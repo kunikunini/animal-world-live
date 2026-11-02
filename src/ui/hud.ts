@@ -5,6 +5,8 @@ export interface Hud {
   reduceMotion: boolean
   onReduceMotionChange: (fn: (on: boolean) => void) => void
   onGoToSpot: (fn: () => void) => void
+  /** 「双眼鏡で見る」 */
+  onViewSpot: (fn: () => void) => void
   /** 「観察スポットへ」ボタンの表示切り替え */
   setGoToSpotVisible: (visible: boolean) => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
@@ -41,6 +43,7 @@ export function createHud(): Hud {
   const spotLabel = document.getElementById('spot-label') as HTMLElement
   const spotDistance = document.getElementById('spot-distance') as HTMLElement
   const arrived = document.getElementById('arrived') as HTMLElement
+  const viewSpotBtn = document.getElementById('view-spot') as HTMLButtonElement
 
   const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const stored = readStored()
@@ -56,6 +59,9 @@ export function createHud(): Hud {
 
   const goToListeners: Array<() => void> = []
   goToSpotBtn.addEventListener('click', () => goToListeners.forEach((fn) => fn()))
+
+  const viewListeners: Array<() => void> = []
+  viewSpotBtn.addEventListener('click', () => viewListeners.forEach((fn) => fn()))
 
   if (import.meta.env.DEV) fpsEl.hidden = false
 
@@ -73,6 +79,9 @@ export function createHud(): Hud {
     },
     onGoToSpot: (fn) => {
       goToListeners.push(fn)
+    },
+    onViewSpot: (fn) => {
+      viewListeners.push(fn)
     },
     setGoToSpotVisible: (visible) => {
       goToSpotBtn.hidden = !visible

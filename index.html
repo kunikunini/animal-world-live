@@ -34,8 +34,29 @@
     </div>
 
     <div id="arrived" class="banner" hidden role="status">
-      観察スポットに着きました
+      <span>観察スポットに着きました</span>
+      <button id="view-spot" class="btn btn-primary btn-small" type="button">双眼鏡で見る</button>
     </div>
+
+    <section id="observe" class="observe" hidden aria-label="観察モニター">
+      <div class="observe-panel">
+        <header class="observe-header">
+          <h2 id="observe-title" class="observe-title">観察モニター</h2>
+          <button id="observe-close" class="btn btn-ghost" type="button">世界に戻る</button>
+        </header>
+        <div class="observe-screen">
+          <video id="observe-video" class="observe-video" playsinline preload="metadata" controls controlslist="nodownload"></video>
+          <div id="observe-poster" class="observe-poster">
+            <p id="observe-poster-text" class="observe-poster-text">タップして再生</p>
+            <button id="observe-play" class="btn btn-primary" type="button">再生する</button>
+            <button id="observe-retry" class="btn btn-primary" type="button" hidden>もう一度試す</button>
+          </div>
+          <span id="observe-badge" class="observe-badge">収録映像</span>
+          <span id="observe-placeholder" class="observe-placeholder" hidden>仮映像（色と文字だけの自作プレースホルダ）</span>
+        </div>
+        <div id="observe-profile" class="observe-profile"></div>
+      </div>
+    </section>
 
     <div id="hud" class="hud" hidden>
       <div class="hud-left">

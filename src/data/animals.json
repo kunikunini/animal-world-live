@@ -1,0 +1,70 @@
+{
+  "$comment": "個体データ。追加はこのファイルだけで可能。担当飼育員の氏名は入れない。仔の性別は未確定なので書かない。映像・写真は許諾範囲が決まるまでリポジトリに入れず、URL で参照する。",
+  "animals": [
+    {
+      "id": "angie",
+      "name": "アンジー",
+      "species": "ライオン",
+      "ageLabel": "",
+      "family": "",
+      "personality": "",
+      "favorites": "",
+      "identifyingMarks": "",
+      "keeperComment": "",
+      "status": "preparing",
+      "video": { "source": "recorded", "url": "/media/lions-family.mp4", "poster": "", "placeholder": true }
+    },
+    {
+      "id": "claire",
+      "name": "クレア",
+      "species": "ライオン",
+      "ageLabel": "",
+      "family": "",
+      "personality": "",
+      "favorites": "",
+      "identifyingMarks": "",
+      "keeperComment": "",
+      "status": "preparing",
+      "video": { "source": "recorded", "url": "/media/lions-family.mp4", "poster": "", "placeholder": true }
+    },
+    {
+      "id": "carla",
+      "name": "カーラ",
+      "species": "ライオン",
+      "ageLabel": "",
+      "family": "",
+      "personality": "",
+      "favorites": "",
+      "identifyingMarks": "",
+      "keeperComment": "",
+      "status": "preparing",
+      "video": { "source": "recorded", "url": "/media/lions-family.mp4", "poster": "", "placeholder": true }
+    },
+    {
+      "id": "alex",
+      "name": "アレックス",
+      "species": "ライオン",
+      "ageLabel": "",
+      "family": "",
+      "personality": "",
+      "favorites": "",
+      "identifyingMarks": "",
+      "keeperComment": "",
+      "status": "preparing",
+      "video": { "source": "recorded", "url": "", "poster": "", "placeholder": true }
+    },
+    {
+      "id": "riley",
+      "name": "ライリー",
+      "species": "ライオン",
+      "ageLabel": "",
+      "family": "",
+      "personality": "",
+      "favorites": "",
+      "identifyingMarks": "",
+      "keeperComment": "",
+      "status": "preparing",
+      "video": { "source": "recorded", "url": "", "poster": "", "placeholder": true }
+    }
+  ]
+}

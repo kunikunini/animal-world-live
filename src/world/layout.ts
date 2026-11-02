@@ -20,6 +20,8 @@ export const SPOT = {
   z: KOPJE.z - 1,
   /** ここまで近づいたら「着いた」とみなす（m） */
   arriveRadius: 4.5,
+  /** この観察スポットで会える個体（animals.json の id） */
+  animalId: 'angie',
   /** 自動移動の経由点。南の登り口 */
   approach: { x: KOPJE.x, z: KOPJE.z + KOPJE.radius + 5 },
 }

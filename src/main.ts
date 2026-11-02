@@ -6,6 +6,8 @@ import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
 import { SPOT } from './world/layout'
+import { createObserveView } from './ui/observe'
+import { getAnimal } from './data/animals'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -40,6 +42,19 @@ function startWorld(canvas: HTMLCanvasElement): void {
   // 「観察スポットへ」: 南の登り口を経由して台地の頂上へ
   hud.onGoToSpot(() => {
     player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
+  })
+
+  // 観察画面。スポットの主役はアンジー（母）。家族の映像を共有する
+  const observe = createObserveView()
+  hud.onViewSpot(() => {
+    const animal = getAnimal(SPOT.animalId)
+    if (!animal) return
+    player.setInputEnabled(false)
+    observe.open(animal)
+  })
+  observe.onClose(() => {
+    player.setInputEnabled(true)
+    canvas.focus()
   })
 
   const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))

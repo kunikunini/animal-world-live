@@ -11,6 +11,8 @@ export interface PlayerController {
   goTo: (waypoints: Array<{ x: number; z: number }>) => void
   /** 今、目的地へ向かって歩いているか */
   isAutoWalking: () => boolean
+  /** 観察画面などを開いている間、タップとキーを受け付けない */
+  setInputEnabled: (on: boolean) => void
   dispose: () => void
 }
 
@@ -128,6 +130,7 @@ export function createPlayer(
   let reduceMotion = false
   let walkPhase = 0
   let stuckTime = 0
+  let inputEnabled = true
 
   const keys = new Set<string>()
   const raycaster = new THREE.Raycaster()
@@ -167,7 +170,7 @@ export function createPlayer(
   let dragging = false
 
   const onPointerDown = (e: PointerEvent) => {
-    if (pointerId !== null) return
+    if (!inputEnabled || pointerId !== null) return
     pointerId = e.pointerId
     downX = lastX = e.clientX
     downY = e.clientY
@@ -204,6 +207,7 @@ export function createPlayer(
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (!inputEnabled) return
     const k = e.key.toLowerCase()
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
       keys.add(k)
@@ -350,6 +354,13 @@ export function createPlayer(
     update,
     goTo,
     isAutoWalking: () => waypoints.length > 0,
+    setInputEnabled: (on) => {
+      inputEnabled = on
+      if (!on) {
+        keys.clear()
+        pointerId = null
+      }
+    },
     setReduceMotion: (on) => {
       reduceMotion = on
     },
