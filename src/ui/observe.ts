@@ -1,5 +1,6 @@
 import type { Animal } from '../data/animals'
 import { resolveVideoSource } from '../video/source'
+import { renderProfile } from './profile'
 
 export interface ObserveView {
   open: (animal: Animal) => void
@@ -23,6 +24,7 @@ export function createObserveView(): ObserveView {
   const playBtn = document.getElementById('observe-play') as HTMLButtonElement
   const retryBtn = document.getElementById('observe-retry') as HTMLButtonElement
   const closeBtn = document.getElementById('observe-close') as HTMLButtonElement
+  const profile = document.getElementById('observe-profile') as HTMLElement
 
   const closeListeners: Array<() => void> = []
   let open = false
@@ -98,6 +100,7 @@ export function createObserveView(): ObserveView {
       current = animal
       title.textContent = `${animal.name}たちの観察モニター`
       load(animal)
+      profile.innerHTML = renderProfile(animal)
       root.hidden = false
       open = true
       closeBtn.focus()

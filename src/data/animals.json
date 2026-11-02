@@ -6,52 +6,72 @@
       "name": "アンジー",
       "species": "ライオン",
       "ageLabel": "",
-      "family": "",
+      "family": "アレックスとの間に生まれた双子、クレアとカーラ（1歳）の母",
       "personality": "",
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
-      "status": "preparing",
-      "video": { "source": "recorded", "url": "/media/lions-family.mp4", "poster": "", "placeholder": true }
+      "status": "ready",
+      "video": {
+        "source": "recorded",
+        "url": "/media/lions-family.mp4",
+        "poster": "",
+        "placeholder": true
+      }
     },
     {
       "id": "claire",
       "name": "クレア",
       "species": "ライオン",
       "ageLabel": "",
-      "family": "",
+      "family": "アレックスとアンジーの子。カーラと双子（1歳）",
       "personality": "",
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
       "status": "preparing",
-      "video": { "source": "recorded", "url": "/media/lions-family.mp4", "poster": "", "placeholder": true }
+      "video": {
+        "source": "recorded",
+        "url": "/media/lions-family.mp4",
+        "poster": "",
+        "placeholder": true
+      }
     },
     {
       "id": "carla",
       "name": "カーラ",
       "species": "ライオン",
       "ageLabel": "",
-      "family": "",
+      "family": "アレックスとアンジーの子。クレアと双子（1歳）",
       "personality": "",
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
       "status": "preparing",
-      "video": { "source": "recorded", "url": "/media/lions-family.mp4", "poster": "", "placeholder": true }
+      "video": {
+        "source": "recorded",
+        "url": "/media/lions-family.mp4",
+        "poster": "",
+        "placeholder": true
+      }
     },
     {
       "id": "alex",
       "name": "アレックス",
       "species": "ライオン",
       "ageLabel": "",
-      "family": "",
+      "family": "アンジーとの間に生まれた双子、クレアとカーラ（1歳）の父",
       "personality": "",
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
       "status": "preparing",
-      "video": { "source": "recorded", "url": "", "poster": "", "placeholder": true }
+      "video": {
+        "source": "recorded",
+        "url": "",
+        "poster": "",
+        "placeholder": true
+      }
     },
     {
       "id": "riley",
@@ -64,7 +84,12 @@
       "identifyingMarks": "",
       "keeperComment": "",
       "status": "preparing",
-      "video": { "source": "recorded", "url": "", "poster": "", "placeholder": true }
+      "video": {
+        "source": "recorded",
+        "url": "",
+        "poster": "",
+        "placeholder": true
+      }
     }
   ]
 }
