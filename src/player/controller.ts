@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { SPAWN, WALK_RADIUS, WATERHOLE } from '../world/layout'
-import { terrainHeight } from '../world/terrain'
+import { terrainHeight, terrainSlope } from '../world/terrain'
 import type { Collider } from '../world/props'
 import { toonMaterial } from '../render/toon'
 
@@ -33,6 +33,8 @@ const CAM_HEIGHT = 3.4
 const DRAG_THRESHOLD = 8
 const PLAYER_RADIUS = 0.45
 const CAMERA_RADIUS = 0.7
+/** 登れる傾きの下限（法線の y 成分）。これより急な斜面は崖として扱う。南の坂（約32度）は登れる */
+const MAX_CLIMB_SLOPE = 0.64
 
 const _dir = new THREE.Vector3()
 const _target = new THREE.Vector3()
@@ -93,6 +95,11 @@ function clampToWorld(p: THREE.Vector3): void {
     p.x = WATERHOLE.x + (d < 1e-3 ? min : dx * k)
     p.z = WATERHOLE.z + (d < 1e-3 ? 0 : dz * k)
   }
+}
+
+/** その場所に立てるか（崖のように急でないか） */
+function canStand(x: number, z: number): boolean {
+  return terrainSlope(x, z, 0.5) >= MAX_CLIMB_SLOPE
 }
 
 /** 岩や幹の円から押し出す。押し出した量を返す */
@@ -284,6 +291,21 @@ export function createPlayer(
     // 当たり判定: 世界の端・水場・岩・幹
     clampToWorld(object.position)
     pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
+
+    // 崖: 急な斜面には入れない。すでに急な場所にいる時は抜け出せるように止めない。
+    // 壁に沿って滑れるよう、x だけ・z だけの移動も試す
+    if (moving && canStand(_prev.x, _prev.z) && !canStand(object.position.x, object.position.z)) {
+      const nx = object.position.x
+      const nz = object.position.z
+      if (canStand(nx, _prev.z)) {
+        object.position.z = _prev.z
+      } else if (canStand(_prev.x, nz)) {
+        object.position.x = _prev.x
+      } else {
+        object.position.x = _prev.x
+        object.position.z = _prev.z
+      }
+    }
     object.position.y = terrainHeight(object.position.x, object.position.z)
 
     // 岩に阻まれて進めない時は、目的地をあきらめる（永遠に足踏みしない）

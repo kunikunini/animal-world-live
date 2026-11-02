@@ -12,3 +12,5 @@ public/media/
 
 # ローカルの開発ツール設定
 .claude/
+# Blender 実験で生成するモデル（コミットしない）
+public/models/
