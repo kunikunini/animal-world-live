@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+.vercel/
+.DS_Store
+
+# 非公開資料・映像素材はリポジトリに入れない
+private/
+*.private.md
+public/media/
+
+# ローカルの開発ツール設定
+.claude/

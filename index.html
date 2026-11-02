@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#d99a4a" />
+    <title>ANIMAL WORLD LIVE</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="world" aria-label="サバンナの3Dワールド"></canvas>
+
+    <div id="entry" class="overlay">
+      <div class="entry-card">
+        <p class="entry-kicker">ANIMAL WORLD LIVE</p>
+        <h1 class="entry-title">世界中の動物たちと、<br />友達になろう。</h1>
+        <p class="entry-lead">夕暮れのサバンナを歩いて、ライオンたちに会いに行こう。</p>
+        <button id="enter" class="btn btn-primary" type="button">世界に入る</button>
+        <p class="entry-hint">タップした場所へ歩きます。キーボードの W A S D でも動けます。</p>
+      </div>
+    </div>
+
+    <div id="fallback" class="overlay" hidden>
+      <div class="entry-card">
+        <p class="entry-kicker">ANIMAL WORLD LIVE</p>
+        <h1 class="entry-title">このブラウザでは3Dを表示できません</h1>
+        <p class="entry-lead">WebGLが使えない環境のようです。別のブラウザか端末でもう一度開いてみてください。</p>
+      </div>
+    </div>
+
+    <div id="hud" class="hud" hidden>
+      <label class="toggle">
+        <input id="reduce-motion" type="checkbox" />
+        <span>動きをへらす</span>
+      </label>
+      <div id="fps" class="fps" hidden></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
