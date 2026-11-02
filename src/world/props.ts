@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-import { Simplex2D, mulberry32 } from './noise'
-import { ACACIAS, KOPJE, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
+import { Reflector } from 'three/addons/objects/Reflector.js'
+import { Simplex2D, mulberry32, smoothstep } from './noise'
+import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { WATER_LEVEL, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 
@@ -19,6 +20,9 @@ export interface Props {
   update: (time: number) => void
 }
 
+/** 映り込みの描画から外すレイヤー（草や光の粒）。メインカメラでは有効にする */
+export const NO_REFLECT_LAYER = 1
+
 const _m = new THREE.Matrix4()
 const _p = new THREE.Vector3()
 const _q = new THREE.Quaternion()
@@ -33,6 +37,15 @@ function distToWater(x: number, z: number): number {
 
 function distToKopje(x: number, z: number): number {
   return Math.hypot(x - KOPJE.x, z - KOPJE.z)
+}
+
+/** 点と線分の距離（xz） */
+function distToSegment(x: number, z: number, ax: number, az: number, bx: number, bz: number): number {
+  const vx = bx - ax
+  const vz = bz - az
+  const len2 = vx * vx + vz * vz
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / len2))
+  return Math.hypot(x - (ax + vx * t), z - (az + vz * t))
 }
 
 /** アカシア: 細い幹と平たい傘状の冠。InstancedMesh 2つで描く */
@@ -109,21 +122,32 @@ function createAcacias(rand: () => number, group: THREE.Group, colliders: Collid
 function createRocks(rand: () => number, group: THREE.Group, colliders: Collider[]): void {
   const placements: Array<{ x: number; z: number; s: number; sink: number }> = []
 
-  // コピエ: 台地の縁と斜面に大きな岩。南側（スポーン側）は登り口として空ける
-  for (let i = 0; i < 34; i++) {
+  // コピエ: 崖の段の上に崩れた岩。南側（登り口）は空ける。地層を隠しすぎないよう控えめに
+  for (let i = 0; i < 22; i++) {
     const a = rand() * Math.PI * 2
-    const south = Math.abs(a - Math.PI / 2) // +z 方向が南
-    if (south < 0.55) continue
-    const r = KOPJE.radius * (0.35 + rand() * 0.6)
+    const south = Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2)))
+    if (south < KOPJE.rampHalfAngle + 0.25) continue
+    const r = KOPJE.radius * (0.4 + rand() * 0.62)
     const x = KOPJE.x + Math.cos(a) * r
     const z = KOPJE.z + Math.sin(a) * r
-    placements.push({ x, z, s: 2.2 + rand() * 3.4, sink: 0.6 })
+    placements.push({ x, z, s: 1.4 + rand() * 2.4, sink: 0.7 })
   }
-  // 台地の上にも低い岩をいくつか（観察スポットの雰囲気づくり）。中央は空けておく
-  for (let i = 0; i < 5; i++) {
+  // 台地の上にも低い岩をいくつか（観察スポットの雰囲気づくり）。スポットとライオンのそばは空ける
+  for (let i = 0; i < 7; i++) {
     const a = rand() * Math.PI * 2
     const r = KOPJE.radius * (0.2 + rand() * 0.1)
-    placements.push({ x: KOPJE.x + Math.cos(a) * r, z: KOPJE.z + Math.sin(a) * r, s: 0.8 + rand() * 1.0, sink: 0.4 })
+    const x = KOPJE.x + Math.cos(a) * r
+    const z = KOPJE.z + Math.sin(a) * r
+    if (Math.hypot(x - SPOT.x, z - SPOT.z) < 5) continue
+    if (LIONS.some((l) => Math.hypot(x - l.x, z - l.z) < 6.5)) continue
+    placements.push({ x, z, s: 0.8 + rand() * 1.0, sink: 0.4 })
+  }
+  // 登り道の両脇に岩を並べ、道らしく見せる
+  for (let i = 0; i < 10; i++) {
+    const side = i % 2 === 0 ? 1 : -1
+    const a = Math.PI / 2 + side * (KOPJE.rampHalfAngle + 0.12 + rand() * 0.1)
+    const r = KOPJE.radius * (0.5 + (Math.floor(i / 2) / 5) * 0.5)
+    placements.push({ x: KOPJE.x + Math.cos(a) * r, z: KOPJE.z + Math.sin(a) * r, s: 0.9 + rand() * 1.2, sink: 0.5 })
   }
   // 平原に散らばる岩
   for (let i = 0; i < 40; i++) {
@@ -164,22 +188,100 @@ function createRocks(rand: () => number, group: THREE.Group, colliders: Collider
   group.add(rocks)
 }
 
-/** 水場 */
-function createWater(group: THREE.Group): void {
-  const geo = new THREE.CircleGeometry(WATERHOLE.radius, 40)
+const WATER_COLOR = '#9fcbe6'
+
+/** 空と周囲を映す水面のシェーダ。映り込みに水の色を混ぜ、さざ波でわずかに歪める */
+const WaterShader = {
+  name: 'StylizedWater',
+  uniforms: {
+    color: { value: null as THREE.Color | null },
+    tDiffuse: { value: null as THREE.Texture | null },
+    textureMatrix: { value: null as THREE.Matrix4 | null },
+    uTime: { value: 0 },
+  },
+  vertexShader: /* glsl */ `
+    uniform mat4 textureMatrix;
+    varying vec4 vUv;
+    varying vec3 vWorld;
+    #include <common>
+    #include <fog_pars_vertex>
+    void main() {
+      vUv = textureMatrix * vec4(position, 1.0);
+      vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+    }
+  `,
+  fragmentShader: /* glsl */ `
+    uniform vec3 color;
+    uniform sampler2D tDiffuse;
+    uniform float uTime;
+    varying vec4 vUv;
+    varying vec3 vWorld;
+    #include <common>
+    #include <fog_pars_fragment>
+    void main() {
+      vec2 ripple = vec2(
+        sin(vWorld.x * 1.3 + uTime * 1.1) + sin(vWorld.z * 1.7 - uTime * 0.9),
+        cos(vWorld.x * 1.1 - uTime * 0.8) + sin(vWorld.z * 1.5 + uTime * 1.3)
+      ) * 0.0035;
+      vec4 uv = vUv;
+      uv.xy += ripple * uv.w;
+      vec3 refl = texture2DProj(tDiffuse, uv).rgb;
+      // 映り込みを少し白っぽい水色へ寄せ、様式化した色にそろえる
+      vec3 c = mix(refl, color, 0.4);
+      c += color * 0.08;
+      gl_FragColor = vec4(c, 1.0);
+      #include <fog_fragment>
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }
+  `,
+}
+
+/**
+ * 水場。PC は Reflector で空と岸を映す。スマホは映り込みを描かず空色の板にする。
+ * 映り込みの描画からは草と光の粒（NO_REFLECT_LAYER）を外して負荷を抑える。
+ */
+function createWater(
+  group: THREE.Group,
+  options: PropsOptions,
+): { update: (time: number) => void } {
+  const geo = new THREE.CircleGeometry(WATERHOLE.radius, 48)
   geo.rotateX(-Math.PI / 2)
-  const mat = new THREE.MeshStandardMaterial({
-    color: '#7fb6d6',
-    roughness: 0.1,
-    metalness: 0.05,
-    transparent: true,
-    opacity: 0.9,
+
+  if (options.mobile || !options.camera) {
+    const mat = new THREE.MeshBasicMaterial({ color: WATER_COLOR, transparent: true, opacity: 0.94 })
+    const mesh = new THREE.Mesh(geo, mat)
+    mesh.position.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
+    mesh.name = 'water'
+    group.add(mesh)
+    return { update: () => {} }
+  }
+
+  const reflector = new Reflector(geo, {
+    color: WATER_COLOR,
+    textureWidth: 640,
+    textureHeight: 640,
+    clipBias: 0.003,
+    shader: WaterShader,
+    multisample: 0,
   })
-  const mesh = new THREE.Mesh(geo, mat)
-  mesh.position.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
-  mesh.receiveShadow = true
-  mesh.name = 'water'
-  group.add(mesh)
+  reflector.position.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
+  reflector.name = 'water'
+  const mat = reflector.material as THREE.ShaderMaterial
+  Object.assign(mat.uniforms, THREE.UniformsUtils.clone(THREE.UniformsLib.fog))
+  mat.fog = true
+  // 映り込み用カメラからは草・光の粒を外す
+  const reflectionCamera = reflector.getReflectionCamera(options.camera) as THREE.Camera
+  reflectionCamera.layers.disable(NO_REFLECT_LAYER)
+  group.add(reflector)
+  return {
+    update: (time) => {
+      mat.uniforms.uTime.value = time
+    },
+  }
 }
 
 /** 遠景の山並み。霧に溶ける低ポリの円錐 */
@@ -216,14 +318,32 @@ function createMountains(rand: () => number, group: THREE.Group): void {
 }
 
 /**
+ * 草の濃さ（0..1）。デモの見せ場を優先して、スポーンから登り口への回廊と
+ * コピエの麓を濃く、遠くはまばらにする。
+ */
+function grassDensity(x: number, z: number): number {
+  const corridor = distToSegment(x, z, SPAWN.x, SPAWN.z + 10, KOPJE.x, KOPJE.z + KOPJE.radius)
+  let d = 0.3
+  d += 0.7 * (1 - smoothstep(10, 30, corridor))
+  const foot = Math.abs(distToKopje(x, z) - KOPJE.radius)
+  d += 0.45 * (1 - smoothstep(1, 14, foot))
+  const far = Math.hypot(x, z)
+  d *= 1 - smoothstep(95, 145, far) * 0.6
+  return Math.min(1, d)
+}
+
+/**
  * 草むら。1本ずつの棘ではなく、数本の葉が外へ傾いた「房」を InstancedMesh で描く。
- * 葉は根元が暗く先端が明るい頂点カラー × 房ごとの色味。頂点シェーダで揺らす。
+ * 葉は根元が暗く先端が明るい頂点カラー × 房ごとの色味。
+ * 頂点シェーダで、風の波（世界座標で進む）と房ごとの細かな揺れを足し、
+ * カメラから遠い房は背を低くして地面に溶かす（距離 LOD）。
  */
 function createGrass(
   rand: () => number,
   group: THREE.Group,
   tufts: number,
-): { mesh: THREE.InstancedMesh; uniforms: { uTime: { value: number }; uSway: { value: number } } } {
+  lodFar: number,
+): { mesh: THREE.InstancedMesh; uniforms: { uTime: { value: number }; uSway: { value: number }; uLodFar: { value: number } } } {
   const BLADES = 4
   const positions: number[] = []
   const colors: number[] = []
@@ -265,44 +385,61 @@ function createGrass(
   for (let i = 1; i < normals.length; i += 3) normals[i] = 1
   geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
 
-  const uniforms = { uTime: { value: 0 }, uSway: { value: 1 } }
+  const uniforms = { uTime: { value: 0 }, uSway: { value: 1 }, uLodFar: { value: lodFar } }
   const mat = toonMaterial({ vertexColors: true })
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = uniforms.uTime
     shader.uniforms.uSway = uniforms.uSway
+    shader.uniforms.uLodFar = uniforms.uLodFar
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform float uSway;')
+      .replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform float uSway;\nuniform float uLodFar;')
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        float ph = instanceMatrix[3].x * 0.35 + instanceMatrix[3].z * 0.27;
-        float sway = sin(uTime * 1.6 + ph) * 0.5 + sin(uTime * 2.7 + ph * 1.7) * 0.25;
+        vec3 ipos = instanceMatrix[3].xyz;
         float bend = position.y * position.y;
-        transformed.x += sway * uSway * bend * 0.3;
-        transformed.z += sway * uSway * bend * 0.1;`,
+        // 風の波: 世界座標で一定方向に進む大きなうねり ＋ ゆっくりした突風
+        vec3 windW = vec3(0.8, 0.0, 0.6);
+        float along = dot(ipos.xz, windW.xz);
+        float wave = sin(along * 0.085 - uTime * 1.4);
+        float gust = 0.5 + 0.5 * sin(along * 0.025 - uTime * 0.5 + 1.7);
+        float windAmt = (0.1 + 0.5 * gust * (0.5 + 0.5 * wave)) * uSway;
+        // 風向きを房のローカル座標へ
+        vec3 windL = normalize(vec3(dot(windW, instanceMatrix[0].xyz), 0.0, dot(windW, instanceMatrix[2].xyz)) + vec3(1e-4));
+        transformed.xz += windL.xz * windAmt * bend;
+        // 房ごとの細かな揺れ
+        float ph = ipos.x * 0.35 + ipos.z * 0.27;
+        float sway = sin(uTime * 1.6 + ph) * 0.5 + sin(uTime * 2.7 + ph * 1.7) * 0.25;
+        transformed.x += sway * uSway * bend * 0.2;
+        transformed.z += sway * uSway * bend * 0.08;
+        // 距離 LOD: 遠い房は背を低くして地面に溶かす
+        float dcam = distance(ipos, cameraPosition);
+        transformed.y *= 1.0 - smoothstep(uLodFar * 0.6, uLodFar, dcam);`,
       )
   }
 
   const grass = new THREE.InstancedMesh(geo, mat, tufts)
   grass.receiveShadow = true
   grass.frustumCulled = false
+  grass.layers.set(NO_REFLECT_LAYER)
 
   const gA = new THREE.Color('#ecc85a')
   const gB = new THREE.Color('#d2a336')
   const gC = new THREE.Color('#a3bf44')
   const gD = new THREE.Color('#e9c57c')
 
+  const R = WALK_RADIUS + 30
   let placed = 0
   let guard = 0
-  while (placed < tufts && guard++ < tufts * 3) {
+  while (placed < tufts && guard++ < tufts * 8) {
     const a = rand() * Math.PI * 2
-    // 近くを密に、遠くをまばらに
-    const r = Math.pow(rand(), 0.65) * (WALK_RADIUS + 25)
+    const r = Math.sqrt(rand()) * R
     const x = Math.cos(a) * r
     const z = Math.sin(a) * r
+    if (rand() > grassDensity(x, z)) continue
     const dw = distToWater(x, z)
     if (dw < WATERHOLE.radius + 1.5) continue
-    if (distToKopje(x, z) < KOPJE.radius * 0.95) continue
+    if (distToKopje(x, z) < KOPJE.radius * 0.97) continue
     const h = 0.35 + rand() * 0.45
     _p.set(x, terrainHeight(x, z) - 0.03, z)
     _e.set(0, rand() * Math.PI, 0)
@@ -328,8 +465,10 @@ function createGrass(
 }
 
 export interface PropsOptions {
-  /** 低性能端末では草の房を減らす */
+  /** 低性能端末では草の房を減らし、水の映り込みを描かない */
   mobile: boolean
+  /** メインカメラ。水の映り込み用カメラの設定に使う（無ければ映り込みなし） */
+  camera?: THREE.Camera
 }
 
 export function createProps(options: PropsOptions): Props {
@@ -340,9 +479,9 @@ export function createProps(options: PropsOptions): Props {
   const colliders: Collider[] = []
   createAcacias(rand, group, colliders)
   createRocks(rand, group, colliders)
-  createWater(group)
+  const water = createWater(group, options)
   createMountains(rand, group)
-  const grass = createGrass(rand, group, options.mobile ? 3200 : 6500)
+  const grass = createGrass(rand, group, options.mobile ? 6000 : 16000, options.mobile ? 110 : 175)
 
   return {
     group,
@@ -352,6 +491,7 @@ export function createProps(options: PropsOptions): Props {
     },
     update: (time) => {
       grass.uniforms.uTime.value = time
+      water.update(time)
     },
   }
 }

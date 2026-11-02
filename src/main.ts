@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { createScene } from './world/scene'
 import { createTerrain } from './world/terrain'
-import { createProps } from './world/props'
+import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
@@ -14,6 +14,7 @@ import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createFriendBookStore } from './data/friends'
 import { getAnimal } from './data/animals'
+import { applyView, viewNames } from './debug/views'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -59,13 +60,18 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   const terrain = createTerrain()
   scene.add(terrain)
 
-  const props = createProps({ mobile })
+  // 草と光の粒は水の映り込みに描かないレイヤーに置く。メインカメラでは見える
+  camera.layers.enable(NO_REFLECT_LAYER)
+  const props = createProps({ mobile, camera })
   scene.add(props.group)
 
   const spot = createObservationSpot()
   scene.add(spot.group)
 
   const atmosphere = createAtmosphere()
+  atmosphere.group.traverse((o) => {
+    if ((o as THREE.Points).isPoints) o.layers.set(NO_REFLECT_LAYER)
+  })
   scene.add(atmosphere.group)
 
   const clouds = createClouds()
@@ -201,7 +207,21 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
 
   if (import.meta.env.DEV) {
     // 開発時だけ、ブラウザのコンソールから中身を覗けるようにする
-    ;(window as unknown as { __awl: unknown }).__awl = { camera, spot, player, props, shell, lions }
+    ;(window as unknown as { __awl: unknown }).__awl = {
+      camera,
+      spot,
+      player,
+      props,
+      shell,
+      lions,
+      views: viewNames(),
+      view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
+      // 描画直後に canvas を画像化する（判定用スクリーンショット）
+      capture: (quality = 0.92) => {
+        postfx.render()
+        return canvas.toDataURL('image/jpeg', quality)
+      },
+    }
   }
 
   // 1フレーム描いてから入口を消す（白画面を見せない）

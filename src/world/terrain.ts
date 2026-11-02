@@ -6,6 +6,7 @@ import { toonMaterial } from '../render/toon'
 const simplex = new Simplex2D(WORLD_SEED)
 const detail = new Simplex2D(WORLD_SEED + 7)
 const patch = new Simplex2D(WORLD_SEED + 31)
+const edge = new Simplex2D(WORLD_SEED + 13)
 
 /** 起伏のもとになるノイズ高さ（コピエと水場の加工前） */
 function baseHeight(x: number, z: number): number {
@@ -14,11 +15,40 @@ function baseHeight(x: number, z: number): number {
   return broad + fine
 }
 
-const kopjeTop = baseHeight(KOPJE.x, KOPJE.z) + KOPJE.height
+const kopjeBase = baseHeight(KOPJE.x, KOPJE.z)
+const kopjeTop = kopjeBase + KOPJE.height
 const waterBase = baseHeight(WATERHOLE.x, WATERHOLE.z) - WATERHOLE.depth
 
 /** 水面の高さ */
 export const WATER_LEVEL = waterBase + 0.75
+
+/** 0..1 を段々にする。段の上は平ら、段の間は急 */
+function terrace(w: number, steps: number): number {
+  const s = w * steps
+  const i = Math.floor(s)
+  const f = s - i
+  return Math.min(1, (i + smoothstep(0.68, 1, f)) / steps)
+}
+
+/**
+ * コピエの持ち上げ量（0..1）と「崖らしさ」（0 = 坂、1 = 段々の崖）。
+ * 地形と色づけの両方で使う。
+ */
+export function kopjeShape(x: number, z: number): { w: number; cliff: number; dk: number } {
+  const dx = x - KOPJE.x
+  const dz = z - KOPJE.z
+  let dk = Math.hypot(dx, dz) / KOPJE.radius
+  if (dk >= 1.2) return { w: 0, cliff: 0, dk }
+  // 縁を少し波打たせて、真円に見せない
+  dk += edge.noise(x * 0.06, z * 0.06) * 0.06
+  if (dk >= 1) return { w: 0, cliff: 0, dk }
+  const w = 1 - smoothstep(KOPJE.plateau, 1, dk)
+  // +z（南）が登り口。そこから外れるほど崖になる
+  const ang = Math.atan2(dz, dx) - Math.PI / 2
+  const south = Math.abs(Math.atan2(Math.sin(ang), Math.cos(ang)))
+  const cliff = smoothstep(KOPJE.rampHalfAngle, KOPJE.rampHalfAngle + 0.3, south)
+  return { w: lerp(w, terrace(w, KOPJE.terraces), cliff), cliff, dk }
+}
 
 /**
  * 地形の高さ関数。地形メッシュ、置き物の足元、プレイヤーの高さがすべてこれを使う。
@@ -26,12 +56,9 @@ export const WATER_LEVEL = waterBase + 0.75
 export function terrainHeight(x: number, z: number): number {
   let h = baseHeight(x, z)
 
-  // コピエ: 中心が平らな台地になるように持ち上げる
-  const dk = Math.hypot(x - KOPJE.x, z - KOPJE.z) / KOPJE.radius
-  if (dk < 1) {
-    const w = 1 - smoothstep(KOPJE.plateau, 1, dk)
-    h = lerp(h, kopjeTop, w)
-  }
+  // コピエ: 中心が平らな台地。南は坂、ほかは地層の崖
+  const k = kopjeShape(x, z)
+  if (k.w > 0) h = lerp(h, kopjeTop, k.w)
 
   // 水場: ゆるい窪みにする
   const dw = Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) / (WATERHOLE.radius * 1.9)
@@ -44,8 +71,7 @@ export function terrainHeight(x: number, z: number): number {
 }
 
 /** 地形の傾き（法線の y 成分。1 が水平） */
-export function terrainSlope(x: number, z: number): number {
-  const e = 0.75
+export function terrainSlope(x: number, z: number, e = 0.75): number {
   const hx = terrainHeight(x + e, z) - terrainHeight(x - e, z)
   const hz = terrainHeight(x, z + e) - terrainHeight(x, z - e)
   const n = new THREE.Vector3(-hx, 2 * e, -hz).normalize()
@@ -57,7 +83,9 @@ const colGrass = new THREE.Color('#cfa42f')
 const colGrassDry = new THREE.Color('#e0bf5c')
 const colGrassGreen = new THREE.Color('#9db840')
 const colEarth = new THREE.Color('#b8834a')
-const colRock = new THREE.Color('#9a7a5e')
+const colRock = new THREE.Color('#a8876a')
+// 地層の帯。赤い層・黄土の層・暗い層が重なる
+const colStrata = [new THREE.Color('#c46c4a'), new THREE.Color('#e2aa6e'), new THREE.Color('#8f5f48')]
 
 function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.03 + 11, z * 0.03 - 5) * 0.5 + 0.5
@@ -82,15 +110,29 @@ function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
     out.lerp(colEarth, mud * 0.9)
   }
 
-  // コピエの台地と斜面は岩肌
-  const dk = Math.hypot(x - KOPJE.x, z - KOPJE.z) / KOPJE.radius
-  if (dk < 1) {
-    const w = 1 - smoothstep(0.5, 0.95, dk)
-    out.lerp(colRock, w * 0.85)
+  const slope = terrainSlope(x, z, 0.6)
+
+  // コピエ: 内側はほぼ岩肌。段の上には乾いた草が少し、崖の面は地層の帯、南の坂は土の道
+  const k = kopjeShape(x, z)
+  if (k.dk < 1.15) {
+    const rockW = 1 - smoothstep(0.92, 1.12, k.dk)
+    out.lerp(colRock, rockW * 0.9)
+    if (slope > 0.96) out.lerp(colGrassDry, 0.3 * rockW)
+    if (k.cliff < 1 && k.dk > KOPJE.plateau) {
+      out.lerp(colEarth, (1 - k.cliff) * 0.55 * rockW)
+      // 坂の下のほうには草が入り込む
+      const low = smoothstep(0.6, 1.0, k.dk) * (1 - k.cliff)
+      out.lerp(colGrassDry, low * 0.7)
+    }
+    if (k.cliff > 0.2 && slope < 0.85) {
+      const band = Math.floor((h - kopjeBase + 0.4) / 0.8)
+      const strata = colStrata[((band % 3) + 3) % 3]
+      out.lerp(strata, Math.min(1, (0.85 - slope) * 3) * k.cliff)
+    }
+    return
   }
 
   // 急斜面は土が見える
-  const slope = terrainSlope(x, z)
   if (slope < 0.92) out.lerp(colEarth, Math.min(1, (0.92 - slope) * 4))
 }
 

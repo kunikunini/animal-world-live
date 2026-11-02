@@ -5,14 +5,27 @@ export const WORLD_SEED = 20261102
 /** 地形メッシュの一辺（m） */
 export const TERRAIN_SIZE = 400
 /** 地形メッシュの分割数 */
-export const TERRAIN_SEGMENTS = 240
+export const TERRAIN_SEGMENTS = 300
 /** 歩ける範囲（原点からの半径, m） */
 export const WALK_RADIUS = 120
 
 export const SPAWN = { x: 0, z: 72 }
 
-/** コピエ（岩山）。頂上の平らな部分が将来の観察スポット */
-export const KOPJE = { x: 0, z: -48, radius: 24, height: 10, plateau: 0.34 }
+/**
+ * コピエ（岩山）。頂上の平らな部分が観察スポット。
+ * 南（+z）の登り口だけなだらかな坂で、それ以外は地層が段になった崖。
+ */
+export const KOPJE = {
+  x: 0,
+  z: -48,
+  radius: 24,
+  height: 10,
+  plateau: 0.34,
+  /** 崖の段数 */
+  terraces: 4,
+  /** 登り口の半角（ラジアン）。+z 方向を中心にこの角度までは坂 */
+  rampHalfAngle: 0.26,
+}
 
 /** 観察スポット。コピエ台地の頂上。南側の斜面から歩いて登る */
 export const SPOT = {

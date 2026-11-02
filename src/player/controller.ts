@@ -4,6 +4,11 @@ import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
 import { toonMaterial } from '../render/toon'
 
+export interface CameraOverride {
+  position: { x: number; y: number; z: number }
+  lookAt: { x: number; y: number; z: number }
+}
+
 export interface PlayerController {
   object: THREE.Object3D
   update: (dt: number) => void
@@ -14,6 +19,10 @@ export interface PlayerController {
   isAutoWalking: () => boolean
   /** 観察画面などを開いている間、タップとキーを受け付けない */
   setInputEnabled: (on: boolean) => void
+  /** 開発用: 位置と向きを即座に変える（スクリーンショットの定点） */
+  teleport: (x: number, z: number, heading?: number, camYaw?: number) => void
+  /** 開発用: 追従カメラを止めて固定の位置・注視点にする。null で戻す */
+  setCameraOverride: (override: CameraOverride | null) => void
   dispose: () => void
 }
 
@@ -132,6 +141,7 @@ export function createPlayer(
   let walkPhase = 0
   let stuckTime = 0
   let inputEnabled = true
+  let cameraOverride: CameraOverride | null = null
 
   const keys = new Set<string>()
   const raycaster = new THREE.Raycaster()
@@ -310,6 +320,13 @@ export function createPlayer(
       figure.rotation.z = 0
     }
 
+    if (cameraOverride) {
+      camera.position.set(cameraOverride.position.x, cameraOverride.position.y, cameraOverride.position.z)
+      camera.lookAt(cameraOverride.lookAt.x, cameraOverride.lookAt.y, cameraOverride.lookAt.z)
+      marker.visible = false
+      return
+    }
+
     // カメラ: 移動中はゆっくり背後へ回り込む
     if (moving && pointerId === null) {
       let diff = heading + Math.PI - camYaw
@@ -364,6 +381,28 @@ export function createPlayer(
     },
     setReduceMotion: (on) => {
       reduceMotion = on
+    },
+    teleport: (x, z, nextHeading, nextCamYaw) => {
+      waypoints = []
+      marker.visible = false
+      object.position.set(x, 0, z)
+      clampToWorld(object.position)
+      object.position.y = terrainHeight(object.position.x, object.position.z)
+      if (nextHeading !== undefined) heading = nextHeading
+      camYaw = nextCamYaw ?? heading + Math.PI
+      object.rotation.y = heading
+      _camPos.set(
+        object.position.x + Math.sin(camYaw) * CAM_DISTANCE,
+        0,
+        object.position.z + Math.cos(camYaw) * CAM_DISTANCE,
+      )
+      pushOutOfColliders(_camPos, CAMERA_RADIUS, colliders)
+      _camPos.y = Math.max(object.position.y + CAM_HEIGHT, terrainHeight(_camPos.x, _camPos.z) + 2.2)
+      camera.position.copy(_camPos)
+      camera.lookAt(object.position.x, object.position.y + 2.3, object.position.z)
+    },
+    setCameraOverride: (override) => {
+      cameraOverride = override
     },
     dispose,
   }

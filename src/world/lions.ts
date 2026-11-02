@@ -6,6 +6,8 @@ import type { Collider } from './props'
 /**
  * 様式化したライオン。プリミティブだけで組み、スキニングなしの微アニメで生きている感じを出す。
  * 本物の行動を強制しない「しるし」で、本物の姿はモニターの収録映像で見せる。
+ *
+ * 試作2回目の見立てに従い「ライオン読み」を優先: 頭を横に広く、鼻先を前に長く、肩まわりに量感。
  */
 export interface LionOptions {
   id: string
@@ -27,13 +29,20 @@ export interface Lion {
   collider: Collider
   update: (time: number, dt: number, player: THREE.Vector3) => void
   setReduceMotion: (on: boolean) => void
+  /**
+   * 実験用: 別の造形（glTF など）に差し替える。first/second は首と尾のピボット、
+   * ears は耳のメッシュ。名前が見つからなければ、その部分の微アニメだけ止まる。
+   */
+  swapModel: (model: THREE.Object3D, parts: { neck?: THREE.Object3D; ears?: THREE.Object3D[]; tail?: THREE.Object3D }) => void
 }
 
-const TAWNY = '#d9a95f'
-const BELLY = '#efd6a8'
-const DARK = '#6a4727'
-const MANE = '#8d5a2b'
-const NOSE = '#3a2a22'
+export const LION_COLORS = {
+  tawny: '#d9a95f',
+  belly: '#efd6a8',
+  dark: '#6a4727',
+  mane: '#8d5a2b',
+  nose: '#3a2a22',
+} as const
 
 export function createLion(options: LionOptions): Lion {
   const group = new THREE.Group()
@@ -45,10 +54,11 @@ export function createLion(options: LionOptions): Lion {
   const scale = options.cub ? 0.58 : 1
   group.scale.setScalar(scale)
 
-  const tawny = toonMaterial({ color: TAWNY })
-  const belly = toonMaterial({ color: BELLY })
-  const dark = toonMaterial({ color: DARK })
-  const nose = toonMaterial({ color: NOSE })
+  const tawny = toonMaterial({ color: LION_COLORS.tawny })
+  const tawnyLight = toonMaterial({ color: '#e4bb78' })
+  const belly = toonMaterial({ color: LION_COLORS.belly })
+  const dark = toonMaterial({ color: LION_COLORS.dark })
+  const nose = toonMaterial({ color: LION_COLORS.nose })
 
   const cast = (m: THREE.Mesh) => {
     m.castShadow = true
@@ -56,91 +66,142 @@ export function createLion(options: LionOptions): Lion {
     return m
   }
 
-  // --- 胴（伏せ）。前が少し高い ---
+  // プリミティブ版の全パーツをまとめる（差し替え時に丸ごと隠す）
+  const primitive = new THREE.Group()
+  primitive.name = 'primitive'
+  group.add(primitive)
+
+  // --- 胴（伏せ）。前が少し高く、肩に量感 ---
   const body = new THREE.Group()
   const torso = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.95, 6, 14), tawny))
-  torso.rotation.x = Math.PI / 2
-  torso.rotation.z = 0
   torso.position.set(0, 0.42, -0.1)
   torso.rotation.set(Math.PI / 2 - 0.08, 0, 0)
+  torso.scale.set(1.12, 1, 1)
   const chest = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10), tawny))
   chest.position.set(0, 0.5, 0.42)
-  chest.scale.set(1, 0.95, 1.05)
+  chest.scale.set(1.3, 0.95, 1.05)
   const bellyMesh = cast(new THREE.Mesh(new THREE.SphereGeometry(0.33, 12, 8), belly))
   bellyMesh.position.set(0, 0.3, 0.1)
-  bellyMesh.scale.set(1, 0.6, 1.5)
+  bellyMesh.scale.set(1.1, 0.6, 1.5)
   body.add(torso, chest, bellyMesh)
+
+  // 肩甲骨のふくらみ。背中の線より少し上に出す
+  for (const side of [-1, 1]) {
+    const shoulder = cast(new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), tawny))
+    shoulder.position.set(side * 0.3, 0.62, 0.5)
+    shoulder.scale.set(1, 0.85, 1.15)
+    body.add(shoulder)
+  }
 
   // 後ろ脚（折りたたみ）
   for (const side of [-1, 1]) {
     const thigh = cast(new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 8), tawny))
-    thigh.position.set(side * 0.3, 0.27, -0.55)
+    thigh.position.set(side * 0.32, 0.27, -0.55)
     thigh.scale.set(1, 0.75, 1.15)
     const hindPaw = cast(new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), belly))
-    hindPaw.position.set(side * 0.36, 0.1, -0.2)
+    hindPaw.position.set(side * 0.38, 0.1, -0.2)
     hindPaw.scale.set(1, 0.6, 1.3)
     body.add(thigh, hindPaw)
   }
-  // 前脚（前へ伸ばす）
+  // 前脚（前へ伸ばす）。肩から出るように少し外へ。上腕で胸とつなぐ
   for (const side of [-1, 1]) {
-    const leg = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.55, 4, 10), tawny))
+    const upper = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.3, 4, 10), tawny))
+    upper.rotation.x = -0.85
+    upper.position.set(side * 0.27, 0.32, 0.64)
+    body.add(upper)
+    const leg = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.55, 4, 10), tawny))
     leg.rotation.x = Math.PI / 2
-    leg.position.set(side * 0.22, 0.13, 0.85)
-    const paw = cast(new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), belly))
-    paw.position.set(side * 0.22, 0.11, 1.18)
+    leg.position.set(side * 0.25, 0.14, 0.85)
+    const paw = cast(new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), belly))
+    paw.position.set(side * 0.25, 0.11, 1.2)
     paw.scale.set(1, 0.7, 1.2)
     body.add(leg, paw)
   }
-  group.add(body)
+  primitive.add(body)
 
   // --- 首と頭（プレイヤーの方をゆっくり向く） ---
   const neckPivot = new THREE.Group()
-  neckPivot.position.set(0, 0.62, 0.62)
-  const neck = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.3, 4, 10), tawny))
+  neckPivot.position.set(0, 0.64, 0.62)
+  const neck = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.3, 4, 10), tawny))
   neck.rotation.x = -0.5
-  neck.position.set(0, 0.22, 0.12)
+  neck.position.set(0, 0.2, 0.12)
   neckPivot.add(neck)
 
   const head = new THREE.Group()
-  head.position.set(0, 0.46, 0.3)
-  const headScale = options.cub ? 1.25 : 1
+  head.position.set(0, 0.44, 0.32)
+  // ライオンの頭は体に対して大きい。仔はさらに大きめ
+  const headScale = options.cub ? 1.3 : 1.1
   head.scale.setScalar(headScale)
+
+  // 頭蓋: 横に広く、少し平たい
   const skull = cast(new THREE.Mesh(new THREE.SphereGeometry(0.29, 14, 10), tawny))
-  skull.scale.set(1, 0.92, 1)
-  const muzzle = cast(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.26), belly))
-  muzzle.position.set(0, -0.09, 0.26)
-  const noseTip = cast(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.07, 0.06), nose))
-  noseTip.position.set(0, -0.02, 0.4)
-  const chin = cast(new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), belly))
-  chin.position.set(0, -0.2, 0.22)
-  head.add(skull, muzzle, noseTip, chin)
+  skull.scale.set(1.36, 0.84, 1.04)
+  // 額: 眉のあたりを前に張り出す
+  const brow = cast(new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), tawny))
+  brow.position.set(0, 0.07, 0.17)
+  brow.scale.set(1.6, 0.55, 1.0)
+  // 鼻すじ: 額から鼻先へ長く前に出す（丸みのあるカプセル）
+  const bridge = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.3, 4, 10), tawnyLight))
+  bridge.rotation.x = Math.PI / 2
+  bridge.position.set(0, 0.01, 0.38)
+  bridge.scale.set(1.15, 0.8, 1)
+  // 口まわり: 上は淡い黄褐色、下唇だけ白く。長く、丸い
+  const muzzle = cast(new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), tawnyLight))
+  muzzle.position.set(0, -0.09, 0.38)
+  muzzle.scale.set(1.0, 0.62, 1.45)
+  const lip = cast(new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), belly))
+  lip.position.set(0, -0.15, 0.42)
+  lip.scale.set(1.05, 0.5, 1.3)
+  // 鼻先: 黒い逆三角形（低い円錐を前に倒す）
+  const noseTip = cast(new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.07, 3), nose))
+  noseTip.rotation.set(Math.PI / 2 + 0.25, Math.PI, 0)
+  noseTip.position.set(0, 0.01, 0.6)
+  noseTip.scale.set(1.3, 1, 1)
+  // 下あご
+  const chin = cast(new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), belly))
+  chin.position.set(0, -0.2, 0.36)
+  chin.scale.set(1, 0.55, 1.3)
+  head.add(skull, brow, bridge, muzzle, lip, noseTip, chin)
+  // 頬のふくらみ（白）。顔の横幅を出す
   for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), nose)
-    eye.position.set(side * 0.11, 0.06, 0.25)
-    const ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), tawny))
-    ear.position.set(side * 0.2, 0.24, -0.02)
-    ear.scale.set(1, 1, 0.5)
+    const cheek = cast(new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), tawnyLight))
+    cheek.position.set(side * 0.22, -0.13, 0.17)
+    cheek.scale.set(1, 0.8, 1.1)
+    head.add(cheek)
+  }
+  for (const side of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), nose)
+    eye.position.set(side * 0.15, 0.045, 0.27)
+    // 目の下の黒いすじ（ライオンらしさ）
+    const tear = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.09, 0.02), nose)
+    tear.position.set(side * 0.125, -0.02, 0.37)
+    tear.rotation.z = side * 0.25
+    // 耳は頭のてっぺんではなく横寄りに。丸く小さめ
+    const ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 6), tawny))
+    ear.position.set(side * 0.31, 0.17, -0.06)
+    ear.rotation.z = side * -0.35
+    ear.scale.set(1, 1, 0.45)
     ear.name = `ear${side}`
-    const earIn = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), dark)
+    const earIn = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), dark)
     earIn.position.set(0, 0, 0.05)
     ear.add(earIn)
-    head.add(eye, ear)
+    head.add(eye, tear, ear)
   }
   if (options.mane) {
-    const maneMat = toonMaterial({ color: MANE })
+    const maneMat = toonMaterial({ color: LION_COLORS.mane })
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * Math.PI * 2
       const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), maneMat))
-      tuft.position.set(Math.cos(a) * 0.3, Math.sin(a) * 0.28 - 0.02, -0.12)
+      tuft.position.set(Math.cos(a) * 0.34, Math.sin(a) * 0.3 - 0.02, -0.12)
       tuft.scale.set(1, 1, 0.7)
       head.add(tuft)
     }
-    const maneBack = cast(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), maneMat))
+    const maneBack = cast(new THREE.Mesh(new THREE.SphereGeometry(0.46, 10, 8), maneMat))
     maneBack.position.set(0, 0.05, -0.08)
     neck.add(maneBack)
   }
   neckPivot.add(head)
-  group.add(neckPivot)
+  primitive.add(neckPivot)
 
   // --- 尾。後ろから横へ、地面に沿わせる ---
   const tailPivot = new THREE.Group()
@@ -155,12 +216,17 @@ export function createLion(options: LionOptions): Lion {
   const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), dark))
   tuft.position.copy(curve.getPoint(1))
   tailPivot.add(tail, tuft)
-  group.add(tailPivot)
+  primitive.add(tailPivot)
 
   const collider: Collider = { x: options.x, z: options.z, r: 1.05 * scale }
 
   // --- 微アニメ ---
-  const ears = [head.getObjectByName('ear-1') as THREE.Mesh, head.getObjectByName('ear1') as THREE.Mesh]
+  // 差し替え可能な「動く部分」
+  let animNeck: THREE.Object3D = neckPivot
+  let animEars: THREE.Object3D[] = [head.getObjectByName('ear-1') as THREE.Mesh, head.getObjectByName('ear1') as THREE.Mesh]
+  let animTail: THREE.Object3D = tailPivot
+  let animBody: THREE.Object3D = body
+
   let reduceMotion = false
   let earTimer = 2 + Math.random() * 4
   let earFlick = 0
@@ -171,7 +237,7 @@ export function createLion(options: LionOptions): Lion {
   const update = (time: number, dt: number, player: THREE.Vector3) => {
     // 呼吸
     const breath = reduceMotion ? 0 : Math.sin(time * 2.2 + breathPhase) * 0.02
-    body.scale.set(1, 1 + breath, 1)
+    animBody.scale.set(1, 1 + breath, 1)
 
     // 近くに来たら、ゆっくりこちらを向く。遠いときは正面に戻る
     headTarget.copy(player)
@@ -187,8 +253,8 @@ export function createLion(options: LionOptions): Lion {
       wantYaw = Math.sin(time * 0.23) * 0.18
     }
     const k = reduceMotion ? 1 : Math.min(1, dt * 1.8)
-    neckPivot.rotation.y += (wantYaw - neckPivot.rotation.y) * k
-    neckPivot.rotation.x += (-wantPitch - neckPivot.rotation.x) * k
+    animNeck.rotation.y += (wantYaw - animNeck.rotation.y) * k
+    animNeck.rotation.x += (-wantPitch - animNeck.rotation.x) * k
 
     // 耳のぴくり
     if (!reduceMotion) {
@@ -200,15 +266,15 @@ export function createLion(options: LionOptions): Lion {
       }
       if (earFlick > 0) {
         earFlick -= dt
-        const ear = ears[flickSide]
-        if (ear) ear.rotation.z = Math.sin((0.25 - earFlick) / 0.25 * Math.PI) * 0.5 * (flickSide === 0 ? 1 : -1)
+        const ear = animEars[flickSide]
+        if (ear) ear.rotation.z = Math.sin(((0.25 - earFlick) / 0.25) * Math.PI) * 0.5 * (flickSide === 0 ? 1 : -1)
       } else {
-        ears.forEach((e) => {
+        animEars.forEach((e) => {
           if (e) e.rotation.z = 0
         })
       }
       // 尾先がゆっくり動く
-      tailPivot.rotation.y = Math.sin(time * 0.9) * 0.12
+      animTail.rotation.y = Math.sin(time * 0.9) * 0.12
     }
   }
 
@@ -220,6 +286,20 @@ export function createLion(options: LionOptions): Lion {
     update,
     setReduceMotion: (on) => {
       reduceMotion = on
+    },
+    swapModel: (model, parts) => {
+      primitive.visible = false
+      model.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) {
+          o.castShadow = true
+          o.receiveShadow = true
+        }
+      })
+      group.add(model)
+      animBody = model
+      animNeck = parts.neck ?? new THREE.Object3D()
+      animEars = parts.ears ?? []
+      animTail = parts.tail ?? new THREE.Object3D()
     },
   }
 }
