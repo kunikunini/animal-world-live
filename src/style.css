@@ -260,6 +260,66 @@ body {
   display: none;
 }
 
+.minimap-expand {
+  position: fixed;
+  left: calc(16px + env(safe-area-inset-left));
+  top: calc(16px + 136px + 8px + env(safe-area-inset-top));
+  z-index: 5;
+}
+
+.minimap-expand[hidden] {
+  display: none;
+}
+
+/* 広げた地図 */
+.map {
+  z-index: 12;
+}
+
+.map-panel {
+  width: min(100%, 640px);
+}
+
+.map-canvas {
+  display: block;
+  width: min(100%, 62vh);
+  aspect-ratio: 1;
+  margin: 4px auto 10px;
+  border-radius: 50%;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.map-hint {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.map-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  font-size: 12px;
+}
+
+.map-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.map-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
 .banner {
   position: fixed;
   left: 50%;
@@ -420,9 +480,13 @@ body {
     height: 92px;
   }
 
-  /* スマホ幅: 地図の下に、文字の行とその下のボタンの2段で出す */
+  .minimap-expand {
+    top: calc(16px + 92px + 6px + env(safe-area-inset-top));
+  }
+
+  /* スマホ幅: 地図とボタンの下に、文字の行とその下のボタンの2段で出す */
   .banner {
-    top: calc(16px + 100px + env(safe-area-inset-top));
+    top: calc(16px + 92px + 6px + 40px + env(safe-area-inset-top));
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;

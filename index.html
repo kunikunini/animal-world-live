@@ -31,6 +31,26 @@
     </div>
 
     <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く"></canvas>
+    <button id="minimap-expand" class="btn btn-ghost btn-small minimap-expand" type="button" hidden>地図を広げる</button>
+
+    <section id="map" class="book map" hidden aria-label="地図">
+      <div class="book-panel map-panel">
+        <header class="observe-header">
+          <h2 class="observe-title">地図</h2>
+          <button id="map-close" class="btn btn-ghost" type="button">閉じる</button>
+        </header>
+        <canvas id="map-canvas" class="map-canvas" role="img" aria-label="サバンナ全体の地図。タップした場所へ歩く"></canvas>
+        <p class="map-hint">北が上。タップした場所へ歩きます。</p>
+        <ul class="map-legend" aria-label="凡例">
+          <li><span class="map-dot" style="background: #e0683a"></span>あなた</li>
+          <li><span class="map-dot" style="background: #d9a95f; box-shadow: inset 0 0 0 1.5px #6a4727"></span>ライオン</li>
+          <li><span class="map-dot" style="background: #fff6e6; box-shadow: inset 0 0 0 2px #c9822e"></span>観察スポット</li>
+          <li><span class="map-dot" style="background: #a8876a"></span>コピエ（岩山）</li>
+          <li><span class="map-dot" style="background: #9fcbe6"></span>水場</li>
+          <li><span class="map-dot" style="background: #4f7f2a"></span>木</li>
+        </ul>
+      </div>
+    </section>
 
     <div id="spot-label" class="spot-label" hidden aria-hidden="true">
       <span class="spot-label-name">観察スポット</span>

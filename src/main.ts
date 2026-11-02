@@ -15,6 +15,7 @@ import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
 import { createMinimap } from './ui/minimap'
+import { createMapView } from './ui/map'
 import { createFriendBookStore } from './data/friends'
 import { getAnimal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
@@ -124,8 +125,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   })
 
   // 何かの画面が開いている間は、ワールドのタップとキーを止める
+  // 広げた全体地図（ミニマップの「地図を広げる」から開く）
+  const mapView = createMapView()
+
   const syncInput = () => {
-    const blocked = observe.isOpen() || book.isOpen()
+    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen()
     player.setInputEnabled(!blocked)
     if (!blocked) canvas.focus()
   }
@@ -133,12 +137,18 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   book.onOpenChange(syncInput)
   syncInput()
 
-  // 左上のミニマップ。タップした場所へ歩く（画面が開いている間は無効）
+  // 左上のミニマップ。タップした場所へ歩く（画面が開いている間は無効）。「地図を広げる」で全体地図
   const minimap = createMinimap()
   minimap.onPick((x, z) => {
-    if (observe.isOpen() || book.isOpen()) return
+    if (observe.isOpen() || book.isOpen() || mapView.isOpen()) return
     player.goTo([{ x, z }])
   })
+  minimap.onExpand(() => {
+    if (observe.isOpen() || book.isOpen()) return
+    mapView.open()
+  })
+  mapView.onPick((x, z) => player.goTo([{ x, z }]))
+  mapView.onOpenChange(() => syncInput())
   minimap.show()
   let minimapTimer = 0
 
@@ -198,10 +208,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     minimapTimer -= dt
     if (minimapTimer <= 0) {
       minimapTimer = 0.1
-      minimap.update(
-        { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y },
-        lions.map((l) => ({ id: l.id, x: l.position.x, z: l.position.z, active: nearest?.id === l.id })),
-      )
+      const mapPlayer = { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y }
+      const mapLions = lions.map((l) => ({
+        id: l.id,
+        name: getAnimal(l.id)?.name ?? l.id,
+        x: l.position.x,
+        z: l.position.z,
+        active: nearest?.id === l.id,
+      }))
+      minimap.update(mapPlayer, mapLions)
+      mapView.update(mapPlayer, mapLions)
     }
     const nextId = nearest ? nearest.id : null
     if (nextId !== encounterId) {
