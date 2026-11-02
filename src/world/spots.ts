@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { SPOT } from './layout'
 import { terrainHeight } from './terrain'
+import { toonMaterial } from '../render/toon'
 
 export interface ObservationSpot {
   group: THREE.Group
@@ -21,7 +22,7 @@ export function createObservationSpot(): ObservationSpot {
   const position = new THREE.Vector3(SPOT.x, y, SPOT.z)
   group.position.copy(position)
 
-  const wood = new THREE.MeshStandardMaterial({ color: '#6b4a2b', roughness: 0.9 })
+  const wood = toonMaterial({ color: '#7a5431' })
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 1.3, 8), wood)
   post.position.y = 0.65
   post.castShadow = true
@@ -29,7 +30,7 @@ export function createObservationSpot(): ObservationSpot {
   bar.position.y = 1.28
   bar.castShadow = true
   // 双眼鏡を模した2本の筒
-  const lensMat = new THREE.MeshStandardMaterial({ color: '#2d2a26', roughness: 0.5, metalness: 0.3 })
+  const lensMat = toonMaterial({ color: '#3a3430' })
   const lensL = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.3, 10), lensMat)
   lensL.rotation.x = Math.PI / 2
   lensL.position.set(-0.1, 1.42, 0)

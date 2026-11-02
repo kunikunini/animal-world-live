@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { Simplex2D, lerp, smoothstep } from './noise'
 import { KOPJE, TERRAIN_SEGMENTS, TERRAIN_SIZE, WATERHOLE, WORLD_SEED } from './layout'
+import { toonMaterial } from '../render/toon'
 
 const simplex = new Simplex2D(WORLD_SEED)
 const detail = new Simplex2D(WORLD_SEED + 7)
@@ -51,11 +52,12 @@ export function terrainSlope(x: number, z: number): number {
   return n.y
 }
 
-const colGrass = new THREE.Color('#c9a24a')
-const colGrassDry = new THREE.Color('#d8b86a')
-const colGrassGreen = new THREE.Color('#9aa23f')
-const colEarth = new THREE.Color('#b07a3e')
-const colRock = new THREE.Color('#8f7556')
+// 彩度高めの金の草原。影が乗っても色が残る明るさにする
+const colGrass = new THREE.Color('#cfa42f')
+const colGrassDry = new THREE.Color('#e0bf5c')
+const colGrassGreen = new THREE.Color('#9db840')
+const colEarth = new THREE.Color('#b8834a')
+const colRock = new THREE.Color('#9a7a5e')
 
 function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.03 + 11, z * 0.03 - 5) * 0.5 + 0.5
@@ -112,12 +114,8 @@ export function createTerrain(): THREE.Mesh {
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
   geo.computeVertexNormals()
 
-  const mat = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 0.95,
-    metalness: 0,
-    flatShading: true,
-  })
+  // 面の割れ目を見せない滑らかな陰影に、段差のあるトゥーンを乗せる
+  const mat = toonMaterial({ vertexColors: true })
   const mesh = new THREE.Mesh(geo, mat)
   mesh.receiveShadow = true
   mesh.name = 'terrain'

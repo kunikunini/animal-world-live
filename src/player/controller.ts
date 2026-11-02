@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { SPAWN, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
+import { toonMaterial } from '../render/toon'
 
 export interface PlayerController {
   object: THREE.Object3D
@@ -18,8 +19,8 @@ export interface PlayerController {
 
 const WALK_SPEED = 6.5
 const TURN_SPEED = 9
-const CAM_DISTANCE = 9.5
-const CAM_HEIGHT = 4.6
+const CAM_DISTANCE = 9.0
+const CAM_HEIGHT = 3.4
 const DRAG_THRESHOLD = 8
 const PLAYER_RADIUS = 0.45
 const CAMERA_RADIUS = 0.7
@@ -34,9 +35,9 @@ const _prev = new THREE.Vector3()
 /** 歩く人。精巧なモデルは作らず、温かい色のシンプルな姿にする */
 function createFigure(): THREE.Group {
   const g = new THREE.Group()
-  const skin = new THREE.MeshStandardMaterial({ color: '#f1c9a0', roughness: 0.8 })
-  const cloth = new THREE.MeshStandardMaterial({ color: '#d96f3a', roughness: 0.85 })
-  const hatMat = new THREE.MeshStandardMaterial({ color: '#e8d6a8', roughness: 0.9 })
+  const skin = toonMaterial({ color: '#f1c9a0' })
+  const cloth = toonMaterial({ color: '#e0683a' })
+  const hatMat = toonMaterial({ color: '#efe0b6' })
 
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.7, 4, 10), cloth)
   body.position.y = 0.68
@@ -143,7 +144,7 @@ export function createPlayer(
     object.position.z + Math.cos(camYaw) * CAM_DISTANCE,
   )
   camera.position.copy(_camPos)
-  camera.lookAt(object.position.x, object.position.y + 1.4, object.position.z)
+  camera.lookAt(object.position.x, object.position.y + 2.3, object.position.z)
 
   const showMarker = (p: THREE.Vector3) => {
     marker.position.set(p.x, terrainHeight(p.x, p.z) + 0.08, p.z)
@@ -326,7 +327,7 @@ export function createPlayer(
     _camPos.y = Math.max(object.position.y + CAM_HEIGHT, groundAtCam + 2.2)
     const follow = reduceMotion ? 1 : Math.min(1, 6 * dt)
     camera.position.lerp(_camPos, follow)
-    _look.set(object.position.x, object.position.y + 1.5, object.position.z)
+    _look.set(object.position.x, object.position.y + 2.3, object.position.z)
     camera.lookAt(_look)
 
     // 目印のフェード

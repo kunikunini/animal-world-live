@@ -6,7 +6,10 @@ import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
 import { createAtmosphere } from './world/atmosphere'
-import { SPOT } from './world/layout'
+import { createClouds } from './world/clouds'
+import { createPostFx } from './render/postfx'
+import { LIONS, SPOT } from './world/layout'
+import { createLion } from './world/lions'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createFriendBookStore } from './data/friends'
@@ -65,6 +68,26 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   const atmosphere = createAtmosphere()
   scene.add(atmosphere.group)
 
+  const clouds = createClouds()
+  scene.add(clouds.group)
+
+  // 様式化ライオン。当たり判定も岩と同じ配列に入れる
+  const lions = LIONS.map((l) => createLion(l))
+  for (const lion of lions) {
+    scene.add(lion.group)
+    props.colliders.push(lion.collider)
+  }
+
+  // カラーグレーディング（1パス）。スマホでは最初から切る
+  const postfx = createPostFx(renderer, scene, camera)
+  postfx.setEnabled(!mobile)
+  const applyPostSize = () => {
+    const dpr = renderer.getPixelRatio()
+    postfx.setSize(window.innerWidth, window.innerHeight, dpr)
+  }
+  applyPostSize()
+  window.addEventListener('resize', applyPostSize)
+
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
 
@@ -93,6 +116,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     player.setReduceMotion(on)
     props.setSway(on ? 0 : 1)
     atmosphere.setReduceMotion(on)
+    lions.forEach((l) => l.setReduceMotion(on))
   }
   applyReduceMotion(hud.reduceMotion)
   hud.onReduceMotionChange(applyReduceMotion)
@@ -118,6 +142,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     player.update(dt)
     props.update(time)
     atmosphere.update(time, dt, camera.position)
+    clouds.update(dt)
+    lions.forEach((l) => l.update(time, dt, player.object.position))
 
     // 観察スポットとの距離。着いたらバナー、離れたらボタン
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
@@ -144,7 +170,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     sun.position.copy(player.object.position).add(sunOffset)
     sky.position.copy(camera.position)
 
-    renderer.render(scene, camera)
+    postfx.render()
 
     // 簡易 FPS 計測と DPR の自動調整
     fpsAcc += dt
@@ -153,11 +179,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
       const fps = fpsFrames / fpsAcc
       hud.setFps(fps)
       // 画面が隠れている間はブラウザが描画を間引くので、見えている時だけ判定する
+      if (fps < 28 && currentDpr <= 1 && postfx.enabled && document.visibilityState === 'visible') {
+        postfx.setEnabled(false)
+      }
       if (fps < 28 && currentDpr > 1 && document.visibilityState === 'visible') {
         slowSeconds++
         if (slowSeconds >= 3) {
           currentDpr = Math.max(1, currentDpr - 0.5)
           setDpr(currentDpr)
+          applyPostSize()
           slowSeconds = 0
         }
       } else {
@@ -171,7 +201,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
 
   if (import.meta.env.DEV) {
     // 開発時だけ、ブラウザのコンソールから中身を覗けるようにする
-    ;(window as unknown as { __awl: unknown }).__awl = { camera, spot, player, props, shell }
+    ;(window as unknown as { __awl: unknown }).__awl = { camera, spot, player, props, shell, lions }
   }
 
   // 1フレーム描いてから入口を消す（白画面を見せない）

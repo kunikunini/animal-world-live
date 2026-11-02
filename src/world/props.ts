@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { Simplex2D, mulberry32 } from './noise'
 import { ACACIAS, KOPJE, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { WATER_LEVEL, terrainHeight } from './terrain'
+import { toonMaterial } from '../render/toon'
 
 /** 円柱の当たり判定（xz 平面の円）。キャラとカメラがめり込まないために使う */
 export interface Collider {
@@ -49,20 +50,20 @@ function createAcacias(rand: () => number, group: THREE.Group, colliders: Collid
 
   const trunkGeo = new THREE.CylinderGeometry(0.22, 0.5, 1, 7, 1)
   trunkGeo.translate(0, 0.5, 0)
-  const trunkMat = new THREE.MeshStandardMaterial({ color: '#4a3220', roughness: 0.9 })
+  const trunkMat = toonMaterial({ color: '#5a3d26' })
   const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, trees.length)
   trunks.castShadow = true
   trunks.receiveShadow = true
 
   const BLOBS = 5
   const blobGeo = new THREE.SphereGeometry(1, 7, 5)
-  const blobMat = new THREE.MeshStandardMaterial({ roughness: 0.85, flatShading: true })
+  const blobMat = toonMaterial()
   const blobs = new THREE.InstancedMesh(blobGeo, blobMat, trees.length * BLOBS)
   blobs.castShadow = true
   blobs.receiveShadow = true
 
-  const canopyA = new THREE.Color('#5e6d2a')
-  const canopyB = new THREE.Color('#7d7f32')
+  const canopyA = new THREE.Color('#5f8a2e')
+  const canopyB = new THREE.Color('#86a33a')
 
   trees.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
@@ -135,13 +136,13 @@ function createRocks(rand: () => number, group: THREE.Group, colliders: Collider
   }
 
   const geo = new THREE.DodecahedronGeometry(1, 0)
-  const mat = new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true })
+  const mat = toonMaterial()
   const rocks = new THREE.InstancedMesh(geo, mat, placements.length)
   rocks.castShadow = true
   rocks.receiveShadow = true
 
-  const rockA = new THREE.Color('#8c7458')
-  const rockB = new THREE.Color('#a68a66')
+  const rockA = new THREE.Color('#a07a5c')
+  const rockB = new THREE.Color('#c09a74')
 
   placements.forEach((p, i) => {
     const y = terrainHeight(p.x, p.z) - p.sink * p.s * 0.4
@@ -168,11 +169,11 @@ function createWater(group: THREE.Group): void {
   const geo = new THREE.CircleGeometry(WATERHOLE.radius, 40)
   geo.rotateX(-Math.PI / 2)
   const mat = new THREE.MeshStandardMaterial({
-    color: '#6f93a6',
-    roughness: 0.12,
+    color: '#7fb6d6',
+    roughness: 0.1,
     metalness: 0.05,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.9,
   })
   const mesh = new THREE.Mesh(geo, mat)
   mesh.position.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
@@ -189,8 +190,9 @@ function createMountains(rand: () => number, group: THREE.Group): void {
   const mat = new THREE.MeshBasicMaterial()
   const mountains = new THREE.InstancedMesh(geo, mat, count)
 
-  const mA = new THREE.Color('#b48d68')
-  const mB = new THREE.Color('#c39b73')
+  // 遠景の赤い丘。霧に溶けて淡くなる
+  const mA = new THREE.Color('#c8785a')
+  const mB = new THREE.Color('#d8906c')
 
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + (rand() - 0.5) * 0.18
@@ -264,7 +266,7 @@ function createGrass(
   geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
 
   const uniforms = { uTime: { value: 0 }, uSway: { value: 1 } }
-  const mat = new THREE.MeshStandardMaterial({ roughness: 0.9, vertexColors: true })
+  const mat = toonMaterial({ vertexColors: true })
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = uniforms.uTime
     shader.uniforms.uSway = uniforms.uSway
@@ -285,10 +287,10 @@ function createGrass(
   grass.receiveShadow = true
   grass.frustumCulled = false
 
-  const gA = new THREE.Color('#e3c268')
-  const gB = new THREE.Color('#c99c3e')
-  const gC = new THREE.Color('#9da64a')
-  const gD = new THREE.Color('#d9b27a')
+  const gA = new THREE.Color('#ecc85a')
+  const gB = new THREE.Color('#d2a336')
+  const gC = new THREE.Color('#a3bf44')
+  const gD = new THREE.Color('#e9c57c')
 
   let placed = 0
   let guard = 0

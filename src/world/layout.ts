@@ -48,3 +48,8 @@ export const ACACIAS: ReadonlyArray<{ x: number; z: number; scale: number }> = [
   { x: -96, z: -70, scale: 1.0 },
   { x: 6, z: -118, scale: 1.1 },
 ]
+
+/** 様式化ライオンの配置（試作: アンジーだけ）。台地の上、観察スポットのそば */
+export const LIONS: ReadonlyArray<{ id: string; x: number; z: number; yaw: number; mane?: boolean; cub?: boolean }> = [
+  { id: 'angie', x: KOPJE.x - 3.6, z: KOPJE.z - 2.2, yaw: 0.55 },
+]
