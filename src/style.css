@@ -241,6 +241,25 @@ body {
   font-size: 12px;
 }
 
+/* 左上のミニマップ。歩ける範囲の俯瞰。タップで移動 */
+.minimap {
+  position: fixed;
+  left: calc(16px + env(safe-area-inset-left));
+  top: calc(16px + env(safe-area-inset-top));
+  z-index: 5;
+  width: 136px;
+  height: 136px;
+  border-radius: 50%;
+  background: rgba(255, 246, 230, 0.55);
+  box-shadow: 0 6px 16px var(--shadow);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.minimap[hidden] {
+  display: none;
+}
+
 .banner {
   position: fixed;
   left: 50%;
@@ -396,6 +415,33 @@ body {
 }
 
 @media (max-width: 480px) {
+  .minimap {
+    width: 92px;
+    height: 92px;
+  }
+
+  /* スマホ幅: 地図の下に、文字の行とその下のボタンの2段で出す */
+  .banner {
+    top: calc(16px + 100px + env(safe-area-inset-top));
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    width: max-content;
+  }
+
+  .banner span {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+
+  .banner .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   .hud {
     grid-template-columns: 1fr 1fr;
   }

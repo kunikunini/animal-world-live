@@ -14,6 +14,7 @@ import { loadLionModel } from './world/lionModel'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
+import { createMinimap } from './ui/minimap'
 import { createFriendBookStore } from './data/friends'
 import { getAnimal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
@@ -132,6 +133,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   book.onOpenChange(syncInput)
   syncInput()
 
+  // 左上のミニマップ。タップした場所へ歩く（画面が開いている間は無効）
+  const minimap = createMinimap()
+  minimap.onPick((x, z) => {
+    if (observe.isOpen() || book.isOpen()) return
+    player.goTo([{ x, z }])
+  })
+  minimap.show()
+  let minimapTimer = 0
+
   const applyReduceMotion = (on: boolean) => {
     player.setReduceMotion(on)
     props.setSway(on ? 0 : 1)
@@ -184,6 +194,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
       } else {
         labels.set(lion.id, null, d)
       }
+    }
+    minimapTimer -= dt
+    if (minimapTimer <= 0) {
+      minimapTimer = 0.1
+      minimap.update(
+        { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y },
+        lions.map((l) => ({ id: l.id, x: l.position.x, z: l.position.z, active: nearest?.id === l.id })),
+      )
     }
     const nextId = nearest ? nearest.id : null
     if (nextId !== encounterId) {
