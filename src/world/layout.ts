@@ -5,7 +5,7 @@ export const WORLD_SEED = 20261102
 /** 地形メッシュの一辺（m） */
 export const TERRAIN_SIZE = 400
 /** 地形メッシュの分割数 */
-export const TERRAIN_SEGMENTS = 200
+export const TERRAIN_SEGMENTS = 240
 /** 歩ける範囲（原点からの半径, m） */
 export const WALK_RADIUS = 120
 

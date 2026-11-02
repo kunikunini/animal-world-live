@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { mulberry32 } from './noise'
+import { Simplex2D, mulberry32 } from './noise'
 import { ACACIAS, KOPJE, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { WATER_LEVEL, terrainHeight } from './terrain'
 
@@ -24,6 +24,7 @@ const _q = new THREE.Quaternion()
 const _s = new THREE.Vector3()
 const _e = new THREE.Euler()
 const _c = new THREE.Color()
+const patchNoise = new Simplex2D(WORLD_SEED + 31)
 
 function distToWater(x: number, z: number): number {
   return Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z)
@@ -212,27 +213,58 @@ function createMountains(rand: () => number, group: THREE.Group): void {
   group.add(mountains)
 }
 
-/** 草むら。細い三角の板を数千本、InstancedMesh で描き、頂点シェーダで揺らす */
-function createGrass(rand: () => number, group: THREE.Group): { mesh: THREE.InstancedMesh; uniforms: { uTime: { value: number }; uSway: { value: number } } } {
-  const count = 14000
+/**
+ * 草むら。1本ずつの棘ではなく、数本の葉が外へ傾いた「房」を InstancedMesh で描く。
+ * 葉は根元が暗く先端が明るい頂点カラー × 房ごとの色味。頂点シェーダで揺らす。
+ */
+function createGrass(
+  rand: () => number,
+  group: THREE.Group,
+  tufts: number,
+): { mesh: THREE.InstancedMesh; uniforms: { uTime: { value: number }; uSway: { value: number } } } {
+  const BLADES = 4
+  const positions: number[] = []
+  const colors: number[] = []
+
+  const pushTri = (a: number[], b: number[], c: number[], ca: number, cb: number, cc: number) => {
+    positions.push(...a, ...b, ...c)
+    colors.push(ca, ca, ca, cb, cb, cb, cc, cc, cc)
+  }
+  // 葉1枚: 根元(幅0.05) → 中ほど(幅0.03) → 先端。表裏2組の巻き順で両面から見える
+  for (let k = 0; k < BLADES; k++) {
+    const yaw = (k / BLADES) * Math.PI * 2 + rand() * 0.9
+    const lean = 0.18 + rand() * 0.22
+    const dx = Math.cos(yaw)
+    const dz = Math.sin(yaw)
+    const px = -dz
+    const pz = dx
+    const w0 = 0.05
+    const w1 = 0.03
+    const bl = [-px * w0, 0, -pz * w0]
+    const br = [px * w0, 0, pz * w0]
+    const ml = [dx * lean * 0.5 - px * w1, 0.55, dz * lean * 0.5 - pz * w1]
+    const mr = [dx * lean * 0.5 + px * w1, 0.55, dz * lean * 0.5 + pz * w1]
+    const tip = [dx * lean * 1.25, 1, dz * lean * 1.25]
+    const cBase = 0.55
+    const cMid = 0.85
+    const cTip = 1.12
+    pushTri(bl, br, mr, cBase, cBase, cMid)
+    pushTri(bl, mr, ml, cBase, cMid, cMid)
+    pushTri(ml, mr, tip, cMid, cMid, cTip)
+    pushTri(br, bl, mr, cBase, cBase, cMid)
+    pushTri(mr, bl, ml, cMid, cBase, cMid)
+    pushTri(mr, ml, tip, cMid, cMid, cTip)
+  }
   const geo = new THREE.BufferGeometry()
-  // 2枚の板を十字に。根元 y=0、先端 y=1
-  // 表裏それぞれの巻き順で三角形を持ち、FrontSide のまま両面から見えるようにする
-  // （DoubleSide だと裏面の法線が反転して暗い棘に見える）
-  const verts = new Float32Array([
-    -0.06, 0, 0, 0.06, 0, 0, 0, 1, 0,
-    0.06, 0, 0, -0.06, 0, 0, 0, 1, 0,
-    0, 0, -0.06, 0, 0, 0.06, 0, 1, 0,
-    0, 0, 0.06, 0, 0, -0.06, 0, 1, 0,
-  ])
-  geo.setAttribute('position', new THREE.BufferAttribute(verts, 3))
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
   // 法線を上向きにそろえ、地面と同じ明るさで光らせる
-  const normals = new Float32Array(12 * 3)
-  for (let i = 0; i < 12; i++) normals[i * 3 + 1] = 1
+  const normals = new Float32Array(positions.length)
+  for (let i = 1; i < normals.length; i += 3) normals[i] = 1
   geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
 
   const uniforms = { uTime: { value: 0 }, uSway: { value: 1 } }
-  const mat = new THREE.MeshStandardMaterial({ roughness: 0.9 })
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.9, vertexColors: true })
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = uniforms.uTime
     shader.uniforms.uSway = uniforms.uSway
@@ -243,38 +275,45 @@ function createGrass(rand: () => number, group: THREE.Group): { mesh: THREE.Inst
         `#include <begin_vertex>
         float ph = instanceMatrix[3].x * 0.35 + instanceMatrix[3].z * 0.27;
         float sway = sin(uTime * 1.6 + ph) * 0.5 + sin(uTime * 2.7 + ph * 1.7) * 0.25;
-        transformed.x += sway * uSway * position.y * 0.35;
-        transformed.z += sway * uSway * position.y * 0.12;`,
+        float bend = position.y * position.y;
+        transformed.x += sway * uSway * bend * 0.3;
+        transformed.z += sway * uSway * bend * 0.1;`,
       )
   }
 
-  const grass = new THREE.InstancedMesh(geo, mat, count)
+  const grass = new THREE.InstancedMesh(geo, mat, tufts)
   grass.receiveShadow = true
   grass.frustumCulled = false
 
-  const gA = new THREE.Color('#e6c66c')
-  const gB = new THREE.Color('#cfa548')
-  const gC = new THREE.Color('#a9ad48')
+  const gA = new THREE.Color('#e3c268')
+  const gB = new THREE.Color('#c99c3e')
+  const gC = new THREE.Color('#9da64a')
+  const gD = new THREE.Color('#d9b27a')
 
   let placed = 0
   let guard = 0
-  while (placed < count && guard++ < count * 3) {
+  while (placed < tufts && guard++ < tufts * 3) {
     const a = rand() * Math.PI * 2
     // 近くを密に、遠くをまばらに
-    const r = Math.pow(rand(), 0.7) * (WALK_RADIUS + 25)
+    const r = Math.pow(rand(), 0.65) * (WALK_RADIUS + 25)
     const x = Math.cos(a) * r
     const z = Math.sin(a) * r
     const dw = distToWater(x, z)
     if (dw < WATERHOLE.radius + 1.5) continue
     if (distToKopje(x, z) < KOPJE.radius * 0.95) continue
-    const h = 0.3 + rand() * 0.45
-    _p.set(x, terrainHeight(x, z) - 0.02, z)
+    const h = 0.35 + rand() * 0.45
+    _p.set(x, terrainHeight(x, z) - 0.03, z)
     _e.set(0, rand() * Math.PI, 0)
     _q.setFromEuler(_e)
-    _s.set(0.8 + rand() * 0.5, h, 0.8 + rand() * 0.5)
+    const w = 0.8 + rand() * 0.7
+    _s.set(w, h, w)
     _m.compose(_p, _q, _s)
     grass.setMatrixAt(placed, _m)
-    _c.copy(gA).lerp(gB, rand())
+    // 大きなまだら: 乾いた金色と、やや緑の群れ
+    const patch = patchNoise.noise(x * 0.02 + 3, z * 0.02 - 7) * 0.5 + 0.5
+    _c.copy(gA).lerp(gB, rand() * 0.8)
+    _c.lerp(gD, Math.max(0, patch - 0.6) * 1.2)
+    _c.lerp(gC, Math.max(0, 0.42 - patch) * 1.4)
     if (dw < WATERHOLE.radius * 2.2) _c.lerp(gC, 0.7)
     grass.setColorAt(placed, _c)
     placed++
@@ -286,7 +325,12 @@ function createGrass(rand: () => number, group: THREE.Group): { mesh: THREE.Inst
   return { mesh: grass, uniforms }
 }
 
-export function createProps(): Props {
+export interface PropsOptions {
+  /** 低性能端末では草の房を減らす */
+  mobile: boolean
+}
+
+export function createProps(options: PropsOptions): Props {
   const rand = mulberry32(WORLD_SEED + 101)
   const group = new THREE.Group()
   group.name = 'props'
@@ -296,7 +340,7 @@ export function createProps(): Props {
   createRocks(rand, group, colliders)
   createWater(group)
   createMountains(rand, group)
-  const grass = createGrass(rand, group)
+  const grass = createGrass(rand, group, options.mobile ? 3200 : 6500)
 
   return {
     group,

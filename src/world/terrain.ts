@@ -4,6 +4,7 @@ import { KOPJE, TERRAIN_SEGMENTS, TERRAIN_SIZE, WATERHOLE, WORLD_SEED } from './
 
 const simplex = new Simplex2D(WORLD_SEED)
 const detail = new Simplex2D(WORLD_SEED + 7)
+const patch = new Simplex2D(WORLD_SEED + 31)
 
 /** 起伏のもとになるノイズ高さ（コピエと水場の加工前） */
 function baseHeight(x: number, z: number): number {
@@ -59,6 +60,11 @@ const colRock = new THREE.Color('#8f7556')
 function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.03 + 11, z * 0.03 - 5) * 0.5 + 0.5
   out.copy(colGrass).lerp(colGrassDry, n)
+
+  // 大きなまだら。草むらと同じノイズで、乾いた金色の帯とやや緑の帯を作る
+  const big = patch.noise(x * 0.02 + 3, z * 0.02 - 7) * 0.5 + 0.5
+  out.lerp(colGrassDry, Math.max(0, big - 0.6) * 1.0)
+  out.lerp(colGrassGreen, Math.max(0, 0.42 - big) * 1.1)
 
   // 低い場所はやや緑、乾いた高い場所は淡い黄土
   const rel = (h - 0) / 4

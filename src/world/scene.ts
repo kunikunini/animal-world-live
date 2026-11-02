@@ -57,7 +57,12 @@ function createSky(sunDir: THREE.Vector3): THREE.Mesh {
         }
         float s = max(dot(d, uSunDir), 0.0);
         float glow = pow(s, 6.0) * 0.55 + pow(s, 48.0) * 0.9;
-        col += uGlow * glow;
+        // 太陽の円盤。低い太陽なので少し大きめに、縁はやわらかく
+        float disc = smoothstep(0.9985, 0.9995, s) * 1.6;
+        col += uGlow * (glow + disc);
+        // 地平線ぎわの霞
+        float haze = exp(-abs(y) * 9.0) * 0.18;
+        col = mix(col, uHorizon, haze);
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -90,7 +95,8 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
   const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 900)
 
   // 低い太陽。西（-x）からの暖かい逆光で、影を長くする
-  const sunDir = new THREE.Vector3(-0.78, 0.22, 0.36)
+  // 仰角 約8度。三人称カメラの視界（水平から上へ約7度）に太陽の円盤がかかる高さ
+  const sunDir = new THREE.Vector3(-0.8, 0.125, 0.35)
   const sun = new THREE.DirectionalLight('#ffc48a', 2.4)
   sun.position.copy(sunDir).multiplyScalar(120)
   sun.castShadow = true
@@ -101,8 +107,8 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
   sun.shadow.camera.right = 70
   sun.shadow.camera.top = 70
   sun.shadow.camera.bottom = -70
-  sun.shadow.bias = -0.0008
-  sun.shadow.normalBias = 0.6
+  sun.shadow.bias = -0.0006
+  sun.shadow.normalBias = 0.8
   scene.add(sun)
   scene.add(sun.target)
 

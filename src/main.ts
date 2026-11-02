@@ -5,6 +5,7 @@ import { createProps } from './world/props'
 import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
+import { createAtmosphere } from './world/atmosphere'
 import { SPOT } from './world/layout'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
@@ -55,11 +56,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   const terrain = createTerrain()
   scene.add(terrain)
 
-  const props = createProps()
+  const props = createProps({ mobile })
   scene.add(props.group)
 
   const spot = createObservationSpot()
   scene.add(spot.group)
+
+  const atmosphere = createAtmosphere()
+  scene.add(atmosphere.group)
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
@@ -88,6 +92,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   const applyReduceMotion = (on: boolean) => {
     player.setReduceMotion(on)
     props.setSway(on ? 0 : 1)
+    atmosphere.setReduceMotion(on)
   }
   applyReduceMotion(hud.reduceMotion)
   hud.onReduceMotionChange(applyReduceMotion)
@@ -112,6 +117,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
 
     player.update(dt)
     props.update(time)
+    atmosphere.update(time, dt, camera.position)
 
     // 観察スポットとの距離。着いたらバナー、離れたらボタン
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
