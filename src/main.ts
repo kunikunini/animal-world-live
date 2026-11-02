@@ -4,6 +4,8 @@ import { createTerrain } from './world/terrain'
 import { createProps } from './world/props'
 import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
+import { createObservationSpot } from './world/spots'
+import { SPOT } from './world/layout'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -28,9 +30,21 @@ function startWorld(canvas: HTMLCanvasElement): void {
   const props = createProps()
   scene.add(props.group)
 
+  const spot = createObservationSpot()
+  scene.add(spot.group)
+
   const hud = createHud()
-  const player = createPlayer(camera, terrain, canvas, scene)
+  const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
+
+  // 「観察スポットへ」: 南の登り口を経由して台地の頂上へ
+  hud.onGoToSpot(() => {
+    player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
+  })
+
+  const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))
+  const projected = new THREE.Vector3()
+  let arrived = false
 
   const applyReduceMotion = (on: boolean) => {
     player.setReduceMotion(on)
@@ -53,8 +67,29 @@ function startWorld(canvas: HTMLCanvasElement): void {
     const dt = Math.min(clock.getDelta(), 0.05)
     const time = clock.elapsedTime
 
-    player.update(dt, time)
+    player.update(dt)
     props.update(time)
+
+    // 観察スポットとの距離。着いたらバナー、離れたらボタン
+    const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
+    spot.update(time, distance)
+    const nowArrived = distance < SPOT.arriveRadius
+    if (nowArrived !== arrived) {
+      arrived = nowArrived
+      hud.setArrived(arrived)
+    }
+    hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
+
+    // スポットのラベルを画面に重ねる（カメラの後ろにある時は隠す）
+    projected.copy(spotHead).project(camera)
+    if (projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1 && !arrived) {
+      hud.setSpotLabel(
+        { x: ((projected.x + 1) / 2) * window.innerWidth, y: ((1 - projected.y) / 2) * window.innerHeight },
+        distance,
+      )
+    } else {
+      hud.setSpotLabel(null, distance)
+    }
 
     sun.target.position.copy(player.object.position)
     sun.position.copy(player.object.position).add(sunOffset)
@@ -83,6 +118,11 @@ function startWorld(canvas: HTMLCanvasElement): void {
       fpsFrames = 0
     }
     requestAnimationFrame(tick)
+  }
+
+  if (import.meta.env.DEV) {
+    // 開発時だけ、ブラウザのコンソールから中身を覗けるようにする
+    ;(window as unknown as { __awl: unknown }).__awl = { camera, spot, player, props }
   }
 
   // 1フレーム描いてから入口を消す（白画面を見せない）

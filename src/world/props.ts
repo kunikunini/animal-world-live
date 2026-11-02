@@ -3,8 +3,16 @@ import { mulberry32 } from './noise'
 import { ACACIAS, KOPJE, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { WATER_LEVEL, terrainHeight } from './terrain'
 
+/** 円柱の当たり判定（xz 平面の円）。キャラとカメラがめり込まないために使う */
+export interface Collider {
+  x: number
+  z: number
+  r: number
+}
+
 export interface Props {
   group: THREE.Group
+  colliders: Collider[]
   /** 草の揺れ。0 で止まる */
   setSway: (amount: number) => void
   update: (time: number) => void
@@ -26,7 +34,7 @@ function distToKopje(x: number, z: number): number {
 }
 
 /** アカシア: 細い幹と平たい傘状の冠。InstancedMesh 2つで描く */
-function createAcacias(rand: () => number, group: THREE.Group): void {
+function createAcacias(rand: () => number, group: THREE.Group, colliders: Collider[]): void {
   const trees = [...ACACIAS]
   // 外側にもまばらに
   for (let i = 0; i < 18; i++) {
@@ -67,6 +75,7 @@ function createAcacias(rand: () => number, group: THREE.Group): void {
     _s.set(t.scale, h, t.scale)
     _m.compose(_p, _q, _s)
     trunks.setMatrixAt(i, _m)
+    colliders.push({ x: t.x, z: t.z, r: 0.55 * t.scale })
 
     // 幹の先端（傾きを含む）
     const top = new THREE.Vector3(0, h, 0).applyQuaternion(_q).add(_p)
@@ -95,7 +104,7 @@ function createAcacias(rand: () => number, group: THREE.Group): void {
 }
 
 /** コピエの岩と、平原に散らばる岩 */
-function createRocks(rand: () => number, group: THREE.Group): void {
+function createRocks(rand: () => number, group: THREE.Group, colliders: Collider[]): void {
   const placements: Array<{ x: number; z: number; s: number; sink: number }> = []
 
   // コピエ: 台地の縁と斜面に大きな岩。南側（スポーン側）は登り口として空ける
@@ -108,10 +117,10 @@ function createRocks(rand: () => number, group: THREE.Group): void {
     const z = KOPJE.z + Math.sin(a) * r
     placements.push({ x, z, s: 2.2 + rand() * 3.4, sink: 0.6 })
   }
-  // 台地の上にも低い岩をいくつか（観察スポットの雰囲気づくり）
+  // 台地の上にも低い岩をいくつか（観察スポットの雰囲気づくり）。中央は空けておく
   for (let i = 0; i < 5; i++) {
     const a = rand() * Math.PI * 2
-    const r = KOPJE.radius * 0.28 * rand()
+    const r = KOPJE.radius * (0.2 + rand() * 0.1)
     placements.push({ x: KOPJE.x + Math.cos(a) * r, z: KOPJE.z + Math.sin(a) * r, s: 0.8 + rand() * 1.0, sink: 0.4 })
   }
   // 平原に散らばる岩
@@ -138,9 +147,13 @@ function createRocks(rand: () => number, group: THREE.Group): void {
     _p.set(p.x, y, p.z)
     _e.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI)
     _q.setFromEuler(_e)
-    _s.set(p.s * (0.8 + rand() * 0.5), p.s * (0.6 + rand() * 0.5), p.s * (0.8 + rand() * 0.5))
+    const sx = p.s * (0.8 + rand() * 0.5)
+    const sz = p.s * (0.8 + rand() * 0.5)
+    _s.set(sx, p.s * (0.6 + rand() * 0.5), sz)
     _m.compose(_p, _q, _s)
     rocks.setMatrixAt(i, _m)
+    // 小石は当たり判定なし。十二面体の外接半径は1なので少し内側を取る
+    if (p.s >= 0.9) colliders.push({ x: p.x, z: p.z, r: Math.max(sx, sz) * 0.8 })
     _c.copy(rockA).lerp(rockB, rand())
     rocks.setColorAt(i, _c)
   })
@@ -278,14 +291,16 @@ export function createProps(): Props {
   const group = new THREE.Group()
   group.name = 'props'
 
-  createAcacias(rand, group)
-  createRocks(rand, group)
+  const colliders: Collider[] = []
+  createAcacias(rand, group, colliders)
+  createRocks(rand, group, colliders)
   createWater(group)
   createMountains(rand, group)
   const grass = createGrass(rand, group)
 
   return {
     group,
+    colliders,
     setSway: (amount) => {
       grass.uniforms.uSway.value = amount
     },

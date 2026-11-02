@@ -1,11 +1,16 @@
 import * as THREE from 'three'
 import { SPAWN, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { terrainHeight } from '../world/terrain'
+import type { Collider } from '../world/props'
 
 export interface PlayerController {
   object: THREE.Object3D
-  update: (dt: number, time: number) => void
+  update: (dt: number) => void
   setReduceMotion: (on: boolean) => void
+  /** 経由点をたどって歩く（最後の点が目的地） */
+  goTo: (waypoints: Array<{ x: number; z: number }>) => void
+  /** 今、目的地へ向かって歩いているか */
+  isAutoWalking: () => boolean
   dispose: () => void
 }
 
@@ -14,12 +19,15 @@ const TURN_SPEED = 9
 const CAM_DISTANCE = 9.5
 const CAM_HEIGHT = 4.6
 const DRAG_THRESHOLD = 8
+const PLAYER_RADIUS = 0.45
+const CAMERA_RADIUS = 0.7
 
 const _dir = new THREE.Vector3()
 const _target = new THREE.Vector3()
 const _camPos = new THREE.Vector3()
 const _look = new THREE.Vector3()
 const _hit = new THREE.Vector3()
+const _prev = new THREE.Vector3()
 
 /** 歩く人。精巧なモデルは作らず、温かい色のシンプルな姿にする */
 function createFigure(): THREE.Group {
@@ -57,8 +65,8 @@ function createMarker(): THREE.Mesh {
   return m
 }
 
-/** 水場の中には入れないように目的地を手前に寄せる */
-function clampDestination(p: THREE.Vector3): void {
+/** 世界の端と水場の中には入れないように位置を寄せる */
+function clampToWorld(p: THREE.Vector3): void {
   const r = Math.hypot(p.x, p.z)
   if (r > WALK_RADIUS) {
     p.x *= WALK_RADIUS / r
@@ -75,11 +83,35 @@ function clampDestination(p: THREE.Vector3): void {
   }
 }
 
+/** 岩や幹の円から押し出す。押し出した量を返す */
+function pushOutOfColliders(p: THREE.Vector3, radius: number, colliders: Collider[]): number {
+  let pushed = 0
+  for (const c of colliders) {
+    const dx = p.x - c.x
+    const dz = p.z - c.z
+    const min = c.r + radius
+    const d2 = dx * dx + dz * dz
+    if (d2 >= min * min) continue
+    const d = Math.sqrt(d2)
+    if (d < 1e-4) {
+      p.x = c.x + min
+      pushed += min
+      continue
+    }
+    const k = min / d
+    p.x = c.x + dx * k
+    p.z = c.z + dz * k
+    pushed += min - d
+  }
+  return pushed
+}
+
 export function createPlayer(
   camera: THREE.PerspectiveCamera,
   terrain: THREE.Mesh,
   canvas: HTMLCanvasElement,
   scene: THREE.Scene,
+  colliders: Collider[],
 ): PlayerController {
   const object = new THREE.Group()
   object.position.set(SPAWN.x, terrainHeight(SPAWN.x, SPAWN.z), SPAWN.z)
@@ -91,10 +123,11 @@ export function createPlayer(
   let markerLife = 0
 
   let heading = Math.PI // -z（コピエの方向）を向く
-  let camYaw = Math.PI
-  let destination: THREE.Vector3 | null = null
+  let camYaw = heading + Math.PI // カメラは背後（+z 側）から見る
+  let waypoints: THREE.Vector3[] = []
   let reduceMotion = false
   let walkPhase = 0
+  let stuckTime = 0
 
   const keys = new Set<string>()
   const raycaster = new THREE.Raycaster()
@@ -108,6 +141,23 @@ export function createPlayer(
   )
   camera.position.copy(_camPos)
   camera.lookAt(object.position.x, object.position.y + 1.4, object.position.z)
+
+  const showMarker = (p: THREE.Vector3) => {
+    marker.position.set(p.x, terrainHeight(p.x, p.z) + 0.08, p.z)
+    marker.visible = true
+    markerLife = 1
+  }
+
+  const goTo = (points: Array<{ x: number; z: number }>) => {
+    waypoints = points.map((p) => {
+      const v = new THREE.Vector3(p.x, 0, p.z)
+      clampToWorld(v)
+      v.y = terrainHeight(v.x, v.z)
+      return v
+    })
+    stuckTime = 0
+    if (waypoints.length > 0) showMarker(waypoints[waypoints.length - 1])
+  }
 
   // --- 入力 ---
   let pointerId: number | null = null
@@ -146,12 +196,7 @@ export function createPlayer(
     const hits = raycaster.intersectObject(terrain, false)
     if (hits.length === 0) return
     _hit.copy(hits[0].point)
-    clampDestination(_hit)
-    _hit.y = terrainHeight(_hit.x, _hit.z)
-    destination = _hit.clone()
-    marker.position.copy(destination).add(new THREE.Vector3(0, 0.08, 0))
-    marker.visible = true
-    markerLife = 1
+    goTo([{ x: _hit.x, z: _hit.z }])
   }
 
   const onPointerCancel = (e: PointerEvent) => {
@@ -177,7 +222,7 @@ export function createPlayer(
   window.addEventListener('blur', onBlur)
 
   // --- 更新 ---
-  const update = (dt: number, time: number) => {
+  const update = (dt: number) => {
     // キー入力（カメラ基準）
     let kx = 0
     let kz = 0
@@ -186,9 +231,12 @@ export function createPlayer(
     if (keys.has('a') || keys.has('arrowleft')) kx -= 1
     if (keys.has('d') || keys.has('arrowright')) kx += 1
 
+    _prev.copy(object.position)
     let moving = false
+    let wanted = 0
+
     if (kx !== 0 || kz !== 0) {
-      destination = null
+      waypoints = []
       marker.visible = false
       const len = Math.hypot(kx, kz)
       kx /= len
@@ -197,26 +245,46 @@ export function createPlayer(
       const sin = Math.sin(camYaw)
       const cos = Math.cos(camYaw)
       _dir.set(kx * cos + kz * sin, 0, -kx * sin + kz * cos)
-      _target.copy(object.position).addScaledVector(_dir, WALK_SPEED * dt)
-      clampDestination(_target)
+      wanted = WALK_SPEED * dt
+      _target.copy(object.position).addScaledVector(_dir, wanted)
       object.position.x = _target.x
       object.position.z = _target.z
       moving = true
-    } else if (destination) {
-      _dir.subVectors(destination, object.position)
+    } else if (waypoints.length > 0) {
+      const dest = waypoints[0]
+      _dir.subVectors(dest, object.position)
       _dir.y = 0
       const dist = _dir.length()
-      if (dist < 0.15) {
-        destination = null
+      if (dist < 0.2) {
+        waypoints.shift()
+        stuckTime = 0
       } else {
         _dir.divideScalar(dist)
-        const step = Math.min(dist, WALK_SPEED * dt)
-        object.position.addScaledVector(_dir, step)
+        wanted = Math.min(dist, WALK_SPEED * dt)
+        object.position.addScaledVector(_dir, wanted)
         moving = true
       }
     }
 
+    // 当たり判定: 世界の端・水場・岩・幹
+    clampToWorld(object.position)
+    pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
     object.position.y = terrainHeight(object.position.x, object.position.z)
+
+    // 岩に阻まれて進めない時は、目的地をあきらめる（永遠に足踏みしない）
+    if (moving && waypoints.length > 0 && wanted > 0) {
+      const actual = Math.hypot(object.position.x - _prev.x, object.position.z - _prev.z)
+      if (actual < wanted * 0.25) {
+        stuckTime += dt
+        if (stuckTime > 0.6) {
+          waypoints = []
+          marker.visible = false
+          stuckTime = 0
+        }
+      } else {
+        stuckTime = 0
+      }
+    }
 
     // 向き
     if (moving) {
@@ -248,6 +316,8 @@ export function createPlayer(
       0,
       object.position.z + Math.cos(camYaw) * CAM_DISTANCE,
     )
+    // カメラも岩にめり込まない。押し出された分だけキャラに寄る
+    pushOutOfColliders(_camPos, CAMERA_RADIUS, colliders)
     const groundAtCam = terrainHeight(_camPos.x, _camPos.z)
     _camPos.y = Math.max(object.position.y + CAM_HEIGHT, groundAtCam + 2.2)
     const follow = reduceMotion ? 1 : Math.min(1, 6 * dt)
@@ -263,7 +333,6 @@ export function createPlayer(
       marker.scale.setScalar(1 + (1 - Math.max(0, markerLife)) * 0.6)
       if (markerLife <= 0) marker.visible = false
     }
-    void time
   }
 
   const dispose = () => {
@@ -279,6 +348,8 @@ export function createPlayer(
   return {
     object,
     update,
+    goTo,
+    isAutoWalking: () => waypoints.length > 0,
     setReduceMotion: (on) => {
       reduceMotion = on
     },

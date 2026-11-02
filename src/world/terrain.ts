@@ -27,7 +27,7 @@ export function terrainHeight(x: number, z: number): number {
   // コピエ: 中心が平らな台地になるように持ち上げる
   const dk = Math.hypot(x - KOPJE.x, z - KOPJE.z) / KOPJE.radius
   if (dk < 1) {
-    const w = 1 - smoothstep(0.42, 1, dk)
+    const w = 1 - smoothstep(KOPJE.plateau, 1, dk)
     h = lerp(h, kopjeTop, w)
   }
 

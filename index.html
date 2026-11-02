@@ -28,12 +28,26 @@
       </div>
     </div>
 
+    <div id="spot-label" class="spot-label" hidden aria-hidden="true">
+      <span class="spot-label-name">観察スポット</span>
+      <span id="spot-distance" class="spot-label-distance"></span>
+    </div>
+
+    <div id="arrived" class="banner" hidden role="status">
+      観察スポットに着きました
+    </div>
+
     <div id="hud" class="hud" hidden>
-      <label class="toggle">
-        <input id="reduce-motion" type="checkbox" />
-        <span>動きをへらす</span>
-      </label>
-      <div id="fps" class="fps" hidden></div>
+      <div class="hud-left">
+        <label class="toggle">
+          <input id="reduce-motion" type="checkbox" />
+          <span>動きをへらす</span>
+        </label>
+        <div id="fps" class="fps" hidden></div>
+      </div>
+      <div class="hud-center">
+        <button id="goto-spot" class="btn btn-primary btn-small" type="button">観察スポットへ</button>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

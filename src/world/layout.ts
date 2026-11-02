@@ -12,7 +12,17 @@ export const WALK_RADIUS = 120
 export const SPAWN = { x: 0, z: 72 }
 
 /** コピエ（岩山）。頂上の平らな部分が将来の観察スポット */
-export const KOPJE = { x: 0, z: -48, radius: 20, height: 10 }
+export const KOPJE = { x: 0, z: -48, radius: 24, height: 10, plateau: 0.34 }
+
+/** 観察スポット。コピエ台地の頂上。南側の斜面から歩いて登る */
+export const SPOT = {
+  x: KOPJE.x,
+  z: KOPJE.z - 1,
+  /** ここまで近づいたら「着いた」とみなす（m） */
+  arriveRadius: 4.5,
+  /** 自動移動の経由点。南の登り口 */
+  approach: { x: KOPJE.x, z: KOPJE.z + KOPJE.radius + 5 },
+}
 
 /** 水場 */
 export const WATERHOLE = { x: 50, z: -4, radius: 11, depth: 1.6 }
