@@ -17,6 +17,7 @@ import { createWorldLabels } from './ui/labels'
 import { createMinimap } from './ui/minimap'
 import { createMapView } from './ui/map'
 import { createFriendBookStore } from './data/friends'
+import { createEncounterStore } from './data/encounters'
 import { getAnimal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 
@@ -35,12 +36,16 @@ function isMobile(): boolean {
 /** 3D ワールドに依存しない部分。ともだち帳と観察モニターは WebGL が無くても使える */
 function createShell() {
   const store = createFriendBookStore()
+  const met = createEncounterStore()
   const hud = createHud()
   const observe = createObserveView(store)
   const book = createBookView(store)
 
   // ともだち帳の「会いに行く」: 3D を歩かずに映像へ直行
-  book.onVisit((animal) => observe.open(animal, 'book'))
+  book.onVisit((animal) => {
+    met.mark(animal.id)
+    observe.open(animal, 'book')
+  })
   hud.onOpenBook(() => book.open())
   observe.onBefriend(() => hud.pulseBook())
   observe.setReduceMotion(hud.reduceMotion)
@@ -50,13 +55,13 @@ function createShell() {
     document.getElementById(id)?.addEventListener('click', () => book.open())
   }
 
-  return { store, hud, observe, book }
+  return { store, met, hud, observe, book }
 }
 
 type Shell = ReturnType<typeof createShell>
 
 function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
-  const { hud, observe, book } = shell
+  const { hud, observe, book, store, met } = shell
   const mobile = isMobile()
   const { renderer, scene, camera, sun, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
   if (mobile) sun.shadow.mapSize.set(1024, 1024)
@@ -110,6 +115,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
 
+  hud.onJump(() => player.jump())
+
   // 「観察スポットへ」: 南の登り口を経由して台地の頂上へ
   hud.onGoToSpot(() => {
     player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
@@ -121,7 +128,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   let encounterId: string | null = null
   hud.onViewSpot(() => {
     const animal = getAnimal(encounterId ?? SPOT.animalId)
-    if (animal) observe.open(animal, 'world')
+    if (!animal) return
+    met.mark(animal.id)
+    observe.open(animal, 'world')
   })
 
   // 何かの画面が開いている間は、ワールドのタップとキーを止める
@@ -209,13 +218,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     if (minimapTimer <= 0) {
       minimapTimer = 0.1
       const mapPlayer = { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y }
-      const mapLions = lions.map((l) => ({
-        id: l.id,
-        name: getAnimal(l.id)?.name ?? l.id,
-        x: l.position.x,
-        z: l.position.z,
-        active: nearest?.id === l.id,
-      }))
+      // 地図は出会いの記録: 出会った個体だけ。ともだち帳に登録済みなら区別する
+      const mapLions = lions
+        .filter((l) => met.has(l.id))
+        .map((l) => ({
+          id: l.id,
+          name: getAnimal(l.id)?.name ?? l.id,
+          x: l.position.x,
+          z: l.position.z,
+          active: nearest?.id === l.id,
+          friend: store.has(l.id),
+        }))
       minimap.update(mapPlayer, mapLions)
       mapView.update(mapPlayer, mapLions)
     }
@@ -223,7 +236,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     if (nextId !== encounterId) {
       encounterId = nextId
       const lion = lions.find((l) => l.id === nextId)
-      if (lion) lion.notice(time)
+      if (lion) {
+        lion.notice(time)
+        // 出会いの記録。地図に出るのはここから
+        met.mark(lion.id)
+      }
       hud.setEncounter(lion ? (getAnimal(lion.id)?.name ?? lion.id) : null)
     }
 

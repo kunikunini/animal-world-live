@@ -9,6 +9,8 @@ export interface Hud {
   onViewSpot: (fn: () => void) => void
   /** 「ともだち帳」ボタン */
   onOpenBook: (fn: () => void) => void
+  /** 「ジャンプ」ボタン（キーボードの Space と同じ） */
+  onJump: (fn: () => void) => void
   /** 帳に新しいページが増えたことを、ボタンの一拍の動きで伝える */
   pulseBook: () => void
   /** 「観察スポットへ」ボタンの表示切り替え */
@@ -50,6 +52,7 @@ export function createHud(): Hud {
   const arrivedText = document.getElementById('arrived-text') as HTMLElement
   const viewSpotBtn = document.getElementById('view-spot') as HTMLButtonElement
   const openBookBtn = document.getElementById('open-book') as HTMLButtonElement
+  const jumpBtn = document.getElementById('jump') as HTMLButtonElement
 
   const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const stored = readStored()
@@ -71,6 +74,13 @@ export function createHud(): Hud {
 
   const bookListeners: Array<() => void> = []
   openBookBtn.addEventListener('click', () => bookListeners.forEach((fn) => fn()))
+
+  const jumpListeners: Array<() => void> = []
+  // タップの反応を速く、キーボードフォーカスは奪わない
+  jumpBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault()
+    jumpListeners.forEach((fn) => fn())
+  })
 
   if (import.meta.env.DEV) fpsEl.hidden = false
 
@@ -94,6 +104,9 @@ export function createHud(): Hud {
     },
     onOpenBook: (fn) => {
       bookListeners.push(fn)
+    },
+    onJump: (fn) => {
+      jumpListeners.push(fn)
     },
     pulseBook: () => {
       if (reduceMotion) return

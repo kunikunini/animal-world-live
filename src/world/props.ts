@@ -284,37 +284,67 @@ function createWater(
   }
 }
 
-/** 遠景の山並み。霧に溶ける低ポリの円錐 */
-function createMountains(rand: () => number, group: THREE.Group): void {
-  const count = 30
-  const geo = new THREE.ConeGeometry(1, 1, 6, 1)
-  geo.translate(0, 0.5, 0)
-  const mat = new THREE.MeshBasicMaterial()
-  const mountains = new THREE.InstancedMesh(geo, mat, count)
+/**
+ * 遠景の山並み。角度に沿ったノイズで稜線を作った帯を3層重ねる。
+ * 近い層は赤く低く、遠い層は高く、霧に溶けて淡くなる。頂点カラー（麓は暗く、峰は明るい）に
+ * トゥーンの陰影が乗るので、太陽の向きで面の明暗が出る。
+ */
+function createMountains(group: THREE.Group): void {
+  const ridgeNoise = new Simplex2D(WORLD_SEED + 77)
+  const layers = [
+    { r: 172, h: 20, spread: 10, segs: 200, foot: '#b86a4e', peak: '#e0a080', seed: 0.0 },
+    { r: 212, h: 36, spread: 16, segs: 180, foot: '#c07e6c', peak: '#e8b6a2', seed: 3.3 },
+    { r: 258, h: 54, spread: 24, segs: 160, foot: '#c89090', peak: '#eecbc4', seed: 7.1 },
+  ]
+  const colFoot = new THREE.Color()
+  const colPeak = new THREE.Color()
 
-  // 遠景の赤い丘。霧に溶けて淡くなる
-  const mA = new THREE.Color('#c8785a')
-  const mB = new THREE.Color('#d8906c')
+  for (const L of layers) {
+    const positions: number[] = []
+    const colors: number[] = []
+    const indices: number[] = []
+    const rows = 3
+    colFoot.set(L.foot)
+    colPeak.set(L.peak)
 
-  for (let i = 0; i < count; i++) {
-    const a = (i / count) * Math.PI * 2 + (rand() - 0.5) * 0.18
-    const r = 182 + rand() * 16
-    const x = Math.cos(a) * r
-    const z = Math.sin(a) * r
-    const h = 14 + rand() * 20
-    const w = 36 + rand() * 36
-    _p.set(x, terrainHeight(x, z) - 2, z)
-    _e.set(0, rand() * Math.PI, 0)
-    _q.setFromEuler(_e)
-    _s.set(w, h, w * (0.8 + rand() * 0.4))
-    _m.compose(_p, _q, _s)
-    mountains.setMatrixAt(i, _m)
-    _c.copy(mA).lerp(mB, rand())
-    mountains.setColorAt(i, _c)
+    // 周期的な稜線: 角度を円周上の点にしてノイズを引くと、一周でつながる
+    const ridge = (a: number, k: number, off: number) => ridgeNoise.noise(Math.cos(a) * k + off, Math.sin(a) * k + off)
+    for (let i = 0; i <= L.segs; i++) {
+      const a = (i / L.segs) * Math.PI * 2
+      const broad = ridge(a, 2.2, L.seed) * 0.5 + 0.5
+      const sharp = 1 - Math.abs(ridge(a, 7, L.seed + 11))
+      const fine = ridge(a, 19, L.seed + 23) * 0.5
+      const height = L.h * (0.45 + 0.55 * broad) + L.spread * (sharp * 0.8 + fine * 0.4)
+      // 行0: 麓（外側・低い）、行1: 肩、行2: 峰
+      const ys = [-4, height * (0.42 + 0.12 * ridge(a, 5, L.seed + 31)), height]
+      const rs = [L.r + 14, L.r + 5, L.r]
+      for (let row = 0; row < rows; row++) {
+        const rr = rs[row] + (row === 2 ? ridge(a, 13, L.seed + 41) * 3 : 0)
+        positions.push(Math.cos(a) * rr, ys[row], Math.sin(a) * rr)
+        const t = row === 0 ? 0 : row === 1 ? 0.45 : 0.85 + 0.15 * sharp
+        _c.copy(colFoot).lerp(colPeak, t)
+        colors.push(_c.r, _c.g, _c.b)
+      }
+    }
+    for (let i = 0; i < L.segs; i++) {
+      for (let row = 0; row < rows - 1; row++) {
+        const a0 = i * rows + row
+        const a1 = a0 + 1
+        const b0 = (i + 1) * rows + row
+        const b1 = b0 + 1
+        indices.push(a0, b0, a1, a1, b0, b1)
+      }
+    }
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    geo.setIndex(indices)
+    geo.computeVertexNormals()
+    const mesh = new THREE.Mesh(geo, toonMaterial({ vertexColors: true, side: THREE.DoubleSide }))
+    mesh.frustumCulled = false
+    mesh.name = `mountains-${L.r}`
+    group.add(mesh)
   }
-  mountains.instanceMatrix.needsUpdate = true
-  if (mountains.instanceColor) mountains.instanceColor.needsUpdate = true
-  group.add(mountains)
 }
 
 /**
@@ -481,7 +511,7 @@ export function createProps(options: PropsOptions): Props {
   createAcacias(rand, group, colliders)
   createRocks(rand, group, colliders)
   const water = createWater(group, options)
-  createMountains(rand, group)
+  createMountains(group)
   const grass = createGrass(rand, group, options.mobile ? 6000 : 16000, options.mobile ? 110 : 175)
 
   return {

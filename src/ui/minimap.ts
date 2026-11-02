@@ -13,6 +13,8 @@ export interface MinimapMarker {
   z: number
   /** 強調（そばにいる個体など） */
   active?: boolean
+  /** ともだち帳に登録済み。白い輪で区別し、広げた地図では名前に添える */
+  friend?: boolean
 }
 
 export interface MapPlayer {
@@ -124,7 +126,7 @@ export function createMapRenderer(size: number, options: { labels: boolean }): M
     ctx.clearRect(0, 0, size, size)
     ctx.drawImage(base, 0, 0)
 
-    // ライオン: 黄褐色の点に暗い縁。そばにいる個体は少し大きく
+    // 出会った個体: 黄褐色の点に暗い縁。そばにいる個体は少し大きく。ともだちは白い輪を足す
     for (const l of lions) {
       const r = (l.active ? 6 : 4.5) * u
       ctx.fillStyle = l.active ? '#f3c36a' : '#d9a95f'
@@ -134,6 +136,13 @@ export function createMapRenderer(size: number, options: { labels: boolean }): M
       ctx.arc(px(l.x), py(l.z), r, 0, Math.PI * 2)
       ctx.fill()
       ctx.stroke()
+      if (l.friend) {
+        ctx.strokeStyle = '#fff6e6'
+        ctx.lineWidth = 2 * u
+        ctx.beginPath()
+        ctx.arc(px(l.x), py(l.z), r + 3 * u, 0, Math.PI * 2)
+        ctx.stroke()
+      }
     }
     if (options.labels) {
       // 名前。台地の上の個体は地図では数ピクセルの距離に固まるので、コピエの左に縦に並べる。
@@ -148,15 +157,16 @@ export function createMapRenderer(size: number, options: { labels: boolean }): M
       const lineH = 11 * u
       const left = px(KOPJE.x) - (KOPJE.radius + 3) * k
       const top = py(KOPJE.z) - ((onKopje.length - 1) * lineH) / 2
+      const text = (l: MinimapMarker) => (l.friend ? `${l.name}（ともだち）` : l.name)
       ctx.textAlign = 'right'
       onKopje.forEach((l, i) => {
-        ctx.strokeText(l.name, left, top + i * lineH)
-        ctx.fillText(l.name, left, top + i * lineH)
+        ctx.strokeText(text(l), left, top + i * lineH)
+        ctx.fillText(text(l), left, top + i * lineH)
       })
       ctx.textAlign = 'left'
       for (const l of others) {
-        ctx.strokeText(l.name, px(l.x) + 7 * u, py(l.z))
-        ctx.fillText(l.name, px(l.x) + 7 * u, py(l.z))
+        ctx.strokeText(text(l), px(l.x) + 7 * u, py(l.z))
+        ctx.fillText(text(l), px(l.x) + 7 * u, py(l.z))
       }
     }
 

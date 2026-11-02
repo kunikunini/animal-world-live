@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { SPAWN, WALK_RADIUS, WATERHOLE } from '../world/layout'
-import { terrainHeight, terrainSlope } from '../world/terrain'
+import { SPAWN, WALK_RADIUS } from '../world/layout'
+import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
 import { toonMaterial } from '../render/toon'
 
@@ -19,6 +19,8 @@ export interface PlayerController {
   isAutoWalking: () => boolean
   /** 観察画面などを開いている間、タップとキーを受け付けない */
   setInputEnabled: (on: boolean) => void
+  /** ジャンプ（地面にいるときだけ） */
+  jump: () => void
   /** 開発用: 位置と向きを即座に変える（スクリーンショットの定点） */
   teleport: (x: number, z: number, heading?: number, camYaw?: number) => void
   /** 開発用: 追従カメラを止めて固定の位置・注視点にする。null で戻す */
@@ -28,13 +30,20 @@ export interface PlayerController {
 
 const WALK_SPEED = 6.5
 const TURN_SPEED = 9
+/** カメラの距離（ホイールで変えられる範囲） */
 const CAM_DISTANCE = 9.0
-const CAM_HEIGHT = 3.4
+const CAM_MIN = 4
+const CAM_MAX = 18
+/** カメラの仰角（ラジアン）。正で上から見下ろす、負で下から空を見上げる */
+const CAM_PITCH = 0.36
+const CAM_PITCH_MIN = -0.42
+const CAM_PITCH_MAX = 1.35
 const DRAG_THRESHOLD = 8
 const PLAYER_RADIUS = 0.45
 const CAMERA_RADIUS = 0.7
-/** 登れる傾きの下限（法線の y 成分）。これより急な斜面は崖として扱う。南の坂（約32度）は登れる */
-const MAX_CLIMB_SLOPE = 0.64
+/** ジャンプ: 初速と重力。台地の段（約2.5m）を飛び越えられる高さ */
+const JUMP_SPEED = 10.5
+const GRAVITY = 22
 
 const _dir = new THREE.Vector3()
 const _target = new THREE.Vector3()
@@ -79,32 +88,21 @@ function createMarker(): THREE.Mesh {
   return m
 }
 
-/** 世界の端と水場の中には入れないように位置を寄せる */
+/** 世界の端より外には出ない（それ以外はどこでも歩ける。水場にも入れる） */
 function clampToWorld(p: THREE.Vector3): void {
   const r = Math.hypot(p.x, p.z)
   if (r > WALK_RADIUS) {
     p.x *= WALK_RADIUS / r
     p.z *= WALK_RADIUS / r
   }
-  const dx = p.x - WATERHOLE.x
-  const dz = p.z - WATERHOLE.z
-  const d = Math.hypot(dx, dz)
-  const min = WATERHOLE.radius + 1.2
-  if (d < min) {
-    const k = d < 1e-3 ? 1 : min / d
-    p.x = WATERHOLE.x + (d < 1e-3 ? min : dx * k)
-    p.z = WATERHOLE.z + (d < 1e-3 ? 0 : dz * k)
-  }
 }
 
-/** その場所に立てるか（崖のように急でないか） */
-function canStand(x: number, z: number): boolean {
-  return terrainSlope(x, z, 0.5) >= MAX_CLIMB_SLOPE
-}
+const _push = new THREE.Vector3()
 
-/** 岩や幹の円から押し出す。押し出した量を返す */
+/** 岩や幹の円から押し出す。押し出した量を返し、押し出した向きを _push に残す */
 function pushOutOfColliders(p: THREE.Vector3, radius: number, colliders: Collider[]): number {
   let pushed = 0
+  _push.set(0, 0, 0)
   for (const c of colliders) {
     const dx = p.x - c.x
     const dz = p.z - c.z
@@ -115,12 +113,15 @@ function pushOutOfColliders(p: THREE.Vector3, radius: number, colliders: Collide
     if (d < 1e-4) {
       p.x = c.x + min
       pushed += min
+      _push.x += 1
       continue
     }
     const k = min / d
     p.x = c.x + dx * k
     p.z = c.z + dz * k
     pushed += min - d
+    _push.x += dx / d
+    _push.z += dz / d
   }
   return pushed
 }
@@ -143,6 +144,11 @@ export function createPlayer(
 
   let heading = Math.PI // -z（コピエの方向）を向く
   let camYaw = heading + Math.PI // カメラは背後（+z 側）から見る
+  let camPitch = CAM_PITCH
+  let camDist = CAM_DISTANCE
+  // ジャンプ: 空中の高さと上向きの速度。地面にいるときは null
+  let airY: number | null = null
+  let vy = 0
   let waypoints: THREE.Vector3[] = []
   let reduceMotion = false
   let walkPhase = 0
@@ -154,14 +160,24 @@ export function createPlayer(
   const raycaster = new THREE.Raycaster()
   const ndc = new THREE.Vector2()
 
-  // 初期カメラ位置
-  _camPos.set(
-    object.position.x + Math.sin(camYaw) * CAM_DISTANCE,
-    object.position.y + CAM_HEIGHT,
-    object.position.z + Math.cos(camYaw) * CAM_DISTANCE,
-  )
-  camera.position.copy(_camPos)
-  camera.lookAt(object.position.x, object.position.y + 2.3, object.position.z)
+  /** 追従カメラの位置と注視点。向き・仰角・距離から求め、岩と地面にめり込ませない */
+  const placeCamera = (immediate: boolean, dt = 0) => {
+    const cp = Math.cos(camPitch)
+    _camPos.set(
+      object.position.x + Math.sin(camYaw) * cp * camDist,
+      0,
+      object.position.z + Math.cos(camYaw) * cp * camDist,
+    )
+    pushOutOfColliders(_camPos, CAMERA_RADIUS, colliders)
+    const groundAtCam = terrainHeight(_camPos.x, _camPos.z)
+    _camPos.y = Math.max(object.position.y + 1.0 + Math.sin(camPitch) * camDist, groundAtCam + 0.6)
+    if (immediate) camera.position.copy(_camPos)
+    else camera.position.lerp(_camPos, reduceMotion ? 1 : Math.min(1, 6 * dt))
+    // 見上げるときは注視点を上げて、空が画面に入るようにする
+    _look.set(object.position.x, object.position.y + 2.0 + Math.max(0, -camPitch) * 6, object.position.z)
+    camera.lookAt(_look)
+  }
+  placeCamera(true)
 
   const showMarker = (p: THREE.Vector3) => {
     marker.position.set(p.x, terrainHeight(p.x, p.z) + 0.08, p.z)
@@ -180,18 +196,25 @@ export function createPlayer(
     if (waypoints.length > 0) showMarker(waypoints[waypoints.length - 1])
   }
 
+  const jump = () => {
+    if (!inputEnabled || airY !== null) return
+    airY = object.position.y
+    vy = JUMP_SPEED
+  }
+
   // --- 入力 ---
   let pointerId: number | null = null
   let downX = 0
   let downY = 0
   let lastX = 0
+  let lastY = 0
   let dragging = false
 
   const onPointerDown = (e: PointerEvent) => {
     if (!inputEnabled || pointerId !== null) return
     pointerId = e.pointerId
     downX = lastX = e.clientX
-    downY = e.clientY
+    downY = lastY = e.clientY
     dragging = false
     canvas.setPointerCapture(e.pointerId)
   }
@@ -200,9 +223,12 @@ export function createPlayer(
     if (e.pointerId !== pointerId) return
     if (!dragging && Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_THRESHOLD) dragging = true
     if (dragging) {
+      // 横で回り込み、縦で見上げ・見下ろし
       camYaw -= (e.clientX - lastX) * 0.006
+      camPitch = Math.max(CAM_PITCH_MIN, Math.min(CAM_PITCH_MAX, camPitch + (e.clientY - lastY) * 0.005))
     }
     lastX = e.clientX
+    lastY = e.clientY
   }
 
   const onPointerUp = (e: PointerEvent) => {
@@ -224,8 +250,19 @@ export function createPlayer(
     if (e.pointerId === pointerId) pointerId = null
   }
 
+  const onWheel = (e: WheelEvent) => {
+    if (!inputEnabled) return
+    e.preventDefault()
+    camDist = Math.max(CAM_MIN, Math.min(CAM_MAX, camDist + e.deltaY * 0.01))
+  }
+
   const onKeyDown = (e: KeyboardEvent) => {
     if (!inputEnabled) return
+    if (e.code === 'Space' && !e.repeat) {
+      jump()
+      e.preventDefault()
+      return
+    }
     const k = e.key.toLowerCase()
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
       keys.add(k)
@@ -239,6 +276,7 @@ export function createPlayer(
   canvas.addEventListener('pointermove', onPointerMove)
   canvas.addEventListener('pointerup', onPointerUp)
   canvas.addEventListener('pointercancel', onPointerCancel)
+  canvas.addEventListener('wheel', onWheel, { passive: false })
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
   window.addEventListener('blur', onBlur)
@@ -288,25 +326,37 @@ export function createPlayer(
       }
     }
 
-    // 当たり判定: 世界の端・水場・岩・幹
+    // 当たり判定: 世界の端・岩・幹。地形はどこでも歩ける（崖の段も登れる）
     clampToWorld(object.position)
-    pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
-
-    // 崖: 急な斜面には入れない。すでに急な場所にいる時は抜け出せるように止めない。
-    // 壁に沿って滑れるよう、x だけ・z だけの移動も試す
-    if (moving && canStand(_prev.x, _prev.z) && !canStand(object.position.x, object.position.z)) {
-      const nx = object.position.x
-      const nz = object.position.z
-      if (canStand(nx, _prev.z)) {
-        object.position.z = _prev.z
-      } else if (canStand(_prev.x, nz)) {
-        object.position.x = _prev.x
-      } else {
-        object.position.x = _prev.x
-        object.position.z = _prev.z
+    const pushed = pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
+    if (moving && pushed > 0 && wanted > 0) {
+      // 岩に正面からぶつかって進めない時は、岩の縁に沿って横へ滑る（進みたい向きに近いほう）
+      const progress = Math.hypot(object.position.x - _prev.x, object.position.z - _prev.z)
+      if (progress < wanted * 0.6 && _push.lengthSq() > 1e-6) {
+        _push.normalize()
+        const tx = -_push.z
+        const tz = _push.x
+        const sign = tx * _dir.x + tz * _dir.z >= 0 ? 1 : -1
+        object.position.x += tx * sign * wanted
+        object.position.z += tz * sign * wanted
+        clampToWorld(object.position)
+        pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
       }
     }
-    object.position.y = terrainHeight(object.position.x, object.position.z)
+    const ground = terrainHeight(object.position.x, object.position.z)
+    if (airY !== null) {
+      // 空中: 重力で落ち、地面に着いたら戻る
+      vy -= GRAVITY * dt
+      airY += vy * dt
+      if (airY <= ground) {
+        airY = null
+        object.position.y = ground
+      } else {
+        object.position.y = airY
+      }
+    } else {
+      object.position.y = ground
+    }
 
     // 岩に阻まれて進めない時は、目的地をあきらめる（永遠に足踏みしない）
     if (moving && waypoints.length > 0 && wanted > 0) {
@@ -333,8 +383,8 @@ export function createPlayer(
     }
     object.rotation.y = heading
 
-    // 歩きの揺れ（動きをへらす時は止める）
-    if (moving && !reduceMotion) {
+    // 歩きの揺れ（動きをへらす時と空中では止める）
+    if (moving && !reduceMotion && airY === null) {
       figure.position.y = Math.abs(Math.sin(walkPhase)) * 0.06
       figure.rotation.z = Math.sin(walkPhase) * 0.04
     } else {
@@ -355,19 +405,7 @@ export function createPlayer(
       diff = Math.atan2(Math.sin(diff), Math.cos(diff))
       camYaw += diff * Math.min(1, 1.6 * dt)
     }
-    _camPos.set(
-      object.position.x + Math.sin(camYaw) * CAM_DISTANCE,
-      0,
-      object.position.z + Math.cos(camYaw) * CAM_DISTANCE,
-    )
-    // カメラも岩にめり込まない。押し出された分だけキャラに寄る
-    pushOutOfColliders(_camPos, CAMERA_RADIUS, colliders)
-    const groundAtCam = terrainHeight(_camPos.x, _camPos.z)
-    _camPos.y = Math.max(object.position.y + CAM_HEIGHT, groundAtCam + 2.2)
-    const follow = reduceMotion ? 1 : Math.min(1, 6 * dt)
-    camera.position.lerp(_camPos, follow)
-    _look.set(object.position.x, object.position.y + 2.3, object.position.z)
-    camera.lookAt(_look)
+    placeCamera(false, dt)
 
     // 目印のフェード
     if (marker.visible) {
@@ -384,6 +422,7 @@ export function createPlayer(
     canvas.removeEventListener('pointermove', onPointerMove)
     canvas.removeEventListener('pointerup', onPointerUp)
     canvas.removeEventListener('pointercancel', onPointerCancel)
+    canvas.removeEventListener('wheel', onWheel)
     window.removeEventListener('keydown', onKeyDown)
     window.removeEventListener('keyup', onKeyUp)
     window.removeEventListener('blur', onBlur)
@@ -404,6 +443,7 @@ export function createPlayer(
     setReduceMotion: (on) => {
       reduceMotion = on
     },
+    jump,
     teleport: (x, z, nextHeading, nextCamYaw) => {
       waypoints = []
       marker.visible = false
@@ -412,16 +452,11 @@ export function createPlayer(
       object.position.y = terrainHeight(object.position.x, object.position.z)
       if (nextHeading !== undefined) heading = nextHeading
       camYaw = nextCamYaw ?? heading + Math.PI
+      camPitch = CAM_PITCH
+      camDist = CAM_DISTANCE
+      airY = null
       object.rotation.y = heading
-      _camPos.set(
-        object.position.x + Math.sin(camYaw) * CAM_DISTANCE,
-        0,
-        object.position.z + Math.cos(camYaw) * CAM_DISTANCE,
-      )
-      pushOutOfColliders(_camPos, CAMERA_RADIUS, colliders)
-      _camPos.y = Math.max(object.position.y + CAM_HEIGHT, terrainHeight(_camPos.x, _camPos.z) + 2.2)
-      camera.position.copy(_camPos)
-      camera.lookAt(object.position.x, object.position.y + 2.3, object.position.z)
+      placeCamera(true)
     },
     setCameraOverride: (override) => {
       cameraOverride = override

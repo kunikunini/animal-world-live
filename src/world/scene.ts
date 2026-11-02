@@ -91,7 +91,8 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
 
   const scene = new THREE.Scene()
   scene.background = FOG_COLOR
-  scene.fog = new THREE.Fog(FOG_COLOR, 60, 330)
+  // 遠い山脈（半径 258m）がうっすら残る距離まで霧を伸ばす
+  scene.fog = new THREE.Fog(FOG_COLOR, 60, 380)
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 900)
 
