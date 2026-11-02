@@ -109,7 +109,8 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
   sun.shadow.camera.top = 70
   sun.shadow.camera.bottom = -70
   sun.shadow.bias = -0.0006
-  sun.shadow.normalBias = 0.8
+  // 細い円柱（脚など）に斜めから光が当たると自己遮蔽の縞が出るので、法線方向のバイアスを大きめに取る
+  sun.shadow.normalBias = 1.8
   scene.add(sun)
   scene.add(sun.target)
 

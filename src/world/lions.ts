@@ -24,8 +24,10 @@ export interface LionOptions {
   size?: number
   /** 毛色の個体差。省略時は標準の黄褐色 */
   coat?: string
-  /** たてがみの色（mane のとき） */
+  /** たてがみの横と下の色（mane のとき） */
   maneColor?: string
+  /** たてがみの上（頭頂）の色。省略時は濃い茶 */
+  maneTopColor?: string
 }
 
 export interface Lion {
@@ -68,6 +70,8 @@ export function createLion(options: LionOptions): Lion {
   const belly = toonMaterial({ color: LION_COLORS.belly })
   const dark = toonMaterial({ color: LION_COLORS.dark })
   const nose = toonMaterial({ color: LION_COLORS.nose })
+  const eyeMat = new THREE.MeshBasicMaterial({ color: '#140d08' })
+  const glintMat = new THREE.MeshBasicMaterial({ color: '#fff6e6' })
 
   const cast = (m: THREE.Mesh) => {
     m.castShadow = true
@@ -179,8 +183,12 @@ export function createLion(options: LionOptions): Lion {
     head.add(cheek)
   }
   for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), nose)
-    eye.position.set(side * 0.15, 0.045, 0.27)
+    // 目: 光の影響を受けない黒いビーズ。顔から少し浮かせ、小さなハイライトを乗せる（遠くからも「目」と分かる）
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.052, 10, 8), eyeMat)
+    eye.position.set(side * 0.16, 0.05, 0.31)
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 4), glintMat)
+    glint.position.set(side * -0.012, 0.022, 0.044)
+    eye.add(glint)
     // 目の下の黒いすじ（ライオンらしさ）
     const tear = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.09, 0.02), nose)
     tear.position.set(side * 0.125, -0.02, 0.37)
@@ -198,24 +206,33 @@ export function createLion(options: LionOptions): Lion {
     head.add(eye, tear, ear)
   }
   if (options.mane) {
-    // たてがみ: 顔を囲む輪（上ほど暗く盛り上がる）と、首の後ろ・胸のふくらみ。顔は前に出す
-    const maneColor = new THREE.Color(options.maneColor ?? LION_COLORS.mane)
-    const maneMat = toonMaterial({ color: maneColor })
-    const maneTop = toonMaterial({ color: maneColor.clone().lerp(new THREE.Color('#3a2416'), 0.3) })
+    // たてがみ: 顔の後ろで囲む輪（上は濃い茶、横と下は金色のツートーン）＋首の後ろと胸のふくらみ。
+    // 輪は顔より後ろに置き、直径を絞って、正面から見ても顔が前に出るようにする
+    const maneSide = new THREE.Color(options.maneColor ?? LION_COLORS.mane)
+    const maneTopColor = new THREE.Color(options.maneTopColor ?? '#5a3418')
+    const sideMat = toonMaterial({ color: maneSide })
+    const topMat = toonMaterial({ color: maneTopColor })
+    const midMat = toonMaterial({ color: maneSide.clone().lerp(maneTopColor, 0.5) })
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * Math.PI * 2
       const up = Math.sin(a)
-      const r = 0.42 + Math.max(0, up) * 0.08
-      const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 6), up > 0.3 ? maneTop : maneMat))
-      tuft.position.set(Math.cos(a) * r, up * r * 0.85 + 0.04, -0.06 - Math.max(0, up) * 0.04)
-      tuft.scale.set(1.1, 1 + Math.max(0, up) * 0.35, 0.8)
+      const r = 0.34 + Math.max(0, up) * 0.07
+      const mat = up > 0.55 ? topMat : up > 0.1 ? midMat : sideMat
+      const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), mat))
+      tuft.position.set(Math.cos(a) * r, up * r * 0.9 + 0.02, -0.2 - Math.max(0, up) * 0.03)
+      tuft.scale.set(1.1, 1 + Math.max(0, up) * 0.4, 0.7)
       head.add(tuft)
     }
-    const maneBack = cast(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), maneMat))
-    maneBack.position.set(0, -0.02, -0.2)
-    maneBack.scale.set(1.2, 1, 0.9)
+    // 頭頂のひとふさ（濃い茶）
+    const crown = cast(new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), topMat))
+    crown.position.set(0, 0.3, -0.12)
+    crown.scale.set(1.4, 0.7, 0.9)
+    head.add(crown)
+    const maneBack = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), midMat))
+    maneBack.position.set(0, -0.02, -0.24)
+    maneBack.scale.set(1.15, 1, 0.9)
     neck.add(maneBack)
-    const maneChest = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), maneMat))
+    const maneChest = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), sideMat))
     maneChest.position.set(0, 0.5, 0.52)
     maneChest.scale.set(1.3, 0.85, 1)
     body.add(maneChest)

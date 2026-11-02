@@ -78,6 +78,7 @@ export interface LionPlacement {
   size?: number
   coat?: string
   maneColor?: string
+  maneTopColor?: string
 }
 
 export const LIONS: ReadonlyArray<LionPlacement> = [
@@ -85,6 +86,6 @@ export const LIONS: ReadonlyArray<LionPlacement> = [
   { id: 'angie', x: KOPJE.x - 3.0, z: KOPJE.z - 2.6, yaw: 0.7, coat: '#d9a95f' },
   { id: 'carla', x: KOPJE.x - 5.2, z: KOPJE.z - 5.0, yaw: 1.3, cub: true, coat: '#e5bb70' },
   { id: 'claire', x: KOPJE.x - 6.6, z: KOPJE.z - 1.6, yaw: -0.2, cub: true, coat: '#e2b568' },
-  { id: 'alex', x: KOPJE.x + 4.8, z: KOPJE.z - 5.2, yaw: -2.2, mane: true, size: 1.12, coat: '#cf9a52', maneColor: '#9a5e30' },
+  { id: 'alex', x: KOPJE.x + 4.8, z: KOPJE.z - 5.2, yaw: -2.2, mane: true, size: 1.12, coat: '#cf9a52', maneColor: '#c3883c', maneTopColor: '#6e4222' },
   { id: 'riley', x: 40, z: 5, yaw: 1.7, size: 0.98, coat: '#dcb47c' },
 ]

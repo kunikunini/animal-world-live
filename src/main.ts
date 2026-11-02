@@ -241,6 +241,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     // 開発時だけ、ブラウザのコンソールから中身を覗けるようにする
     ;(window as unknown as { __awl: unknown }).__awl = {
       camera,
+      sun,
+      scene,
       spot,
       player,
       props,
