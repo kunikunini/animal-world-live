@@ -15,8 +15,8 @@ export interface Hud {
   setGoToSpotVisible: (visible: boolean) => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
   setSpotLabel: (screen: { x: number; y: number } | null, distance: number) => void
-  /** 到着バナー */
-  setArrived: (arrived: boolean) => void
+  /** 出会いのバナー。name があれば「○○のそばに来ました」、null で隠す */
+  setEncounter: (name: string | null) => void
   setFps: (fps: number) => void
 }
 
@@ -47,6 +47,7 @@ export function createHud(): Hud {
   const spotLabel = document.getElementById('spot-label') as HTMLElement
   const spotDistance = document.getElementById('spot-distance') as HTMLElement
   const arrived = document.getElementById('arrived') as HTMLElement
+  const arrivedText = document.getElementById('arrived-text') as HTMLElement
   const viewSpotBtn = document.getElementById('view-spot') as HTMLButtonElement
   const openBookBtn = document.getElementById('open-book') as HTMLButtonElement
 
@@ -114,8 +115,9 @@ export function createHud(): Hud {
         spotDistance.textContent = distance >= 1000 ? '' : `あと ${Math.max(0, Math.round(distance))} m`
       }
     },
-    setArrived: (on) => {
-      arrived.hidden = !on
+    setEncounter: (name) => {
+      arrived.hidden = name === null
+      if (name !== null) arrivedText.textContent = `${name}のそばに来ました`
     },
     setFps: (fps) => {
       if (!fpsEl.hidden) fpsEl.textContent = `${fps.toFixed(0)} fps`

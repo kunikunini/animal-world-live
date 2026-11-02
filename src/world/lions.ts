@@ -18,8 +18,14 @@ export interface LionOptions {
   yaw: number
   /** たてがみ（成獣の雄） */
   mane?: boolean
-  /** 仔は小さく、頭が大きめ */
+  /** 仔は小さく、頭が大きめ。耳の後ろは暗い色 */
   cub?: boolean
+  /** 体の大きさの倍率（成獣 1、仔は自動で小さくなる） */
+  size?: number
+  /** 毛色の個体差。省略時は標準の黄褐色 */
+  coat?: string
+  /** たてがみの色（mane のとき） */
+  maneColor?: string
 }
 
 export interface Lion {
@@ -29,6 +35,8 @@ export interface Lion {
   collider: Collider
   update: (time: number, dt: number, player: THREE.Vector3) => void
   setReduceMotion: (on: boolean) => void
+  /** そばに来た人に気づく: 耳をぴくりとさせ、少し早くこちらを向き、尾を一度大きく振る */
+  notice: (time: number) => void
   /**
    * 実験用: 別の造形（glTF など）に差し替える。first/second は首と尾のピボット、
    * ears は耳のメッシュ。名前が見つからなければ、その部分の微アニメだけ止まる。
@@ -51,11 +59,12 @@ export function createLion(options: LionOptions): Lion {
   const position = new THREE.Vector3(options.x, y, options.z)
   group.position.copy(position)
   group.rotation.y = options.yaw
-  const scale = options.cub ? 0.58 : 1
+  const scale = (options.cub ? 0.58 : 1) * (options.size ?? 1)
   group.scale.setScalar(scale)
 
-  const tawny = toonMaterial({ color: LION_COLORS.tawny })
-  const tawnyLight = toonMaterial({ color: '#e4bb78' })
+  const coat = new THREE.Color(options.coat ?? LION_COLORS.tawny)
+  const tawny = toonMaterial({ color: coat })
+  const tawnyLight = toonMaterial({ color: coat.clone().lerp(new THREE.Color('#f3dcae'), 0.35) })
   const belly = toonMaterial({ color: LION_COLORS.belly })
   const dark = toonMaterial({ color: LION_COLORS.dark })
   const nose = toonMaterial({ color: LION_COLORS.nose })
@@ -177,28 +186,39 @@ export function createLion(options: LionOptions): Lion {
     tear.position.set(side * 0.125, -0.02, 0.37)
     tear.rotation.z = side * 0.25
     // 耳は頭のてっぺんではなく横寄りに。丸く小さめ
-    const ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 6), tawny))
+    // 仔は耳の後ろが暗く、縁が黒い（写真の参考）。成獣は体と同じ色
+    const ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 6), options.cub ? dark : tawny))
     ear.position.set(side * 0.31, 0.17, -0.06)
     ear.rotation.z = side * -0.35
     ear.scale.set(1, 1, 0.45)
     ear.name = `ear${side}`
-    const earIn = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), dark)
+    const earIn = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), options.cub ? belly : dark)
     earIn.position.set(0, 0, 0.05)
     ear.add(earIn)
     head.add(eye, tear, ear)
   }
   if (options.mane) {
-    const maneMat = toonMaterial({ color: LION_COLORS.mane })
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2
-      const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), maneMat))
-      tuft.position.set(Math.cos(a) * 0.34, Math.sin(a) * 0.3 - 0.02, -0.12)
-      tuft.scale.set(1, 1, 0.7)
+    // たてがみ: 顔を囲む輪（上ほど暗く盛り上がる）と、首の後ろ・胸のふくらみ。顔は前に出す
+    const maneColor = new THREE.Color(options.maneColor ?? LION_COLORS.mane)
+    const maneMat = toonMaterial({ color: maneColor })
+    const maneTop = toonMaterial({ color: maneColor.clone().lerp(new THREE.Color('#3a2416'), 0.3) })
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2
+      const up = Math.sin(a)
+      const r = 0.42 + Math.max(0, up) * 0.08
+      const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(0.19, 8, 6), up > 0.3 ? maneTop : maneMat))
+      tuft.position.set(Math.cos(a) * r, up * r * 0.85 + 0.04, -0.06 - Math.max(0, up) * 0.04)
+      tuft.scale.set(1.1, 1 + Math.max(0, up) * 0.35, 0.8)
       head.add(tuft)
     }
-    const maneBack = cast(new THREE.Mesh(new THREE.SphereGeometry(0.46, 10, 8), maneMat))
-    maneBack.position.set(0, 0.05, -0.08)
+    const maneBack = cast(new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), maneMat))
+    maneBack.position.set(0, -0.02, -0.2)
+    maneBack.scale.set(1.2, 1, 0.9)
     neck.add(maneBack)
+    const maneChest = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), maneMat))
+    maneChest.position.set(0, 0.5, 0.52)
+    maneChest.scale.set(1.3, 0.85, 1)
+    body.add(maneChest)
   }
   neckPivot.add(head)
   primitive.add(neckPivot)
@@ -227,16 +247,24 @@ export function createLion(options: LionOptions): Lion {
   let animTail: THREE.Object3D = tailPivot
   let animBody: THREE.Object3D = body
 
+  // 気質: 仔はせわしなく、たてがみの雄はゆったり
+  const tempo = options.cub
+    ? { breath: 3.0, earMin: 1.5, earRange: 3, tail: 1.7, idleLook: 0.3 }
+    : options.mane
+      ? { breath: 1.7, earMin: 4, earRange: 6, tail: 0.6, idleLook: 0.12 }
+      : { breath: 2.2, earMin: 3, earRange: 5, tail: 0.9, idleLook: 0.18 }
+
   let reduceMotion = false
   let earTimer = 2 + Math.random() * 4
   let earFlick = 0
   let flickSide = 0
   const headTarget = new THREE.Vector3()
   const breathPhase = Math.random() * Math.PI * 2
+  let noticeTime = -10
 
   const update = (time: number, dt: number, player: THREE.Vector3) => {
     // 呼吸
-    const breath = reduceMotion ? 0 : Math.sin(time * 2.2 + breathPhase) * 0.02
+    const breath = reduceMotion ? 0 : Math.sin(time * tempo.breath + breathPhase) * 0.02
     animBody.scale.set(1, 1 + breath, 1)
 
     // 近くに来たら、ゆっくりこちらを向く。遠いときは正面に戻る
@@ -250,9 +278,11 @@ export function createLion(options: LionOptions): Lion {
       wantYaw = Math.max(-0.7, Math.min(0.7, wantYaw))
       wantPitch = Math.max(-0.2, Math.min(0.25, Math.atan2(headTarget.y - 1.0, dist) * 0.5))
     } else if (!reduceMotion) {
-      wantYaw = Math.sin(time * 0.23) * 0.18
+      wantYaw = Math.sin(time * 0.23) * tempo.idleLook
     }
-    const k = reduceMotion ? 1 : Math.min(1, dt * 1.8)
+    // 気づいた直後は少し早く向く
+    const quick = time - noticeTime < 1.2 ? 2.2 : 1
+    const k = reduceMotion ? 1 : Math.min(1, dt * 1.8 * quick)
     animNeck.rotation.y += (wantYaw - animNeck.rotation.y) * k
     animNeck.rotation.x += (-wantPitch - animNeck.rotation.x) * k
 
@@ -260,7 +290,7 @@ export function createLion(options: LionOptions): Lion {
     if (!reduceMotion) {
       earTimer -= dt
       if (earTimer <= 0) {
-        earTimer = 3 + Math.random() * 5
+        earTimer = tempo.earMin + Math.random() * tempo.earRange
         earFlick = 0.25
         flickSide = Math.random() < 0.5 ? 0 : 1
       }
@@ -273,8 +303,9 @@ export function createLion(options: LionOptions): Lion {
           if (e) e.rotation.z = 0
         })
       }
-      // 尾先がゆっくり動く
-      animTail.rotation.y = Math.sin(time * 0.9) * 0.12
+      // 尾先がゆっくり動く。気づいた直後は大きく
+      const lift = Math.max(0, 1 - (time - noticeTime) / 1.5)
+      animTail.rotation.y = Math.sin(time * tempo.tail) * (0.12 + lift * 0.25)
     }
   }
 
@@ -286,6 +317,10 @@ export function createLion(options: LionOptions): Lion {
     update,
     setReduceMotion: (on) => {
       reduceMotion = on
+    },
+    notice: (time) => {
+      noticeTime = time
+      earTimer = 0
     },
     swapModel: (model, parts) => {
       primitive.visible = false

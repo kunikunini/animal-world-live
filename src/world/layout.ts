@@ -62,7 +62,29 @@ export const ACACIAS: ReadonlyArray<{ x: number; z: number; scale: number }> = [
   { x: 6, z: -118, scale: 1.1 },
 ]
 
-/** 様式化ライオンの配置（試作: アンジーだけ）。台地の上、観察スポットのそば */
-export const LIONS: ReadonlyArray<{ id: string; x: number; z: number; yaw: number; mane?: boolean; cub?: boolean }> = [
-  { id: 'angie', x: KOPJE.x - 3.6, z: KOPJE.z - 2.2, yaw: 0.55 },
+/**
+ * 様式化ライオンの配置。
+ * 台地の観察スポットのそばにアンジーと双子（クレア・カーラ）＝家族の場面。
+ * アレックスは少し離れて台地の北東の縁に、ライリーは水場のそばの草むらに。
+ * 毛色は参考写真から様式化した値（事実の記述ではない）。
+ */
+export interface LionPlacement {
+  id: string
+  x: number
+  z: number
+  yaw: number
+  mane?: boolean
+  cub?: boolean
+  size?: number
+  coat?: string
+  maneColor?: string
+}
+
+export const LIONS: ReadonlyArray<LionPlacement> = [
+  // スポット（台地の中央）にいちばん近いのはアンジー。双子はその向こう側に
+  { id: 'angie', x: KOPJE.x - 3.0, z: KOPJE.z - 2.6, yaw: 0.7, coat: '#d9a95f' },
+  { id: 'carla', x: KOPJE.x - 5.2, z: KOPJE.z - 5.0, yaw: 1.3, cub: true, coat: '#e5bb70' },
+  { id: 'claire', x: KOPJE.x - 6.6, z: KOPJE.z - 1.6, yaw: -0.2, cub: true, coat: '#e2b568' },
+  { id: 'alex', x: KOPJE.x + 4.8, z: KOPJE.z - 5.2, yaw: -2.2, mane: true, size: 1.12, coat: '#cf9a52', maneColor: '#9a5e30' },
+  { id: 'riley', x: 40, z: 5, yaw: 1.7, size: 0.98, coat: '#dcb47c' },
 ]

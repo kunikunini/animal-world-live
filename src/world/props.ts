@@ -440,6 +440,7 @@ function createGrass(
     const dw = distToWater(x, z)
     if (dw < WATERHOLE.radius + 1.5) continue
     if (distToKopje(x, z) < KOPJE.radius * 0.97) continue
+    if (LIONS.some((l) => Math.hypot(x - l.x, z - l.z) < 1.8)) continue
     const h = 0.35 + rand() * 0.45
     _p.set(x, terrainHeight(x, z) - 0.03, z)
     _e.set(0, rand() * Math.PI, 0)

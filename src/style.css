@@ -226,6 +226,21 @@ body {
   opacity: 0.75;
 }
 
+/* ライオンの名前ラベル。スポットより控えめ */
+.lion-label {
+  z-index: 3;
+  padding: 4px 10px 6px;
+  background: rgba(255, 246, 230, 0.82);
+}
+
+.lion-label::after {
+  background: rgba(255, 246, 230, 0.82);
+}
+
+.lion-label .spot-label-name {
+  font-size: 12px;
+}
+
 .banner {
   position: fixed;
   left: 50%;

@@ -16,6 +16,9 @@ export type ViewName =
   | 'angie'
   | 'angie-side'
   | 'angie-front'
+  | 'family'
+  | 'alex'
+  | 'riley'
   | 'free'
 
 const angie = LIONS.find((l) => l.id === 'angie') ?? LIONS[0]
@@ -70,6 +73,34 @@ export function applyView(name: ViewName, player: PlayerController): void {
       player.teleport(angie.x + 7, angie.z + 6, Math.PI)
       player.setCameraOverride(lionView(4.2, 0.6, 1.4, 0.65))
       break
+    case 'family': {
+      // 家族の場面: スポットの東側から、アンジーと双子をひとつの画面に
+      const y = terrainHeight(KOPJE.x, KOPJE.z)
+      player.teleport(KOPJE.x + 3, KOPJE.z + 4, -2.3)
+      player.setCameraOverride({
+        position: { x: KOPJE.x - 0.2, y: y + 2.4, z: KOPJE.z + 3.0 },
+        lookAt: { x: KOPJE.x - 4.6, y: y + 0.5, z: KOPJE.z - 3.4 },
+      })
+      break
+    }
+    case 'alex': {
+      const y = terrainHeight(KOPJE.x, KOPJE.z)
+      player.teleport(KOPJE.x + 1.5, KOPJE.z - 1.5, 0)
+      player.setCameraOverride({
+        position: { x: KOPJE.x + 1.2, y: y + 1.9, z: KOPJE.z - 7.8 },
+        lookAt: { x: KOPJE.x + 4.8, y: y + 0.7, z: KOPJE.z - 5.2 },
+      })
+      break
+    }
+    case 'riley': {
+      const y = terrainHeight(40, 5)
+      player.teleport(35, 10, 0)
+      player.setCameraOverride({
+        position: { x: 35.5, y: y + 2.2, z: 9.5 },
+        lookAt: { x: 41, y: y + 0.6, z: 3.5 },
+      })
+      break
+    }
     case 'free':
     default:
       break
@@ -77,5 +108,5 @@ export function applyView(name: ViewName, player: PlayerController): void {
 }
 
 export function viewNames(): ViewName[] {
-  return ['entrance', 'far', 'climb', 'summit', 'summit-east', 'angie', 'angie-side', 'angie-front', 'free']
+  return ['entrance', 'far', 'climb', 'summit', 'summit-east', 'angie', 'angie-side', 'angie-front', 'family', 'alex', 'riley', 'free']
 }

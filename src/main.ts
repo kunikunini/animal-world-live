@@ -13,6 +13,7 @@ import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
+import { createWorldLabels } from './ui/labels'
 import { createFriendBookStore } from './data/friends'
 import { getAnimal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
@@ -112,9 +113,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
   })
 
-  // 観察画面。スポットの主役はアンジー（母）。家族の映像を共有する
+  // 出会い: いちばん近くにいるライオンのそばに来たらバナー。「双眼鏡で見る」はその個体の観察画面
+  const labels = createWorldLabels()
+  for (const lion of lions) labels.add(lion.id, getAnimal(lion.id)?.name ?? lion.id)
+  let encounterId: string | null = null
   hud.onViewSpot(() => {
-    const animal = getAnimal(SPOT.animalId)
+    const animal = getAnimal(encounterId ?? SPOT.animalId)
     if (animal) observe.open(animal, 'world')
   })
 
@@ -161,15 +165,33 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     clouds.update(dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
 
-    // 観察スポットとの距離。着いたらバナー、離れたらボタン
+    // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
     spot.update(time, distance)
-    const nowArrived = distance < SPOT.arriveRadius
-    if (nowArrived !== arrived) {
-      arrived = nowArrived
-      hud.setArrived(arrived)
-    }
+    arrived = distance < SPOT.arriveRadius
     hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
+
+    // 出会い: いちばん近いライオン。名前ラベルは 45m 以内で見せる
+    let nearest: { id: string; d: number } | null = null
+    for (const lion of lions) {
+      const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
+      const reach = lion.collider.r + 4.2
+      if (d < reach && (!nearest || d < nearest.d)) nearest = { id: lion.id, d }
+      projected.copy(lion.position).setY(lion.position.y + 1.5 * lion.group.scale.y + 0.4).project(camera)
+      const onScreen = projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1
+      if (onScreen && d < 45) {
+        labels.set(lion.id, { x: ((projected.x + 1) / 2) * window.innerWidth, y: ((1 - projected.y) / 2) * window.innerHeight }, d)
+      } else {
+        labels.set(lion.id, null, d)
+      }
+    }
+    const nextId = nearest ? nearest.id : null
+    if (nextId !== encounterId) {
+      encounterId = nextId
+      const lion = lions.find((l) => l.id === nextId)
+      if (lion) lion.notice(time)
+      hud.setEncounter(lion ? (getAnimal(lion.id)?.name ?? lion.id) : null)
+    }
 
     // スポットのラベルを画面に重ねる（カメラの後ろにある時は隠す）
     projected.copy(spotHead).project(camera)
