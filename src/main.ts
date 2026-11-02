@@ -7,6 +7,8 @@ import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
 import { SPOT } from './world/layout'
 import { createObserveView } from './ui/observe'
+import { createBookView } from './ui/book'
+import { createFriendBookStore } from './data/friends'
 import { getAnimal } from './data/animals'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
@@ -21,7 +23,31 @@ function isMobile(): boolean {
   return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768
 }
 
-function startWorld(canvas: HTMLCanvasElement): void {
+/** 3D ワールドに依存しない部分。ともだち帳と観察モニターは WebGL が無くても使える */
+function createShell() {
+  const store = createFriendBookStore()
+  const hud = createHud()
+  const observe = createObserveView(store)
+  const book = createBookView(store)
+
+  // ともだち帳の「会いに行く」: 3D を歩かずに映像へ直行
+  book.onVisit((animal) => observe.open(animal, 'book'))
+  hud.onOpenBook(() => book.open())
+  observe.onBefriend(() => hud.pulseBook())
+  observe.setReduceMotion(hud.reduceMotion)
+  hud.onReduceMotionChange((on) => observe.setReduceMotion(on))
+
+  for (const id of ['entry-book', 'fallback-book']) {
+    document.getElementById(id)?.addEventListener('click', () => book.open())
+  }
+
+  return { store, hud, observe, book }
+}
+
+type Shell = ReturnType<typeof createShell>
+
+function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
+  const { hud, observe, book } = shell
   const mobile = isMobile()
   const { renderer, scene, camera, sun, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
   if (mobile) sun.shadow.mapSize.set(1024, 1024)
@@ -35,7 +61,6 @@ function startWorld(canvas: HTMLCanvasElement): void {
   const spot = createObservationSpot()
   scene.add(spot.group)
 
-  const hud = createHud()
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
 
@@ -45,21 +70,20 @@ function startWorld(canvas: HTMLCanvasElement): void {
   })
 
   // 観察画面。スポットの主役はアンジー（母）。家族の映像を共有する
-  const observe = createObserveView()
   hud.onViewSpot(() => {
     const animal = getAnimal(SPOT.animalId)
-    if (!animal) return
-    player.setInputEnabled(false)
-    observe.open(animal)
-  })
-  observe.onClose(() => {
-    player.setInputEnabled(true)
-    canvas.focus()
+    if (animal) observe.open(animal, 'world')
   })
 
-  const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))
-  const projected = new THREE.Vector3()
-  let arrived = false
+  // 何かの画面が開いている間は、ワールドのタップとキーを止める
+  const syncInput = () => {
+    const blocked = observe.isOpen() || book.isOpen()
+    player.setInputEnabled(!blocked)
+    if (!blocked) canvas.focus()
+  }
+  observe.onOpenChange(syncInput)
+  book.onOpenChange(syncInput)
+  syncInput()
 
   const applyReduceMotion = (on: boolean) => {
     player.setReduceMotion(on)
@@ -68,6 +92,10 @@ function startWorld(canvas: HTMLCanvasElement): void {
   applyReduceMotion(hud.reduceMotion)
   hud.onReduceMotionChange(applyReduceMotion)
   hud.show()
+
+  const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))
+  const projected = new THREE.Vector3()
+  let arrived = false
 
   // 影のカメラはプレイヤーについていく
   const sunOffset = sun.position.clone()
@@ -137,7 +165,7 @@ function startWorld(canvas: HTMLCanvasElement): void {
 
   if (import.meta.env.DEV) {
     // 開発時だけ、ブラウザのコンソールから中身を覗けるようにする
-    ;(window as unknown as { __awl: unknown }).__awl = { camera, spot, player, props }
+    ;(window as unknown as { __awl: unknown }).__awl = { camera, spot, player, props, shell }
   }
 
   // 1フレーム描いてから入口を消す（白画面を見せない）
@@ -151,6 +179,8 @@ function main(): void {
   const fallback = document.getElementById('fallback') as HTMLElement
   const enter = document.getElementById('enter') as HTMLButtonElement
 
+  const shell = createShell()
+
   if (!hasWebGL(canvas)) {
     entry.hidden = true
     fallback.hidden = false
@@ -160,7 +190,7 @@ function main(): void {
   enter.addEventListener('click', () => {
     enter.disabled = true
     try {
-      startWorld(canvas)
+      startWorld(canvas, shell)
       entry.hidden = true
       canvas.focus()
     } catch (err) {

@@ -7,6 +7,10 @@ export interface Hud {
   onGoToSpot: (fn: () => void) => void
   /** 「双眼鏡で見る」 */
   onViewSpot: (fn: () => void) => void
+  /** 「ともだち帳」ボタン */
+  onOpenBook: (fn: () => void) => void
+  /** 帳に新しいページが増えたことを、ボタンの一拍の動きで伝える */
+  pulseBook: () => void
   /** 「観察スポットへ」ボタンの表示切り替え */
   setGoToSpotVisible: (visible: boolean) => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
@@ -44,6 +48,7 @@ export function createHud(): Hud {
   const spotDistance = document.getElementById('spot-distance') as HTMLElement
   const arrived = document.getElementById('arrived') as HTMLElement
   const viewSpotBtn = document.getElementById('view-spot') as HTMLButtonElement
+  const openBookBtn = document.getElementById('open-book') as HTMLButtonElement
 
   const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const stored = readStored()
@@ -62,6 +67,9 @@ export function createHud(): Hud {
 
   const viewListeners: Array<() => void> = []
   viewSpotBtn.addEventListener('click', () => viewListeners.forEach((fn) => fn()))
+
+  const bookListeners: Array<() => void> = []
+  openBookBtn.addEventListener('click', () => bookListeners.forEach((fn) => fn()))
 
   if (import.meta.env.DEV) fpsEl.hidden = false
 
@@ -82,6 +90,15 @@ export function createHud(): Hud {
     },
     onViewSpot: (fn) => {
       viewListeners.push(fn)
+    },
+    onOpenBook: (fn) => {
+      bookListeners.push(fn)
+    },
+    pulseBook: () => {
+      if (reduceMotion) return
+      openBookBtn.classList.remove('is-pulse')
+      void openBookBtn.offsetWidth
+      openBookBtn.classList.add('is-pulse')
     },
     setGoToSpotVisible: (visible) => {
       goToSpotBtn.hidden = !visible

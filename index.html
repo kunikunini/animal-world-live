@@ -17,6 +17,7 @@
         <p class="entry-lead">夕暮れのサバンナを歩いて、ライオンたちに会いに行こう。</p>
         <button id="enter" class="btn btn-primary" type="button">世界に入る</button>
         <p class="entry-hint">タップした場所へ歩きます。キーボードの W A S D でも動けます。</p>
+        <button id="entry-book" class="btn btn-ghost btn-small" type="button">ともだち帳を開く</button>
       </div>
     </div>
 
@@ -25,6 +26,7 @@
         <p class="entry-kicker">ANIMAL WORLD LIVE</p>
         <h1 class="entry-title">このブラウザでは3Dを表示できません</h1>
         <p class="entry-lead">WebGLが使えない環境のようです。別のブラウザか端末でもう一度開いてみてください。</p>
+        <button id="fallback-book" class="btn btn-ghost btn-small" type="button">ともだち帳を開く</button>
       </div>
     </div>
 
@@ -55,6 +57,24 @@
           <span id="observe-placeholder" class="observe-placeholder" hidden>仮映像（色と文字だけの自作プレースホルダ）</span>
         </div>
         <div id="observe-profile" class="observe-profile"></div>
+        <div class="befriend">
+          <button id="befriend" class="btn btn-primary" type="button">ともだちになる</button>
+          <p id="befriended" class="befriended" hidden>ともだち帳に書いてあります（初めて出会った日: <span id="befriended-date"></span>）</p>
+          <p id="befriend-memory-note" class="befriend-note" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+        </div>
+      </div>
+      <div id="befriend-toast" class="toast" hidden role="status">ともだち帳に書きました</div>
+    </section>
+
+    <section id="book" class="book" hidden aria-label="ともだち帳">
+      <div class="book-panel">
+        <header class="observe-header">
+          <h2 class="observe-title">ともだち帳</h2>
+          <button id="book-close" class="btn btn-ghost" type="button">閉じる</button>
+        </header>
+        <p id="book-empty" class="book-empty">まだ誰もいません。サバンナを歩いて、観察スポットで会ってみよう。</p>
+        <ul id="book-list" class="book-list"></ul>
+        <p id="book-note" class="befriend-note" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
       </div>
     </section>
 
@@ -68,6 +88,9 @@
       </div>
       <div class="hud-center">
         <button id="goto-spot" class="btn btn-primary btn-small" type="button">観察スポットへ</button>
+      </div>
+      <div class="hud-right">
+        <button id="open-book" class="btn btn-book" type="button">ともだち帳</button>
       </div>
     </div>
 

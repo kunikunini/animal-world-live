@@ -1,19 +1,27 @@
 import type { Animal } from '../data/animals'
+import type { FriendBookStore } from '../data/friends'
+import { formatMetDate } from '../data/friends'
 import { resolveVideoSource } from '../video/source'
 import { renderProfile } from './profile'
+import { playFriendChime } from './chime'
+
+export type ObserveOrigin = 'world' | 'book'
 
 export interface ObserveView {
-  open: (animal: Animal) => void
+  open: (animal: Animal, from: ObserveOrigin) => void
   close: () => void
   isOpen: () => boolean
-  onClose: (fn: () => void) => void
+  onOpenChange: (fn: (open: boolean) => void) => void
+  /** 「ともだちになる」が押された直後 */
+  onBefriend: (fn: (animal: Animal) => void) => void
+  setReduceMotion: (on: boolean) => void
 }
 
 /**
- * 観察画面。収録映像を HTML の <video> で重ねて再生する。
+ * 観察画面。収録映像を HTML の <video> で重ねて再生し、その下にプロフィールと「ともだちになる」。
  * 再生はユーザーのタップで始める（自動再生しない）。映像が読めない時はポスターと再試行を出す。
  */
-export function createObserveView(): ObserveView {
+export function createObserveView(store: FriendBookStore): ObserveView {
   const root = document.getElementById('observe') as HTMLElement
   const title = document.getElementById('observe-title') as HTMLElement
   const badge = document.getElementById('observe-badge') as HTMLElement
@@ -25,10 +33,18 @@ export function createObserveView(): ObserveView {
   const retryBtn = document.getElementById('observe-retry') as HTMLButtonElement
   const closeBtn = document.getElementById('observe-close') as HTMLButtonElement
   const profile = document.getElementById('observe-profile') as HTMLElement
+  const befriendBtn = document.getElementById('befriend') as HTMLButtonElement
+  const befriended = document.getElementById('befriended') as HTMLElement
+  const befriendedDate = document.getElementById('befriended-date') as HTMLElement
+  const toast = document.getElementById('befriend-toast') as HTMLElement
+  const memoryNote = document.getElementById('befriend-memory-note') as HTMLElement
 
-  const closeListeners: Array<() => void> = []
+  const openListeners: Array<(open: boolean) => void> = []
+  const befriendListeners: Array<(animal: Animal) => void> = []
   let open = false
   let current: Animal | null = null
+  let reduceMotion = false
+  let toastTimer = 0
 
   const showPoster = (text: string, canPlay: boolean, canRetry: boolean) => {
     poster.hidden = false
@@ -58,6 +74,15 @@ export function createObserveView(): ObserveView {
     showPoster('タップして再生', true, false)
   }
 
+  /** 「ともだちになる」の状態。登録済みなら日付を見せ、ボタンは出さない */
+  const renderFriendState = (animal: Animal) => {
+    const entry = store.get(animal.id)
+    befriendBtn.hidden = !!entry
+    befriended.hidden = !entry
+    if (entry) befriendedDate.textContent = formatMetDate(entry.firstMetAt)
+    memoryNote.hidden = store.isPersistent
+  }
+
   const play = async () => {
     try {
       await video.play()
@@ -83,32 +108,62 @@ export function createObserveView(): ObserveView {
     }
   })
 
-  const close = () => {
-    if (!open) return
-    open = false
-    video.pause()
-    root.hidden = true
-    closeListeners.forEach((fn) => fn())
+  befriendBtn.addEventListener('click', () => {
+    if (!current) return
+    // ユーザー自身が押す瞬間。動物が承諾したという表現はしない
+    store.add(current.id)
+    renderFriendState(current)
+    playFriendChime()
+    toast.hidden = false
+    toast.classList.toggle('is-animated', !reduceMotion)
+    window.clearTimeout(toastTimer)
+    toastTimer = window.setTimeout(() => {
+      toast.hidden = true
+    }, 2600)
+    befriendListeners.forEach((fn) => fn(current as Animal))
+  })
+
+  const setOpen = (next: boolean) => {
+    if (open === next) return
+    open = next
+    root.hidden = !open
+    if (!open) {
+      video.pause()
+      toast.hidden = true
+    }
+    openListeners.forEach((fn) => fn(open))
   }
-  closeBtn.addEventListener('click', close)
+
+  closeBtn.addEventListener('click', () => setOpen(false))
   window.addEventListener('keydown', (e) => {
-    if (open && e.key === 'Escape') close()
+    if (open && e.key === 'Escape') {
+      // 下に開いているともだち帳まで閉じないように、ここで止める
+      e.stopImmediatePropagation()
+      setOpen(false)
+    }
   })
 
   return {
-    open: (animal) => {
+    open: (animal, from) => {
       current = animal
       title.textContent = `${animal.name}たちの観察モニター`
+      closeBtn.textContent = from === 'book' ? 'ともだち帳に戻る' : '世界に戻る'
       load(animal)
       profile.innerHTML = renderProfile(animal)
-      root.hidden = false
-      open = true
+      renderFriendState(animal)
+      setOpen(true)
       closeBtn.focus()
     },
-    close,
+    close: () => setOpen(false),
     isOpen: () => open,
-    onClose: (fn) => {
-      closeListeners.push(fn)
+    onOpenChange: (fn) => {
+      openListeners.push(fn)
+    },
+    onBefriend: (fn) => {
+      befriendListeners.push(fn)
+    },
+    setReduceMotion: (on) => {
+      reduceMotion = on
     },
   }
 }
