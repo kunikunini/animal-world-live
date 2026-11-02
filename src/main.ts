@@ -10,6 +10,7 @@ import { createClouds } from './world/clouds'
 import { createPostFx } from './render/postfx'
 import { LIONS, SPOT } from './world/layout'
 import { createLion } from './world/lions'
+import { loadLionModel } from './world/lionModel'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createFriendBookStore } from './data/friends'
@@ -82,6 +83,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   for (const lion of lions) {
     scene.add(lion.group)
     props.colliders.push(lion.collider)
+  }
+  // 実験: ?lion=v2 で Blender 製モデルに差し替える。読めなければプリミティブのまま
+  if (new URLSearchParams(location.search).get('lion') === 'v2') {
+    const angie = lions.find((l) => l.id === 'angie')
+    if (angie) {
+      loadLionModel('/models/angie-v2.glb')
+        .then((loaded) => angie.swapModel(loaded.model, loaded.parts))
+        .catch((err) => console.warn('lion v2 model not loaded; keeping primitive', err))
+    }
   }
 
   // カラーグレーディング（1パス）。スマホでは最初から切る

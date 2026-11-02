@@ -40,6 +40,10 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 
 Vite + TypeScript + Three.js。世界はすべて手続き生成（外部3Dアセットは使っていません）。
 
+### 3D モデルの生成（実験）
+
+`tools/blender/angie_v2.py` は Blender 5.2 の Python で動かすスクリプトで、様式化したライオンをコードだけで造形し glTF に書き出します（外部の 3D 素材は使いません）。`?lion=v2` を付けて開くと `public/models/angie-v2.glb` に差し替わり、読めなければプリミティブ版のまま動きます。
+
 ## 開発
 
 ```bash
