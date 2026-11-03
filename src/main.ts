@@ -18,6 +18,7 @@ import type { LabelEntry, Rect } from './ui/labels'
 import { createEncounterIcon } from './ui/encounter'
 import { createMinimap } from './ui/minimap'
 import { createMapView } from './ui/map'
+import { createJoystick } from './ui/joystick'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
 import { getAnimal } from './data/animals'
@@ -119,6 +120,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
 
   hud.onJump(() => player.jump())
 
+  // 左下の半透明スティック（スマホ）。細かい移動用。タップ移動と併用できる。?stick=1 で PC でも出す
+  const joystick = createJoystick()
+  joystick.onChange((x, z) => player.setStick(x, z))
+  if (mobile || new URLSearchParams(location.search).get('stick') === '1') joystick.show()
+
   // 「観察スポットへ」: 南の登り口を経由して台地の頂上へ
   hud.onGoToSpot(() => {
     player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
@@ -143,6 +149,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   const syncInput = () => {
     const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen()
     player.setInputEnabled(!blocked)
+    joystick.setEnabled(!blocked)
     if (!blocked) canvas.focus()
   }
   observe.onOpenChange(syncInput)

@@ -21,6 +21,8 @@ export interface PlayerController {
   setInputEnabled: (on: boolean) => void
   /** ジャンプ（地面にいるときだけ） */
   jump: () => void
+  /** バーチャルスティック。カメラ基準の (x, z)、長さ 0〜1。倒した量で速さが変わる。(0, 0) で離した状態 */
+  setStick: (x: number, z: number) => void
   /** 開発用: 位置と向きを即座に変える（スクリーンショットの定点） */
   teleport: (x: number, z: number, heading?: number, camYaw?: number) => void
   /** 開発用: 追従カメラを止めて固定の位置・注視点にする。null で戻す */
@@ -157,6 +159,8 @@ export function createPlayer(
   let cameraOverride: CameraOverride | null = null
 
   const keys = new Set<string>()
+  let stickX = 0
+  let stickZ = 0
   const raycaster = new THREE.Raycaster()
   const ndc = new THREE.Vector2()
 
@@ -290,6 +294,16 @@ export function createPlayer(
     if (keys.has('s') || keys.has('arrowdown')) kz += 1
     if (keys.has('a') || keys.has('arrowleft')) kx -= 1
     if (keys.has('d') || keys.has('arrowright')) kx += 1
+    // スティック（キーが無いときだけ）。倒した量で速さを変える
+    let throttle = 1
+    if (kx === 0 && kz === 0) {
+      const mag = Math.hypot(stickX, stickZ)
+      if (mag > 0.12) {
+        kx = stickX
+        kz = stickZ
+        throttle = Math.min(1, (mag - 0.12) / 0.75 + 0.25)
+      }
+    }
 
     _prev.copy(object.position)
     let moving = false
@@ -305,7 +319,7 @@ export function createPlayer(
       const sin = Math.sin(camYaw)
       const cos = Math.cos(camYaw)
       _dir.set(kx * cos + kz * sin, 0, -kx * sin + kz * cos)
-      wanted = WALK_SPEED * dt
+      wanted = WALK_SPEED * dt * throttle
       _target.copy(object.position).addScaledVector(_dir, wanted)
       object.position.x = _target.x
       object.position.z = _target.z
@@ -438,7 +452,14 @@ export function createPlayer(
       if (!on) {
         keys.clear()
         pointerId = null
+        stickX = 0
+        stickZ = 0
       }
+    },
+    setStick: (x, z) => {
+      if (!inputEnabled) return
+      stickX = x
+      stickZ = z
     },
     setReduceMotion: (on) => {
       reduceMotion = on
