@@ -232,9 +232,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
       }
     }
     const nextId = nearest ? nearest.id : null
-    const iconHead = nextId ? heads.get(nextId) : undefined
+    let iconHead = nextId ? heads.get(nextId) : undefined
     const iconR = encounterIcon.size() / 2
     const obstacles: Rect[] = []
+    if (nextId && !iconHead) {
+      // そばにいるのに頭が画面に入っていない（到着時に横や後ろにいる）。画面の端に寄せて、必ず押せるようにする
+      const lion = lions.find((l) => l.id === nextId)
+      if (lion) {
+        projected.copy(lion.position).setY(lion.position.y + 0.95 * lion.group.scale.y + 0.1).project(camera)
+        let sx = projected.x
+        let sy = projected.y
+        if (projected.z >= 1) {
+          // カメラの後ろにいる時は射影が裏返るので戻す
+          sx = -sx
+          sy = -sy
+        }
+        const marginX = iconR + 12
+        const marginTop = iconR + 72
+        // 下は HUD（スマホではスティックも）に重ねない
+        const marginBottom = iconR + (mobile ? 320 : 190)
+        iconHead = {
+          x: Math.min(window.innerWidth - marginX, Math.max(marginX, ((sx + 1) / 2) * window.innerWidth)),
+          y: Math.min(window.innerHeight - marginBottom, Math.max(marginTop, ((1 - sy) / 2) * window.innerHeight)),
+          d: nearest?.d ?? 0,
+        }
+      }
+    }
     if (iconHead) {
       encounterIcon.set({ x: iconHead.x, y: iconHead.y }, getAnimal(nextId as string)?.name)
       obstacles.push({ l: iconHead.x - iconR, r: iconHead.x + iconR, t: iconHead.y - iconR, b: iconHead.y + iconR })
@@ -242,7 +265,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
       encounterIcon.set(null)
     }
     for (const [id, head] of heads) {
-      if (id === nextId && iconHead) {
+      if (id === nextId && iconHead && heads.get(id) === iconHead) {
         // 名前はアイコンの下に。ラベルの高さ分だけ下げた位置を下端にする
         labelEntries.push({ id, x: head.x, y: head.y + iconR + 4 + 28, d: head.d, under: true })
       } else {
