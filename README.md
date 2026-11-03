@@ -6,6 +6,10 @@
 
 Walk through a hand-built 3D savanna, meet real lions, read their profiles, press "Become friends" by your own choice, and come back to see them anytime from your Friends Book. A web prototype.
 
+## Why this exists
+
+Some people cannot come to meet animals in person: children in long hospital stays, older people who can no longer travel far, and families who live too far away. For them, a real animal stays a picture in a book or a clip that scrolls past — you watch it, but you never go to meet it, choose it, or keep anything of the encounter. ANIMAL WORLD LIVE removes that wall. You walk through the savanna yourself, find a real lion, watch recorded footage of that same animal, learn how to tell her apart and what her keeper sees in her, and press "Become friends" only when you choose to. The encounter stays in your Friends Book, so the animal becomes someone you can come back to — not content you once watched. After the hackathon, the facility can keep adding its real animals, so people who cannot visit can keep meeting them from a hospital room, a care home, or home.
+
 An entry for **Built with Claude: Japan 2026**, built from scratch during the hackathon period (from 2026-11-02). Development with Claude Code is logged in `DEVLOG.md` (Japanese).
 
 ## What works now
@@ -66,6 +70,10 @@ npm run dev
 **「世界中の動物たちと、友達になろう。」**
 
 美しい3Dのサバンナを歩いて、実在するライオンたちと出会い、プロフィールを知り、自分の意思で「ともだちになる」を押して、ともだち帳からいつでも会いに行ける。そんなWebプロトタイプです。
+
+## なぜ作るのか
+
+動物に会いに来たくても、来られない人がいます。長期入院中の子ども、遠出が難しくなった高齢者、施設から遠くに住む家族です。その人たちにとって実在の動物は、図鑑の写真や、流れて終わる短い動画のままです。見て終わりで、自分で会いに行き、自分で選んで、思い出として残すことができません。ANIMAL WORLD LIVEは、その壁を取り払います。自分でサバンナを歩いて実在のライオンと出会い、その個体の収録映像を見て、見分け方や飼育員の見ている魅力を知り、自分の意思で「ともだちになる」を押す。ともだち帳に出会いが残るので、その動物は「一度見たコンテンツ」ではなく、何度でも会いに行ける存在になります。ハッカソン後も、施設が実在の動物を増やし続けることで、来られない人が病室や介護施設、自宅から会いに来続けられます。
 
 Built with Claude: Japan 2026 の提出作品として、ハッカソン期間中（2026-11-02 以降）に新規制作しています。Claude Code との制作過程は `DEVLOG.md` に記録しています。
 
