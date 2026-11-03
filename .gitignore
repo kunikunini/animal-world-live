@@ -5,10 +5,13 @@ dist/
 .vercel/
 .DS_Store
 
-# 非公開資料・映像素材はリポジトリに入れない
+# 非公開資料はリポジトリに入れない
 private/
 *.private.md
-public/media/
+# 映像: 配信用（720p に最適化した版とポスター）だけ追跡する。元ファイルや仮映像は入れない
+public/media/*
+!public/media/angie-claire-carla_720p.mp4
+!public/media/angie-claire-carla_poster.jpg
 
 # ローカルの開発ツール設定
 .claude/

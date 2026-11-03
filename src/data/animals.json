@@ -1,5 +1,5 @@
 {
-  "$comment": "個体データ。追加はこのファイルだけで可能。担当飼育員の氏名は入れない。仔の性別は未確定なので書かない。映像・写真は許諾範囲が決まるまでリポジトリに入れず、URL で参照する。",
+  "$comment": "個体データ。追加はこのファイルだけで可能。担当飼育員の氏名は入れない。仔の性別は未確定なので書かない。映像は配信用に最適化した収録映像（public/media/ の追跡対象ファイル）を URL で参照する。",
   "animals": [
     {
       "id": "angie",
@@ -14,9 +14,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "/media/lions-family.mp4",
-        "poster": "",
-        "placeholder": true
+        "url": "/media/angie-claire-carla_720p.mp4",
+        "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
     {
@@ -29,12 +28,11 @@
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
-      "status": "preparing",
+      "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "/media/lions-family.mp4",
-        "poster": "",
-        "placeholder": true
+        "url": "/media/angie-claire-carla_720p.mp4",
+        "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
     {
@@ -47,12 +45,11 @@
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
-      "status": "preparing",
+      "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "/media/lions-family.mp4",
-        "poster": "",
-        "placeholder": true
+        "url": "/media/angie-claire-carla_720p.mp4",
+        "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
     {
