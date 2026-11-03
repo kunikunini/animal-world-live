@@ -243,6 +243,11 @@ body {
   font-size: 12px;
 }
 
+/* 双眼鏡のアイコンの下にぶら下げる時は矢印なし */
+.lion-label.is-under::after {
+  display: none;
+}
+
 /* 左上のミニマップ。歩ける範囲の俯瞰。タップで移動 */
 .minimap {
   position: fixed;
@@ -348,8 +353,8 @@ body {
 }
 
 .encounter-icon svg {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   position: relative;
 }
 

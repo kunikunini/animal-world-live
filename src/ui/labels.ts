@@ -9,6 +9,8 @@ export interface LabelEntry {
   y: number
   /** プレイヤーからの距離。近い順に優先する */
   d: number
+  /** true なら矢印なし（アイコンの下にぶら下げる時） */
+  under?: boolean
 }
 
 export interface PlacedLabel {
@@ -19,8 +21,8 @@ export interface PlacedLabel {
 
 export interface WorldLabels {
   add: (id: string, name: string) => void
-  /** 見せるラベルだけ渡す。渡さなかった id は隠す。戻り値は確定した位置 */
-  layout: (entries: LabelEntry[]) => Map<string, PlacedLabel>
+  /** 見せるラベルだけ渡す。渡さなかった id は隠す。obstacles は避ける矩形（双眼鏡のアイコンなど）。戻り値は確定した位置 */
+  layout: (entries: LabelEntry[], obstacles?: Rect[]) => Map<string, PlacedLabel>
 }
 
 interface Item {
@@ -30,7 +32,7 @@ interface Item {
   h: number
 }
 
-interface Rect {
+export interface Rect {
   l: number
   r: number
   t: number
@@ -65,8 +67,8 @@ export function createWorldLabels(): WorldLabels {
       document.body.append(el)
       items.set(id, { el, visible: false, w: 0, h: 0 })
     },
-    layout: (entries) => {
-      const placed: Rect[] = []
+    layout: (entries, obstacles = []) => {
+      const placed: Rect[] = [...obstacles]
       const result = new Map<string, PlacedLabel>()
       const shown = new Set<string>()
       const sorted = [...entries].sort((a, b) => a.d - b.d)
@@ -75,6 +77,7 @@ export function createWorldLabels(): WorldLabels {
         if (!item) continue
         shown.add(e.id)
         setVisible(item, true)
+        item.el.classList.toggle('is-under', e.under === true)
         // 名前は変わらないので、大きさは一度だけ測る
         if (item.w === 0) {
           item.w = item.el.offsetWidth

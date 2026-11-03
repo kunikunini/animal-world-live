@@ -14,7 +14,7 @@ import { loadLionModel } from './world/lionModel'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
-import type { LabelEntry } from './ui/labels'
+import type { LabelEntry, Rect } from './ui/labels'
 import { createEncounterIcon } from './ui/encounter'
 import { createMinimap } from './ui/minimap'
 import { createMapView } from './ui/map'
@@ -204,25 +204,45 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     arrived = distance < SPOT.arriveRadius
     hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
 
-    // 出会い: いちばん近いライオン。名前ラベルは 45m 以内で見せ、近い個体を優先して重ならないように置く
+    // 出会い: いちばん近いライオン。名前ラベルは 45m 以内で見せ、近い個体を優先して重ならないように置く。
+    // そばにいる個体は頭に双眼鏡のアイコンを重ね、名前はその下にぶら下げる
     let nearest: { id: string; d: number } | null = null
     const labelEntries: LabelEntry[] = []
+    const heads = new Map<string, { x: number; y: number; d: number }>()
     for (const lion of lions) {
       const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
       const reach = lion.collider.r + 4.2
       if (d < reach && (!nearest || d < nearest.d)) nearest = { id: lion.id, d }
-      projected.copy(lion.position).setY(lion.position.y + 1.5 * lion.group.scale.y + 0.4).project(camera)
+      // 伏せたライオンの頭のあたり
+      projected.copy(lion.position).setY(lion.position.y + 0.95 * lion.group.scale.y + 0.1).project(camera)
       const onScreen = projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1
       if (onScreen && d < 45) {
-        labelEntries.push({
-          id: lion.id,
+        heads.set(lion.id, {
           x: ((projected.x + 1) / 2) * window.innerWidth,
           y: ((1 - projected.y) / 2) * window.innerHeight,
           d,
         })
       }
     }
-    const placedLabels = labels.layout(labelEntries)
+    const nextId = nearest ? nearest.id : null
+    const iconHead = nextId ? heads.get(nextId) : undefined
+    const iconR = encounterIcon.size() / 2
+    const obstacles: Rect[] = []
+    if (iconHead) {
+      encounterIcon.set({ x: iconHead.x, y: iconHead.y }, getAnimal(nextId as string)?.name)
+      obstacles.push({ l: iconHead.x - iconR, r: iconHead.x + iconR, t: iconHead.y - iconR, b: iconHead.y + iconR })
+    } else {
+      encounterIcon.set(null)
+    }
+    for (const [id, head] of heads) {
+      if (id === nextId && iconHead) {
+        // 名前はアイコンの下に。ラベルの高さ分だけ下げた位置を下端にする
+        labelEntries.push({ id, x: head.x, y: head.y + iconR + 4 + 28, d: head.d, under: true })
+      } else {
+        labelEntries.push({ id, x: head.x, y: head.y - 10, d: head.d })
+      }
+    }
+    labels.layout(labelEntries, obstacles)
     minimapTimer -= dt
     if (minimapTimer <= 0) {
       minimapTimer = 0.1
@@ -241,7 +261,6 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
       minimap.update(mapPlayer, mapLions)
       mapView.update(mapPlayer, mapLions)
     }
-    const nextId = nearest ? nearest.id : null
     if (nextId !== encounterId) {
       encounterId = nextId
       const lion = lions.find((l) => l.id === nextId)
@@ -251,13 +270,6 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
         met.mark(lion.id)
       }
       if (lion) hud.toast(`${getAnimal(lion.id)?.name ?? lion.id}のそばに来ました`)
-    }
-    // 双眼鏡のアイコンは、そばにいる個体の名前ラベルの上に浮かせる
-    const iconAnchor = encounterId ? placedLabels.get(encounterId) : undefined
-    if (iconAnchor) {
-      encounterIcon.set({ x: iconAnchor.x, y: iconAnchor.top - 8 }, getAnimal(encounterId as string)?.name)
-    } else {
-      encounterIcon.set(null)
     }
 
     // スポットのラベルを画面に重ねる（カメラの後ろにある時は隠す）
