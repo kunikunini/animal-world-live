@@ -10,6 +10,8 @@ Walk through a hand-built 3D savanna, meet real lions, read their profiles, pres
 
 Some people cannot come to meet animals in person: children in long hospital stays, older people who can no longer travel far, and families who live too far away. For them, a real animal stays a picture in a book or a clip that scrolls past — you watch it, but you never go to meet it, choose it, or keep anything of the encounter. ANIMAL WORLD LIVE removes that wall. You walk through the savanna yourself, find a real lion, watch recorded footage of that same animal, learn how to tell her apart and what her keeper sees in her, and press "Become friends" only when you choose to. The encounter stays in your Friends Book, so the animal becomes someone you can come back to — not content you once watched. After the hackathon, the facility can keep adding its real animals, so people who cannot visit can keep meeting them from a hospital room, a care home, or home.
 
+**Live demo:** https://animal-world-live.pages.dev (recorded footage is served from Cloudflare R2)
+
 An entry for **Built with Claude: Japan 2026**, built from scratch during the hackathon period (from 2026-11-02). Development with Claude Code is logged in `DEVLOG.md` (Japanese).
 
 ## What works now
@@ -37,6 +39,8 @@ Work with zoos and sanctuaries so that, through live streaming, you can visit an
 
 All animal footage in this prototype is **recorded footage**, shot at Hokkaido Animal World during the hackathon (2026-11-03). It is not a live stream. Only the delivery version (720p, H.264/AAC, converted from HLG to SDR) and a poster image are included under `public/media/`; the original files are not in this repository. The facility has given permission to use the footage and photos.
 
+The published site streams the footage from Cloudflare R2 (`https://media.kobakuni.com/<file>`); the copy in `public/media/` is the master and the fallback for local development. See "Deployment" below.
+
 For animals without footage yet, a self-made placeholder video (color and text only, no external material) can be generated with ffmpeg:
 
 ```bash
@@ -63,6 +67,16 @@ npm install
 npm run dev
 ```
 
+## Deployment
+
+- **Site:** Cloudflare Pages, connected to this GitHub repository. Build command `npm run build`, output directory `dist`, Node 22. Every push to `main` deploys.
+- **Footage:** Cloudflare R2 bucket `awl-media`, served at `https://media.kobakuni.com/<file>`. Pages limits each file to 25 MiB, so the mp4 files are never part of the site build: the Vite plugin in `vite.config.ts` removes `dist/media/*.mp4` after the build (the build log prints each excluded file). The player tries the R2 URL first and falls back to the repository copy (`/media/<file>`), which keeps the dev server and phone testing over LAN working.
+- To add footage for another animal: upload the mp4 to the bucket under the same name as in `public/media/`, then point its `video.url` / `video.fallbackUrl` in `src/data/animals.json` at it.
+
+```bash
+npx wrangler r2 object put awl-media/<file>.mp4 --file public/media/<file>.mp4 --content-type video/mp4 --cache-control "public, max-age=31536000, immutable" --remote
+```
+
 ---
 
 # 日本語版
@@ -74,6 +88,8 @@ npm run dev
 ## なぜ作るのか
 
 動物に会いに来たくても、来られない人がいます。長期入院中の子ども、遠出が難しくなった高齢者、施設から遠くに住む家族です。その人たちにとって実在の動物は、図鑑の写真や、流れて終わる短い動画のままです。見て終わりで、自分で会いに行き、自分で選んで、思い出として残すことができません。ANIMAL WORLD LIVEは、その壁を取り払います。自分でサバンナを歩いて実在のライオンと出会い、その個体の収録映像を見て、見分け方や飼育員の見ている魅力を知り、自分の意思で「ともだちになる」を押す。ともだち帳に出会いが残るので、その動物は「一度見たコンテンツ」ではなく、何度でも会いに行ける存在になります。ハッカソン後も、施設が実在の動物を増やし続けることで、来られない人が病室や介護施設、自宅から会いに来続けられます。
+
+**公開デモ:** https://animal-world-live.pages.dev （収録映像は Cloudflare R2 から配信）
 
 Built with Claude: Japan 2026 の提出作品として、ハッカソン期間中（2026-11-02 以降）に新規制作しています。Claude Code との制作過程は `DEVLOG.md` に記録しています。
 
@@ -102,6 +118,8 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 
 このプロトタイプで使う動物映像は、ハッカソン期間中（2026-11-03）に北海道アニマルワールドで収録した**収録映像**です。ライブ配信ではありません。配信用に最適化した版（720p、H.264/AAC、HLG から SDR へ変換）とポスター画像だけを `public/media/` に含めています。収録した元ファイルはリポジトリに入れていません。映像・写真の使用は施設の許諾を得ています。
 
+公開サイトでは映像を Cloudflare R2（`https://media.kobakuni.com/<ファイル名>`）から配信します。`public/media/` の映像はマスターであり、ローカル開発時の予備です。詳しくは下の「公開」を参照してください。
+
 映像がまだない個体には、色と文字だけの自作プレースホルダ映像を使えます。生成するには ffmpeg を入れて次を実行します（実写や外部の素材は使いません）。
 
 ```bash
@@ -126,4 +144,14 @@ Vite + TypeScript + Three.js、素のDOM、静的サイトとして配信。世�
 ```bash
 npm install
 npm run dev
+```
+
+## 公開
+
+- **サイト本体:** Cloudflare Pages。この GitHub リポジトリに接続し、ビルドコマンド `npm run build`、出力 `dist`、Node 22。`main` への push ごとに公開されます
+- **映像:** Cloudflare R2 のバケット `awl-media` を `https://media.kobakuni.com/<ファイル名>` で配信。Pages は1ファイル 25 MiB までなので、mp4 はサイトのビルドに含めません。`vite.config.ts` のプラグインがビルド後に `dist/media/*.mp4` を消します（ビルドログに除外したファイルが出ます）。プレイヤーはまず R2 の URL を試し、読めなければリポジトリ内の `/media/<ファイル名>` に切り替えるので、開発サーバーや LAN での実機確認はそのまま動きます
+- 個体の映像を増やすときは、`public/media/` と同じ名前でバケットにアップロードし、`src/data/animals.json` の `video.url` / `video.fallbackUrl` を向けます
+
+```bash
+npx wrangler r2 object put awl-media/<file>.mp4 --file public/media/<file>.mp4 --content-type video/mp4 --cache-control "public, max-age=31536000, immutable" --remote
 ```

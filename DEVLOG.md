@@ -224,6 +224,21 @@
 - 修正: 土台が「観察スポットへ」に重なった → HUD の2段の上（下から 172px）に。合成イベントでは `setPointerCapture` が失敗して押下状態が付かなかった → try/catch で続行
 - 検証: スマホ幅（375×812）で pointer events を模擬。全開で 6.6 m/s、半分で 4.7 m/s、離すと停止しつまみが中央に戻る。土台の下端 640px < ボタン上端 653px。型チェック OK。実機の指での操作は未確認
 
+#### 公開: 映像は R2、サイトは Cloudflare Pages（16:30〜）
+
+- 指示: 方針確定。映像は Cloudflare R2（カスタムドメイン media.kobakuni.com、r2.dev は使わない）、サイト本体は Cloudflare Pages（GitHub 接続、Vite ビルド、出力 dist）。個人アカウントを使い、kobakuni.com の既存 DNS は触らない。映像はリポジトリにマスターとして残し、配信の参照先だけ変える。ログインや支払いの画面では止まる
+- R2 を選んだ理由: Pages / Workers の静的配信は1ファイル 25 MiB までで、配信用映像（46 MB）が載らない。25 MB に収めると画質が落ち、尺を切るとデモの価値が減る。R2 なら画質も尺もそのままで、転送量が無料、アレックス・ライリーの映像を同じバケットに同じ命名で足すだけで増やせる
+- 構成: ブラウザ → Pages（animal-world-live.pages.dev: HTML/JS/CSS/ポスター画像）。映像だけ R2（https://media.kobakuni.com/<ファイル名>）。`animals.json` は `url`（R2）と `fallbackUrl`（リポジトリ内 `/media/<同名>`）を持ち、モニターは R2 が読めない時だけ予備へ切り替える（LAN での開発・実機確認を壊さない）
+- セットアップ: `wrangler` を devDependency に追加して `npx wrangler login`（OAuth。1回目は承認前にタイムアウトしたので再実行）。`whoami` で個人アカウント（kobakuni.com のゾーンがある側）を確認。`r2 bucket create awl-media` → `r2 object put`（`--content-type video/mp4 --cache-control "public, max-age=31536000, immutable" --remote`）→ `r2 bucket domain add awl-media --domain media.kobakuni.com --zone-id <kobakuni.com>`（R2 が media の DNS レコードを1件足す。ほかは触らない）。Pages は API で GitHub 接続のプロジェクトを作成（既存の Pages プロジェクトで GitHub App が入っていたので認可画面なしで通った）。ビルド `npm run build`、出力 `dist`、NODE_VERSION=22、`main` の push で自動デプロイ。初回は API で main のデプロイを起動
+- ビルドから mp4 を除外: `vite.config.ts` に `closeBundle` で `dist/media/*.mp4` を消すプラグイン。`vite build` のログに除外したファイル名が出る。再現手順は README の「公開」に記載
+- 検証: 開発サーバーで R2 が未接続の状態 → コンソールに切り替えの警告1行、予備の `/media/...` で再生。`vite build` で `dist/media` にポスターだけ残る。型チェック OK
+
+- 公開サイトで通し確認をしたら導線の穴が見つかった: 「観察スポットへ」で着いた時、アンジーが画面の左端の外にいて双眼鏡アイコンが出ない（アイコンは頭が画面内の時だけ出していた）。修正: そばにいるのに頭が画面外なら、射影を画面内（上 72px・横 12px・下は HUD とスティックを避けて 190/320px の余白）に寄せて必ず出す。カメラの後ろにいる時は射影が裏返るので符号を戻す。開発サーバーで4方向を向いて、全部で画面内に出てスティックと重ならないことを確認（コミット 7997b95）
+
+- 通し確認（公開 URL、ブラウザのスマホ幅）: https://animal-world-live.pages.dev → 「世界に入る」→「観察スポットへ」で自動移動 → 到着でアンジーの双眼鏡（画面左端に寄せた表示）→ タップで「アンジーの観察モニター」が開き、`https://media.kobakuni.com/angie-claire-carla_720p.mp4` が音声付きで即再生（1280×720、ドロップ 0、フォールバックは不発）。R2 は `content-type: video/mp4`、`cache-control: public, max-age=31536000, immutable`、Range 対応（206）。Pages のビルドログで Node 22、`[awl] dist から除外: media/angie-claire-carla_720p.mp4` を確認。mp4 の URL は Pages では index.html が返る（SPA のフォールバック）ので、リポジトリ内の予備は公開サイトでは効かない（R2 専用。想定どおり）
+- 気づき: カスタムドメイン接続直後はローカルのルーターが NXDOMAIN を 30 分（SOA の 1800 秒）キャッシュして `media.kobakuni.com` が引けなかった。Cloudflare 側は数分で有効。`dig @1.1.1.1` では引けたので、待つだけでよい
+- 未解決: GitHub へ push しても Pages の自動ビルドが走らなかった（API で作ったプロジェクトに Cloudflare Pages の GitHub App の権限が及んでいない可能性）。今回は API で手動起動した。GitHub の Settings → Applications → Cloudflare Pages → Repository access に `animal-world-live` を足せば push で走る見込み
+
 ### 明日へ
 
 - 世界の磨き（光・霧・草の見え方、コピエの存在感）。毎日録画で判定
