@@ -669,8 +669,26 @@ body {
     text-overflow: ellipsis;
   }
 
+  /* スマホ幅: 左の切り替えは内容幅、右のボタン2つに残りを渡す。文字は折らない */
   .hud {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr;
+  }
+
+  .hud .btn,
+  .hud .toggle {
+    white-space: nowrap;
+  }
+
+  .hud-right .btn-small,
+  .hud-right .btn-book {
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 14px;
+  }
+
+  .hud .toggle {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 
   .hud-center {
