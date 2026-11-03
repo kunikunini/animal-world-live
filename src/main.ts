@@ -14,6 +14,8 @@ import { loadLionModel } from './world/lionModel'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
+import type { LabelEntry } from './ui/labels'
+import { createEncounterIcon } from './ui/encounter'
 import { createMinimap } from './ui/minimap'
 import { createMapView } from './ui/map'
 import { createFriendBookStore } from './data/friends'
@@ -38,7 +40,7 @@ function createShell() {
   const store = createFriendBookStore()
   const met = createEncounterStore()
   const hud = createHud()
-  const observe = createObserveView(store)
+  const observe = createObserveView(store, met)
   const book = createBookView(store)
 
   // ともだち帳の「会いに行く」: 3D を歩かずに映像へ直行
@@ -122,11 +124,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
   })
 
-  // 出会い: いちばん近くにいるライオンのそばに来たらバナー。「双眼鏡で見る」はその個体の観察画面
+  // 出会い: いちばん近くにいるライオンの頭の上に光る双眼鏡。タップでその個体の観察モニター
   const labels = createWorldLabels()
   for (const lion of lions) labels.add(lion.id, getAnimal(lion.id)?.name ?? lion.id)
+  const encounterIcon = createEncounterIcon()
   let encounterId: string | null = null
-  hud.onViewSpot(() => {
+  encounterIcon.onTap(() => {
     const animal = getAnimal(encounterId ?? SPOT.animalId)
     if (!animal) return
     met.mark(animal.id)
@@ -166,6 +169,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     props.setSway(on ? 0 : 1)
     atmosphere.setReduceMotion(on)
     lions.forEach((l) => l.setReduceMotion(on))
+    encounterIcon.setReduceMotion(on)
   }
   applyReduceMotion(hud.reduceMotion)
   hud.onReduceMotionChange(applyReduceMotion)
@@ -200,8 +204,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     arrived = distance < SPOT.arriveRadius
     hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
 
-    // 出会い: いちばん近いライオン。名前ラベルは 45m 以内で見せる
+    // 出会い: いちばん近いライオン。名前ラベルは 45m 以内で見せ、近い個体を優先して重ならないように置く
     let nearest: { id: string; d: number } | null = null
+    const labelEntries: LabelEntry[] = []
     for (const lion of lions) {
       const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
       const reach = lion.collider.r + 4.2
@@ -209,11 +214,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
       projected.copy(lion.position).setY(lion.position.y + 1.5 * lion.group.scale.y + 0.4).project(camera)
       const onScreen = projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1
       if (onScreen && d < 45) {
-        labels.set(lion.id, { x: ((projected.x + 1) / 2) * window.innerWidth, y: ((1 - projected.y) / 2) * window.innerHeight }, d)
-      } else {
-        labels.set(lion.id, null, d)
+        labelEntries.push({
+          id: lion.id,
+          x: ((projected.x + 1) / 2) * window.innerWidth,
+          y: ((1 - projected.y) / 2) * window.innerHeight,
+          d,
+        })
       }
     }
+    const placedLabels = labels.layout(labelEntries)
     minimapTimer -= dt
     if (minimapTimer <= 0) {
       minimapTimer = 0.1
@@ -241,7 +250,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
         // 出会いの記録。地図に出るのはここから
         met.mark(lion.id)
       }
-      hud.setEncounter(lion ? (getAnimal(lion.id)?.name ?? lion.id) : null)
+      if (lion) hud.toast(`${getAnimal(lion.id)?.name ?? lion.id}のそばに来ました`)
+    }
+    // 双眼鏡のアイコンは、そばにいる個体の名前ラベルの上に浮かせる
+    const iconAnchor = encounterId ? placedLabels.get(encounterId) : undefined
+    if (iconAnchor) {
+      encounterIcon.set({ x: iconAnchor.x, y: iconAnchor.top - 8 }, getAnimal(encounterId as string)?.name)
+    } else {
+      encounterIcon.set(null)
     }
 
     // スポットのラベルを画面に重ねる（カメラの後ろにある時は隠す）

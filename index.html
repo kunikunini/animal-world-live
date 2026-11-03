@@ -58,26 +58,28 @@
       <span id="spot-distance" class="spot-label-distance"></span>
     </div>
 
-    <div id="arrived" class="banner" hidden role="status">
-      <span id="arrived-text">観察スポットに着きました</span>
-      <button id="view-spot" class="btn btn-primary btn-small" type="button">双眼鏡で見る</button>
-    </div>
+    <div id="hud-toast" class="toast hud-toast" hidden role="status"></div>
 
     <section id="observe" class="observe" hidden aria-label="観察モニター">
       <div class="observe-panel">
         <header class="observe-header">
+          <button id="observe-close" class="icon-btn" type="button" aria-label="世界に戻る" title="世界に戻る">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+          </button>
           <h2 id="observe-title" class="observe-title">観察モニター</h2>
-          <button id="observe-close" class="btn btn-ghost" type="button">世界に戻る</button>
         </header>
+        <div id="observe-chips" class="observe-chips" role="tablist" aria-label="出会った動物" hidden></div>
         <div class="observe-screen">
-          <video id="observe-video" class="observe-video" playsinline preload="metadata" controls controlslist="nodownload"></video>
-          <div id="observe-poster" class="observe-poster">
-            <p id="observe-poster-text" class="observe-poster-text">タップして再生</p>
-            <button id="observe-play" class="btn btn-primary" type="button">再生する</button>
-            <button id="observe-retry" class="btn btn-primary" type="button" hidden>もう一度試す</button>
+          <video id="observe-video" class="observe-video" playsinline loop preload="metadata" controls controlslist="nodownload"></video>
+          <div id="observe-poster" class="observe-poster" hidden>
+            <p id="observe-poster-text" class="observe-poster-text"></p>
+            <button id="observe-retry" class="btn btn-primary btn-small" type="button" hidden>もう一度試す</button>
           </div>
           <span id="observe-badge" class="observe-badge">収録映像</span>
           <span id="observe-placeholder" class="observe-placeholder" hidden>仮映像（色と文字だけの自作プレースホルダ）</span>
+          <button id="observe-unmute" class="observe-unmute" type="button" aria-label="音を出す" title="音を出す" hidden>
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9l5 6M21 9l-5 6" /></svg>
+          </button>
         </div>
         <div id="observe-profile" class="observe-profile"></div>
         <div class="befriend">

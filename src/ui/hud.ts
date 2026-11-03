@@ -5,8 +5,6 @@ export interface Hud {
   reduceMotion: boolean
   onReduceMotionChange: (fn: (on: boolean) => void) => void
   onGoToSpot: (fn: () => void) => void
-  /** 「双眼鏡で見る」 */
-  onViewSpot: (fn: () => void) => void
   /** 「ともだち帳」ボタン */
   onOpenBook: (fn: () => void) => void
   /** 「ジャンプ」ボタン（キーボードの Space と同じ） */
@@ -17,8 +15,8 @@ export interface Hud {
   setGoToSpotVisible: (visible: boolean) => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
   setSpotLabel: (screen: { x: number; y: number } | null, distance: number) => void
-  /** 出会いのバナー。name があれば「○○のそばに来ました」、null で隠す */
-  setEncounter: (name: string | null) => void
+  /** ボタンを持たない小さな通知。2〜3秒で消える */
+  toast: (text: string) => void
   setFps: (fps: number) => void
 }
 
@@ -48,9 +46,7 @@ export function createHud(): Hud {
   const goToSpotBtn = document.getElementById('goto-spot') as HTMLButtonElement
   const spotLabel = document.getElementById('spot-label') as HTMLElement
   const spotDistance = document.getElementById('spot-distance') as HTMLElement
-  const arrived = document.getElementById('arrived') as HTMLElement
-  const arrivedText = document.getElementById('arrived-text') as HTMLElement
-  const viewSpotBtn = document.getElementById('view-spot') as HTMLButtonElement
+  const toastEl = document.getElementById('hud-toast') as HTMLElement
   const openBookBtn = document.getElementById('open-book') as HTMLButtonElement
   const jumpBtn = document.getElementById('jump') as HTMLButtonElement
 
@@ -69,9 +65,6 @@ export function createHud(): Hud {
   const goToListeners: Array<() => void> = []
   goToSpotBtn.addEventListener('click', () => goToListeners.forEach((fn) => fn()))
 
-  const viewListeners: Array<() => void> = []
-  viewSpotBtn.addEventListener('click', () => viewListeners.forEach((fn) => fn()))
-
   const bookListeners: Array<() => void> = []
   openBookBtn.addEventListener('click', () => bookListeners.forEach((fn) => fn()))
 
@@ -82,9 +75,11 @@ export function createHud(): Hud {
     jumpListeners.forEach((fn) => fn())
   })
 
-  if (import.meta.env.DEV) fpsEl.hidden = false
+  // fps は通常は出さない。?debug=1 のときだけ
+  fpsEl.hidden = new URLSearchParams(location.search).get('debug') !== '1'
 
   let lastLabelVisible = false
+  let toastTimer = 0
 
   return {
     show: () => {
@@ -98,9 +93,6 @@ export function createHud(): Hud {
     },
     onGoToSpot: (fn) => {
       goToListeners.push(fn)
-    },
-    onViewSpot: (fn) => {
-      viewListeners.push(fn)
     },
     onOpenBook: (fn) => {
       bookListeners.push(fn)
@@ -128,9 +120,14 @@ export function createHud(): Hud {
         spotDistance.textContent = distance >= 1000 ? '' : `あと ${Math.max(0, Math.round(distance))} m`
       }
     },
-    setEncounter: (name) => {
-      arrived.hidden = name === null
-      if (name !== null) arrivedText.textContent = `${name}のそばに来ました`
+    toast: (text) => {
+      toastEl.textContent = text
+      toastEl.hidden = false
+      toastEl.classList.toggle('is-animated', !reduceMotion)
+      window.clearTimeout(toastTimer)
+      toastTimer = window.setTimeout(() => {
+        toastEl.hidden = true
+      }, 2500)
     },
     setFps: (fps) => {
       if (!fpsEl.hidden) fpsEl.textContent = `${fps.toFixed(0)} fps`

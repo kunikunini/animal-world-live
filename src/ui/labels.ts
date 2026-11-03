@@ -1,15 +1,57 @@
 /**
- * 3D 空間の位置に重ねる名前ラベル（ライオン用）。
- * スポットのラベルと同じ見た目で小さめ。近づくほど距離を出す。
+ * 3D 空間の位置に重ねる名前ラベル（ライオン用）。名前だけを出す。
+ * 近い個体を優先し、ラベル同士が重なるときは遠い個体のラベルを上へずらす。
  */
+export interface LabelEntry {
+  id: string
+  /** 画面座標。ラベルの下端の中心 */
+  x: number
+  y: number
+  /** プレイヤーからの距離。近い順に優先する */
+  d: number
+}
+
+export interface PlacedLabel {
+  x: number
+  /** ずらした後のラベル上端 */
+  top: number
+}
+
 export interface WorldLabels {
   add: (id: string, name: string) => void
-  /** screen が null なら隠す */
-  set: (id: string, screen: { x: number; y: number } | null, distance: number) => void
+  /** 見せるラベルだけ渡す。渡さなかった id は隠す。戻り値は確定した位置 */
+  layout: (entries: LabelEntry[]) => Map<string, PlacedLabel>
+}
+
+interface Item {
+  el: HTMLElement
+  visible: boolean
+  w: number
+  h: number
+}
+
+interface Rect {
+  l: number
+  r: number
+  t: number
+  b: number
+}
+
+const GAP = 6
+
+function overlaps(a: Rect, b: Rect): boolean {
+  return a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t
 }
 
 export function createWorldLabels(): WorldLabels {
-  const items = new Map<string, { el: HTMLElement; dist: HTMLElement; visible: boolean }>()
+  const items = new Map<string, Item>()
+
+  const setVisible = (item: Item, visible: boolean) => {
+    if (visible === item.visible) return
+    item.el.hidden = !visible
+    item.visible = visible
+  }
+
   return {
     add: (id, name) => {
       const el = document.createElement('div')
@@ -19,24 +61,42 @@ export function createWorldLabels(): WorldLabels {
       const nameEl = document.createElement('span')
       nameEl.className = 'spot-label-name'
       nameEl.textContent = name
-      const dist = document.createElement('span')
-      dist.className = 'spot-label-distance'
-      el.append(nameEl, dist)
+      el.append(nameEl)
       document.body.append(el)
-      items.set(id, { el, dist, visible: false })
+      items.set(id, { el, visible: false, w: 0, h: 0 })
     },
-    set: (id, screen, distance) => {
-      const item = items.get(id)
-      if (!item) return
-      const visible = screen !== null
-      if (visible !== item.visible) {
-        item.el.hidden = !visible
-        item.visible = visible
+    layout: (entries) => {
+      const placed: Rect[] = []
+      const result = new Map<string, PlacedLabel>()
+      const shown = new Set<string>()
+      const sorted = [...entries].sort((a, b) => a.d - b.d)
+      for (const e of sorted) {
+        const item = items.get(e.id)
+        if (!item) continue
+        shown.add(e.id)
+        setVisible(item, true)
+        // 名前は変わらないので、大きさは一度だけ測る
+        if (item.w === 0) {
+          item.w = item.el.offsetWidth
+          item.h = item.el.offsetHeight
+        }
+        const rect: Rect = { l: e.x - item.w / 2, r: e.x + item.w / 2, t: e.y - item.h, b: e.y }
+        // 近い個体のラベルを避けて上へ
+        for (let guard = 0; guard < 8; guard++) {
+          const hit = placed.find((p) => overlaps(rect, p))
+          if (!hit) break
+          const dy = rect.b - hit.t + GAP
+          rect.t -= dy
+          rect.b -= dy
+        }
+        item.el.style.transform = `translate(-50%, -100%) translate(${e.x.toFixed(0)}px, ${rect.b.toFixed(0)}px)`
+        placed.push(rect)
+        result.set(e.id, { x: e.x, top: rect.t })
       }
-      if (screen) {
-        item.el.style.transform = `translate(-50%, -100%) translate(${screen.x.toFixed(0)}px, ${screen.y.toFixed(0)}px)`
-        item.dist.textContent = distance < 8 ? 'そばにいる' : `あと ${Math.round(distance)} m`
+      for (const [id, item] of items) {
+        if (!shown.has(id)) setVisible(item, false)
       }
+      return result
     },
   }
 }

@@ -322,22 +322,66 @@ body {
   border-radius: 50%;
 }
 
-.banner {
+/* 出会いの導線: そばに来た個体の頭の上に浮かぶ、光る双眼鏡 */
+.encounter-icon {
   position: fixed;
-  left: 50%;
-  top: calc(16px + env(safe-area-inset-top));
-  transform: translateX(-50%);
+  left: 0;
+  top: 0;
   z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 8px 8px 18px;
-  border-radius: 999px;
-  background: rgba(255, 246, 230, 0.95);
-  box-shadow: 0 6px 16px var(--shadow);
-  font-size: 15px;
-  font-weight: 700;
-  max-width: calc(100% - 32px);
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gold-deep);
+  color: #fff;
+  box-shadow: 0 6px 16px var(--shadow), 0 0 18px rgba(255, 220, 140, 0.75);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  will-change: transform;
+  touch-action: manipulation;
+}
+
+.encounter-icon[hidden] {
+  display: none;
+}
+
+.encounter-icon svg {
+  width: 32px;
+  height: 32px;
+  position: relative;
+}
+
+.encounter-icon::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 236, 180, 0.95);
+  animation: encounter-ring 1.6s ease-out infinite;
+}
+
+.encounter-icon.is-still::before {
+  animation: none;
+  transform: scale(1.12);
+  opacity: 0.8;
+}
+
+.encounter-icon:hover {
+  background: #b5721f;
+}
+
+@keyframes encounter-ring {
+  0% { transform: scale(0.95); opacity: 0.95; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+
+/* 到着の小さな通知。ボタンは持たず、自動で消える（.toast より後で効くよう2クラスで指定） */
+.toast.hud-toast {
+  z-index: 6;
+  padding: 9px 16px;
+  font-size: 14px;
 }
 
 .btn-ghost {
@@ -387,6 +431,103 @@ body {
   margin-bottom: 12px;
 }
 
+/* 観察モニターのヘッダーは「←」アイコンと見出しだけ */
+#observe .observe-header {
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.icon-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(43, 29, 18, 0.08);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: rgba(43, 29, 18, 0.14);
+}
+
+.icon-btn:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* 出会った個体のチップ。横に並べ、はみ出したら横スクロール */
+.observe-chips {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 2px 2px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.observe-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.observe-chips[hidden] {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 56px;
+  padding: 4px 4px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.chip-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #e8b45a, #c9822e);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.chip:hover .chip-avatar {
+  opacity: 1;
+}
+
+.chip.is-current {
+  font-weight: 700;
+}
+
+.chip.is-current .chip-avatar {
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--cream), 0 0 0 5px var(--gold-deep);
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 1px;
+}
+
 .observe-title {
   margin: 0;
   font-size: 17px;
@@ -434,6 +575,33 @@ body {
   font-weight: 700;
 }
 
+/* 「音を出す」: ミュートで再生が始まったときだけ */
+.observe-unmute {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 246, 230, 0.95);
+  color: var(--ink);
+  box-shadow: 0 4px 12px var(--shadow);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.observe-unmute[hidden] {
+  display: none;
+}
+
+.observe-unmute:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
 .observe-badge {
   position: absolute;
   left: 12px;
@@ -451,7 +619,7 @@ body {
 .observe-placeholder {
   position: absolute;
   right: 12px;
-  top: 12px;
+  top: 64px;
   padding: 4px 10px;
   border-radius: 6px;
   background: rgba(255, 246, 230, 0.9);
@@ -472,10 +640,6 @@ body {
   display: none;
 }
 
-.banner[hidden] {
-  display: none;
-}
-
 @media (max-width: 480px) {
   .minimap {
     width: 92px;
@@ -486,26 +650,18 @@ body {
     top: calc(16px + 92px + 6px + env(safe-area-inset-top));
   }
 
-  /* スマホ幅: 地図とボタンの下に、文字の行とその下のボタンの2段で出す */
-  .banner {
-    top: calc(16px + 92px + 6px + 40px + env(safe-area-inset-top));
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: 20px;
-    font-size: 14px;
-    width: max-content;
+  .encounter-icon {
+    width: 52px;
+    height: 52px;
   }
 
-  .banner span {
-    flex: 1 1 100%;
-    text-align: center;
-  }
-
-  .banner .btn {
+  /* スマホ幅: 到着の通知は地図の下に、1行で */
+  .toast.hud-toast {
+    top: calc(16px + 92px + 6px + 44px + 10px + env(safe-area-inset-top));
     white-space: nowrap;
-    flex-shrink: 0;
+    max-width: calc(100% - 32px);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .hud {
