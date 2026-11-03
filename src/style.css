@@ -252,7 +252,7 @@ body {
   width: 136px;
   height: 136px;
   border-radius: 50%;
-  background: rgba(255, 246, 230, 0.55);
+  background: transparent;
   box-shadow: 0 6px 16px var(--shadow);
   touch-action: none;
   cursor: pointer;

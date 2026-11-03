@@ -32,7 +32,7 @@ export interface MapRenderer {
 
 const MAP_RADIUS = WALK_RADIUS + 8
 
-export function createMapRenderer(size: number, options: { labels: boolean }): MapRenderer {
+export function createMapRenderer(size: number, options: { labels: boolean; baseAlpha?: number }): MapRenderer {
   const c = size / 2
   const k = (size / 2 - size * 0.02) / MAP_RADIUS
   const px = (x: number) => c + x * k
@@ -124,7 +124,10 @@ export function createMapRenderer(size: number, options: { labels: boolean }): M
 
   const draw = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
     ctx.clearRect(0, 0, size, size)
+    // 地形（動かない部分）だけ透かす。自分と動物の印は不透明のまま
+    ctx.globalAlpha = options.baseAlpha ?? 1
     ctx.drawImage(base, 0, 0)
+    ctx.globalAlpha = 1
 
     // 出会った個体: 黄褐色の点に暗い縁。そばにいる個体は少し大きく。ともだちは白い輪を足す
     for (const l of lions) {
@@ -238,7 +241,8 @@ export interface Minimap {
 export function createMinimap(): Minimap {
   const canvas = document.getElementById('minimap') as HTMLCanvasElement
   const expandBtn = document.getElementById('minimap-expand') as HTMLButtonElement
-  const renderer = createMapRenderer(280, { labels: false })
+  // ワールドが透けて見えるよう、地形は半透明に
+  const renderer = createMapRenderer(280, { labels: false, baseAlpha: 0.5 })
   canvas.width = renderer.size
   canvas.height = renderer.size
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
