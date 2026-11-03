@@ -338,7 +338,7 @@ body {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--gold-deep);
+  background: rgba(201, 130, 46, 0.55);
   color: #fff;
   box-shadow: 0 6px 16px var(--shadow), 0 0 18px rgba(255, 220, 140, 0.75);
   cursor: pointer;
@@ -374,7 +374,7 @@ body {
 }
 
 .encounter-icon:hover {
-  background: #b5721f;
+  background: rgba(181, 114, 31, 0.75);
 }
 
 @keyframes encounter-ring {
