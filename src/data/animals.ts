@@ -5,8 +5,10 @@ export type VideoSourceKind = 'recorded' | 'live'
 
 export interface VideoSource {
   source: VideoSourceKind
-  /** MP4 の URL。空なら映像なし */
+  /** MP4 の URL（配信用。R2 の https://media.kobakuni.com/...）。空なら映像なし */
   url: string
+  /** url が読めない時に試す予備の URL（リポジトリ内の /media/...。LAN での開発や実機確認用） */
+  fallbackUrl?: string
   /** 再生前に見せる静止画の URL。空なら色だけのポスター */
   poster: string
   /** true のときは仮映像（自作プレースホルダ）。UI に「仮映像」と出す */

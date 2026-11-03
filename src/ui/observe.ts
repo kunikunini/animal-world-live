@@ -58,6 +58,9 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   let loadedUrl = ''
   /** 読み込みの世代。古い play() の結果は捨てる */
   let loadSeq = 0
+  /** 試す URL の並び（第一が R2、予備がリポジトリ内）と、いま何番目か */
+  let sources: string[] = []
+  let sourceIndex = 0
 
   const showPoster = (text: string, canRetry: boolean) => {
     poster.hidden = false
@@ -116,10 +119,17 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
       return
     }
     loadedUrl = resolved.url
-    video.pause()
-    video.src = resolved.url
+    sources = [resolved.url, resolved.fallbackUrl].filter(Boolean)
+    sourceIndex = 0
     if (resolved.poster) video.poster = resolved.poster
     else video.removeAttribute('poster')
+    applySource(seq)
+  }
+
+  /** sources[sourceIndex] を <video> に入れて再生を始める */
+  const applySource = (seq: number) => {
+    video.pause()
+    video.src = sources[sourceIndex]
     video.load()
     poster.hidden = true
     void play(seq)
@@ -171,7 +181,15 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   })
 
   video.addEventListener('error', () => {
-    if (!video.hidden) showPoster('映像を読み込めませんでした', true)
+    if (video.hidden) return
+    if (sourceIndex + 1 < sources.length) {
+      // 配信元（R2）が読めない時はリポジトリ内の予備へ
+      console.warn('video source failed, trying fallback', sources[sourceIndex])
+      sourceIndex++
+      applySource(++loadSeq)
+      return
+    }
+    showPoster('映像を読み込めませんでした', true)
   })
 
   retryBtn.addEventListener('click', () => {

@@ -4,6 +4,8 @@ import type { VideoSource } from '../data/animals'
 export interface ResolvedVideo {
   kind: 'recorded'
   url: string
+  /** url が読めなかった時の予備。無ければ空 */
+  fallbackUrl: string
   poster: string
   /** バッジの文言。収録映像は常にこれ。LIVE 表示の部品は作らない */
   badge: '収録映像'
@@ -20,6 +22,7 @@ export function resolveVideoSource(src: VideoSource): ResolvedVideo | null {
   return {
     kind: 'recorded',
     url: src.url,
+    fallbackUrl: src.fallbackUrl ?? '',
     poster: src.poster,
     badge: '収録映像',
     placeholder: src.placeholder === true,

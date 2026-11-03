@@ -17,3 +17,6 @@ public/media/*
 .claude/
 # Blender 実験で生成するモデル（コミットしない）
 public/models/
+
+# wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
+.wrangler/

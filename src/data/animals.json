@@ -1,5 +1,5 @@
 {
-  "$comment": "個体データ。追加はこのファイルだけで可能。担当飼育員の氏名は入れない。仔の性別は未確定なので書かない。映像は配信用に最適化した収録映像（public/media/ の追跡対象ファイル）を URL で参照する。",
+  "$comment": "個体データ。追加はこのファイルだけで可能。担当飼育員の氏名は入れない。仔の性別は未確定なので書かない。映像は R2（https://media.kobakuni.com/<ファイル名>）を第一に参照し、読めない時はリポジトリ内の /media/<同名> に切り替える。新しい個体の映像も同じバケット・同じ命名で足す。",
   "animals": [
     {
       "id": "angie",
@@ -14,7 +14,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "/media/angie-claire-carla_720p.mp4",
+        "url": "https://media.kobakuni.com/angie-claire-carla_720p.mp4",
+        "fallbackUrl": "/media/angie-claire-carla_720p.mp4",
         "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
@@ -31,7 +32,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "/media/angie-claire-carla_720p.mp4",
+        "url": "https://media.kobakuni.com/angie-claire-carla_720p.mp4",
+        "fallbackUrl": "/media/angie-claire-carla_720p.mp4",
         "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
@@ -48,7 +50,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "/media/angie-claire-carla_720p.mp4",
+        "url": "https://media.kobakuni.com/angie-claire-carla_720p.mp4",
+        "fallbackUrl": "/media/angie-claire-carla_720p.mp4",
         "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
