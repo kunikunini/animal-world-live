@@ -4,7 +4,8 @@ import type { EncounterStore } from '../data/encounters'
 import type { FriendBookStore } from '../data/friends'
 import { formatMetDate } from '../data/friends'
 import { resolveVideoSource } from '../video/source'
-import { renderProfile } from './profile'
+import { faceMarkup } from './faces'
+import { renderHero, renderProfile } from './profile'
 import { playFriendChime } from './chime'
 
 export type ObserveOrigin = 'world' | 'book'
@@ -23,9 +24,21 @@ function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
+/** 祝いの星。帯の周りに 8 個、散る方向を CSS 変数で渡す */
+const STARS = [
+  [-6, -8, -14, -34],
+  [18, -16, 10, -30],
+  [44, -4, 22, -28],
+  [62, -14, 28, -22],
+  [78, 6, 32, -16],
+  [8, 18, -24, 12],
+  [30, 22, -6, 26],
+  [66, 20, 20, 22],
+]
+
 /**
- * 観察モニター。5頭分の器で、出会った個体のチップで切り替えられる。
- * 収録映像を HTML の <video> で再生し、その下にプロフィールと「ともだちになる」。
+ * 観察モニター。映像 → 顔と名前 → ともだちになる → 項目カードの順。
+ * 出会った個体のチップ（顔）で家族を切り替えられる。
  * 開いた瞬間に再生を始める。音声付きが拒否されたらミュートで再生し「音を出す」を出す。
  * 映像が無い個体は「準備中」を正直に出す（偽の映像は入れない）。
  */
@@ -33,10 +46,12 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const root = document.getElementById('observe') as HTMLElement
   const title = document.getElementById('observe-title') as HTMLElement
   const chips = document.getElementById('observe-chips') as HTMLElement
+  const hero = document.getElementById('observe-hero') as HTMLElement
   const badge = document.getElementById('observe-badge') as HTMLElement
   const placeholderNote = document.getElementById('observe-placeholder') as HTMLElement
   const video = document.getElementById('observe-video') as HTMLVideoElement
   const poster = document.getElementById('observe-poster') as HTMLElement
+  const posterFace = document.getElementById('observe-poster-face') as HTMLElement
   const posterText = document.getElementById('observe-poster-text') as HTMLElement
   const retryBtn = document.getElementById('observe-retry') as HTMLButtonElement
   const unmuteBtn = document.getElementById('observe-unmute') as HTMLButtonElement
@@ -45,6 +60,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const befriendBtn = document.getElementById('befriend') as HTMLButtonElement
   const befriended = document.getElementById('befriended') as HTMLElement
   const befriendedDate = document.getElementById('befriended-date') as HTMLElement
+  const stars = document.getElementById('befriend-stars') as HTMLElement
   const toast = document.getElementById('befriend-toast') as HTMLElement
   const memoryNote = document.getElementById('befriend-memory-note') as HTMLElement
 
@@ -54,6 +70,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   let current: Animal | null = null
   let reduceMotion = false
   let toastTimer = 0
+  let starTimer = 0
   /** いま <video> に入っている URL。家族で同じ映像を共有する個体へ切り替えた時は読み直さない */
   let loadedUrl = ''
   /** 読み込みの世代。古い play() の結果は捨てる */
@@ -66,6 +83,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     poster.hidden = false
     posterText.textContent = text
     retryBtn.hidden = !canRetry
+    posterFace.innerHTML = current ? faceMarkup(current) : ''
   }
 
   /** まず音声付きで再生し、拒否されたらミュートで再生して「音を出す」を見せる */
@@ -96,7 +114,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const load = (animal: Animal) => {
     const resolved = resolveVideoSource(animal.video)
     const seq = ++loadSeq
-    badge.textContent = '収録映像'
+    badge.hidden = !resolved
     placeholderNote.hidden = !(resolved?.placeholder ?? false)
 
     if (!resolved) {
@@ -135,7 +153,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     void play(seq)
   }
 
-  /** 「ともだちになる」の状態。登録済みなら日付を見せ、ボタンは出さない */
+  /** 「ともだちになる」の状態。登録済みなら帯を見せ、ボタンは出さない */
   const renderFriendState = (animal: Animal) => {
     const entry = store.get(animal.id)
     befriendBtn.hidden = !!entry
@@ -144,7 +162,26 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     memoryNote.hidden = store.isPersistent
   }
 
-  /** 出会った個体のチップ。未出会いの個体は出さない（地図と同じルール）。2頭以上で見せる */
+  /** 祝い: 金の星が帯の周りに散る。動きをへらす時は静かに出して消す */
+  const celebrate = () => {
+    window.clearTimeout(starTimer)
+    stars.innerHTML = STARS.map(
+      ([x, y, dx, dy]) =>
+        `<svg viewBox="0 0 24 24" style="left:${x}%;top:${y}px;--dx:${dx}px;--dy:${dy}px"><use href="#i-star" /></svg>`,
+    ).join('')
+    stars.classList.remove('is-burst', 'is-still')
+    void stars.offsetWidth
+    stars.classList.add(reduceMotion ? 'is-still' : 'is-burst')
+    starTimer = window.setTimeout(
+      () => {
+        stars.classList.remove('is-burst', 'is-still')
+        stars.innerHTML = ''
+      },
+      reduceMotion ? 1600 : 900,
+    )
+  }
+
+  /** 出会った個体のチップ（顔）。未出会いの個体は出さない（地図と同じルール）。2頭以上で見せる */
   const renderChips = () => {
     const metAnimals = ANIMALS.filter((a) => met.has(a.id))
     chips.hidden = metAnimals.length < 2
@@ -153,7 +190,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
         const isCurrent = a.id === current?.id
         return `
           <button class="chip${isCurrent ? ' is-current' : ''}" type="button" role="tab" aria-selected="${isCurrent}" data-animal="${esc(a.id)}">
-            <span class="chip-avatar" aria-hidden="true">${esc(a.name.slice(0, 1))}</span>
+            <span class="chip-face">${faceMarkup(a)}</span>
             <span class="chip-name">${esc(a.name)}</span>
           </button>`
       })
@@ -163,6 +200,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const show = (animal: Animal) => {
     current = animal
     title.textContent = `${animal.name}の観察モニター`
+    hero.innerHTML = renderHero(animal)
     load(animal)
     profile.innerHTML = renderProfile(animal)
     renderFriendState(animal)
@@ -210,6 +248,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     // ユーザー自身が押す瞬間。動物が承諾したという表現はしない
     store.add(current.id)
     renderFriendState(current)
+    celebrate()
     playFriendChime()
     toast.hidden = false
     toast.classList.toggle('is-animated', !reduceMotion)

@@ -3,103 +3,215 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#d99a4a" />
+    <meta name="theme-color" content="#3ba7ff" />
     <title>ANIMAL WORLD LIVE</title>
+    <!-- ホームのロゴ（英字 11 文字）だけ Web フォント（Zen Maru Gothic, SIL OFL 1.1）。text= でその文字だけ取り、届くまではシステムの丸ゴシックで描く。1 行の見出しなので入れ替わっても他の要素は動かない -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&text=ANIMALWORDVE&display=swap" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <!-- 自作 SVG アイコン。OS の絵文字は使わない -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-bino" viewBox="0 0 40 40"><g transform="rotate(-16 20 20)"><path d="M9 5h6v7l3 2v15a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V14l3-2z" /><path d="M25 5h6v7l3 2v15a3 3 0 0 1-3 3H25a3 3 0 0 1-3-3V14l3-2z" /><rect x="15" y="10" width="10" height="6" rx="1.5" opacity=".85" /><circle cx="20" cy="8" r="2.4" opacity=".85" /><ellipse cx="11" cy="32" rx="7" ry="2.6" /><ellipse cx="29" cy="32" rx="7" ry="2.6" /><ellipse cx="11" cy="32" rx="4.6" ry="1.7" fill="#2b1d12" opacity=".6" /><ellipse cx="29" cy="32" rx="4.6" ry="1.7" fill="#2b1d12" opacity=".6" /></g></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5c-1.6-1.4-3.8-2-6.5-2v13c2.7 0 4.9.6 6.5 2 1.6-1.4 3.8-2 6.5-2v-13c-2.7 0-4.9.6-6.5 2z" /><path d="M12 6.5v13" /></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></symbol>
+      <symbol id="i-jump" viewBox="0 0 24 24"><path d="M12 19V6M6.5 11.5L12 6l5.5 5.5" /><path d="M6 20h12" opacity=".5" /></symbol>
+      <symbol id="i-motion" viewBox="0 0 24 24"><path d="M3 8c3 0 3-3 6-3s3 3 6 3 3-3 6-3M3 16c3 0 3-3 6-3s3 3 6 3 3-3 6-3" /></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" /></symbol>
+      <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6l5.5-2 6 2 5.5-2v14l-5.5 2-6-2-5.5 2z" /><path d="M9 4v14M15 6v14" /></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1L3.2 9.4l6.1-.8z" /></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" /></symbol>
+      <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M7.5 5v14M16.5 5v14M3 10h4.5M3 14h4.5M16.5 10H21M16.5 14H21" /></symbol>
+      <symbol id="i-find" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5.5 5.5" /></symbol>
+      <symbol id="i-family" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2" /><circle cx="16.5" cy="10.5" r="2.6" /><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M14 19c0-2.3 1.4-3.8 3.5-3.8S21 16.7 21 19" /></symbol>
+      <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16A2.5 2.5 0 0 1 4 13.5v-7z" /></symbol>
+      <symbol id="i-sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9l5 6M21 9l-5 6" /></symbol>
+    </svg>
+
     <canvas id="world" aria-label="サバンナの3Dワールド"></canvas>
 
-    <div id="entry" class="overlay">
-      <div class="entry-card">
-        <p class="entry-kicker">ANIMAL WORLD LIVE</p>
-        <h1 class="entry-title">世界中の動物たちと、<br />友達になろう。</h1>
-        <p class="entry-lead">夕暮れのサバンナを歩いて、ライオンたちに会いに行こう。</p>
-        <button id="enter" class="btn btn-primary" type="button">世界に入る</button>
-        <p class="entry-hint">タップした場所へ歩きます。キーボードの W A S D でも動けます。</p>
-        <button id="entry-book" class="btn btn-ghost btn-small" type="button">ともだち帳を開く</button>
-      </div>
-    </div>
+    <!-- ホーム: 平穏ないつもの世界。丘の奥にアニマルスコープが立つ -->
+    <section id="home" class="home" aria-label="ホーム">
+      <svg class="home-sun" viewBox="0 0 100 100" aria-hidden="true">
+        <g fill="#ffd233" opacity=".9"><path d="M50 2l6 14-6 6-6-6zM98 50l-14 6-6-6 6-6zM50 98l-6-14 6-6 6 6zM2 50l14-6 6 6-6 6zM84 16l-5 14-8-1-1-8zM84 84l-14-5 1-8 8-1zM16 84l5-14 8 1 1 8zM16 16l14 5-1 8-8 1z" /></g>
+        <circle cx="50" cy="50" r="30" fill="#ffd233" /><circle cx="50" cy="50" r="23" fill="#ffe27a" />
+      </svg>
+      <svg class="home-cloud c1" viewBox="0 0 220 90" aria-hidden="true"><g fill="#fff"><ellipse cx="110" cy="62" rx="100" ry="26" /><circle cx="70" cy="48" r="32" /><circle cx="118" cy="36" r="38" /><circle cx="165" cy="50" r="28" /></g></svg>
+      <svg class="home-cloud c2" viewBox="0 0 220 90" aria-hidden="true"><g fill="#fff"><ellipse cx="110" cy="62" rx="100" ry="26" /><circle cx="70" cy="48" r="32" /><circle cx="118" cy="36" r="38" /><circle cx="165" cy="50" r="28" /></g></svg>
+      <svg class="home-cloud c3" viewBox="0 0 220 90" aria-hidden="true"><g fill="#fff"><ellipse cx="110" cy="62" rx="100" ry="26" /><circle cx="70" cy="48" r="32" /><circle cx="118" cy="36" r="38" /><circle cx="165" cy="50" r="28" /></g></svg>
 
-    <div id="fallback" class="overlay" hidden>
-      <div class="entry-card">
-        <p class="entry-kicker">ANIMAL WORLD LIVE</p>
-        <h1 class="entry-title">このブラウザでは3Dを表示できません</h1>
-        <p class="entry-lead">WebGLが使えない環境のようです。別のブラウザか端末でもう一度開いてみてください。</p>
-        <button id="fallback-book" class="btn btn-ghost btn-small" type="button">ともだち帳を開く</button>
+      <div class="home-hills" aria-hidden="true">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0 42 C 18 20, 36 24, 50 34 S 82 44, 100 26 L100 100 L0 100Z" fill="#7ee08a" />
+          <path d="M0 62 C 20 40, 44 48, 58 56 S 86 70, 100 52 L100 100 L0 100Z" fill="#5ed36a" />
+          <path d="M0 80 C 24 62, 50 72, 68 76 S 90 84, 100 76 L100 100 L0 100Z" fill="#35b654" />
+        </svg>
       </div>
-    </div>
+
+      <svg class="home-tree l" viewBox="0 0 120 140" aria-hidden="true">
+        <rect x="52" y="80" width="16" height="60" rx="8" fill="#9b5e34" />
+        <circle cx="60" cy="56" r="44" fill="#3dbd5c" /><circle cx="36" cy="72" r="26" fill="#5ed36a" /><circle cx="86" cy="70" r="24" fill="#5ed36a" />
+        <circle cx="48" cy="40" r="6" fill="#ff7bac" /><circle cx="76" cy="50" r="6" fill="#ffd233" /><circle cx="62" cy="76" r="6" fill="#ff7bac" />
+      </svg>
+      <svg class="home-tree r" viewBox="0 0 120 140" aria-hidden="true">
+        <rect x="52" y="80" width="16" height="60" rx="8" fill="#9b5e34" />
+        <circle cx="60" cy="56" r="44" fill="#ff7bac" /><circle cx="36" cy="72" r="26" fill="#ff9cc0" /><circle cx="86" cy="70" r="24" fill="#ff9cc0" />
+        <circle cx="48" cy="40" r="6" fill="#fff" /><circle cx="76" cy="50" r="6" fill="#fff" />
+      </svg>
+
+      <div class="home-stage">
+        <!-- 小道・柱・主人公（後ろ姿。ワールドの中と同じ帽子と赤いシャツ） -->
+        <svg class="home-path" viewBox="0 0 400 480" aria-hidden="true">
+          <path d="M120 480 L280 480 L228 300 L172 300 Z" fill="#f7dfae" />
+          <path d="M160 480 L240 480 L214 300 L186 300 Z" fill="#fbead0" />
+          <rect x="190" y="236" width="20" height="78" rx="10" fill="#9b5e34" />
+          <rect x="150" y="226" width="100" height="18" rx="9" fill="#b9733f" />
+          <rect x="166" y="386" width="68" height="84" rx="30" fill="#e0683a" />
+          <rect x="176" y="452" width="20" height="28" rx="10" fill="#9b5e34" /><rect x="204" y="452" width="20" height="28" rx="10" fill="#9b5e34" />
+          <circle cx="200" cy="372" r="26" fill="#f2c9a4" />
+          <ellipse cx="200" cy="360" rx="52" ry="14" fill="#f2e3c4" />
+          <ellipse cx="200" cy="346" rx="30" ry="18" fill="#f2e3c4" />
+          <rect x="172" y="344" width="56" height="10" rx="5" fill="#e0683a" />
+        </svg>
+        <!-- アニマルスコープ: 丘の奥に立つ大きな双眼鏡。レンズの中に向こうの世界が見える。タップで入る -->
+        <button id="home-scope" class="home-scope" type="button" aria-label="アニマルワールドに入る">
+          <svg viewBox="0 0 400 300" aria-hidden="true">
+            <defs>
+              <radialGradient id="home-glow-g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff3a8" stop-opacity=".95" /><stop offset=".6" stop-color="#ffd233" stop-opacity=".45" /><stop offset="1" stop-color="#ffd233" stop-opacity="0" /></radialGradient>
+              <clipPath id="home-lens-l"><circle cx="140" cy="170" r="54" /></clipPath>
+              <clipPath id="home-lens-r"><circle cx="260" cy="170" r="54" /></clipPath>
+            </defs>
+            <circle class="home-glow" cx="200" cy="170" r="160" fill="url(#home-glow-g)" />
+            <g class="home-scope-body">
+              <rect x="74" y="118" width="252" height="104" rx="52" fill="#2f6bff" />
+              <circle cx="200" cy="108" r="22" fill="#ffd233" /><circle cx="200" cy="108" r="11" fill="#fff" />
+              <circle cx="140" cy="170" r="64" fill="#1f2a44" /><circle cx="260" cy="170" r="64" fill="#1f2a44" />
+              <image id="home-peek-l" href="/home/peek.jpg" x="20" y="100" width="360" height="225" preserveAspectRatio="none" clip-path="url(#home-lens-l)" />
+              <image id="home-peek-r" href="/home/peek.jpg" x="20" y="100" width="360" height="225" preserveAspectRatio="none" clip-path="url(#home-lens-r)" />
+              <circle cx="140" cy="170" r="54" fill="none" stroke="#fff" stroke-width="6" opacity=".9" /><circle cx="260" cy="170" r="54" fill="none" stroke="#fff" stroke-width="6" opacity=".9" />
+              <path d="M104 150 a40 40 0 0 1 28 -30" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".85" /><path d="M224 150 a40 40 0 0 1 28 -30" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".85" />
+            </g>
+          </svg>
+        </button>
+      </div>
+
+      <div class="home-title">
+        <h1 class="home-logo" aria-label="ANIMAL WORLD LIVE"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>L</span><span class="sp"></span><span>W</span><span>O</span><span>R</span><span>L</span><span>D</span><span class="sp"></span><span>L</span><span>I</span><span>V</span><span>E</span></h1>
+        <p class="home-tagline">世界中の動物たちと、友達になろう。</p>
+        <p class="home-story">ふしぎな双眼鏡をのぞくと、どうぶつたちの世界へ。</p>
+      </div>
+
+      <div class="home-cta">
+        <button id="enter" class="btn btn-hero" type="button" aria-label="アニマルワールドに入る"><svg class="ico ico-fill"><use href="#i-bino" /></svg>のぞいてみる</button>
+        <button id="entry-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="home-new-dot" class="badge-dot" hidden></span></button>
+      </div>
+
+      <div id="fallback" class="fallback" hidden>
+        <h2>このブラウザでは3Dを表示できません</h2>
+        <p>WebGLが使えない環境のようです。別のブラウザか端末でもう一度開いてみてください。</p>
+        <button id="fallback-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳</button>
+      </div>
+    </section>
+
+    <!-- 物語: 初回だけ 3 コマ -->
+    <section id="story" class="story" hidden aria-label="おはなし">
+      <div class="story-panel">
+        <div id="story-art" class="story-art" aria-hidden="true"></div>
+        <p id="story-text" class="story-text"></p>
+        <div id="story-dots" class="story-dots" aria-hidden="true"></div>
+        <div class="story-actions">
+          <button id="story-skip" class="btn btn-quiet btn-m" type="button">スキップ</button>
+          <button id="story-next" class="btn btn-hero" type="button">つぎへ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 往復の演出: 双眼鏡の形（2 つの円）に絞られる幕 -->
+    <svg id="iris" class="iris" hidden aria-hidden="true"><path id="iris-path" fill="#13192b" fill-rule="evenodd" /></svg>
 
     <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く"></canvas>
-    <button id="minimap-expand" class="btn btn-ghost btn-small minimap-expand" type="button" hidden>地図を広げる</button>
+    <button id="minimap-expand" class="icon-btn minimap-expand" type="button" hidden aria-label="地図を広げる" title="地図を広げる"><svg class="ico"><use href="#i-expand" /></svg></button>
 
-    <section id="map" class="book map" hidden aria-label="地図">
-      <div class="book-panel map-panel">
-        <header class="observe-header">
-          <h2 class="observe-title">地図</h2>
-          <button id="map-close" class="btn btn-ghost" type="button">閉じる</button>
+    <section id="map" class="sheet-wrap map" hidden aria-label="地図">
+      <div class="sheet">
+        <div class="grabber"></div>
+        <header class="sheet-head">
+          <h2 class="sheet-title"><svg class="ico"><use href="#i-map" /></svg>地図</h2>
+          <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" title="閉じる"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
-        <canvas id="map-canvas" class="map-canvas" role="img" aria-label="サバンナ全体の地図。タップした場所へ歩く"></canvas>
-        <p class="map-hint">北が上。タップした場所へ歩きます。まだ出会っていない動物は地図に出ません。</p>
-        <ul class="map-legend" aria-label="凡例">
-          <li><span class="map-dot" style="background: #e0683a"></span>あなた</li>
-          <li><span class="map-dot" style="background: #d9a95f; box-shadow: inset 0 0 0 1.5px #6a4727"></span>出会った動物</li>
-          <li><span class="map-dot" style="background: #d9a95f; box-shadow: 0 0 0 2px #fff6e6, 0 0 0 3px #c9822e"></span>ともだち</li>
-          <li><span class="map-dot" style="background: #fff6e6; box-shadow: inset 0 0 0 2px #c9822e"></span>観察スポット</li>
-          <li><span class="map-dot" style="background: #a8876a"></span>コピエ（岩山）</li>
-          <li><span class="map-dot" style="background: #9fcbe6"></span>水場</li>
-          <li><span class="map-dot" style="background: #4f7f2a"></span>木</li>
-        </ul>
+        <div class="sheet-body">
+          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="サバンナ全体の地図。北が上。タップした場所へ歩く"></canvas>
+          <ul class="map-legend" aria-label="凡例">
+            <li><span class="map-dot dot-you"></span>あなた</li>
+            <li><span class="map-dot dot-met"></span>出会った動物</li>
+            <li><span class="map-dot dot-friend"></span>ともだち</li>
+            <li><span class="map-dot dot-spot"></span>観察スポット</li>
+          </ul>
+        </div>
       </div>
     </section>
 
     <div id="spot-label" class="spot-label" hidden aria-hidden="true">
+      <svg class="ico"><use href="#i-bino" /></svg>
       <span class="spot-label-name">観察スポット</span>
       <span id="spot-distance" class="spot-label-distance"></span>
     </div>
 
     <div id="hud-toast" class="toast hud-toast" hidden role="status"></div>
 
+    <!-- 観察モニター: 映像 → 顔と名前 → ともだちになる → 項目カード -->
     <section id="observe" class="observe" hidden aria-label="観察モニター">
       <div class="observe-panel">
-        <header class="observe-header">
-          <button id="observe-close" class="icon-btn" type="button" aria-label="世界に戻る" title="世界に戻る">
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
-          </button>
-          <h2 id="observe-title" class="observe-title">観察モニター</h2>
-        </header>
-        <div id="observe-chips" class="observe-chips" role="tablist" aria-label="出会った動物" hidden></div>
-        <div class="observe-screen">
+        <h2 id="observe-title" class="visually-hidden">観察モニター</h2>
+        <div class="m-video">
           <video id="observe-video" class="observe-video" playsinline loop preload="metadata" controls controlslist="nodownload"></video>
           <div id="observe-poster" class="observe-poster" hidden>
+            <div id="observe-poster-face" class="poster-face"></div>
             <p id="observe-poster-text" class="observe-poster-text"></p>
-            <button id="observe-retry" class="btn btn-primary btn-small" type="button" hidden>もう一度試す</button>
+            <button id="observe-retry" class="btn btn-hero btn-m" type="button" hidden>もう一度試す</button>
           </div>
-          <span id="observe-badge" class="observe-badge">収録映像</span>
-          <span id="observe-placeholder" class="observe-placeholder" hidden>仮映像（色と文字だけの自作プレースホルダ）</span>
-          <button id="observe-unmute" class="observe-unmute" type="button" aria-label="音を出す" title="音を出す" hidden>
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9l5 6M21 9l-5 6" /></svg>
-          </button>
+          <button id="observe-close" class="icon-btn m-back" type="button" aria-label="世界に戻る" title="世界に戻る"><svg class="ico"><use href="#i-back" /></svg></button>
+          <span id="observe-badge" class="m-badge"><svg class="ico"><use href="#i-film" /></svg>収録映像</span>
+          <span id="observe-placeholder" class="m-placeholder" hidden>仮映像（色と文字だけの自作プレースホルダ）</span>
+          <button id="observe-unmute" class="icon-btn m-unmute" type="button" aria-label="音を出す" title="音を出す" hidden><svg class="ico"><use href="#i-sound-off" /></svg></button>
         </div>
-        <div id="observe-profile" class="observe-profile"></div>
-        <div class="befriend">
-          <button id="befriend" class="btn btn-primary" type="button">ともだちになる</button>
-          <p id="befriended" class="befriended" hidden>ともだち帳に書いてあります（初めて出会った日: <span id="befriended-date"></span>）</p>
-          <p id="befriend-memory-note" class="befriend-note" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+        <div class="m-sheet">
+          <div id="observe-chips" class="chips" role="tablist" aria-label="出会った動物" hidden></div>
+          <div id="observe-hero" class="hero"></div>
+          <div class="cta-area">
+            <button id="befriend" class="btn btn-hero" type="button"><svg class="ico ico-fill"><use href="#i-heart" /></svg>ともだちになる</button>
+            <div id="befriended" class="friend-band" hidden>
+              <span class="check"><svg class="ico"><use href="#i-check" /></svg></span>
+              <span><strong>ともだち帳に書いてあります</strong><small>初めて出会った日 <span id="befriended-date"></span></small></span>
+              <span id="befriend-stars" class="stars" aria-hidden="true"></span>
+            </div>
+            <p id="befriend-memory-note" class="note-small" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+          </div>
+          <div id="observe-profile" class="fields"></div>
         </div>
       </div>
-      <div id="befriend-toast" class="toast" hidden role="status">ともだち帳に書きました</div>
+      <div id="befriend-toast" class="toast toast-book" hidden role="status"><svg class="ico"><use href="#i-book" /></svg>ともだち帳に書きました</div>
     </section>
 
-    <section id="book" class="book" hidden aria-label="ともだち帳">
-      <div class="book-panel">
-        <header class="observe-header">
-          <h2 class="observe-title">ともだち帳</h2>
-          <button id="book-close" class="btn btn-ghost" type="button">閉じる</button>
+    <!-- ともだち帳: 顔のカードグリッド -->
+    <section id="book" class="sheet-wrap" hidden aria-label="ともだち帳">
+      <div class="sheet">
+        <div class="grabber"></div>
+        <header class="sheet-head">
+          <h2 class="sheet-title"><svg class="ico"><use href="#i-book" /></svg>ともだち帳</h2>
+          <button id="book-close" class="icon-btn" type="button" aria-label="閉じる" title="閉じる"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
-        <p id="book-empty" class="book-empty">まだ誰もいません。サバンナを歩いて、観察スポットで会ってみよう。</p>
-        <ul id="book-list" class="book-list"></ul>
-        <p id="book-note" class="befriend-note" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+        <div class="sheet-body">
+          <div id="book-empty" class="fempty"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#i-bino" /></svg><p>まだ誰もいません</p></div>
+          <ul id="book-list" class="fgrid"></ul>
+          <p id="book-note" class="note-small" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+        </div>
       </div>
     </section>
 
@@ -108,20 +220,19 @@
     </div>
 
     <div id="hud" class="hud" hidden>
-      <div class="hud-left">
-        <label class="toggle">
-          <input id="reduce-motion" type="checkbox" />
-          <span>動きをへらす</span>
-        </label>
-        <div id="fps" class="fps" hidden></div>
+      <div class="hud-nav">
+        <button id="open-book" class="btn btn-nav hud-book" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳</button>
+        <button id="go-home" class="icon-btn" type="button" aria-label="ホームへ" title="ホームへ"><svg class="ico"><use href="#i-home" /></svg></button>
       </div>
-      <div class="hud-center">
-        <button id="goto-spot" class="btn btn-primary btn-small" type="button">観察スポットへ</button>
-      </div>
-      <div class="hud-right">
-        <button id="jump" class="btn btn-ghost btn-small" type="button">ジャンプ</button>
-        <button id="open-book" class="btn btn-book" type="button">ともだち帳</button>
-      </div>
+      <label class="toggle hud-toggle">
+        <input id="reduce-motion" type="checkbox" />
+        <svg class="ico"><use href="#i-motion" /></svg>
+        <span>動きをへらす</span>
+        <svg class="ico toggle-check"><use href="#i-check" /></svg>
+      </label>
+      <button id="goto-spot" class="btn btn-hero hud-spot" type="button"><svg class="ico ico-fill"><use href="#i-bino" /></svg>観察スポットへ</button>
+      <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" title="ジャンプ"><svg class="ico"><use href="#i-jump" /></svg></button>
+      <div id="fps" class="fps" hidden></div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

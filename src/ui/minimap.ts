@@ -4,7 +4,7 @@ import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
  * 地図の描画。左上のミニマップと、広げた全体地図の両方で使う。
  * 歩ける範囲（半径 WALK_RADIUS）を円形の俯瞰で描く。北が上。
  * 地形・コピエ・水場・木・観察スポットは一度だけ描いて使い回し、
- * 自分の位置と向き、ライオンの位置を毎回重ねる。
+ * 自分の位置と向き、ライオンの位置を毎回重ねる。色はワールドのトークンと同じ系統。
  */
 export interface MinimapMarker {
   id: string
@@ -13,7 +13,7 @@ export interface MinimapMarker {
   z: number
   /** 強調（そばにいる個体など） */
   active?: boolean
-  /** ともだち帳に登録済み。白い輪で区別し、広げた地図では名前に添える */
+  /** ともだち帳に登録済み。緑の輪で区別し、広げた地図では名前に添える */
   friend?: boolean
 }
 
@@ -32,6 +32,69 @@ export interface MapRenderer {
 
 const MAP_RADIUS = WALK_RADIUS + 8
 
+const C = {
+  grass0: '#f6dc8a',
+  grass1: '#e8c45a',
+  grass2: '#cfa42f',
+  water: '#8fc6ec',
+  rock: '#b8834a',
+  ramp: '#c9a27a',
+  plateau: '#dcc29a',
+  tree: '#6fae2e',
+  spot: '#f4c242',
+  rim: '#ffffff',
+  ink: '#2b1d12',
+  lion: '#d9a95f',
+  lionActive: '#f4c242',
+  lionEdge: '#6a4727',
+  friend: '#6fae2e',
+  you: '#f26a1b',
+}
+
+interface Box {
+  l: number
+  t: number
+  r: number
+  b: number
+}
+
+function overlaps(a: Box, b: Box): boolean {
+  return a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
+  ctx.closePath()
+}
+
+/** 白いピルの文字。left/top はピルの左上 */
+function drawPill(ctx: CanvasRenderingContext2D, text: string, left: number, top: number, u: number): void {
+  const font = `800 ${Math.round(11 * u)}px ${FONT}`
+  ctx.font = font
+  const padX = 6 * u
+  const h = 16 * u
+  const w = ctx.measureText(text).width + padX * 2
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)'
+  roundRect(ctx, left, top, w, h, h / 2)
+  ctx.fill()
+  ctx.fillStyle = C.ink
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, left + padX, top + h / 2 + 0.5 * u)
+}
+
+function pillWidth(ctx: CanvasRenderingContext2D, text: string, u: number): number {
+  ctx.font = `800 ${Math.round(11 * u)}px ${FONT}`
+  return ctx.measureText(text).width + 12 * u
+}
+
+const FONT = "'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif"
+
 export function createMapRenderer(size: number, options: { labels: boolean; baseAlpha?: number }): MapRenderer {
   const c = size / 2
   const k = (size / 2 - size * 0.02) / MAP_RADIUS
@@ -45,81 +108,80 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
   base.height = size
   const b = base.getContext('2d') as CanvasRenderingContext2D
 
-  // 草原（外は少し暗く）
+  // 草原（外は少し濃く）
   const grad = b.createRadialGradient(c, c, 10 * u, c, c, c)
-  grad.addColorStop(0, '#e2bd5c')
-  grad.addColorStop(0.75, '#d6ab3e')
-  grad.addColorStop(1, '#b98f36')
+  grad.addColorStop(0, C.grass0)
+  grad.addColorStop(0.7, C.grass1)
+  grad.addColorStop(1, C.grass2)
   b.fillStyle = grad
   b.beginPath()
   b.arc(c, c, c - 3 * u, 0, Math.PI * 2)
   b.fill()
 
   // 水場
-  b.fillStyle = '#9fcbe6'
+  b.fillStyle = C.water
   b.beginPath()
   b.arc(px(WATERHOLE.x), py(WATERHOLE.z), WATERHOLE.radius * k, 0, Math.PI * 2)
   b.fill()
 
   // コピエ: 岩肌の円、南の坂、頂上の台地
-  b.fillStyle = '#a8876a'
+  b.fillStyle = C.rock
   b.beginPath()
   b.arc(px(KOPJE.x), py(KOPJE.z), KOPJE.radius * k, 0, Math.PI * 2)
   b.fill()
-  b.fillStyle = '#c29a5c'
+  b.fillStyle = C.ramp
   b.beginPath()
   b.moveTo(px(KOPJE.x), py(KOPJE.z))
   b.arc(px(KOPJE.x), py(KOPJE.z), KOPJE.radius * k, Math.PI / 2 - KOPJE.rampHalfAngle, Math.PI / 2 + KOPJE.rampHalfAngle)
   b.closePath()
   b.fill()
-  b.fillStyle = '#bfa184'
+  b.fillStyle = C.plateau
   b.beginPath()
   b.arc(px(KOPJE.x), py(KOPJE.z), KOPJE.radius * KOPJE.plateau * k, 0, Math.PI * 2)
   b.fill()
 
   // 木
-  b.fillStyle = '#4f7f2a'
+  b.fillStyle = C.tree
   for (const t of ACACIAS) {
     b.beginPath()
     b.arc(px(t.x), py(t.z), 2.6 * u * t.scale, 0, Math.PI * 2)
     b.fill()
   }
 
-  // 観察スポット: 白い輪
-  b.strokeStyle = '#fff6e6'
-  b.lineWidth = 2 * u
+  // 観察スポット: 金の輪に白い縁
+  b.strokeStyle = C.rim
+  b.lineWidth = 4 * u
+  b.beginPath()
+  b.arc(px(SPOT.x), py(SPOT.z), 5 * u, 0, Math.PI * 2)
+  b.stroke()
+  b.strokeStyle = C.spot
+  b.lineWidth = 2.4 * u
   b.beginPath()
   b.arc(px(SPOT.x), py(SPOT.z), 5 * u, 0, Math.PI * 2)
   b.stroke()
 
   // 縁と「N」
-  b.strokeStyle = 'rgba(43, 29, 18, 0.35)'
-  b.lineWidth = 3 * u
+  b.strokeStyle = 'rgba(255, 255, 255, 0.7)'
+  b.lineWidth = 2 * u
   b.beginPath()
   b.arc(c, c, c - 3 * u, 0, Math.PI * 2)
   b.stroke()
-  b.fillStyle = 'rgba(43, 29, 18, 0.7)'
-  b.font = `bold ${Math.round(18 * u)}px system-ui, sans-serif`
+  b.fillStyle = C.ink
+  b.font = `800 ${Math.round(16 * u)}px ${FONT}`
   b.textAlign = 'center'
   b.textBaseline = 'top'
   b.fillText('N', c, 8 * u)
 
-  // 広げた地図だけ、場所の名前を入れる
+  // 広げた地図だけ、場所の名前を入れる。個体の名前はこれらを避けて置く
+  const staticBoxes: Box[] = []
   if (options.labels) {
-    const label = (text: string, x: number, y: number, align: CanvasTextAlign = 'center') => {
-      b.font = `bold ${Math.round(11 * u)}px system-ui, sans-serif`
-      b.textAlign = align
-      b.textBaseline = 'middle'
-      b.lineWidth = 3 * u
-      b.strokeStyle = 'rgba(255, 246, 230, 0.9)'
-      b.strokeText(text, x, y)
-      b.fillStyle = '#2b1d12'
-      b.fillText(text, x, y)
+    const pill = (text: string, left: number, top: number) => {
+      drawPill(b, text, left, top, u)
+      staticBoxes.push({ l: left, t: top, r: left + pillWidth(b, text, u), b: top + 16 * u })
     }
-    // 個体の名前と重ならないよう、水場は上、コピエは上（北側）に置く
-    label('水場', px(WATERHOLE.x) + (WATERHOLE.radius + 3) * k, py(WATERHOLE.z), 'left')
-    label('コピエ', px(KOPJE.x), py(KOPJE.z) - (KOPJE.radius + 6) * k)
-    label('観察スポット', px(SPOT.x) + 8 * u, py(SPOT.z), 'left')
+    pill('水場', px(WATERHOLE.x) + (WATERHOLE.radius + 3) * k, py(WATERHOLE.z) - 8 * u)
+    pill('コピエ', px(KOPJE.x) - pillWidth(b, 'コピエ', u) / 2, py(KOPJE.z) - (KOPJE.radius + 6) * k - 8 * u)
+    pill('観察スポット', px(SPOT.x) + 8 * u, py(SPOT.z) - 8 * u)
   }
 
   const draw = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
@@ -129,47 +191,27 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
     ctx.drawImage(base, 0, 0)
     ctx.globalAlpha = 1
 
-    // 出会った個体: 黄褐色の点に暗い縁。そばにいる個体は少し大きく。ともだちは白い輪を足す
+    // 出会った個体: 黄褐色の点に暗い縁。そばにいる個体は少し大きく。ともだちは緑の輪を足す
     for (const l of lions) {
       const r = (l.active ? 6 : 4.5) * u
-      ctx.fillStyle = l.active ? '#f3c36a' : '#d9a95f'
-      ctx.strokeStyle = '#6a4727'
+      ctx.fillStyle = l.active ? C.lionActive : C.lion
+      ctx.strokeStyle = C.lionEdge
       ctx.lineWidth = 1.5 * u
       ctx.beginPath()
       ctx.arc(px(l.x), py(l.z), r, 0, Math.PI * 2)
       ctx.fill()
       ctx.stroke()
       if (l.friend) {
-        ctx.strokeStyle = '#fff6e6'
+        ctx.strokeStyle = C.rim
+        ctx.lineWidth = 3.5 * u
+        ctx.beginPath()
+        ctx.arc(px(l.x), py(l.z), r + 3 * u, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.strokeStyle = C.friend
         ctx.lineWidth = 2 * u
         ctx.beginPath()
         ctx.arc(px(l.x), py(l.z), r + 3 * u, 0, Math.PI * 2)
         ctx.stroke()
-      }
-    }
-    if (options.labels) {
-      // 名前。台地の上の個体は地図では数ピクセルの距離に固まるので、コピエの左に縦に並べる。
-      // それ以外は点の右に置く
-      ctx.font = `bold ${Math.round(10 * u)}px system-ui, sans-serif`
-      ctx.textBaseline = 'middle'
-      ctx.lineWidth = 3 * u
-      ctx.strokeStyle = 'rgba(255, 246, 230, 0.9)'
-      ctx.fillStyle = '#2b1d12'
-      const onKopje = lions.filter((l) => Math.hypot(l.x - KOPJE.x, l.z - KOPJE.z) < KOPJE.radius)
-      const others = lions.filter((l) => !onKopje.includes(l))
-      const lineH = 11 * u
-      const left = px(KOPJE.x) - (KOPJE.radius + 3) * k
-      const top = py(KOPJE.z) - ((onKopje.length - 1) * lineH) / 2
-      const text = (l: MinimapMarker) => (l.friend ? `${l.name}（ともだち）` : l.name)
-      ctx.textAlign = 'right'
-      onKopje.forEach((l, i) => {
-        ctx.strokeText(text(l), left, top + i * lineH)
-        ctx.fillText(text(l), left, top + i * lineH)
-      })
-      ctx.textAlign = 'left'
-      for (const l of others) {
-        ctx.strokeText(text(l), px(l.x) + 7 * u, py(l.z))
-        ctx.fillText(text(l), px(l.x) + 7 * u, py(l.z))
       }
     }
 
@@ -177,8 +219,8 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
     ctx.save()
     ctx.translate(px(player.x), py(player.z))
     ctx.rotate(-player.heading)
-    ctx.fillStyle = '#e0683a'
-    ctx.strokeStyle = '#fff6e6'
+    ctx.fillStyle = C.you
+    ctx.strokeStyle = C.rim
     ctx.lineWidth = 2 * u
     ctx.beginPath()
     ctx.moveTo(0, 9 * u)
@@ -189,15 +231,32 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
     ctx.fill()
     ctx.stroke()
     ctx.restore()
+
     if (options.labels) {
-      ctx.font = `bold ${Math.round(10 * u)}px system-ui, sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'top'
-      ctx.lineWidth = 3 * u
-      ctx.strokeStyle = 'rgba(255, 246, 230, 0.9)'
-      ctx.fillStyle = '#2b1d12'
-      ctx.strokeText('あなた', px(player.x), py(player.z) + 11 * u)
-      ctx.fillText('あなた', px(player.x), py(player.z) + 11 * u)
+      // 名前のピル。点の右 → 左 → 下 → 上の順に、置けるところへ。重なる時は下へずらす
+      const placed: Box[] = [...staticBoxes]
+      const h = 16 * u
+      const put = (text: string, x: number, y: number) => {
+        const w = pillWidth(ctx, text, u)
+        const candidates: Box[] = [
+          { l: x + 8 * u, t: y - h / 2, r: x + 8 * u + w, b: y + h / 2 },
+          { l: x - 8 * u - w, t: y - h / 2, r: x - 8 * u, b: y + h / 2 },
+          { l: x - w / 2, t: y + 8 * u, r: x + w / 2, b: y + 8 * u + h },
+          { l: x - w / 2, t: y - 8 * u - h, r: x + w / 2, b: y - 8 * u },
+        ]
+        let box = candidates.find((cand) => !placed.some((p) => overlaps(cand, p)) && cand.l > 2 * u && cand.r < size - 2 * u)
+        if (!box) {
+          box = { ...candidates[0] }
+          for (let guard = 0; guard < 12 && placed.some((p) => overlaps(box as Box, p)); guard++) {
+            box.t += h + 2 * u
+            box.b += h + 2 * u
+          }
+        }
+        placed.push(box)
+        drawPill(ctx, text, box.l, box.t, u)
+      }
+      for (const l of lions) put(l.friend ? `${l.name}（ともだち）` : l.name, px(l.x), py(l.z))
+      put('あなた', px(player.x), py(player.z))
     }
   }
 
@@ -242,7 +301,7 @@ export function createMinimap(): Minimap {
   const canvas = document.getElementById('minimap') as HTMLCanvasElement
   const expandBtn = document.getElementById('minimap-expand') as HTMLButtonElement
   // ワールドが透けて見えるよう、地形は半透明に
-  const renderer = createMapRenderer(280, { labels: false, baseAlpha: 0.5 })
+  const renderer = createMapRenderer(280, { labels: false, baseAlpha: 0.55 })
   canvas.width = renderer.size
   canvas.height = renderer.size
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D

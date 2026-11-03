@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'awl.reduceMotion'
 
+export type ToastIcon = 'bino' | 'book' | 'home'
+
 export interface Hud {
   show: () => void
   reduceMotion: boolean
@@ -9,6 +11,8 @@ export interface Hud {
   onOpenBook: (fn: () => void) => void
   /** 「ジャンプ」ボタン（キーボードの Space と同じ） */
   onJump: (fn: () => void) => void
+  /** 「ホームへ」ボタン */
+  onGoHome: (fn: () => void) => void
   /** 帳に新しいページが増えたことを、ボタンの一拍の動きで伝える */
   pulseBook: () => void
   /** 「観察スポットへ」ボタンの表示切り替え */
@@ -16,8 +20,14 @@ export interface Hud {
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
   setSpotLabel: (screen: { x: number; y: number } | null, distance: number) => void
   /** ボタンを持たない小さな通知。2〜3秒で消える */
-  toast: (text: string) => void
+  toast: (text: string, icon?: ToastIcon) => void
+  /** モニターや帳が開いている間は「ホームへ」を重ねない */
+  setOverlayOpen: (open: boolean) => void
   setFps: (fps: number) => void
+}
+
+function esc(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
 function readStored(): boolean | null {
@@ -49,6 +59,7 @@ export function createHud(): Hud {
   const toastEl = document.getElementById('hud-toast') as HTMLElement
   const openBookBtn = document.getElementById('open-book') as HTMLButtonElement
   const jumpBtn = document.getElementById('jump') as HTMLButtonElement
+  const goHomeBtn = document.getElementById('go-home') as HTMLButtonElement
 
   const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const stored = readStored()
@@ -67,6 +78,9 @@ export function createHud(): Hud {
 
   const bookListeners: Array<() => void> = []
   openBookBtn.addEventListener('click', () => bookListeners.forEach((fn) => fn()))
+
+  const homeListeners: Array<() => void> = []
+  goHomeBtn.addEventListener('click', () => homeListeners.forEach((fn) => fn()))
 
   const jumpListeners: Array<() => void> = []
   // タップの反応を速く、キーボードフォーカスは奪わない
@@ -100,6 +114,9 @@ export function createHud(): Hud {
     onJump: (fn) => {
       jumpListeners.push(fn)
     },
+    onGoHome: (fn) => {
+      homeListeners.push(fn)
+    },
     pulseBook: () => {
       if (reduceMotion) return
       openBookBtn.classList.remove('is-pulse')
@@ -120,14 +137,20 @@ export function createHud(): Hud {
         spotDistance.textContent = distance >= 1000 ? '' : `あと ${Math.max(0, Math.round(distance))} m`
       }
     },
-    toast: (text) => {
-      toastEl.textContent = text
+    toast: (text, icon) => {
+      const iconHtml = icon
+        ? `<svg class="ico${icon === 'bino' ? ' ico-fill' : ''}" aria-hidden="true"><use href="#i-${icon}" /></svg>`
+        : ''
+      toastEl.innerHTML = `${iconHtml}<span>${esc(text)}</span>`
       toastEl.hidden = false
       toastEl.classList.toggle('is-animated', !reduceMotion)
       window.clearTimeout(toastTimer)
       toastTimer = window.setTimeout(() => {
         toastEl.hidden = true
       }, 2500)
+    },
+    setOverlayOpen: (open) => {
+      goHomeBtn.hidden = open
     },
     setFps: (fps) => {
       if (!fpsEl.hidden) fpsEl.textContent = `${fps.toFixed(0)} fps`

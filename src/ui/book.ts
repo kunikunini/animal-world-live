@@ -1,7 +1,8 @@
 import type { Animal } from '../data/animals'
 import { getAnimal } from '../data/animals'
 import type { FriendBookStore } from '../data/friends'
-import { formatMetDate } from '../data/friends'
+import { formatMetDateShort } from '../data/friends'
+import { faceMarkup } from './faces'
 
 export interface BookView {
   open: () => void
@@ -15,14 +16,9 @@ function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
-function avatar(animal: Animal): string {
-  if (animal.photo) return `<img class="book-avatar" src="${esc(animal.photo)}" alt="" />`
-  return `<div class="book-avatar book-avatar-placeholder" aria-hidden="true">${esc(animal.name.slice(0, 1))}</div>`
-}
-
 /**
- * ともだち帳。出会って友達になった個体のページが並ぶ。
- * 収集率や「あと○頭」は出さない。カードの「会いに行く」で 3D を歩かずに映像へ直行する。
+ * ともだち帳。出会って友達になった個体の顔が並ぶ。
+ * 収集率や「あと○頭」は出さない。カード全体が「会いに行く」で、3D を歩かずに映像へ直行する。
  */
 export function createBookView(store: FriendBookStore): BookView {
   const root = document.getElementById('book') as HTMLElement
@@ -41,23 +37,18 @@ export function createBookView(store: FriendBookStore): BookView {
       .map((e) => {
         const animal = getAnimal(e.animalId)
         if (!animal) return ''
-        const marks = animal.identifyingMarks
-          ? esc(animal.identifyingMarks)
-          : '<span class="profile-pending">見分けポイントは準備中</span>'
         return `
-          <li class="book-card">
-            ${avatar(animal)}
-            <div class="book-card-body">
-              <h3 class="book-card-name">${esc(animal.name)}</h3>
-              <p class="book-card-sub">${esc(animal.species)}</p>
-              <p class="book-card-marks">${marks}</p>
-              <p class="book-card-date">初めて出会った日: ${esc(formatMetDate(e.firstMetAt))}</p>
-            </div>
-            <button class="btn btn-primary btn-small" type="button" data-visit="${esc(animal.id)}">会いに行く</button>
+          <li>
+            <button class="fcard" type="button" data-visit="${esc(animal.id)}" aria-label="${esc(animal.name)}に会いに行く">
+              <span class="fface">${faceMarkup(animal)}<span class="badge-see" aria-hidden="true"><svg><use href="#i-bino" /></svg></span></span>
+              <span class="fname">${esc(animal.name)}</span>
+              <span class="fsub">${esc(formatMetDateShort(e.firstMetAt))}に出会った</span>
+            </button>
           </li>`
       })
       .join('')
     list.innerHTML = cards
+    list.hidden = entries.length === 0
     empty.hidden = entries.length > 0
     note.hidden = store.isPersistent
   }
@@ -81,6 +72,10 @@ export function createBookView(store: FriendBookStore): BookView {
   }
 
   closeBtn.addEventListener('click', () => setOpen(false))
+  // 幕のタップで閉じる（シートの中は閉じない）
+  root.addEventListener('click', (e) => {
+    if (e.target === root) setOpen(false)
+  })
   window.addEventListener('keydown', (e) => {
     if (open && e.key === 'Escape') setOpen(false)
   })

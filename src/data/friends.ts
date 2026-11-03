@@ -87,3 +87,10 @@ export function formatMetDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return ''
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
 }
+
+/** 「11月2日」の形（ともだち帳のカード用） */
+export function formatMetDateShort(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}月${d.getDate()}日`
+}

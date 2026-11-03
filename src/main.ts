@@ -19,6 +19,10 @@ import { createEncounterIcon } from './ui/encounter'
 import { createMinimap } from './ui/minimap'
 import { createMapView } from './ui/map'
 import { createJoystick } from './ui/joystick'
+import { createHome } from './ui/home'
+import { createStory } from './ui/story'
+import { createIris } from './ui/iris'
+import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
 import { getAnimal } from './data/animals'
@@ -36,13 +40,20 @@ function isMobile(): boolean {
   return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768
 }
 
-/** 3D ワールドに依存しない部分。ともだち帳と観察モニターは WebGL が無くても使える */
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, v))
+}
+
+/** 3D ワールドに依存しない部分。ホーム・ともだち帳・観察モニターは WebGL が無くても使える */
 function createShell() {
   const store = createFriendBookStore()
   const met = createEncounterStore()
   const hud = createHud()
   const observe = createObserveView(store, met)
   const book = createBookView(store)
+  const home = createHome(store)
+  const story = createStory()
+  const iris = createIris()
 
   // ともだち帳の「会いに行く」: 3D を歩かずに映像へ直行
   book.onVisit((animal) => {
@@ -50,20 +61,31 @@ function createShell() {
     observe.open(animal, 'book')
   })
   hud.onOpenBook(() => book.open())
+  home.onBook(() => book.open())
   observe.onBefriend(() => hud.pulseBook())
-  observe.setReduceMotion(hud.reduceMotion)
-  hud.onReduceMotionChange((on) => observe.setReduceMotion(on))
 
-  for (const id of ['entry-book', 'fallback-book']) {
-    document.getElementById(id)?.addEventListener('click', () => book.open())
+  const applyMotion = (on: boolean) => {
+    observe.setReduceMotion(on)
+    home.setReduceMotion(on)
+    iris.setReduceMotion(on)
   }
+  applyMotion(hud.reduceMotion)
+  hud.onReduceMotionChange(applyMotion)
 
-  return { store, met, hud, observe, book }
+  return { store, met, hud, observe, book, home, story, iris }
 }
 
 type Shell = ReturnType<typeof createShell>
 
-function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
+interface WorldHandle {
+  /** ホームにいる間は更新も描画も止める */
+  pause: () => void
+  resume: () => void
+  /** いまの画面を画像にする（ホームのスコープのレンズに映す） */
+  snapshot: () => string
+}
+
+function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
   const { hud, observe, book, store, met } = shell
   const mobile = isMobile()
   const { renderer, scene, camera, sun, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
@@ -88,6 +110,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
 
   const clouds = createClouds()
   scene.add(clouds.group)
+
+  // 風景の生き物（鳥の群れ、遠くで草を食む生き物）。名前も出会いも無い
+  const fauna = createFauna({ mobile })
+  scene.add(fauna.group)
 
   // 様式化ライオン。当たり判定も岩と同じ配列に入れる
   const lions = LIONS.map((l) => createLion(l))
@@ -130,7 +156,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
   })
 
-  // 出会い: いちばん近くにいるライオンの頭の上に光る双眼鏡。タップでその個体の観察モニター
+  // 出会い: そばにいるライオンの頭の上に「双眼鏡 + 名前」のピン。タップでその個体の観察モニター
   const labels = createWorldLabels()
   for (const lion of lions) labels.add(lion.id, getAnimal(lion.id)?.name ?? lion.id)
   const encounterIcon = createEncounterIcon()
@@ -142,15 +168,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     observe.open(animal, 'world')
   })
 
-  // 何かの画面が開いている間は、ワールドのタップとキーを止める
   // 広げた全体地図（ミニマップの「地図を広げる」から開く）
   const mapView = createMapView()
 
+  // 何かの画面が開いている間は、ワールドのタップとキーを止め、「ホームへ」も重ねない
+  let paused = false
   const syncInput = () => {
     const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen()
-    player.setInputEnabled(!blocked)
-    joystick.setEnabled(!blocked)
-    if (!blocked) canvas.focus()
+    player.setInputEnabled(!blocked && !paused)
+    joystick.setEnabled(!blocked && !paused)
+    hud.setOverlayOpen(blocked)
+    if (!blocked && !paused) canvas.focus()
   }
   observe.onOpenChange(syncInput)
   book.onOpenChange(syncInput)
@@ -177,14 +205,40 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     atmosphere.setReduceMotion(on)
     lions.forEach((l) => l.setReduceMotion(on))
     encounterIcon.setReduceMotion(on)
+    fauna.setReduceMotion(on)
   }
   applyReduceMotion(hud.reduceMotion)
   hud.onReduceMotionChange(applyReduceMotion)
   hud.show()
 
+  // ピンを画面の端に寄せる時の余白。下は HUD（スティック・ジャンプ・観察スポットへ）の上端から測る
+  const stickEl = document.getElementById('stick')
+  const jumpEl = document.getElementById('jump')
+  const spotBtnEl = document.getElementById('goto-spot')
+  const safe = { top: 72, bottom: 190 }
+  const measureSafe = () => {
+    let reserve = 0
+    for (const el of [stickEl, jumpEl, spotBtnEl]) {
+      if (!el || el.hidden) continue
+      const r = el.getBoundingClientRect()
+      if (r.height === 0) continue
+      reserve = Math.max(reserve, window.innerHeight - r.top)
+    }
+    safe.bottom = Math.min(window.innerHeight * 0.45, reserve + 12)
+    safe.top = 72
+  }
+  measureSafe()
+  window.addEventListener('resize', measureSafe)
+
   const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))
   const projected = new THREE.Vector3()
   let arrived = false
+
+  // 出会いの対象の切り替えに間を置く（家族が固まっている場所でピンが飛び回らないように）
+  let candidateId: string | null = null
+  let candidateSince = 0
+  const SWITCH_MARGIN = 0.8
+  const SWITCH_DELAY = 0.5
 
   // 影のカメラはプレイヤーについていく
   const sunOffset = sun.position.clone()
@@ -193,16 +247,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
   let fpsAcc = 0
   let fpsFrames = 0
   let slowSeconds = 0
+  let frames = 0
   let currentDpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2)
 
   const tick = () => {
+    if (paused) {
+      requestAnimationFrame(tick)
+      return
+    }
     const dt = Math.min(clock.getDelta(), 0.05)
     const time = clock.elapsedTime
+    frames++
+    if (frames % 60 === 0) measureSafe()
 
     player.update(dt)
     props.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
+    fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
 
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
@@ -211,15 +273,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     arrived = distance < SPOT.arriveRadius
     hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
 
-    // 出会い: いちばん近いライオン。名前ラベルは 45m 以内で見せ、近い個体を優先して重ならないように置く。
-    // そばにいる個体は頭に双眼鏡のアイコンを重ね、名前はその下にぶら下げる
-    let nearest: { id: string; d: number } | null = null
-    const labelEntries: LabelEntry[] = []
+    // 出会い: そばにいる個体を決める。切り替えは「はっきり近い状態が少し続いたら」
+    const dist = new Map<string, number>()
+    const reachOf = new Map<string, number>()
+    let closest: { id: string; d: number } | null = null
     const heads = new Map<string, { x: number; y: number; d: number }>()
     for (const lion of lions) {
       const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
       const reach = lion.collider.r + 4.2
-      if (d < reach && (!nearest || d < nearest.d)) nearest = { id: lion.id, d }
+      dist.set(lion.id, d)
+      reachOf.set(lion.id, reach)
+      if (d < reach && (!closest || d < closest.d)) closest = { id: lion.id, d }
       // 伏せたライオンの頭のあたり
       projected.copy(lion.position).setY(lion.position.y + 0.95 * lion.group.scale.y + 0.1).project(camera)
       const onScreen = projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1
@@ -231,15 +295,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
         })
       }
     }
-    const nextId = nearest ? nearest.id : null
-    let iconHead = nextId ? heads.get(nextId) : undefined
-    const iconR = encounterIcon.size() / 2
+    let nextId = encounterId
+    if (encounterId !== null && (dist.get(encounterId) ?? Infinity) < (reachOf.get(encounterId) ?? 0)) {
+      const currentD = dist.get(encounterId) as number
+      if (closest && closest.id !== encounterId && closest.d < currentD - SWITCH_MARGIN) {
+        if (candidateId !== closest.id) {
+          candidateId = closest.id
+          candidateSince = time
+        } else if (time - candidateSince >= SWITCH_DELAY) {
+          nextId = closest.id
+        }
+      } else {
+        candidateId = null
+      }
+    } else {
+      nextId = closest ? closest.id : null
+      candidateId = null
+    }
+
+    // ピン: 対象の頭の少し上。画面に入っていない時は端に寄せて、必ず押せるようにする
     const obstacles: Rect[] = []
-    if (nextId && !iconHead) {
-      // そばにいるのに頭が画面に入っていない（到着時に横や後ろにいる）。画面の端に寄せて、必ず押せるようにする
+    const labelEntries: LabelEntry[] = []
+    if (nextId) {
       const lion = lions.find((l) => l.id === nextId)
       if (lion) {
-        projected.copy(lion.position).setY(lion.position.y + 0.95 * lion.group.scale.y + 0.1).project(camera)
+        const scale = lion.group.scale.y
+        projected.copy(lion.position).setY(lion.position.y + 0.95 * scale + 0.1 + 0.45 * scale).project(camera)
         let sx = projected.x
         let sy = projected.y
         if (projected.z >= 1) {
@@ -247,32 +328,21 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
           sx = -sx
           sy = -sy
         }
-        const marginX = iconR + 12
-        const marginTop = iconR + 72
-        // 下は HUD（スマホではスティックも）に重ねない
-        const marginBottom = iconR + (mobile ? 320 : 190)
-        iconHead = {
-          x: Math.min(window.innerWidth - marginX, Math.max(marginX, ((sx + 1) / 2) * window.innerWidth)),
-          y: Math.min(window.innerHeight - marginBottom, Math.max(marginTop, ((1 - sy) / 2) * window.innerHeight)),
-          d: nearest?.d ?? 0,
-        }
+        const size = encounterIcon.size()
+        const x = clamp(((sx + 1) / 2) * window.innerWidth, size.w / 2 + 12, window.innerWidth - size.w / 2 - 12)
+        const y = clamp(((1 - sy) / 2) * window.innerHeight, safe.top + size.h, window.innerHeight - safe.bottom)
+        encounterIcon.set({ x, y }, getAnimal(nextId)?.name)
+        obstacles.push({ l: x - size.w / 2, r: x + size.w / 2, t: y - size.h, b: y })
       }
-    }
-    if (iconHead) {
-      encounterIcon.set({ x: iconHead.x, y: iconHead.y }, getAnimal(nextId as string)?.name)
-      obstacles.push({ l: iconHead.x - iconR, r: iconHead.x + iconR, t: iconHead.y - iconR, b: iconHead.y + iconR })
     } else {
       encounterIcon.set(null)
     }
     for (const [id, head] of heads) {
-      if (id === nextId && iconHead && heads.get(id) === iconHead) {
-        // 名前はアイコンの下に。ラベルの高さ分だけ下げた位置を下端にする
-        labelEntries.push({ id, x: head.x, y: head.y + iconR + 4 + 28, d: head.d, under: true })
-      } else {
-        labelEntries.push({ id, x: head.x, y: head.y - 10, d: head.d })
-      }
+      if (id === nextId) continue
+      labelEntries.push({ id, x: head.x, y: head.y - 10, d: head.d })
     }
     labels.layout(labelEntries, obstacles)
+
     minimapTimer -= dt
     if (minimapTimer <= 0) {
       minimapTimer = 0.1
@@ -285,7 +355,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
           name: getAnimal(l.id)?.name ?? l.id,
           x: l.position.x,
           z: l.position.z,
-          active: nearest?.id === l.id,
+          active: nextId === l.id,
           friend: store.has(l.id),
         }))
       minimap.update(mapPlayer, mapLions)
@@ -293,20 +363,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     }
     if (nextId !== encounterId) {
       encounterId = nextId
+      candidateId = null
       const lion = lions.find((l) => l.id === nextId)
       if (lion) {
         lion.notice(time)
         // 出会いの記録。地図に出るのはここから
         met.mark(lion.id)
+        hud.toast(`${getAnimal(lion.id)?.name ?? lion.id}のそばに来ました`, 'bino')
       }
-      if (lion) hud.toast(`${getAnimal(lion.id)?.name ?? lion.id}のそばに来ました`)
     }
 
     // スポットのラベルを画面に重ねる（カメラの後ろにある時は隠す）
     projected.copy(spotHead).project(camera)
     if (projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1 && !arrived) {
       hud.setSpotLabel(
-        { x: ((projected.x + 1) / 2) * window.innerWidth, y: ((1 - projected.y) / 2) * window.innerHeight },
+        {
+          x: ((projected.x + 1) / 2) * window.innerWidth,
+          y: clamp(((1 - projected.y) / 2) * window.innerHeight, 64, window.innerHeight),
+        },
         distance,
       )
     } else {
@@ -367,36 +441,83 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): void {
     }
   }
 
-  // 1フレーム描いてから入口を消す（白画面を見せない）
+  // 1フレーム描いてから幕を開ける（白画面を見せない）
   renderer.render(scene, camera)
   requestAnimationFrame(tick)
+
+  return {
+    pause: () => {
+      paused = true
+      player.setInputEnabled(false)
+      joystick.setEnabled(false)
+    },
+    resume: () => {
+      paused = false
+      clock.getDelta()
+      syncInput()
+    },
+    snapshot: () => {
+      try {
+        postfx.render()
+        return canvas.toDataURL('image/jpeg', 0.6)
+      } catch {
+        return ''
+      }
+    },
+  }
 }
 
 function main(): void {
   const canvas = document.getElementById('world') as HTMLCanvasElement
-  const entry = document.getElementById('entry') as HTMLElement
-  const fallback = document.getElementById('fallback') as HTMLElement
-  const enter = document.getElementById('enter') as HTMLButtonElement
-
   const shell = createShell()
+  const webgl = hasWebGL(canvas)
+  if (!webgl) shell.home.showFallback()
 
-  if (!hasWebGL(canvas)) {
-    entry.hidden = true
-    fallback.hidden = false
-    return
-  }
+  let world: WorldHandle | null = null
+  let busy = false
 
-  enter.addEventListener('click', () => {
-    enter.disabled = true
+  // ホーム → 幕が双眼鏡の形に閉じる → ワールド → 幕が開く
+  const enterWorld = async () => {
+    if (busy || !webgl) return
+    busy = true
     try {
-      startWorld(canvas, shell)
-      entry.hidden = true
+      if (shell.story.shouldShow()) await shell.story.play()
+      await shell.iris.close()
+      if (!world) world = startWorld(canvas, shell)
+      else world.resume()
+      shell.home.hide()
+      document.body.classList.add('in-world')
       canvas.focus()
+      await shell.iris.open()
     } catch (err) {
       console.error(err)
-      entry.hidden = true
-      fallback.hidden = false
+      shell.home.show()
+      document.body.classList.remove('in-world')
+      shell.home.showFallback()
+      await shell.iris.open()
+    } finally {
+      busy = false
     }
+  }
+
+  // ワールド → 幕が閉じる → ホーム（レンズに最後の景色）→ 幕が開く
+  const goHome = async () => {
+    if (busy || !world) return
+    busy = true
+    await shell.iris.close()
+    shell.home.setPeek(world.snapshot())
+    world.pause()
+    shell.home.show()
+    document.body.classList.remove('in-world')
+    await shell.iris.open()
+    busy = false
+  }
+
+  shell.home.onEnter(() => {
+    void enterWorld()
+  })
+  shell.hud.onGoHome(() => {
+    void goHome()
   })
 }
 
