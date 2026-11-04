@@ -3,6 +3,7 @@ import { createScene } from './world/scene'
 import { createTerrain } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
+import { createResidents } from './world/residents'
 import { OUTER_REGIONS, biomeAt, regionAt } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
@@ -175,7 +176,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   scene.add(fauna.group)
 
   // 様式化ライオン。当たり判定も岩と同じ配列に入れる
-  const lions = LIONS.map((l) => createLion(l))
+  // ほかのワールドで会える子（トラ・オオカミ）も同じ伏せの体で作り、出会いの仕組みに乗せる
+  const lions = [...LIONS.map((l) => createLion(l)), ...createResidents()]
   for (const lion of lions) {
     scene.add(lion.group)
     props.colliders.push(lion.collider)
@@ -438,7 +440,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       if (lion.id === encounterId && d < reach) currentD = d
       if (d < reach && (!closest || d < closest.d)) closest = { id: lion.id, d }
       // 伏せたライオンの頭のあたり
-      projected.copy(lion.position).setY(lion.position.y + 0.95 * lion.group.scale.y + 0.1).project(camera)
+      projected.copy(lion.position).setY(lion.position.y + (lion.headHeight ?? 0.95) * lion.group.scale.y + 0.1).project(camera)
       const onScreen = projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1
       if (onScreen && d < 45) {
         heads.set(lion.id, {
@@ -472,7 +474,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const lion = lions.find((l) => l.id === nextId)
       if (lion) {
         const scale = lion.group.scale.y
-        projected.copy(lion.position).setY(lion.position.y + 0.95 * scale + 0.1 + 0.45 * scale).project(camera)
+        projected.copy(lion.position).setY(lion.position.y + (lion.headHeight ?? 0.95) * scale + 0.1 + 0.45 * scale).project(camera)
         let sx = projected.x
         let sy = projected.y
         if (projected.z >= 1) {

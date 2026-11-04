@@ -126,7 +126,8 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
 /** ジャングル: 背の高い木（細い幹に濃い緑の玉）、ヤシ、シダ。目印は中心の奥の大木 */
 function createJungle(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('jungle')
-  const trees = scatter(rand, r, mobile ? 90 : 130, { max: r.walk + 40, clearing: 16, path: 7 })
+  // 広場は広めに: 日は西から差すので、西の高い木の影がスポットまで伸びないように
+  const trees = scatter(rand, r, mobile ? 90 : 130, { max: r.walk + 40, clearing: 24, path: 7 })
   const trunkGeo = new THREE.CylinderGeometry(0.22, 0.45, 1, 7)
   trunkGeo.translate(0, 0.5, 0)
   const blobGeo = new THREE.IcosahedronGeometry(1, 1)
@@ -211,9 +212,9 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   finish(fernMesh)
   group.add(fernMesh)
 
-  // 目印の大木: 中心の奥（サバンナと反対側）
-  const gx = r.x - 22
-  const gz = r.z
+  // 目印の大木: 中心の北西。日は西から差すので、影がスポットにかからない側に置く
+  const gx = r.x - 20
+  const gz = r.z - 22
   const gy = terrainHeight(gx, gz)
   const giant = new THREE.Group()
   giant.position.set(gx, gy - 0.5, gz)
@@ -303,7 +304,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   // 目印の赤い一枚岩: 中心の奥（サバンナと反対側）に、横長で角の丸い岩
   const mx = r.x
   const mz = r.z + 62
-  const mono = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), toonMaterial({ color: '#b65a3a' }))
+  const mono = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), toonMaterial({ color: '#a6614a' }))
   mono.scale.set(34, 13, 15)
   mono.position.set(mx, terrainHeight(mx, mz) - 3, mz)
   mono.castShadow = true

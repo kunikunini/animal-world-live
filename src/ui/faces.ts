@@ -67,10 +67,13 @@ export function faceBackground(animal: Animal): string {
 /** ライオンだけは自作の顔がある。ほかの種は写真が届くまでシルエットの枠（D-32 ③） */
 const isLion = (animal: Animal) => animal.species === 'ライオン'
 
+let silSeq = 0
+
 /** 写真待ちの枠: ワールドの色の地に、白い足あと。顔を描いたふりはしない */
 function silhouetteSvg(animal: Animal): string {
   const [top, bottom] = (animal.world && getWorld(animal.world)?.colors) || ['#cfd8e3', '#93a3b8']
-  const gid = `sil-${animal.id}`
+  // 同じ子の顔がページに何枚も出るので、グラデーションの ID は描くたびに変える（重なると色が消える）
+  const gid = `sil-${animal.id}-${++silSeq}`
   return `<svg viewBox="0 0 100 100" role="img" aria-label="${esc(t('silhouetteOf', { name: animalName(animal) }))}"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}" /><stop offset="1" stop-color="${bottom}" /></linearGradient></defs><rect width="100" height="100" fill="url(#${gid})" /><g fill="#fff" opacity=".55"><ellipse cx="50" cy="60" rx="15" ry="12.5" /><circle cx="31" cy="42" r="6.5" /><circle cx="43" cy="32" r="6.5" /><circle cx="57" cy="32" r="6.5" /><circle cx="69" cy="42" r="6.5" /></g></svg>`
 }
 
