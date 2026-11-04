@@ -2,6 +2,7 @@ import { ANIMALS } from '../data/animals'
 import { faceBackground, faceParts } from './faces'
 import { esc } from './html'
 import { t, type I18nKey } from './i18n'
+import { hideView, refreshIn, showView } from './transition'
 
 /**
  * 物語: 初回だけ 3 コマ。絵と一言だけで、説明文にしない。
@@ -128,7 +129,7 @@ export function createStory(): StoryView {
 
   const finish = () => {
     writeSeen()
-    root.hidden = true
+    hideView(root)
     const done = resolveDone
     resolveDone = null
     if (done) done()
@@ -138,6 +139,7 @@ export function createStory(): StoryView {
     if (index < PANELS.length - 1) {
       index++
       render()
+      refreshIn(art, text)
       nextBtn.focus()
     } else {
       finish()
@@ -145,7 +147,7 @@ export function createStory(): StoryView {
   })
   skipBtn.addEventListener('click', finish)
   window.addEventListener('keydown', (e) => {
-    if (!root.hidden && e.key === 'Escape') finish()
+    if (resolveDone && e.key === 'Escape') finish()
   })
 
   return {
@@ -155,7 +157,7 @@ export function createStory(): StoryView {
         resolveDone = resolve
         index = 0
         render()
-        root.hidden = false
+        showView(root)
         nextBtn.focus()
       }),
   }

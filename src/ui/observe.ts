@@ -9,6 +9,7 @@ import { esc } from './html'
 import { renderHero, renderProfile } from './profile'
 import { playFriendChime } from './chime'
 import { animalName, t } from './i18n'
+import { refreshIn, setViewOpen } from './transition'
 
 export type ObserveOrigin = 'world' | 'book'
 
@@ -225,7 +226,11 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     const target = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-animal]')
     if (!target) return
     const animal = ANIMALS.find((a) => a.id === target.dataset.animal)
-    if (animal && animal.id !== current?.id) show(animal)
+    if (animal && animal.id !== current?.id) {
+      show(animal)
+      // 家族の切り替え: 顔と名前・帯・項目をふわっと入れ直す
+      refreshIn(hero, befriended, profile)
+    }
   })
 
   met.onChange(() => {
@@ -283,7 +288,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const setOpen = (next: boolean) => {
     if (open === next) return
     open = next
-    root.hidden = !open
+    setViewOpen(root, open)
     if (!open) {
       loadSeq++
       video.pause()

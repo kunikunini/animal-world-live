@@ -89,6 +89,8 @@ function createShell() {
     home.setReduceMotion(on)
     iris.setReduceMotion(on)
     hud.setReduceMotion(on)
+    // 画面の出入りは CSS の transition。動きをへらす時はフェードだけにする
+    document.body.classList.toggle('is-reduce-motion', on)
   }
   applyMotion(settings.reduceMotion)
   settings.onReduceMotionChange(applyMotion)

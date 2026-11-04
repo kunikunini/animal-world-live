@@ -1,5 +1,6 @@
 import { esc } from './html'
 import { t } from './i18n'
+import { hideView, showView } from './transition'
 
 export type ToastIcon = 'bino' | 'book' | 'home'
 
@@ -113,12 +114,9 @@ export function createHud(): Hud {
         ? `<svg class="ico${icon === 'bino' ? ' ico-fill' : ''}" aria-hidden="true"><use href="#i-${icon}" /></svg>`
         : ''
       toastEl.innerHTML = `${iconHtml}<span>${esc(text)}</span>`
-      toastEl.hidden = false
-      toastEl.classList.toggle('is-animated', !reduceMotion)
+      showView(toastEl)
       window.clearTimeout(toastTimer)
-      toastTimer = window.setTimeout(() => {
-        toastEl.hidden = true
-      }, 2500)
+      toastTimer = window.setTimeout(() => hideView(toastEl), 2500)
     },
     setOverlayOpen: (open) => {
       goHomeBtn.hidden = open

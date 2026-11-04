@@ -4,6 +4,7 @@
  * 保存が無ければ端末の「視差効果を減らす」に従う。
  */
 import { getLang, onLangChange, setLang, type Lang } from './i18n'
+import { setViewOpen } from './transition'
 
 const MOTION_KEY = 'awl.reduceMotion'
 
@@ -63,7 +64,7 @@ export function createSettings(): Settings {
   const setOpen = (next: boolean) => {
     if (open === next) return
     open = next
-    root.hidden = !open
+    setViewOpen(root, open)
     if (open) closeBtn.focus()
     else openBtn.focus()
   }

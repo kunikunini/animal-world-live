@@ -1,4 +1,5 @@
 import { t } from './i18n'
+import { hideView, showView } from './transition'
 
 /**
  * 出会いの導線。そばに来たライオンの頭の上に「双眼鏡 + 名前」のピンを浮かべ、尻尾で頭を指す。
@@ -40,7 +41,8 @@ export function createEncounterIcon(): EncounterIcon {
     set: (screen, name) => {
       const next = screen !== null
       if (next !== visible) {
-        el.hidden = !next
+        if (next) showView(el)
+        else hideView(el)
         visible = next
       }
       if (!screen) return

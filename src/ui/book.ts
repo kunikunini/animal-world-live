@@ -5,6 +5,7 @@ import { formatMetDateShort } from '../data/friends'
 import { faceMarkup } from './faces'
 import { esc } from './html'
 import { animalName, t } from './i18n'
+import { setViewOpen } from './transition'
 
 /** 帳をどこから開いたか。ホームからなら「のぞいてみる」、ワールドからなら「ワールドに戻る」 */
 export type BookOrigin = 'home' | 'world'
@@ -91,7 +92,7 @@ export function createBookView(store: FriendBookStore): BookView {
   const setOpen = (next: boolean) => {
     if (open === next) return
     open = next
-    root.hidden = !open
+    setViewOpen(root, open)
     if (open) {
       worldLabel.textContent = origin === 'home' ? t('peek') : t('toWorld')
       worldBtn.hidden = origin === 'home' && !canEnterWorld

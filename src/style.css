@@ -1110,14 +1110,7 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   z-index: 6;
 }
 
-.toast.is-animated {
-  animation: toast-in 0.4s ease-out;
-}
-
-@keyframes toast-in {
-  from { opacity: 0; transform: translate(-50%, -10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
+/* 通知の出入りは下の「画面の出入り」でまとめて扱う */
 
 /* ---- スマホ縦 ---- */
 @media (max-width: 480px) {
@@ -2081,4 +2074,93 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   .map-canvas { width: calc(100vh - 110px); height: calc(100vh - 110px); margin: 0; }
   .map-legend { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; gap: 8px; }
   .map-legend li { white-space: nowrap; }
+}
+
+/* ==========================================================================
+   画面の出入り（ui/transition.ts）。角のない切り替え: 幕の色が溶けるように出て、中身は少し下から浮かぶ。
+   .is-out が「消えている側」の見た目。transform は位置決めに使っている部品があるので、
+   ずらしは translate / scale の個別プロパティで重ねる。動きをへらす時はフェードだけ
+   ========================================================================== */
+:root {
+  --ease-soft: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --t-view: 0.32s;
+}
+
+.sheet-wrap,
+.observe,
+.story,
+.toast,
+.encounter-pin {
+  transition: opacity var(--t-view) var(--ease-soft);
+}
+
+.sheet,
+.observe-panel,
+.story-panel {
+  transition:
+    translate var(--t-view) var(--ease-soft),
+    scale var(--t-view) var(--ease-soft),
+    opacity var(--t-view) var(--ease-soft);
+}
+
+.sheet-wrap.is-out,
+.observe.is-out,
+.story.is-out,
+.toast.is-out,
+.encounter-pin.is-out {
+  opacity: 0;
+}
+
+/* スマホのシートは下から、PC のシート・モニター・物語は少し下から浮かんで大きくなる */
+.sheet-wrap.is-out .sheet {
+  translate: 0 48px;
+}
+
+.observe.is-out .observe-panel {
+  translate: 0 28px;
+}
+
+.story.is-out .story-panel {
+  translate: 0 20px;
+  scale: 0.96;
+}
+
+.toast.is-out {
+  translate: 0 -10px;
+}
+
+.encounter-pin.is-out {
+  scale: 0.85;
+}
+
+@media (min-width: 768px) {
+  .sheet-wrap.is-out .sheet,
+  .observe.is-out .observe-panel {
+    translate: 0 18px;
+    scale: 0.97;
+  }
+}
+
+/* 中身の差し替え（家族の切り替え・物語のコマ送り） */
+.is-refresh {
+  animation: refresh-in 0.36s var(--ease-soft);
+}
+
+@keyframes refresh-in {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+body.is-reduce-motion :is(.sheet, .observe-panel, .story-panel, .toast, .encounter-pin) {
+  translate: none !important;
+  scale: none !important;
+}
+
+body.is-reduce-motion .is-refresh {
+  animation-name: refresh-fade;
+}
+
+@keyframes refresh-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

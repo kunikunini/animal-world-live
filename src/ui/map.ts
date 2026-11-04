@@ -1,5 +1,6 @@
 import { bindMapPick, createMapRenderer } from './minimap'
 import type { MapPlayer, MinimapMarker } from './minimap'
+import { setViewOpen } from './transition'
 
 /**
  * 広げた全体地図。場所と個体の名前つき。タップした場所へ歩いて閉じる。
@@ -36,7 +37,7 @@ export function createMapView(): MapView {
   const setOpen = (next: boolean) => {
     if (open === next) return
     open = next
-    root.hidden = !open
+    setViewOpen(root, open)
     if (open) {
       redraw()
       closeBtn.focus()
