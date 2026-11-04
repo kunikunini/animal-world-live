@@ -61,6 +61,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const befriendedDate = document.getElementById('befriended-date') as HTMLElement
   const befriendedText = document.getElementById('befriended-text') as HTMLElement
   const seeBookBtn = document.getElementById('befriend-see') as HTMLButtonElement
+  const seeBookLabel = document.getElementById('befriend-see-label') as HTMLElement
   const stars = document.getElementById('befriend-stars') as HTMLElement
   const status = document.getElementById('befriend-status') as HTMLElement
   const memoryNote = document.getElementById('befriend-memory-note') as HTMLElement
@@ -157,8 +158,8 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
 
   /**
    * 「ともだちになる」の状態。登録済みなら帯を見せ、ボタンは出さない。
-   * 登録したばかりでまだ帳で見ていない子は「加わりました」と、帳へ見に行くボタン（世界から開いた時だけ。
-   * 帳から開いた時は戻るボタンが帳へ戻る）
+   * 登録したばかりでまだ帳で見ていない子は「加わりました」。登録済みなら、どこから開いても帳へ行くボタンを出す
+   * （帳から開いた時は、下に開いている帳へ戻る）
    */
   const renderFriendState = (animal: Animal) => {
     const entry = store.get(animal.id)
@@ -167,7 +168,8 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     befriended.hidden = !entry
     befriended.classList.toggle('is-fresh', fresh)
     befriendedText.textContent = fresh ? 'ともだち帳に加わりました' : 'ともだち帳に書いてあります'
-    seeBookBtn.hidden = !(fresh && origin === 'world')
+    seeBookBtn.hidden = !entry
+    seeBookLabel.textContent = origin === 'book' ? 'ともだち帳に戻る' : 'ともだち帳を見る'
     if (entry) befriendedDate.textContent = formatMetDate(entry.firstMetAt)
     memoryNote.hidden = store.isPersistent
   }

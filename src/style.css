@@ -1185,6 +1185,15 @@ button {
   min-height: 0;
 }
 
+.sheet-foot {
+  flex: none;
+  padding-top: 12px;
+}
+
+.sheet-foot .btn {
+  width: 100%;
+}
+
 .note-small {
   margin: 10px 0 0;
   font-size: var(--fs-caption);

@@ -5,8 +5,11 @@ import { formatMetDateShort } from '../data/friends'
 import { faceMarkup } from './faces'
 import { esc } from './html'
 
+/** 帳をどこから開いたか。ホームからなら「のぞいてみる」、ワールドからなら「ワールドに戻る」 */
+export type BookOrigin = 'home' | 'world'
+
 export interface BookView {
-  open: () => void
+  open: (from: BookOrigin) => void
   close: () => void
   isOpen: () => boolean
   onVisit: (fn: (animal: Animal) => void) => void
@@ -14,6 +17,10 @@ export interface BookView {
   /** 観察モニターから帳へ戻ってきた時、さっき押したカードにフォーカスを戻す */
   restoreFocus: () => void
   setReduceMotion: (on: boolean) => void
+  /** 帳の下の「のぞいてみる／ワールドに戻る」。行き止まりにしないための出口 */
+  onGoWorld: (fn: (from: BookOrigin) => void) => void
+  /** WebGL が無い時: ホームから開いた帳には「のぞいてみる」を出さない */
+  setCanEnterWorld: (on: boolean) => void
 }
 
 /**
@@ -28,12 +35,17 @@ export function createBookView(store: FriendBookStore): BookView {
   const empty = document.getElementById('book-empty') as HTMLElement
   const note = document.getElementById('book-note') as HTMLElement
   const closeBtn = document.getElementById('book-close') as HTMLButtonElement
+  const worldBtn = document.getElementById('book-world') as HTMLButtonElement
+  const worldLabel = document.getElementById('book-world-label') as HTMLElement
 
   let open = false
   let reduceMotion = false
   /** 今回開いた時点で新着だった子。閉じる時に見たことにする */
   let freshIds: string[] = []
   let lastVisitId = ''
+  let origin: BookOrigin = 'world'
+  let canEnterWorld = true
+  const worldListeners: Array<(from: BookOrigin) => void> = []
   const visitListeners: Array<(animal: Animal) => void> = []
   const openListeners: Array<(open: boolean) => void> = []
 
@@ -79,6 +91,8 @@ export function createBookView(store: FriendBookStore): BookView {
     open = next
     root.hidden = !open
     if (open) {
+      worldLabel.textContent = origin === 'home' ? 'のぞいてみる' : 'ワールドに戻る'
+      worldBtn.hidden = origin === 'home' && !canEnterWorld
       freshIds = store.unseen().map((e) => e.animalId)
       lastVisitId = ''
       render()
@@ -102,12 +116,21 @@ export function createBookView(store: FriendBookStore): BookView {
   window.addEventListener('keydown', (e) => {
     if (open && e.key === 'Escape') setOpen(false)
   })
+  worldBtn.addEventListener('click', () => {
+    worldListeners.forEach((fn) => fn(origin))
+  })
   store.onChange(() => {
-    if (open) render()
+    if (!open) return
+    // 帳から開いたモニターで新しく登録した子も「あたらしい」に入れ、閉じる時に見たことにする
+    for (const e of store.unseen()) if (!freshIds.includes(e.animalId)) freshIds.push(e.animalId)
+    render()
   })
 
   return {
-    open: () => setOpen(true),
+    open: (from) => {
+      if (!open) origin = from
+      setOpen(true)
+    },
     close: () => setOpen(false),
     isOpen: () => open,
     onVisit: (fn) => {
@@ -123,6 +146,12 @@ export function createBookView(store: FriendBookStore): BookView {
     setReduceMotion: (on) => {
       reduceMotion = on
       list.classList.toggle('is-still', on)
+    },
+    onGoWorld: (fn) => {
+      worldListeners.push(fn)
+    },
+    setCanEnterWorld: (on) => {
+      canEnterWorld = on
     },
   }
 }

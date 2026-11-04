@@ -60,8 +60,8 @@ function createShell() {
     met.mark(animal.id)
     observe.open(animal, 'book')
   })
-  hud.onOpenBook(() => book.open())
-  home.onBook(() => book.open())
+  hud.onOpenBook(() => book.open('world'))
+  home.onBook(() => book.open('home'))
 
   // 登録したあと: 帳のボタンに点（帳で見るまで残る）。モニターを閉じて HUD が見えた瞬間に一拍弾ませる
   const syncBookNew = () => hud.setBookNew(store.unseen().length > 0)
@@ -75,7 +75,7 @@ function createShell() {
   // 登録直後の「ともだち帳を見る」: モニターを閉じて帳を開く（新しい子の札が見える）
   observe.onSeeBook(() => {
     // 帳を先に開く（モニターを閉じた時に「帳が開いている」扱いになり、HUD を弾ませない）
-    book.open()
+    book.open('world')
     observe.close()
   })
 
@@ -494,7 +494,10 @@ function main(): void {
   const canvas = document.getElementById('world') as HTMLCanvasElement
   const shell = createShell()
   const webgl = hasWebGL(canvas)
-  if (!webgl) shell.home.showFallback()
+  if (!webgl) {
+    shell.home.showFallback()
+    shell.book.setCanEnterWorld(false)
+  }
 
   let world: WorldHandle | null = null
   let busy = false
@@ -538,6 +541,11 @@ function main(): void {
 
   shell.home.onEnter(() => {
     void enterWorld()
+  })
+  // 帳の出口: ワールドからならそのまま閉じて戻る。ホームからなら閉じてワールドへ入る
+  shell.book.onGoWorld((from) => {
+    shell.book.close()
+    if (from === 'home') void enterWorld()
   })
   shell.hud.onGoHome(() => {
     void goHome()
