@@ -1,8 +1,12 @@
+import type * as THREE from 'three'
 import { ANIMALS } from '../data/animals'
 import { createLion } from './lions'
 import type { Lion, LionOptions } from './lions'
 import { createKangaroo } from './kangaroo'
 import type { UprightVariant } from './kangaroo'
+import { createSloth } from './sloth'
+import { JUNGLE_PERCH } from './biomes'
+import { terrainHeight } from './terrain'
 import { OUTER_REGIONS } from './regions'
 
 /**
@@ -15,7 +19,9 @@ interface Resident {
   /** 個体名。省略時は、その種のうち pick 番目（データの並び）の子 */
   name?: string
   pick?: number
-  kind: NonNullable<LionOptions['species']> | UprightVariant
+  kind: NonNullable<LionOptions['species']> | UprightVariant | 'sloth'
+  /** ジャングルの止まり木の横枝の上（dx は幹からの距離。dz は使わない） */
+  perch?: boolean
   region: 'north' | 'jungle' | 'south'
   /** ワールドの中心からのずれ（m） */
   dx: number
@@ -46,10 +52,16 @@ const RESIDENTS: Resident[] = [
   { species: 'パルマワラビー', pick: 1, kind: 'wallaby', region: 'south', dx: 13, dz: 6, yaw: Math.PI - 0.5, size: 0.58 },
   { species: 'カピバラ', pick: 0, kind: 'capybara', region: 'south', dx: -11, dz: 2, yaw: Math.PI - 2.2, size: 0.8 },
   { species: 'カピバラ', pick: 1, kind: 'capybara', region: 'south', dx: -12.5, dz: 4.5, yaw: Math.PI - 2.6, size: 0.74 },
+  { species: 'マーラ', pick: 0, kind: 'mara', region: 'south', dx: -6, dz: 15, yaw: Math.PI - 0.3, size: 0.5 },
+  { species: 'マーラ', pick: 1, kind: 'mara', region: 'south', dx: -8, dz: 13.5, yaw: Math.PI - 0.8, size: 0.48 },
   // ジャングル: スポットの南西にワオキツネザル 3 頭
   { species: 'ワオキツネザル', pick: 0, kind: 'lemur', region: 'jungle', dx: -5, dz: 10, yaw: 1.2, size: 0.42 },
   { species: 'ワオキツネザル', pick: 1, kind: 'lemur', region: 'jungle', dx: -7, dz: 8, yaw: 1.6, size: 0.4 },
   { species: 'ワオキツネザル', pick: 2, kind: 'lemur', region: 'jungle', dx: -4, dz: 13, yaw: 0.9, size: 0.38 },
+  // ジャングルの止まり木: 枝の上にキンカジューとビントロング、枝の先にナマケモノがぶら下がる
+  { species: 'キンカジュー', pick: 0, kind: 'kinkajou', region: 'jungle', perch: true, dx: 1.4, dz: 0, yaw: Math.PI / 2, size: 0.36 },
+  { species: 'ビントロング', pick: 0, kind: 'binturong', region: 'jungle', perch: true, dx: 3.2, dz: 0, yaw: -Math.PI / 2, size: 0.48 },
+  { species: 'フタユビナマケモノ', pick: 0, kind: 'sloth', region: 'jungle', perch: true, dx: 5.2, dz: 0, yaw: Math.PI / 2, size: 0.85 },
 ]
 
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
@@ -61,6 +73,20 @@ export function createResidents(): Lion[] {
       : ANIMALS.filter((a) => a.species === r.species)[r.pick ?? 0]
     const region = OUTER_REGIONS.find((g) => g.key === r.region)
     if (!animal || !region) continue
+    if (r.perch) {
+      // 枝の高さはワールドの y で決める（幹の根元の地面から）
+      const px = region.x + JUNGLE_PERCH.dx
+      const pz = region.z + JUNGLE_PERCH.dz
+      const branchY = terrainHeight(px, pz) + JUNGLE_PERCH.height
+      const x = px + r.dx
+      if (r.kind === 'sloth') {
+        out.push(createSloth({ id: animal.id, x, y: branchY - JUNGLE_PERCH.radius * 0.6, z: pz, yaw: r.yaw, size: r.size }))
+      } else {
+        const lift = branchY + JUNGLE_PERCH.radius * 0.8 - terrainHeight(x, pz)
+        out.push(createLion({ id: animal.id, x, z: pz, yaw: r.yaw, size: r.size, lift, species: r.kind as NonNullable<LionOptions['species']> }))
+      }
+      continue
+    }
     const at = { id: animal.id, x: region.x + r.dx, z: region.z + r.dz, yaw: r.yaw, size: r.size }
     const upright: string[] = ['kangaroo', 'wallaby', 'prairie', 'lemur']
     out.push(
@@ -68,6 +94,13 @@ export function createResidents(): Lion[] {
         ? createKangaroo({ ...at, variant: r.kind as UprightVariant })
         : createLion({ ...at, species: r.kind as NonNullable<LionOptions['species']> }),
     )
+  }
+  // 小さい子は影の読み取りのずれ（normalBias 1.8m）で体がまだらに暗くなるので、影は受けず落とすだけにする
+  for (const lion of out) {
+    if (lion.group.scale.x >= 0.75) continue
+    lion.group.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) o.receiveShadow = false
+    })
   }
   return out
 }

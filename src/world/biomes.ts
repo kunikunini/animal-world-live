@@ -24,6 +24,12 @@ const _s = new THREE.Vector3()
 const _e = new THREE.Euler()
 const _c = new THREE.Color()
 
+/**
+ * ジャングルの「止まり木」: スポットの北東に立つ木と、東へ張り出した横枝。
+ * 木の上で暮らす子（ビントロング・キンカジュー・ナマケモノ）はこの枝に置く（residents.ts）
+ */
+export const JUNGLE_PERCH = { dx: 7, dz: -9, height: 2.7, length: 6.2, radius: 0.24 }
+
 function region(key: RegionKey): Region {
   return OUTER_REGIONS.find((r) => r.key === key) as Region
 }
@@ -211,6 +217,29 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   })
   finish(fernMesh)
   group.add(fernMesh)
+
+  // 止まり木: 縦の幹と、東へ張り出した横枝（枝の先は細く）
+  {
+    const P = JUNGLE_PERCH
+    const px = r.x + P.dx
+    const pz = r.z + P.dz
+    const py = terrainHeight(px, pz)
+    const bark = toonMaterial({ color: '#6b4c33' })
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.5, P.height + 3.5, 9), bark)
+    trunk.position.set(px, py + (P.height + 3.5) / 2 - 0.3, pz)
+    const branch = new THREE.Mesh(new THREE.CylinderGeometry(P.radius * 0.7, P.radius, P.length, 8), bark)
+    branch.rotation.z = Math.PI / 2
+    branch.position.set(px + P.length / 2, py + P.height, pz)
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), toonMaterial({ color: '#3b7d3c' }))
+    crown.scale.set(3.4, 2.4, 3.4)
+    crown.position.set(px - 0.5, py + P.height + 4.2, pz)
+    for (const m of [trunk, branch, crown]) {
+      m.castShadow = true
+      m.receiveShadow = true
+      group.add(m)
+    }
+    colliders.push({ x: px, z: pz, r: 0.6 })
+  }
 
   // 目印の大木: 中心の北西。日は西から差すので、影がスポットにかからない側に置く
   const gx = r.x - 20
