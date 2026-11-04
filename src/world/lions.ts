@@ -9,10 +9,12 @@ import type { Collider } from './props'
  *
  * 試作2回目の見立てに従い「ライオン読み」を優先: 頭を横に広く、鼻先を前に長く、肩まわりに量感。
  *
- * 同じ伏せの体で、トラ（橙の地に黒い縞、白い頬）とオオカミ（細い体、長い鼻先、立った三角の耳、ふさふさの尾）も作る。
+ * 同じ伏せの体で、トラ（橙の地に黒い縞、白い頬）、オオカミ（細い体、長い鼻先、立った三角の耳、ふさふさの尾）、
+ * キツネ（橙、黒い耳の裏、白い尾の先）、クマ（黒、胸の白い三日月、丸い耳、短い尾）、
+ * カピバラ（茶色の太い胴、四角い大きな鼻づら、小さな耳、尾なし）も作る。
  * どれも様式化した目印で、個体の毛並みの再現ではない。
  */
-export type RestingSpecies = 'lion' | 'tiger' | 'wolf'
+export type RestingSpecies = 'lion' | 'tiger' | 'wolf' | 'fox' | 'bear' | 'capybara'
 
 export interface LionOptions {
   id: string
@@ -68,12 +70,20 @@ const SPECIES_COLORS: Record<RestingSpecies, { coat: string; belly: string; dark
   lion: { coat: LION_COLORS.tawny, belly: LION_COLORS.belly, dark: LION_COLORS.dark, nose: LION_COLORS.nose },
   tiger: { coat: '#e3873a', belly: '#f7efe2', dark: '#1f1814', nose: '#3a2a22' },
   wolf: { coat: '#ece4d4', belly: '#fbf7ef', dark: '#8a8580', nose: '#25262b' },
+  fox: { coat: '#d97b36', belly: '#fbf3e6', dark: '#2e2420', nose: '#1e1a18' },
+  bear: { coat: '#2a2624', belly: '#f2eee6', dark: '#2a2624', nose: '#151312' },
+  capybara: { coat: '#9c6e48', belly: '#b38a62', dark: '#5a3e2a', nose: '#33261e' },
 }
 
 export function createLion(options: LionOptions): Lion {
   const species = options.species ?? 'lion'
   const tiger = species === 'tiger'
   const wolf = species === 'wolf'
+  const fox = species === 'fox'
+  const bear = species === 'bear'
+  const capy = species === 'capybara'
+  /** 細い犬の仲間（オオカミ・キツネ）: 長い鼻先、三角の耳、ふさふさの尾 */
+  const canid = wolf || fox
   const palette = SPECIES_COLORS[species]
   const group = new THREE.Group()
   group.name = `lion-${options.id}`
@@ -86,7 +96,9 @@ export function createLion(options: LionOptions): Lion {
 
   const coat = new THREE.Color(options.coat ?? palette.coat)
   const tawny = toonMaterial({ color: coat })
-  const tawnyLight = toonMaterial({ color: tiger ? palette.belly : coat.clone().lerp(new THREE.Color('#f3dcae'), wolf ? 0.1 : 0.35) })
+  const tawnyLight = toonMaterial({
+    color: tiger || fox ? palette.belly : bear ? '#b49a7c' : capy ? coat.clone().lerp(new THREE.Color('#5a3e2a'), 0.2) : coat.clone().lerp(new THREE.Color('#f3dcae'), wolf ? 0.1 : 0.35),
+  })
   const belly = toonMaterial({ color: palette.belly })
   const dark = toonMaterial({ color: palette.dark })
   const nose = toonMaterial({ color: palette.nose })
@@ -109,10 +121,10 @@ export function createLion(options: LionOptions): Lion {
   const torso = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.95, 6, 14), tawny))
   torso.position.set(0, 0.42, -0.1)
   torso.rotation.set(Math.PI / 2 - 0.08, 0, 0)
-  torso.scale.set(wolf ? 0.9 : 1.12, wolf ? 0.92 : 1, 1)
-  const chest = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10), wolf ? belly : tawny))
+  torso.scale.set(canid ? 0.9 : bear ? 1.32 : capy ? 1.2 : 1.12, canid ? 0.92 : bear ? 1.16 : capy ? 1.05 : 1, capy ? 1.12 : 1)
+  const chest = cast(new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10), canid ? belly : tawny))
   chest.position.set(0, 0.5, 0.42)
-  chest.scale.set(wolf ? 1.05 : 1.3, 0.95, 1.05)
+  chest.scale.set(canid ? 1.05 : bear ? 1.45 : 1.3, bear ? 1.1 : 0.95, 1.05)
   const bellyMesh = cast(new THREE.Mesh(new THREE.SphereGeometry(0.33, 12, 8), belly))
   bellyMesh.position.set(0, 0.3, 0.1)
   bellyMesh.scale.set(1.1, 0.6, 1.5)
@@ -150,6 +162,14 @@ export function createLion(options: LionOptions): Lion {
     paw.scale.set(1, 0.7, 1.2)
     body.add(leg, paw)
   }
+  if (bear) {
+    // ツキノワグマ: 胸の白い三日月
+    const moon = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 5, 16, Math.PI), belly)
+    moon.position.set(0, 0.62, 0.86)
+    moon.rotation.set(-0.15, 0, Math.PI)
+    moon.scale.set(1.25, 0.8, 1)
+    body.add(moon)
+  }
   if (tiger) {
     // トラの縞: 胴を上から包む黒い弧。少しずつ傾けて、縞の流れを出す
     const stripeGeo = new THREE.TorusGeometry(0.375, 0.028, 4, 14, Math.PI * 0.78)
@@ -184,14 +204,14 @@ export function createLion(options: LionOptions): Lion {
   const head = new THREE.Group()
   head.position.set(0, 0.44, 0.32)
   // ライオンの頭は体に対して大きい。仔はさらに大きめ
-  const headScale = options.cub ? 1.3 : wolf ? 0.95 : 1.1
+  const headScale = options.cub ? 1.3 : wolf ? 0.95 : fox ? 0.88 : bear ? 1.12 : 1.1
   head.scale.setScalar(headScale)
-  // オオカミは鼻先を前へ長く
-  const snout = wolf ? 0.12 : 0
+  // オオカミとキツネは鼻先を前へ長く。カピバラも少し前へ
+  const snout = wolf ? 0.12 : fox ? 0.15 : capy ? 0.05 : bear ? 0.02 : 0
 
   // 頭蓋: 横に広く、少し平たい
   const skull = cast(new THREE.Mesh(new THREE.SphereGeometry(0.29, 14, 10), tawny))
-  skull.scale.set(wolf ? 1.12 : 1.36, 0.84, 1.04)
+  skull.scale.set(wolf ? 1.12 : fox ? 1.05 : bear ? 1.22 : capy ? 1.02 : 1.36, bear ? 0.98 : capy ? 0.98 : 0.84, capy ? 1.3 : 1.04)
   // 額: 眉のあたりを前に張り出す
   const brow = cast(new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), tawny))
   brow.position.set(0, 0.07, 0.17)
@@ -200,12 +220,12 @@ export function createLion(options: LionOptions): Lion {
   const bridge = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.3, 4, 10), tawnyLight))
   bridge.rotation.x = Math.PI / 2
   bridge.position.set(0, 0.01, 0.38 + snout * 0.6)
-  bridge.scale.set(wolf ? 0.95 : 1.15, 0.8, wolf ? 1.4 : 1)
+  bridge.scale.set(wolf ? 0.95 : fox ? 0.82 : capy ? 1.45 : 1.15, capy ? 1.2 : 0.8, canid ? 1.5 : bear ? 0.7 : capy ? 1.15 : 1)
   // 口まわり: 上は淡い黄褐色、下唇だけ白く。長く、丸い
   const muzzle = cast(new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), tawnyLight))
   muzzle.position.set(0, -0.09, 0.38 + snout)
-  muzzle.scale.set(wolf ? 0.78 : 1.0, 0.62, wolf ? 1.8 : 1.45)
-  const lip = cast(new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), belly))
+  muzzle.scale.set(wolf ? 0.78 : fox ? 0.68 : capy ? 1.3 : 1.0, capy ? 1.0 : 0.62, canid ? 1.85 : bear ? 1.05 : capy ? 1.5 : 1.45)
+  const lip = cast(new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), bear || capy ? tawnyLight : belly))
   lip.position.set(0, -0.15, 0.42 + snout)
   lip.scale.set(1.05, 0.5, 1.3)
   // 鼻先: 黒い逆三角形（低い円錐を前に倒す）
@@ -214,7 +234,7 @@ export function createLion(options: LionOptions): Lion {
   noseTip.position.set(0, 0.01, 0.6 + snout * 1.4)
   noseTip.scale.set(1.3, 1, 1)
   // 下あご
-  const chin = cast(new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), belly))
+  const chin = cast(new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), bear || capy ? tawnyLight : belly))
   chin.position.set(0, -0.2, 0.36 + snout)
   chin.scale.set(1, 0.55, 1.3)
   head.add(skull, brow, bridge, muzzle, lip, noseTip, chin)
@@ -228,7 +248,8 @@ export function createLion(options: LionOptions): Lion {
   for (const side of [-1, 1]) {
     // 目: 光の影響を受けない黒いビーズ。顔から少し浮かせ、小さなハイライトを乗せる（遠くからも「目」と分かる）
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.052, 10, 8), eyeMat)
-    eye.position.set(side * 0.16, 0.05, 0.31)
+    // カピバラは目が高い位置に
+    eye.position.set(side * 0.16, capy ? 0.12 : 0.05, capy ? 0.27 : 0.31)
     const glint = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 4), glintMat)
     glint.position.set(side * -0.012, 0.022, 0.044)
     eye.add(glint)
@@ -239,15 +260,25 @@ export function createLion(options: LionOptions): Lion {
     // 耳は頭のてっぺんではなく横寄りに。丸く小さめ
     // 仔は耳の後ろが暗く、縁が黒い（写真の参考）。成獣は体と同じ色
     let ear: THREE.Mesh
-    if (wolf) {
-      // オオカミ: 立った三角の耳
-      ear = cast(new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.22, 6), tawny))
-      ear.position.set(side * 0.2, 0.28, -0.04)
+    if (canid) {
+      // オオカミ・キツネ: 立った三角の耳（キツネは大きく、裏が黒い）
+      ear = cast(new THREE.Mesh(new THREE.ConeGeometry(fox ? 0.1 : 0.085, fox ? 0.28 : 0.22, 6), fox ? dark : tawny))
+      ear.position.set(side * 0.2, fox ? 0.31 : 0.28, -0.04)
       ear.rotation.z = side * -0.28
       ear.scale.set(1, 1, 0.55)
-      const earIn = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 6), dark)
+      const earIn = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 6), fox ? belly : dark)
       earIn.position.set(0, -0.02, 0.035)
       ear.add(earIn)
+    } else if (capy) {
+      // カピバラ: 頭の上の小さな耳
+      ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), dark))
+      ear.position.set(side * 0.17, 0.21, -0.14)
+      ear.scale.set(1, 0.9, 0.55)
+    } else if (bear) {
+      // クマ: 頭のてっぺん寄りの丸い耳
+      ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), tawny))
+      ear.position.set(side * 0.24, 0.24, -0.08)
+      ear.scale.set(1, 1, 0.5)
     } else {
       ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 6), options.cub || tiger ? dark : tawny))
       ear.position.set(side * 0.31, 0.17, -0.06)
@@ -323,12 +354,15 @@ export function createLion(options: LionOptions): Lion {
     new THREE.Vector3(0.45, -0.26, -0.45),
     new THREE.Vector3(0.75, -0.3, -0.35),
   ])
-  const tail = cast(new THREE.Mesh(new THREE.TubeGeometry(curve, 10, wolf ? 0.1 : 0.045, 7, false), tawny))
-  // ライオンは黒い房、オオカミはふさふさの先、トラは黒い輪
-  const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(wolf ? 0.14 : 0.085, 8, 6), wolf ? belly : dark))
+  const tail = cast(new THREE.Mesh(new THREE.TubeGeometry(curve, 10, canid ? (fox ? 0.11 : 0.1) : 0.045, 7, false), tawny))
+  // ライオンは黒い房、オオカミとキツネはふさふさの白い先、トラは黒い輪。クマは短い尾、カピバラは尾なし
+  const tuft = cast(new THREE.Mesh(new THREE.SphereGeometry(canid ? 0.14 : 0.085, 8, 6), canid ? belly : dark))
   tuft.position.copy(curve.getPoint(1))
-  if (wolf) tuft.scale.set(1, 0.9, 1.6)
-  tailPivot.add(tail, tuft)
+  if (canid) tuft.scale.set(1, 0.9, 1.6)
+  if (bear) {
+    const stub = cast(new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), tawny))
+    tailPivot.add(stub)
+  } else if (!capy) tailPivot.add(tail, tuft)
   if (tiger) {
     const ringGeo = new THREE.TorusGeometry(0.05, 0.014, 4, 10)
     for (let i = 1; i <= 4; i++) {

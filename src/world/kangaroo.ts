@@ -7,7 +7,12 @@ import type { Lion } from './lions'
 /**
  * 様式化したカンガルー。後ろ脚を折って尾で支え、上体を起こして休んでいる姿。
  * ライオンと同じ「しるし」の作り（プリミティブ、スキニングなしの微アニメ）で、出会いの仕組みにそのまま乗る。
+ *
+ * 同じ「上体を起こした」体で、ワラビー（小さく濃い色）、プレーリードッグ（小さな耳、短い尾）、
+ * ワオキツネザル（灰色、白い顔に黒い目のまわり、黒白の輪の長い尾を立てる）も作る。
  */
+export type UprightVariant = 'kangaroo' | 'wallaby' | 'prairie' | 'lemur'
+
 export interface KangarooOptions {
   id: string
   x: number
@@ -15,13 +20,14 @@ export interface KangarooOptions {
   yaw: number
   size?: number
   coat?: string
+  variant?: UprightVariant
 }
 
-const COLORS = {
-  coat: '#a8927b',
-  belly: '#e8dcc8',
-  dark: '#4a3a30',
-  nose: '#2a2220',
+const COLORS: Record<UprightVariant, { coat: string; belly: string; dark: string; nose: string }> = {
+  kangaroo: { coat: '#a8927b', belly: '#e8dcc8', dark: '#4a3a30', nose: '#2a2220' },
+  wallaby: { coat: '#8c7a6a', belly: '#d9cbb6', dark: '#3e322b', nose: '#241e1b' },
+  prairie: { coat: '#c4a072', belly: '#ecdcbf', dark: '#5a4532', nose: '#3a2a22' },
+  lemur: { coat: '#9a9896', belly: '#f3f1ec', dark: '#1e1c1b', nose: '#141312' },
 }
 
 export function createKangaroo(options: KangarooOptions): Lion {
@@ -34,12 +40,18 @@ export function createKangaroo(options: KangarooOptions): Lion {
   const scale = options.size ?? 1
   group.scale.setScalar(scale)
 
-  const coatColor = new THREE.Color(options.coat ?? COLORS.coat)
+  const variant = options.variant ?? 'kangaroo'
+  const lemur = variant === 'lemur'
+  const prairie = variant === 'prairie'
+  const palette = COLORS[variant]
+  const coatColor = new THREE.Color(options.coat ?? palette.coat)
   const coat = toonMaterial({ color: coatColor })
-  const coatLight = toonMaterial({ color: coatColor.clone().lerp(new THREE.Color(COLORS.belly), 0.4) })
-  const belly = toonMaterial({ color: COLORS.belly })
-  const dark = toonMaterial({ color: COLORS.dark })
-  const nose = toonMaterial({ color: COLORS.nose })
+  const coatLight = toonMaterial({ color: lemur ? palette.belly : coatColor.clone().lerp(new THREE.Color(palette.belly), 0.4) })
+  const belly = toonMaterial({ color: palette.belly })
+  const dark = toonMaterial({ color: palette.dark })
+  const nose = toonMaterial({ color: palette.nose })
+  // 足の長さ（カンガルーは長い。ほかは短い）
+  const footLen = variant === 'kangaroo' || variant === 'wallaby' ? 0.42 : 0.16
   const eyeMat = new THREE.MeshBasicMaterial({ color: '#140d08' })
   const glintMat = new THREE.MeshBasicMaterial({ color: '#fff6e6' })
   const cast = (m: THREE.Mesh) => {
@@ -51,11 +63,11 @@ export function createKangaroo(options: KangarooOptions): Lion {
   const body = new THREE.Group()
   // 長い後ろ足（地面にぺたり）と、大きな腿
   for (const side of [-1, 1]) {
-    const foot = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.42, 4, 8), coat))
+    const foot = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.07, footLen, 4, 8), coat))
     foot.rotation.x = Math.PI / 2
-    foot.position.set(side * 0.17, 0.07, 0.16)
+    foot.position.set(side * 0.17, 0.07, 0.16 - (0.42 - footLen) / 2)
     const toe = cast(new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), dark))
-    toe.position.set(side * 0.17, 0.06, 0.42)
+    toe.position.set(side * 0.17, 0.06, 0.42 - (0.42 - footLen))
     toe.scale.set(1, 0.6, 1.2)
     const thigh = cast(new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), coat))
     thigh.position.set(side * 0.19, 0.34, -0.02)
@@ -89,10 +101,31 @@ export function createKangaroo(options: KangarooOptions): Lion {
   // 太く長い尾: 後ろの地面に沿って伸ばす
   const tailPivot = new THREE.Group()
   tailPivot.position.set(0, 0.22, -0.28)
-  const tail = cast(new THREE.Mesh(new THREE.ConeGeometry(0.13, 1.1, 10), coat))
-  tail.rotation.x = -Math.PI / 2 + 0.12
-  tail.position.set(0, -0.08, -0.5)
-  tailPivot.add(tail)
+  if (lemur) {
+    // ワオキツネザル: 背中から立ち上がって先が丸まる長い尾。黒と白の輪を交互に
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0.1, -0.35),
+      new THREE.Vector3(0, 0.7, -0.5),
+      new THREE.Vector3(0, 1.35, -0.38),
+      new THREE.Vector3(0, 1.65, -0.08),
+    ])
+    const RINGS = 12
+    for (let i = 0; i < RINGS; i++) {
+      const tt = (i + 0.5) / RINGS
+      const seg = cast(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 1.75 / RINGS, 10), i % 2 ? belly : dark))
+      seg.position.copy(curve.getPoint(tt))
+      seg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), curve.getTangent(tt))
+      tailPivot.add(seg)
+    }
+  } else {
+    const tail = cast(new THREE.Mesh(new THREE.ConeGeometry(0.13, 1.1, 10), coat))
+    tail.rotation.x = -Math.PI / 2 + 0.12
+    tail.position.set(0, -0.08, -0.5)
+    if (prairie) tail.scale.set(0.8, 0.3, 0.8)
+    if (prairie) tail.position.set(0, -0.1, -0.18)
+    tailPivot.add(tail)
+  }
   group.add(tailPivot)
 
   // 首と頭: 小さな頭、長い耳、前に出た鼻先
@@ -106,22 +139,38 @@ export function createKangaroo(options: KangarooOptions): Lion {
   head.position.set(0, 0.2, 0.08)
   const skull = cast(new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), coat))
   skull.scale.set(0.95, 0.9, 1.05)
-  const muzzle = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.12, 4, 8), coatLight))
+  const muzzle = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.075, lemur ? 0.1 : prairie ? 0.04 : 0.12, 4, 8), lemur ? dark : coatLight))
   muzzle.rotation.x = Math.PI / 2 + 0.2
   muzzle.position.set(0, -0.04, 0.16)
   const noseTip = cast(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), nose))
   noseTip.position.set(0, -0.03, 0.27)
   noseTip.scale.set(1.3, 0.8, 0.8)
   head.add(skull, muzzle, noseTip)
+  if (lemur) {
+    // 白い顔
+    const face = cast(new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), belly))
+    face.position.set(0, 0.0, 0.06)
+    face.scale.set(1.05, 0.95, 0.8)
+    head.add(face)
+  }
   for (const side of [-1, 1]) {
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 6), eyeMat)
     eye.position.set(side * 0.08, 0.03, 0.1)
     const glint = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 4), glintMat)
     glint.position.set(side * -0.006, 0.012, 0.024)
     eye.add(glint)
-    const ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), coat))
-    ear.position.set(side * 0.075, 0.2, -0.04)
-    ear.scale.set(0.75, 2.4, 0.4)
+    if (lemur) {
+      // 目のまわりの黒い三角
+      const mask = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), dark)
+      mask.position.set(side * 0.075, 0.02, 0.12)
+      mask.scale.set(1, 1.2, 0.5)
+      head.add(mask)
+      eye.material = new THREE.MeshBasicMaterial({ color: '#e8a23a' })
+      eye.position.z += 0.03
+    }
+    const ear = cast(new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), lemur ? belly : coat))
+    ear.position.set(side * (lemur ? 0.1 : 0.075), lemur ? 0.1 : prairie ? 0.11 : 0.2, -0.04)
+    ear.scale.set(0.75, lemur ? 1.1 : prairie ? 0.7 : 2.4, 0.4)
     ear.rotation.z = side * -0.22
     ear.name = `ear${side}`
     const earIn = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), belly)
@@ -177,7 +226,7 @@ export function createKangaroo(options: KangarooOptions): Lion {
     group,
     position,
     collider,
-    headHeight: 1.62,
+    headHeight: lemur ? 1.45 : 1.62,
     update,
     setReduceMotion: (on) => {
       reduceMotion = on
