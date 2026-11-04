@@ -16,6 +16,7 @@ import { createPostFx } from './render/postfx'
 import { LIONS, SPOT } from './world/layout'
 import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
+import { loadAiLion } from './world/aiLionModel'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
@@ -189,6 +190,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       loadLionModel('/models/angie-v2.glb')
         .then((loaded) => angie.swapModel(loaded.model, loaded.parts))
         .catch((err) => console.warn('lion v2 model not loaded; keeping primitive', err))
+    }
+  }
+  // 実験（exp/lion-ai）: ?model=ai でアレックスを Meshy 生成モデルに差し替える。&anim=off で静止（呼吸と首振りだけ）
+  let aiMixer: THREE.AnimationMixer | null = null
+  if (new URLSearchParams(location.search).get('model') === 'ai') {
+    const alex = lions.find((l) => l.id === 'alex')
+    const animate = new URLSearchParams(location.search).get('anim') !== 'off'
+    if (alex) {
+      // 体高はプリミティブと同じ倍率（群れの scale）の前の値。立ち姿のオスの頭頂あたり
+      loadAiLion('/models/alex-ai.glb', { height: 1.15, animate })
+        .then((loaded) => {
+          alex.swapModel(loaded.model, { neck: animate ? undefined : loaded.head })
+          aiMixer = loaded.mixer
+          console.info('[lion-ai] loaded', loaded.clipNames)
+        })
+        .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', err))
     }
   }
 
@@ -398,6 +415,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     clouds.update(dt)
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
+    aiMixer?.update(dt)
 
     // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
     const px = player.object.position.x

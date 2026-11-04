@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
@@ -26,9 +26,37 @@ function excludeVideosFromDist(): Plugin {
   }
 }
 
+/** 実験（exp/lion-ai）: 開発サーバーだけ。ブラウザの canvas 画像を experiments/lion-ai/shots/ に保存する */
+function lionAiCapture(): Plugin {
+  return {
+    name: 'awl:lion-ai-capture',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__lionai/capture', (req, res) => {
+        const name = new URL(req.url ?? '', 'http://x').searchParams.get('name') ?? 'shot'
+        if (req.method !== 'POST' || !/^[\w-]+$/.test(name)) {
+          res.statusCode = 400
+          res.end('bad request')
+          return
+        }
+        const chunks: Buffer[] = []
+        req.on('data', (c: Buffer) => chunks.push(c))
+        req.on('end', () => {
+          const body = Buffer.concat(chunks).toString()
+          const b64 = body.replace(/^data:image\/\w+;base64,/, '')
+          const dir = join(root, 'experiments', 'lion-ai', 'shots')
+          mkdirSync(dir, { recursive: true })
+          writeFileSync(join(dir, `${name}.jpg`), Buffer.from(b64, 'base64'))
+          res.end('ok')
+        })
+      })
+    },
+  }
+}
+
 export default defineConfig({
   base: '/',
-  plugins: [excludeVideosFromDist()],
+  plugins: [excludeVideosFromDist(), lionAiCapture()],
   build: {
     target: 'es2022',
     sourcemap: false,
