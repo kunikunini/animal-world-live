@@ -18,6 +18,8 @@ export interface ObserveView {
   onOpenChange: (fn: (open: boolean) => void) => void
   /** 「ともだちになる」が押された直後 */
   onBefriend: (fn: (animal: Animal) => void) => void
+  /** 登録直後の「ともだち帳を見る」 */
+  onSeeBook: (fn: (animal: Animal) => void) => void
   setReduceMotion: (on: boolean) => void
 }
 
@@ -57,16 +59,19 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const befriendBtn = document.getElementById('befriend') as HTMLButtonElement
   const befriended = document.getElementById('befriended') as HTMLElement
   const befriendedDate = document.getElementById('befriended-date') as HTMLElement
+  const befriendedText = document.getElementById('befriended-text') as HTMLElement
+  const seeBookBtn = document.getElementById('befriend-see') as HTMLButtonElement
   const stars = document.getElementById('befriend-stars') as HTMLElement
-  const toast = document.getElementById('befriend-toast') as HTMLElement
+  const status = document.getElementById('befriend-status') as HTMLElement
   const memoryNote = document.getElementById('befriend-memory-note') as HTMLElement
 
   const openListeners: Array<(open: boolean) => void> = []
   const befriendListeners: Array<(animal: Animal) => void> = []
+  const seeBookListeners: Array<(animal: Animal) => void> = []
   let open = false
   let current: Animal | null = null
+  let origin: ObserveOrigin = 'world'
   let reduceMotion = false
-  let toastTimer = 0
   let starTimer = 0
   /** いま <video> に入っている URL。家族で同じ映像を共有する個体へ切り替えた時は読み直さない */
   let loadedUrl = ''
@@ -150,11 +155,19 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     void play(seq)
   }
 
-  /** 「ともだちになる」の状態。登録済みなら帯を見せ、ボタンは出さない */
+  /**
+   * 「ともだちになる」の状態。登録済みなら帯を見せ、ボタンは出さない。
+   * 登録したばかりでまだ帳で見ていない子は「加わりました」と、帳へ見に行くボタン（世界から開いた時だけ。
+   * 帳から開いた時は戻るボタンが帳へ戻る）
+   */
   const renderFriendState = (animal: Animal) => {
     const entry = store.get(animal.id)
+    const fresh = entry?.seenAt === null
     befriendBtn.hidden = !!entry
     befriended.hidden = !entry
+    befriended.classList.toggle('is-fresh', fresh)
+    befriendedText.textContent = fresh ? 'ともだち帳に加わりました' : 'ともだち帳に書いてあります'
+    seeBookBtn.hidden = !(fresh && origin === 'world')
     if (entry) befriendedDate.textContent = formatMetDate(entry.firstMetAt)
     memoryNote.hidden = store.isPersistent
   }
@@ -200,6 +213,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     hero.innerHTML = renderHero(animal)
     load(animal)
     profile.innerHTML = renderProfile(animal)
+    befriended.classList.remove('is-pop')
     renderFriendState(animal)
     renderChips()
   }
@@ -245,15 +259,22 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     // ユーザー自身が押す瞬間。動物が承諾したという表現はしない
     store.add(current.id)
     renderFriendState(current)
+    befriended.classList.remove('is-pop')
+    if (!reduceMotion) {
+      void befriended.offsetWidth
+      befriended.classList.add('is-pop')
+    }
     celebrate()
     playFriendChime()
-    toast.hidden = false
-    toast.classList.toggle('is-animated', !reduceMotion)
-    window.clearTimeout(toastTimer)
-    toastTimer = window.setTimeout(() => {
-      toast.hidden = true
-    }, 2600)
+    status.textContent = `${current.name}がともだち帳に加わりました`
+    // 押したボタンは消えるので、次の行き先へフォーカスを移す（キーボード・読み上げの人が迷わない）
+    if (!seeBookBtn.hidden) seeBookBtn.focus()
+    else closeBtn.focus()
     befriendListeners.forEach((fn) => fn(current as Animal))
+  })
+
+  seeBookBtn.addEventListener('click', () => {
+    if (current) seeBookListeners.forEach((fn) => fn(current as Animal))
   })
 
   const setOpen = (next: boolean) => {
@@ -263,7 +284,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     if (!open) {
       loadSeq++
       video.pause()
-      toast.hidden = true
+      status.textContent = ''
     }
     openListeners.forEach((fn) => fn(open))
   }
@@ -279,6 +300,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
 
   return {
     open: (animal, from) => {
+      origin = from
       const backLabel = from === 'book' ? 'ともだち帳に戻る' : '世界に戻る'
       closeBtn.setAttribute('aria-label', backLabel)
       closeBtn.title = backLabel
@@ -293,6 +315,9 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     },
     onBefriend: (fn) => {
       befriendListeners.push(fn)
+    },
+    onSeeBook: (fn) => {
+      seeBookListeners.push(fn)
     },
     setReduceMotion: (on) => {
       reduceMotion = on

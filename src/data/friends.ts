@@ -10,6 +10,11 @@ export interface FriendEntry {
   animalId: string
   /** 初めて出会った日時（ISO 8601） */
   firstMetAt: string
+  /**
+   * ともだち帳でこの子を見た日時。登録したばかりでまだ帳を開いていなければ null。
+   * このフィールドが無い古い記録は「見た」として扱う（新着の印を出さない）
+   */
+  seenAt?: string | null
 }
 
 interface StoredFile {
@@ -23,6 +28,10 @@ export interface FriendBookStore {
   has: (animalId: string) => boolean
   /** 登録する。すでにいれば何もしない。戻り値は登録内容 */
   add: (animalId: string) => FriendEntry
+  /** 登録したあと、まだともだち帳で見ていない子 */
+  unseen: () => FriendEntry[]
+  /** ともだち帳で見たことにする（新着の印を消す） */
+  markSeen: (animalIds: string[]) => void
   /** true なら再読み込み後も残る */
   isPersistent: boolean
   onChange: (fn: () => void) => void
@@ -35,7 +44,10 @@ function readStorage(): FriendEntry[] | null {
     const parsed = JSON.parse(raw) as Partial<StoredFile>
     if (parsed.version !== 1 || !Array.isArray(parsed.entries)) return []
     return parsed.entries.filter(
-      (e): e is FriendEntry => typeof e?.animalId === 'string' && typeof e?.firstMetAt === 'string',
+      (e): e is FriendEntry =>
+        typeof e?.animalId === 'string' &&
+        typeof e?.firstMetAt === 'string' &&
+        (e.seenAt === undefined || e.seenAt === null || typeof e.seenAt === 'string'),
     )
   } catch {
     return null
@@ -66,11 +78,24 @@ export function createFriendBookStore(): FriendBookStore {
     add: (id) => {
       const existing = entries.find((e) => e.animalId === id)
       if (existing) return existing
-      const entry: FriendEntry = { animalId: id, firstMetAt: new Date().toISOString() }
+      const entry: FriendEntry = { animalId: id, firstMetAt: new Date().toISOString(), seenAt: null }
       entries = [...entries, entry]
       if (persistent) persistent = writeStorage(entries)
       emit()
       return entry
+    },
+    unseen: () => entries.filter((e) => e.seenAt === null),
+    markSeen: (ids) => {
+      const now = new Date().toISOString()
+      let changed = false
+      entries = entries.map((e) => {
+        if (e.seenAt !== null || !ids.includes(e.animalId)) return e
+        changed = true
+        return { ...e, seenAt: now }
+      })
+      if (!changed) return
+      if (persistent) persistent = writeStorage(entries)
+      emit()
     },
     get isPersistent() {
       return persistent

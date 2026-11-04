@@ -800,6 +800,7 @@ button {
 }
 
 .hud-book {
+  position: relative;
   padding: 0 18px 0 14px;
 }
 
@@ -1240,6 +1241,45 @@ button {
 
 .fcard:active {
   transform: scale(0.97);
+}
+
+/* 登録してからまだ帳で見ていない子: 金の輪と「あたらしい」の札（数は出さない） */
+.fcard.is-new {
+  position: relative;
+  box-shadow: 0 0 0 3px var(--gold), var(--shadow-card);
+  animation: card-glow 1.4s ease-in-out 3;
+}
+
+.is-still .fcard.is-new {
+  animation: none;
+}
+
+@keyframes card-glow {
+  0%, 100% { box-shadow: 0 0 0 3px var(--gold), var(--shadow-card); }
+  50% { box-shadow: 0 0 0 3px var(--gold), 0 0 22px 6px rgba(244, 194, 66, 0.75), var(--shadow-card); }
+}
+
+.tag-new {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--ink);
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tag-new svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
 
 .fface {
@@ -1708,9 +1748,19 @@ button {
   font-weight: 700;
 }
 
-/* 登録の通知。モニターの上の段（戻る・バッジ）に被せない */
-.toast.toast-book {
-  top: calc(72px + var(--safe-top));
+/* 登録した直後: 帯が弾んで出て、その下に「ともだち帳を見る」 */
+.friend-band.is-pop {
+  animation: band-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes band-pop {
+  0% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.see-book {
+  width: 100%;
+  margin-top: 10px;
 }
 
 @media (min-width: 768px) {
@@ -1744,7 +1794,6 @@ button {
   .cta-area { grid-area: cta; }
   .fields { grid-area: fields; margin-top: 0; align-self: start; }
   .m-unmute { bottom: 12px; }
-  .toast.toast-book { top: calc(14px + var(--safe-top)); }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
@@ -1766,7 +1815,7 @@ button {
   .friend-band { min-height: 52px; }
   .fields { margin-top: 10px; gap: 8px; }
   .field { padding: 10px 12px; }
-  .toast.toast-book { top: calc(10px + var(--safe-top)); max-width: 50%; }
+  .see-book { min-height: 48px; margin-top: 8px; }
 }
 
 /* ==========================================================================

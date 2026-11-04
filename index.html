@@ -188,15 +188,16 @@
             <button id="befriend" class="btn btn-hero" type="button"><svg class="ico ico-fill"><use href="#i-heart" /></svg>ともだちになる</button>
             <div id="befriended" class="friend-band" hidden>
               <span class="check"><svg class="ico"><use href="#i-check" /></svg></span>
-              <span><strong>ともだち帳に書いてあります</strong><small>初めて出会った日 <span id="befriended-date"></span></small></span>
+              <span><strong id="befriended-text">ともだち帳に書いてあります</strong><small>初めて出会った日 <span id="befriended-date"></span></small></span>
               <span id="befriend-stars" class="stars" aria-hidden="true"></span>
             </div>
+            <button id="befriend-see" class="btn btn-nav see-book" type="button" hidden><svg class="ico"><use href="#i-book" /></svg>ともだち帳を見る</button>
             <p id="befriend-memory-note" class="note-small" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
           </div>
           <div id="observe-profile" class="fields"></div>
         </div>
       </div>
-      <div id="befriend-toast" class="toast toast-book" hidden role="status"><svg class="ico"><use href="#i-book" /></svg>ともだち帳に書きました</div>
+      <p id="befriend-status" class="visually-hidden" role="status"></p>
     </section>
 
     <!-- ともだち帳: 顔のカードグリッド -->
@@ -221,7 +222,7 @@
 
     <div id="hud" class="hud" hidden>
       <div class="hud-nav">
-        <button id="open-book" class="btn btn-nav hud-book" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳</button>
+        <button id="open-book" class="btn btn-nav hud-book" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="hud-book-dot" class="badge-dot" hidden></span></button>
         <button id="go-home" class="icon-btn" type="button" aria-label="ホームへ" title="ホームへ"><svg class="ico"><use href="#i-home" /></svg></button>
       </div>
       <label class="toggle hud-toggle">

@@ -4,7 +4,7 @@ import type { FriendBookStore } from '../data/friends'
  * ホーム: 平穏ないつもの世界。入口（アニマルスコープ）と、ともだち帳の居場所。
  * 2.5 層の絵（CSS 変数 --px/--py でポインタに合わせて少し動く）。
  * ワールドから帰ってくると、スコープのレンズに最後に見た景色が映り、
- * ともだちが増えていれば帳のボタンに印が付く。
+ * まだ帳で見ていない新しいともだちがいれば、帳のボタンに印が付く（印は帳を閉じた時に消える）。
  */
 export interface HomeView {
   show: () => void
@@ -34,7 +34,6 @@ export function createHome(store: FriendBookStore): HomeView {
 
   let open = true
   let reduceMotion = false
-  let seenCount = store.list().length
   const enterListeners: Array<() => void> = []
   const bookListeners: Array<() => void> = []
 
@@ -42,11 +41,18 @@ export function createHome(store: FriendBookStore): HomeView {
   scope.addEventListener('click', enter)
   enterBtn.addEventListener('click', enter)
   const openBook = () => {
-    newDot.hidden = true
     bookBtn.classList.remove('is-new')
-    seenCount = store.list().length
     bookListeners.forEach((fn) => fn())
   }
+
+  // 新着の印は保存された「まだ見ていない」から決める。帳を閉じて見たことになったら消える
+  const syncDot = () => {
+    const fresh = store.unseen().length > 0
+    newDot.hidden = !fresh
+    if (!fresh) bookBtn.classList.remove('is-new')
+  }
+  syncDot()
+  store.onChange(syncDot)
   bookBtn.addEventListener('click', openBook)
   fallbackBook.addEventListener('click', openBook)
 
@@ -64,12 +70,9 @@ export function createHome(store: FriendBookStore): HomeView {
     show: () => {
       open = true
       root.hidden = false
-      // 帰ってきた時、ともだちが増えていれば帳のボタンに印
-      const count = store.list().length
-      if (count > seenCount) {
-        newDot.hidden = false
-        if (!reduceMotion) bookBtn.classList.add('is-new')
-      }
+      // 帰ってきた時、新しいともだちがいれば帳のボタンを少し弾ませる
+      syncDot()
+      if (!newDot.hidden && !reduceMotion) bookBtn.classList.add('is-new')
     },
     hide: () => {
       open = false

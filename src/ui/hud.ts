@@ -17,6 +17,8 @@ export interface Hud {
   onGoHome: (fn: () => void) => void
   /** 帳に新しいページが増えたことを、ボタンの一拍の動きで伝える */
   pulseBook: () => void
+  /** まだ帳で見ていない新しいともだちがいる間、帳のボタンに点を付ける（数は出さない） */
+  setBookNew: (on: boolean) => void
   /** 「観察スポットへ」ボタンの表示切り替え */
   setGoToSpotVisible: (visible: boolean) => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
@@ -58,6 +60,7 @@ export function createHud(): Hud {
   const openBookBtn = document.getElementById('open-book') as HTMLButtonElement
   const jumpBtn = document.getElementById('jump') as HTMLButtonElement
   const goHomeBtn = document.getElementById('go-home') as HTMLButtonElement
+  const bookDot = document.getElementById('hud-book-dot') as HTMLElement
 
   const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const stored = readStored()
@@ -123,6 +126,10 @@ export function createHud(): Hud {
       openBookBtn.classList.remove('is-pulse')
       void openBookBtn.offsetWidth
       openBookBtn.classList.add('is-pulse')
+    },
+    setBookNew: (on) => {
+      bookDot.hidden = !on
+      openBookBtn.setAttribute('aria-label', on ? 'ともだち帳（あたらしいともだちがいます）' : 'ともだち帳')
     },
     setGoToSpotVisible: (visible) => {
       goToSpotBtn.hidden = !visible

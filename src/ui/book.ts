@@ -11,11 +11,16 @@ export interface BookView {
   isOpen: () => boolean
   onVisit: (fn: (animal: Animal) => void) => void
   onOpenChange: (fn: (open: boolean) => void) => void
+  /** 観察モニターから帳へ戻ってきた時、さっき押したカードにフォーカスを戻す */
+  restoreFocus: () => void
+  setReduceMotion: (on: boolean) => void
 }
 
 /**
  * ともだち帳。出会って友達になった個体の顔が並ぶ。
  * 収集率や「あと○頭」は出さない。カード全体が「会いに行く」で、3D を歩かずに映像へ直行する。
+ * 登録してからまだ帳で見ていない子には「あたらしい」の札と金の輪。帳を閉じたら見たことにする
+ * （開いている間は印を残し、次に開いた時には消えている）。
  */
 export function createBookView(store: FriendBookStore): BookView {
   const root = document.getElementById('book') as HTMLElement
@@ -25,6 +30,10 @@ export function createBookView(store: FriendBookStore): BookView {
   const closeBtn = document.getElementById('book-close') as HTMLButtonElement
 
   let open = false
+  let reduceMotion = false
+  /** 今回開いた時点で新着だった子。閉じる時に見たことにする */
+  let freshIds: string[] = []
+  let lastVisitId = ''
   const visitListeners: Array<(animal: Animal) => void> = []
   const openListeners: Array<(open: boolean) => void> = []
 
@@ -34,10 +43,13 @@ export function createBookView(store: FriendBookStore): BookView {
       .map((e) => {
         const animal = getAnimal(e.animalId)
         if (!animal) return ''
+        const fresh = freshIds.includes(animal.id)
+        const label = fresh ? `${animal.name}（あたらしいともだち）に会いに行く` : `${animal.name}に会いに行く`
         return `
           <li>
-            <button class="fcard" type="button" data-visit="${esc(animal.id)}" aria-label="${esc(animal.name)}に会いに行く">
+            <button class="fcard${fresh ? ' is-new' : ''}" type="button" data-visit="${esc(animal.id)}" aria-label="${esc(label)}">
               <span class="fface">${faceMarkup(animal)}<span class="badge-see" aria-hidden="true"><svg><use href="#i-bino" /></svg></span></span>
+              ${fresh ? '<span class="tag-new" aria-hidden="true"><svg><use href="#i-sparkle" /></svg>あたらしい</span>' : ''}
               <span class="fname">${esc(animal.name)}</span>
               <span class="fsub">${esc(formatMetDateShort(e.firstMetAt))}に出会った</span>
             </button>
@@ -45,16 +57,21 @@ export function createBookView(store: FriendBookStore): BookView {
       })
       .join('')
     list.innerHTML = cards
+    list.classList.toggle('is-still', reduceMotion)
     list.hidden = entries.length === 0
     empty.hidden = entries.length > 0
     note.hidden = store.isPersistent
   }
 
+  const cardOf = (id: string) => list.querySelector<HTMLButtonElement>(`button[data-visit="${CSS.escape(id)}"]`)
+
   list.addEventListener('click', (e) => {
     const target = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-visit]')
     if (!target) return
     const animal = getAnimal(target.dataset.visit ?? '')
-    if (animal) visitListeners.forEach((fn) => fn(animal))
+    if (!animal) return
+    lastVisitId = animal.id
+    visitListeners.forEach((fn) => fn(animal))
   })
 
   const setOpen = (next: boolean) => {
@@ -62,8 +79,17 @@ export function createBookView(store: FriendBookStore): BookView {
     open = next
     root.hidden = !open
     if (open) {
+      freshIds = store.unseen().map((e) => e.animalId)
+      lastVisitId = ''
       render()
       closeBtn.focus()
+      // 新しい子が見えるところへ（帳が長くなっても見落とさない）
+      const first = freshIds[0] ? cardOf(freshIds[0]) : null
+      first?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' })
+    } else {
+      const seen = freshIds
+      freshIds = []
+      store.markSeen(seen)
     }
     openListeners.forEach((fn) => fn(open))
   }
@@ -89,6 +115,14 @@ export function createBookView(store: FriendBookStore): BookView {
     },
     onOpenChange: (fn) => {
       openListeners.push(fn)
+    },
+    restoreFocus: () => {
+      if (!open) return
+      ;(cardOf(lastVisitId) ?? closeBtn).focus()
+    },
+    setReduceMotion: (on) => {
+      reduceMotion = on
+      list.classList.toggle('is-still', on)
     },
   }
 }

@@ -62,10 +62,26 @@ function createShell() {
   })
   hud.onOpenBook(() => book.open())
   home.onBook(() => book.open())
-  observe.onBefriend(() => hud.pulseBook())
+
+  // 登録したあと: 帳のボタンに点（帳で見るまで残る）。モニターを閉じて HUD が見えた瞬間に一拍弾ませる
+  const syncBookNew = () => hud.setBookNew(store.unseen().length > 0)
+  syncBookNew()
+  store.onChange(syncBookNew)
+  observe.onOpenChange((open) => {
+    if (open) return
+    if (book.isOpen()) book.restoreFocus()
+    else if (store.unseen().length > 0) hud.pulseBook()
+  })
+  // 登録直後の「ともだち帳を見る」: モニターを閉じて帳を開く（新しい子の札が見える）
+  observe.onSeeBook(() => {
+    // 帳を先に開く（モニターを閉じた時に「帳が開いている」扱いになり、HUD を弾ませない）
+    book.open()
+    observe.close()
+  })
 
   const applyMotion = (on: boolean) => {
     observe.setReduceMotion(on)
+    book.setReduceMotion(on)
     home.setReduceMotion(on)
     iris.setReduceMotion(on)
   }
