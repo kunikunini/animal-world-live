@@ -15,6 +15,10 @@
     <link rel="preload" as="image" type="image/webp" href="/home/kv-tablet-portrait.webp" media="(min-aspect-ratio: 13/20) and (max-aspect-ratio: 1/1)" />
     <link rel="preload" as="image" type="image/webp" href="/home/kv-tablet-landscape.webp" media="(min-aspect-ratio: 1/1) and (max-aspect-ratio: 20/13)" />
     <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-landscape.webp" media="(min-aspect-ratio: 20/13)" />
+    <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-portrait-bino.webp" media="(max-aspect-ratio: 13/20)" />
+    <link rel="preload" as="image" type="image/webp" href="/home/kv-tablet-portrait-bino.webp" media="(min-aspect-ratio: 13/20) and (max-aspect-ratio: 1/1)" />
+    <link rel="preload" as="image" type="image/webp" href="/home/kv-tablet-landscape-bino.webp" media="(min-aspect-ratio: 1/1) and (max-aspect-ratio: 20/13)" />
+    <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-landscape-bino.webp" media="(min-aspect-ratio: 20/13)" />
   </head>
   <body>
     <!-- 自作 SVG アイコン。OS の絵文字は使わない -->
@@ -46,8 +50,13 @@
     <!-- ホーム: キービジュアル 1 枚。画面の縦横比にいちばん近い絵を選ぶ（スマホ縦・タブレット縦・タブレット横・スマホ横/PC）。ロゴと合言葉は絵の中にある -->
     <section id="home" class="home" aria-label="ホーム" data-i18n-aria="home">
       <div class="home-kv">
-        <!-- 絵の中の双眼鏡: タップでも入れる -->
-        <button id="home-scope" class="home-scope" type="button" aria-label="アニマルワールドに入る" data-i18n-aria="enterWorld"></button>
+        <!-- 絵の中の双眼鏡: 切り抜いた双眼鏡を絵の上に重ね、少しだけ大小に動かす。レンズの中は 3D で開いている 4 つのワールドの動物へ順に変わる。タップでも入れる -->
+        <button id="home-scope" class="home-scope" type="button" aria-label="アニマルワールドに入る" data-i18n-aria="enterWorld">
+          <span class="home-bino" aria-hidden="true">
+            <span class="home-lens l"><span class="lens-pic north"></span><span class="lens-pic jungle"></span><span class="lens-pic south"></span></span>
+            <span class="home-lens r"><span class="lens-pic north"></span><span class="lens-pic jungle"></span><span class="lens-pic south"></span></span>
+          </span>
+        </button>
       </div>
 
       <div class="home-title visually-hidden">

@@ -317,11 +317,11 @@ button {
   /* スマホ横・PC（16:9） */
   --kv: url('/home/kv-phone-landscape.webp');
   --kv-ar: 1.7768;
-  /* 絵の中の双眼鏡（絵の幅・高さに対する割合）。タップで入る */
-  --scope-x: 30%;
-  --scope-y: 40%;
-  --scope-w: 40%;
-  --scope-h: 38%;
+  /* 絵から切り抜いた双眼鏡（絵の幅・高さに対する割合）と、その中のレンズ（双眼鏡の幅・高さに対する割合） */
+  --bino: url('/home/kv-phone-landscape-bino.webp');
+  --bino-x: 30.38%; --bino-y: 41.45%; --bino-w: 39.47%; --bino-h: 39.53%;
+  --lens-l-x: 6.48%; --lens-l-y: 22.07%; --lens-l-w: 38.50%; --lens-l-h: 68.31%;
+  --lens-r-x: 55.53%; --lens-r-y: 22.58%; --lens-r-w: 38.35%; --lens-r-h: 68.04%;
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -339,10 +339,10 @@ button {
   .home {
     --kv: url('/home/kv-tablet-landscape.webp');
     --kv-ar: 1.3333;
-    --scope-x: 29%;
-    --scope-y: 42%;
-    --scope-w: 42%;
-    --scope-h: 33%;
+    --bino: url('/home/kv-tablet-landscape-bino.webp');
+    --bino-x: 29.21%; --bino-y: 44.48%; --bino-w: 42.06%; --bino-h: 33.06%;
+    --lens-l-x: 5.87%; --lens-l-y: 25.30%; --lens-l-w: 39.04%; --lens-l-h: 66.23%;
+    --lens-r-x: 55.03%; --lens-r-y: 25.30%; --lens-r-w: 39.04%; --lens-r-h: 66.23%;
   }
 }
 
@@ -351,10 +351,10 @@ button {
   .home {
     --kv: url('/home/kv-tablet-portrait.webp');
     --kv-ar: 0.75;
-    --scope-x: 27%;
-    --scope-y: 44%;
-    --scope-w: 46%;
-    --scope-h: 24%;
+    --bino: url('/home/kv-tablet-portrait-bino.webp');
+    --bino-x: 25.60%; --bino-y: 47.44%; --bino-w: 48.25%; --bino-h: 22.44%;
+    --lens-l-x: 6.69%; --lens-l-y: 25.15%; --lens-l-w: 39.91%; --lens-l-h: 64.35%;
+    --lens-r-x: 55.64%; --lens-r-y: 24.65%; --lens-r-w: 39.80%; --lens-r-h: 64.17%;
   }
 }
 
@@ -363,10 +363,10 @@ button {
   .home {
     --kv: url('/home/kv-phone-portrait.webp');
     --kv-ar: 0.5628;
-    --scope-x: 27%;
-    --scope-y: 44%;
-    --scope-w: 46%;
-    --scope-h: 19%;
+    --bino: url('/home/kv-phone-portrait-bino.webp');
+    --bino-x: 26.04%; --bino-y: 44.62%; --bino-w: 47.93%; --bino-h: 18.18%;
+    --lens-l-x: 6.91%; --lens-l-y: 25.96%; --lens-l-w: 40.73%; --lens-l-h: 60.43%;
+    --lens-r-x: 53.63%; --lens-r-y: 25.91%; --lens-r-w: 40.29%; --lens-r-h: 59.77%;
   }
 }
 
@@ -407,12 +407,14 @@ button {
   }
 }
 
+/* 絵の中の双眼鏡（ボタン）。切り抜いた双眼鏡を絵の同じ位置に重ねる。
+   大小に動くのは 1 倍より大きい側だけ（小さくすると下の絵の双眼鏡がはみ出して見える）。支点は岩に乗っている下のまん中 */
 .home-scope {
   position: absolute;
-  left: var(--scope-x);
-  top: var(--scope-y);
-  width: var(--scope-w);
-  height: var(--scope-h);
+  left: var(--bino-x);
+  top: var(--bino-y);
+  width: var(--bino-w);
+  height: var(--bino-h);
   padding: 0;
   border: 0;
   border-radius: 40%;
@@ -421,13 +423,74 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-.home-scope:active {
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
-}
-
 .home-scope:focus-visible {
   outline: 4px solid #fff;
   outline-offset: 4px;
+}
+
+.home-bino {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: var(--bino) center / 100% 100% no-repeat;
+  transform-origin: 50% 100%;
+  animation: home-bino-breathe 3.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.home-scope:active .home-bino {
+  filter: brightness(1.08);
+}
+
+@keyframes home-bino-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+
+/* レンズ: 4 つのワールドを順に（サバンナ＝絵のままのライオン → 北の世界 → ジャングル → 南半球）。
+   1 枚の横長の絵の左半分を左のレンズに、右半分を右のレンズに映す */
+.home-lens {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.home-lens.l { left: var(--lens-l-x); top: var(--lens-l-y); width: var(--lens-l-w); height: var(--lens-l-h); }
+.home-lens.r { left: var(--lens-r-x); top: var(--lens-r-y); width: var(--lens-r-w); height: var(--lens-r-h); }
+
+.lens-pic {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  background-repeat: no-repeat;
+  background-size: 200% auto;
+  animation: home-lens-slot 24s linear infinite both;
+}
+
+.home-lens.l .lens-pic { background-position: 0% 50%; }
+.home-lens.r .lens-pic { background-position: 100% 50%; }
+.lens-pic.north { background-image: url('/home/lens-north.webp'); animation-delay: 5s; }
+.lens-pic.jungle { background-image: url('/home/lens-jungle.webp'); animation-delay: 11s; }
+.lens-pic.south { background-image: url('/home/lens-south.webp'); animation-delay: 17s; }
+
+/* レンズのガラス: 内側のふちの影と、左上の光 */
+.home-lens::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(16, 36, 80, 0.28), inset 0 0.5em 1em rgba(10, 20, 50, 0.18);
+  background: radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 38%);
+}
+
+@keyframes home-lens-slot {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  25% { opacity: 1; }
+  30% { opacity: 0; }
+  100% { opacity: 0; }
 }
 
 /* 右上: ともだち帳（白い丸ボタン）と設定 */
@@ -532,6 +595,155 @@ button {
 .home-spark.r {
   right: -0.85em;
   transform: scaleX(-1);
+}
+
+/* ボタンの動き: 出てくる時にぽんと出る。「のぞいてみる」はふわふわ浮き、光が走り、まわりに輪が広がり、角がきらめく。
+   「ともだち帳」は上から降りてきて、本がときどきぱらっとめくれる。動きをへらす時は止める */
+.home .home-enter {
+  position: relative;
+  overflow: hidden;
+  animation: home-pop 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) 0.2s both, home-float 2.8s ease-in-out 1s infinite;
+}
+
+.home .home-enter::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 38%;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
+  transform: translateX(-150%) skewX(-18deg);
+  animation: home-shine 3.6s ease-in-out 1.4s infinite;
+  pointer-events: none;
+}
+
+.home .home-enter > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgba(255, 196, 90, 0.7);
+  animation: home-ring 2.4s ease-out 1.2s infinite;
+  pointer-events: none;
+}
+
+.home-spark {
+  animation: home-twinkle 1.6s ease-in-out infinite;
+}
+
+.home-spark.r {
+  animation-name: home-twinkle-r;
+  animation-delay: 0.8s;
+}
+
+.home-corner > * {
+  animation: home-drop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.home-corner > .home-book {
+  animation-delay: 0.12s;
+}
+
+.home .home-book .ico {
+  transform-origin: 50% 80%;
+  animation: home-book-flip 5s ease-in-out 2s infinite;
+}
+
+.home .home-book:hover,
+.home .home-settings:hover {
+  transform: translateY(-2px);
+}
+
+.home .home-settings:hover .ico {
+  transform: rotate(40deg);
+  transition: transform 0.4s ease;
+}
+
+.home .badge-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--h-orange);
+  animation: home-dot 1.8s ease-out infinite;
+}
+
+@keyframes home-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes home-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes home-shine {
+  0% { transform: translateX(-150%) skewX(-18deg); }
+  40%, 100% { transform: translateX(380%) skewX(-18deg); }
+}
+
+@keyframes home-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 196, 90, 0.65); }
+  100% { box-shadow: 0 0 0 0.55em rgba(255, 196, 90, 0); }
+}
+
+@keyframes home-twinkle {
+  0%, 100% { transform: scale(0.85) rotate(0deg); opacity: 0.7; }
+  50% { transform: scale(1.12) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes home-twinkle-r {
+  0%, 100% { transform: scaleX(-1) scale(0.85) rotate(0deg); opacity: 0.7; }
+  50% { transform: scaleX(-1) scale(1.12) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes home-drop {
+  0% { transform: translateY(-140%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes home-book-flip {
+  0%, 82%, 100% { transform: rotate(0) scale(1); }
+  86% { transform: rotate(-14deg) scale(1.12); }
+  90% { transform: rotate(10deg) scale(1.12); }
+  94% { transform: rotate(-4deg) scale(1.05); }
+}
+
+@keyframes home-dot {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* 動きをへらす: 双眼鏡・ボタンの動きを止める（レンズの入れ替わりは、ゆっくり色が変わるだけなので残す） */
+.home.is-still :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico),
+.home.is-still .home-cta::before,
+.home.is-still .home-enter::after,
+.home.is-still .badge-dot::after {
+  animation: none;
+}
+
+.home.is-still .home-enter::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico),
+  .home .home-cta::before,
+  .home .home-enter::after,
+  .home .badge-dot::after {
+    animation: none;
+  }
+
+  .home .home-enter::after {
+    display: none;
+  }
 }
 
 /* WebGL が無い時の案内の中の「ともだち帳」 */
