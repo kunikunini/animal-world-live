@@ -1,4 +1,5 @@
 import { esc } from './html'
+import { t } from './i18n'
 
 export type ToastIcon = 'bino' | 'book' | 'home'
 
@@ -91,7 +92,7 @@ export function createHud(): Hud {
     },
     setBookNew: (on) => {
       bookDot.hidden = !on
-      openBookBtn.setAttribute('aria-label', on ? 'ともだち帳（あたらしいともだちがいます）' : 'ともだち帳')
+      openBookBtn.setAttribute('aria-label', on ? t('bookNew') : t('book'))
     },
     setGoToSpotVisible: (visible) => {
       goToSpotBtn.hidden = !visible
@@ -104,7 +105,7 @@ export function createHud(): Hud {
       }
       if (screen) {
         spotLabel.style.transform = `translate(-50%, -100%) translate(${screen.x.toFixed(0)}px, ${screen.y.toFixed(0)}px)`
-        spotDistance.textContent = distance >= 1000 ? '' : `あと ${Math.max(0, Math.round(distance))} m`
+        spotDistance.textContent = distance >= 1000 ? '' : t('distance', { n: Math.max(0, Math.round(distance)) })
       }
     },
     toast: (text, icon) => {

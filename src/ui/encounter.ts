@@ -1,3 +1,5 @@
+import { t } from './i18n'
+
 /**
  * 出会いの導線。そばに来たライオンの頭の上に「双眼鏡 + 名前」のピンを浮かべ、尻尾で頭を指す。
  * 顔を隠さないよう頭の上に置き、名前はピンに合体させる（その個体の名前ラベルは別に出さない）。
@@ -45,7 +47,7 @@ export function createEncounterIcon(): EncounterIcon {
       if (name !== undefined && name !== currentName) {
         currentName = name
         nameEl.textContent = name
-        el.setAttribute('aria-label', `${name}を双眼鏡で見る`)
+        el.setAttribute('aria-label', t('lookAt', { name }))
         w = 0
       }
       if (w === 0) {

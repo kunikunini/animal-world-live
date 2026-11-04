@@ -1,8 +1,10 @@
 /**
- * 設定。ホームの歯車から開くシート。いまは「動きをへらす」。
+ * 設定。ホームの歯車から開くシート。「動きをへらす」と「言語」（日本語・English）。
  * 「動きをへらす」は前と同じ保存キーを使う（ワールドの HUD にあった時の選択を引き継ぐ）。
  * 保存が無ければ端末の「視差効果を減らす」に従う。
  */
+import { getLang, onLangChange, setLang, type Lang } from './i18n'
+
 const MOTION_KEY = 'awl.reduceMotion'
 
 export interface Settings {
@@ -47,6 +49,15 @@ export function createSettings(): Settings {
     writeMotion(reduceMotion)
     motionListeners.forEach((fn) => fn(reduceMotion))
   })
+
+  // 言語: 押した方に切り替える。押されている方は aria-pressed
+  const langBtns = [...root.querySelectorAll<HTMLButtonElement>('button[data-lang]')]
+  const syncLang = () => {
+    for (const b of langBtns) b.setAttribute('aria-pressed', String(b.dataset.lang === getLang()))
+  }
+  syncLang()
+  onLangChange(syncLang)
+  for (const b of langBtns) b.addEventListener('click', () => setLang(b.dataset.lang as Lang))
 
   let open = false
   const setOpen = (next: boolean) => {

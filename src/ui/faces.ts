@@ -1,6 +1,7 @@
 import type { Animal } from '../data/animals'
 import { LIONS } from '../world/layout'
 import { esc } from './html'
+import { animalName, t } from './i18n'
 
 /**
  * 顔。写真（animal.photo）があれば写真、無ければ自作 SVG のライオンの顔で成立させる。
@@ -63,7 +64,7 @@ export function faceBackground(animal: Animal): string {
 }
 
 export function faceSvg(animal: Animal): string {
-  return `<svg viewBox="0 0 100 100" role="img" aria-label="${esc(animal.name)}の顔"><rect width="100" height="100" fill="${faceBackground(animal)}" />${faceParts(animal)}</svg>`
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="${esc(t('faceOf', { name: animalName(animal) }))}"><rect width="100" height="100" fill="${faceBackground(animal)}" />${faceParts(animal)}</svg>`
 }
 
 /** 顔の HTML。写真があれば img、無ければ SVG。cls はサイズ用のクラス */

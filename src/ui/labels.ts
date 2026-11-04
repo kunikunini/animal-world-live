@@ -21,6 +21,8 @@ export interface PlacedLabel {
 
 export interface WorldLabels {
   add: (id: string, name: string) => void
+  /** 言語を切り替えた時に名前を差し替える */
+  rename: (id: string, name: string) => void
   /** 見せるラベルだけ渡す。渡さなかった id は隠す。obstacles は避ける矩形（双眼鏡のアイコンなど）。戻り値は確定した位置 */
   layout: (entries: LabelEntry[], obstacles?: Rect[]) => Map<string, PlacedLabel>
 }
@@ -66,6 +68,13 @@ export function createWorldLabels(): WorldLabels {
       el.append(nameEl)
       document.body.append(el)
       items.set(id, { el, visible: false, w: 0, h: 0 })
+    },
+    rename: (id, name) => {
+      const item = items.get(id)
+      if (!item) return
+      const nameEl = item.el.querySelector('.spot-label-name')
+      if (nameEl) nameEl.textContent = name
+      item.w = 0
     },
     layout: (entries, obstacles = []) => {
       const placed: Rect[] = [...obstacles]

@@ -4,6 +4,7 @@
     {
       "id": "angie",
       "name": "アンジー",
+      "nameEn": "Angie",
       "species": "ライオン",
       "ageLabel": "",
       "family": "アレックスとの間に生まれた双子、クレアとカーラ（1歳）の母",
@@ -22,6 +23,7 @@
     {
       "id": "claire",
       "name": "クレア",
+      "nameEn": "Claire",
       "species": "ライオン",
       "ageLabel": "",
       "family": "アレックスとアンジーの子。カーラと双子（1歳）",
@@ -40,6 +42,7 @@
     {
       "id": "carla",
       "name": "カーラ",
+      "nameEn": "Carla",
       "species": "ライオン",
       "ageLabel": "",
       "family": "アレックスとアンジーの子。クレアと双子（1歳）",
@@ -58,6 +61,7 @@
     {
       "id": "alex",
       "name": "アレックス",
+      "nameEn": "Alex",
       "species": "ライオン",
       "ageLabel": "",
       "family": "アンジーとの間に生まれた双子、クレアとカーラ（1歳）の父",
@@ -76,6 +80,7 @@
     {
       "id": "riley",
       "name": "ライリー",
+      "nameEn": "Riley",
       "species": "ライオン",
       "ageLabel": "",
       "family": "",

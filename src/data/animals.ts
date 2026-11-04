@@ -18,6 +18,8 @@ export interface VideoSource {
 export interface Animal {
   id: string
   name: string
+  /** 英語表示の名前（無ければ name のまま） */
+  nameEn?: string
   species: string
   ageLabel: string
   family: string

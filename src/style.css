@@ -1269,6 +1269,52 @@ button {
   color: var(--ink-soft);
 }
 
+.set-row-lang {
+  flex-wrap: wrap;
+  cursor: default;
+}
+
+.set-row-lang .set-text {
+  flex: 1 1 150px;
+}
+
+/* 狭い時は切り替えを次の行へ（アイコンの幅だけ下げる） */
+.set-row-lang .seg {
+  margin-left: auto;
+}
+
+.seg {
+  flex: none;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--ink-faint);
+}
+
+.seg-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.seg-btn[aria-pressed='true'] {
+  background: #fff;
+  color: var(--sky);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.fields-note {
+  margin: 0 0 4px;
+  text-align: left;
+}
+
 .switch {
   flex: none;
   appearance: none;

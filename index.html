@@ -32,13 +32,14 @@
       <symbol id="i-family" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2" /><circle cx="16.5" cy="10.5" r="2.6" /><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M14 19c0-2.3 1.4-3.8 3.5-3.8S21 16.7 21 19" /></symbol>
       <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16A2.5 2.5 0 0 1 4 13.5v-7z" /></symbol>
       <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" /><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5" /><circle cx="12" cy="12" r="6.6" /></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5S9.6 5.9 12 3.5z" /></symbol>
       <symbol id="i-sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9l5 6M21 9l-5 6" /></symbol>
     </svg>
 
-    <canvas id="world" aria-label="サバンナの3Dワールド"></canvas>
+    <canvas id="world" aria-label="サバンナの3Dワールド" data-i18n-aria="worldCanvas"></canvas>
 
     <!-- ホーム: 平穏ないつもの世界。丘の奥にアニマルスコープが立つ -->
-    <section id="home" class="home" aria-label="ホーム">
+    <section id="home" class="home" aria-label="ホーム" data-i18n-aria="home">
       <svg class="home-sun" viewBox="0 0 100 100" aria-hidden="true">
         <g fill="#ffd233" opacity=".9"><path d="M50 2l6 14-6 6-6-6zM98 50l-14 6-6-6 6-6zM50 98l-6-14 6-6 6 6zM2 50l14-6 6 6-6 6zM84 16l-5 14-8-1-1-8zM84 84l-14-5 1-8 8-1zM16 84l5-14 8 1 1 8zM16 16l14 5-1 8-8 1z" /></g>
         <circle cx="50" cy="50" r="30" fill="#ffd233" /><circle cx="50" cy="50" r="23" fill="#ffe27a" />
@@ -81,7 +82,7 @@
           <rect x="172" y="344" width="56" height="10" rx="5" fill="#e0683a" />
         </svg>
         <!-- アニマルスコープ: 丘の奥に立つ大きな双眼鏡。レンズの中に向こうの世界が見える。タップで入る -->
-        <button id="home-scope" class="home-scope" type="button" aria-label="アニマルワールドに入る">
+        <button id="home-scope" class="home-scope" type="button" aria-label="アニマルワールドに入る" data-i18n-aria="enterWorld">
           <svg viewBox="0 0 400 300" aria-hidden="true">
             <defs>
               <radialGradient id="home-glow-g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff3a8" stop-opacity=".95" /><stop offset=".6" stop-color="#ffd233" stop-opacity=".45" /><stop offset="1" stop-color="#ffd233" stop-opacity="0" /></radialGradient>
@@ -104,34 +105,34 @@
 
       <div class="home-title">
         <h1 class="home-logo" aria-label="ANIMAL WORLD LIVE"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>L</span><span class="sp"></span><span>W</span><span>O</span><span>R</span><span>L</span><span>D</span><span class="sp"></span><span>L</span><span>I</span><span>V</span><span>E</span></h1>
-        <p class="home-tagline">世界中の動物たちと、友達になろう。</p>
-        <p class="home-story">ふしぎな双眼鏡をのぞくと、どうぶつたちの世界へ。</p>
+        <p class="home-tagline"><span data-i18n="tagline">世界中の動物たちと、友達になろう。</span></p>
+        <p class="home-story"><span data-i18n="homeStory">ふしぎな双眼鏡をのぞくと、どうぶつたちの世界へ。</span></p>
       </div>
 
       <div class="home-cta">
-        <button id="enter" class="btn btn-hero" type="button" aria-label="アニマルワールドに入る"><svg class="ico ico-fill"><use href="#i-bino" /></svg>のぞいてみる</button>
+        <button id="enter" class="btn btn-hero" type="button" aria-label="アニマルワールドに入る" data-i18n-aria="enterWorld"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span data-i18n="peek">のぞいてみる</span></button>
         <div class="home-cta-sub">
-          <button id="entry-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="home-new-dot" class="badge-dot" hidden></span></button>
-          <button id="home-settings" class="icon-btn home-settings" type="button" aria-label="設定" title="設定"><svg class="ico"><use href="#i-gear" /></svg></button>
+          <button id="entry-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span><span id="home-new-dot" class="badge-dot" hidden></span></button>
+          <button id="home-settings" class="icon-btn home-settings" type="button" aria-label="設定" data-i18n-aria="settings" title="設定" data-i18n-title="settings"><svg class="ico"><use href="#i-gear" /></svg></button>
         </div>
       </div>
 
       <div id="fallback" class="fallback" hidden>
-        <h2>このブラウザでは3Dを表示できません</h2>
-        <p>WebGLが使えない環境のようです。別のブラウザか端末でもう一度開いてみてください。</p>
-        <button id="fallback-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳</button>
+        <h2><span data-i18n="fallbackTitle">このブラウザでは3Dを表示できません</span></h2>
+        <p><span data-i18n="fallbackBody">WebGLが使えない環境のようです。別のブラウザか端末でもう一度開いてみてください。</span></p>
+        <button id="fallback-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span></button>
       </div>
     </section>
 
     <!-- 物語: 初回だけ 3 コマ -->
-    <section id="story" class="story" hidden aria-label="おはなし">
+    <section id="story" class="story" hidden aria-label="おはなし" data-i18n-aria="story">
       <div class="story-panel">
         <div id="story-art" class="story-art" aria-hidden="true"></div>
         <p id="story-text" class="story-text"></p>
         <div id="story-dots" class="story-dots" aria-hidden="true"></div>
         <div class="story-actions">
-          <button id="story-skip" class="btn btn-quiet btn-m" type="button">スキップ</button>
-          <button id="story-next" class="btn btn-hero" type="button">つぎへ</button>
+          <button id="story-skip" class="btn btn-quiet btn-m" type="button"><span data-i18n="skip">スキップ</span></button>
+          <button id="story-next" class="btn btn-hero" type="button"><span data-i18n="next">つぎへ</span></button>
         </div>
       </div>
     </section>
@@ -139,23 +140,23 @@
     <!-- 往復の演出: 双眼鏡の形（2 つの円）に絞られる幕。iOS Safari でも確実に描き直せるよう canvas で描く -->
     <canvas id="iris" class="iris" hidden aria-hidden="true"></canvas>
 
-    <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く"></canvas>
-    <button id="minimap-expand" class="icon-btn minimap-expand" type="button" hidden aria-label="地図を広げる" title="地図を広げる"><svg class="ico"><use href="#i-expand" /></svg></button>
+    <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く" data-i18n-aria="minimap"></canvas>
+    <button id="minimap-expand" class="icon-btn minimap-expand" type="button" hidden aria-label="地図を広げる" data-i18n-aria="expandMap" title="地図を広げる" data-i18n-title="expandMap"><svg class="ico"><use href="#i-expand" /></svg></button>
 
-    <section id="map" class="sheet-wrap map" hidden aria-label="地図">
+    <section id="map" class="sheet-wrap map" hidden aria-label="地図" data-i18n-aria="map">
       <div class="sheet">
         <div class="grabber"></div>
         <header class="sheet-head">
-          <h2 class="sheet-title"><svg class="ico"><use href="#i-map" /></svg>地図</h2>
-          <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" title="閉じる"><svg class="ico"><use href="#i-close" /></svg></button>
+          <h2 class="sheet-title"><svg class="ico"><use href="#i-map" /></svg><span data-i18n="map">地図</span></h2>
+          <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
         <div class="sheet-body">
-          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="サバンナ全体の地図。北が上。タップした場所へ歩く"></canvas>
-          <ul class="map-legend" aria-label="凡例">
-            <li><span class="map-dot dot-you"></span>あなた</li>
-            <li><span class="map-dot dot-met"></span>出会った動物</li>
-            <li><span class="map-dot dot-friend"></span>ともだち</li>
-            <li><span class="map-dot dot-spot"></span>観察スポット</li>
+          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="サバンナ全体の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
+          <ul class="map-legend" aria-label="凡例" data-i18n-aria="legend">
+            <li><span class="map-dot dot-you"></span><span data-i18n="you">あなた</span></li>
+            <li><span class="map-dot dot-met"></span><span data-i18n="metAnimals">出会った動物</span></li>
+            <li><span class="map-dot dot-friend"></span><span data-i18n="friends">ともだち</span></li>
+            <li><span class="map-dot dot-spot"></span><span data-i18n="spot">観察スポット</span></li>
           </ul>
         </div>
       </div>
@@ -163,40 +164,40 @@
 
     <div id="spot-label" class="spot-label" hidden aria-hidden="true">
       <svg class="ico"><use href="#i-bino" /></svg>
-      <span class="spot-label-name">観察スポット</span>
+      <span class="spot-label-name"><span data-i18n="spot">観察スポット</span></span>
       <span id="spot-distance" class="spot-label-distance"></span>
     </div>
 
     <div id="hud-toast" class="toast hud-toast" hidden role="status"></div>
 
     <!-- 観察モニター: 映像 → 顔と名前 → ともだちになる → 項目カード -->
-    <section id="observe" class="observe" hidden aria-label="観察モニター">
+    <section id="observe" class="observe" hidden aria-label="観察モニター" data-i18n-aria="monitor">
       <div class="observe-panel">
-        <h2 id="observe-title" class="visually-hidden">観察モニター</h2>
+        <h2 id="observe-title" class="visually-hidden"><span data-i18n="monitor">観察モニター</span></h2>
         <div class="m-video">
           <video id="observe-video" class="observe-video" playsinline loop preload="metadata" controls controlslist="nodownload"></video>
           <div id="observe-poster" class="observe-poster" hidden>
             <div id="observe-poster-face" class="poster-face"></div>
             <p id="observe-poster-text" class="observe-poster-text"></p>
-            <button id="observe-retry" class="btn btn-m" type="button" hidden>もう一度試す</button>
+            <button id="observe-retry" class="btn btn-m" type="button" hidden><span data-i18n="retry">もう一度試す</span></button>
           </div>
           <button id="observe-close" class="icon-btn m-back" type="button" aria-label="世界に戻る" title="世界に戻る"><svg class="ico"><use href="#i-back" /></svg></button>
-          <span id="observe-badge" class="m-badge"><svg class="ico"><use href="#i-film" /></svg>収録映像</span>
-          <span id="observe-placeholder" class="m-placeholder" hidden>仮映像（色と文字だけの自作プレースホルダ）</span>
-          <button id="observe-unmute" class="icon-btn m-unmute" type="button" aria-label="音を出す" title="音を出す" hidden><svg class="ico"><use href="#i-sound-off" /></svg></button>
+          <span id="observe-badge" class="m-badge"><svg class="ico"><use href="#i-film" /></svg><span data-i18n="recorded">収録映像</span></span>
+          <span id="observe-placeholder" class="m-placeholder" hidden><span data-i18n="placeholder">仮映像（色と文字だけの自作プレースホルダ）</span></span>
+          <button id="observe-unmute" class="icon-btn m-unmute" type="button" aria-label="音を出す" data-i18n-aria="unmute" title="音を出す" data-i18n-title="unmute" hidden><svg class="ico"><use href="#i-sound-off" /></svg></button>
         </div>
         <div class="m-sheet">
-          <div id="observe-chips" class="chips" role="tablist" aria-label="出会った動物" hidden></div>
+          <div id="observe-chips" class="chips" role="tablist" aria-label="出会った動物" data-i18n-aria="metAnimals" hidden></div>
           <div id="observe-hero" class="hero"></div>
           <div class="cta-area">
-            <button id="befriend" class="btn btn-hero" type="button"><svg class="ico ico-fill"><use href="#i-heart" /></svg>ともだちになる</button>
+            <button id="befriend" class="btn btn-hero" type="button"><svg class="ico ico-fill"><use href="#i-heart" /></svg><span data-i18n="befriend">ともだちになる</span></button>
             <div id="befriended" class="friend-band" hidden>
               <span class="check"><svg class="ico"><use href="#i-check" /></svg></span>
-              <span><strong id="befriended-text">ともだち帳に書いてあります</strong><small>初めて出会った日 <span id="befriended-date"></span></small></span>
+              <span><strong id="befriended-text">ともだち帳に書いてあります</strong><small><span data-i18n="firstMet">初めて出会った日</span> <span id="befriended-date"></span></small></span>
               <span id="befriend-stars" class="stars" aria-hidden="true"></span>
             </div>
             <button id="befriend-see" class="btn btn-nav see-book" type="button" hidden><svg class="ico"><use href="#i-book" /></svg><span id="befriend-see-label">ともだち帳を見る</span></button>
-            <p id="befriend-memory-note" class="note-small" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+            <p id="befriend-memory-note" class="note-small" hidden><span data-i18n="memoryNote">この環境では保存できないため、ページを閉じるとともだち帳は消えます。</span></p>
           </div>
           <div id="observe-profile" class="fields"></div>
         </div>
@@ -205,35 +206,43 @@
     </section>
 
     <!-- 設定: ホームの歯車から開く -->
-    <section id="settings" class="sheet-wrap" hidden aria-label="設定">
+    <section id="settings" class="sheet-wrap" hidden aria-label="設定" data-i18n-aria="settings">
       <div class="sheet">
         <div class="grabber"></div>
         <header class="sheet-head">
-          <h2 class="sheet-title"><svg class="ico"><use href="#i-gear" /></svg>設定</h2>
-          <button id="settings-close" class="icon-btn" type="button" aria-label="閉じる" title="閉じる"><svg class="ico"><use href="#i-close" /></svg></button>
+          <h2 class="sheet-title"><svg class="ico"><use href="#i-gear" /></svg><span data-i18n="settings">設定</span></h2>
+          <button id="settings-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
         <div class="sheet-body set-list">
           <label class="set-row">
             <svg class="ico"><use href="#i-motion" /></svg>
-            <span class="set-text"><strong>動きをへらす</strong><small>画面の揺れ・アニメーションを少なくします</small></span>
+            <span class="set-text"><strong><span data-i18n="reduceMotion">動きをへらす</span></strong><small><span data-i18n="reduceMotionDesc">画面の揺れ・アニメーションを少なくします</span></small></span>
             <input id="reduce-motion" class="switch" type="checkbox" role="switch" />
           </label>
+          <div class="set-row set-row-lang" role="group" aria-labelledby="lang-label">
+            <svg class="ico"><use href="#i-globe" /></svg>
+            <span class="set-text"><strong id="lang-label" data-i18n="language">言語</strong><small data-i18n="languageDesc">プロフィールの本文は日本語のままです</small></span>
+            <span class="seg">
+              <button class="seg-btn" type="button" data-lang="ja" lang="ja">日本語</button>
+              <button class="seg-btn" type="button" data-lang="en" lang="en">English</button>
+            </span>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ともだち帳: 顔のカードグリッド -->
-    <section id="book" class="sheet-wrap" hidden aria-label="ともだち帳">
+    <section id="book" class="sheet-wrap" hidden aria-label="ともだち帳" data-i18n-aria="book">
       <div class="sheet">
         <div class="grabber"></div>
         <header class="sheet-head">
-          <h2 class="sheet-title"><svg class="ico"><use href="#i-book" /></svg>ともだち帳</h2>
-          <button id="book-close" class="icon-btn" type="button" aria-label="閉じる" title="閉じる"><svg class="ico"><use href="#i-close" /></svg></button>
+          <h2 class="sheet-title"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span></h2>
+          <button id="book-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
         <div class="sheet-body">
-          <div id="book-empty" class="fempty"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#i-bino" /></svg><p>まだ誰もいません</p></div>
+          <div id="book-empty" class="fempty"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#i-bino" /></svg><p><span data-i18n="bookEmpty">まだ誰もいません</span></p></div>
           <ul id="book-list" class="fgrid"></ul>
-          <p id="book-note" class="note-small" hidden>この環境では保存できないため、ページを閉じるとともだち帳は消えます。</p>
+          <p id="book-note" class="note-small" hidden><span data-i18n="memoryNote">この環境では保存できないため、ページを閉じるとともだち帳は消えます。</span></p>
         </div>
         <div class="sheet-foot">
           <button id="book-world" class="btn btn-nav" type="button"><svg class="ico"><use href="#i-bino" /></svg><span id="book-world-label">ワールドに戻る</span></button>
@@ -241,17 +250,17 @@
       </div>
     </section>
 
-    <div id="stick" class="stick" hidden aria-label="移動スティック">
+    <div id="stick" class="stick" hidden aria-label="移動スティック" data-i18n-aria="stick">
       <div class="stick-knob"></div>
     </div>
 
     <div id="hud" class="hud" hidden>
       <div class="hud-nav">
-        <button id="open-book" class="btn btn-nav hud-book" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="hud-book-dot" class="badge-dot" hidden></span></button>
-        <button id="go-home" class="icon-btn" type="button" aria-label="ホームへ" title="ホームへ"><svg class="ico"><use href="#i-home" /></svg></button>
+        <button id="open-book" class="btn btn-nav hud-book" type="button"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span><span id="hud-book-dot" class="badge-dot" hidden></span></button>
+        <button id="go-home" class="icon-btn" type="button" aria-label="ホームへ" data-i18n-aria="goHome" title="ホームへ" data-i18n-title="goHome"><svg class="ico"><use href="#i-home" /></svg></button>
       </div>
-      <button id="goto-spot" class="btn btn-hero hud-spot" type="button" aria-label="観察スポットへ" title="観察スポットへ"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span class="hud-spot-text">観察スポットへ</span></button>
-      <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" title="ジャンプ"><svg class="ico"><use href="#i-jump" /></svg></button>
+      <button id="goto-spot" class="btn btn-hero hud-spot" type="button" aria-label="観察スポットへ" data-i18n-aria="gotoSpot" title="観察スポットへ" data-i18n-title="gotoSpot"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span class="hud-spot-text"><span data-i18n="gotoSpot">観察スポットへ</span></span></button>
+      <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" data-i18n-aria="jump" title="ジャンプ" data-i18n-title="jump"><svg class="ico"><use href="#i-jump" /></svg></button>
       <div id="fps" class="fps" hidden></div>
     </div>
 

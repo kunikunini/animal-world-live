@@ -8,6 +8,7 @@ import { faceMarkup } from './faces'
 import { esc } from './html'
 import { renderHero, renderProfile } from './profile'
 import { playFriendChime } from './chime'
+import { animalName, t } from './i18n'
 
 export type ObserveOrigin = 'world' | 'book'
 
@@ -109,7 +110,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
       } catch (err2) {
         if (seq !== loadSeq) return
         console.warn('video play failed', err2)
-        showPoster('映像を再生できませんでした', true)
+        showPoster(t('videoFailed'), true)
       }
     }
   }
@@ -128,7 +129,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
       loadedUrl = ''
       video.hidden = true
       unmuteBtn.hidden = true
-      showPoster('映像は準備中です', false)
+      showPoster(t('videoPending'), false)
       return
     }
 
@@ -167,9 +168,9 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     befriendBtn.hidden = !!entry
     befriended.hidden = !entry
     befriended.classList.toggle('is-fresh', fresh)
-    befriendedText.textContent = fresh ? 'ともだち帳に加わりました' : 'ともだち帳に書いてあります'
+    befriendedText.textContent = fresh ? t('addedBook') : t('inBook')
     seeBookBtn.hidden = !entry
-    seeBookLabel.textContent = origin === 'book' ? 'ともだち帳に戻る' : 'ともだち帳を見る'
+    seeBookLabel.textContent = origin === 'book' ? t('backBook') : t('seeBook')
     if (entry) befriendedDate.textContent = formatMetDate(entry.firstMetAt)
     memoryNote.hidden = store.isPersistent
   }
@@ -203,7 +204,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
         return `
           <button class="chip${isCurrent ? ' is-current' : ''}" type="button" role="tab" aria-selected="${isCurrent}" data-animal="${esc(a.id)}">
             <span class="chip-face">${faceMarkup(a)}</span>
-            <span class="chip-name">${esc(a.name)}</span>
+            <span class="chip-name">${esc(animalName(a))}</span>
           </button>`
       })
       .join('')
@@ -211,7 +212,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
 
   const show = (animal: Animal) => {
     current = animal
-    title.textContent = `${animal.name}の観察モニター`
+    title.textContent = t('monitorOf', { name: animalName(animal) })
     hero.innerHTML = renderHero(animal)
     load(animal)
     profile.innerHTML = renderProfile(animal)
@@ -240,7 +241,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
       applySource(++loadSeq)
       return
     }
-    showPoster('映像を読み込めませんでした', true)
+    showPoster(t('videoLoadFailed'), true)
   })
 
   retryBtn.addEventListener('click', () => {
@@ -268,7 +269,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     }
     celebrate()
     playFriendChime()
-    status.textContent = `${current.name}がともだち帳に加わりました`
+    status.textContent = t('addedStatus', { name: animalName(current) })
     // 押したボタンは消えるので、次の行き先へフォーカスを移す（キーボード・読み上げの人が迷わない）
     if (!seeBookBtn.hidden) seeBookBtn.focus()
     else closeBtn.focus()
@@ -303,7 +304,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   return {
     open: (animal, from) => {
       origin = from
-      const backLabel = from === 'book' ? 'ともだち帳に戻る' : '世界に戻る'
+      const backLabel = from === 'book' ? t('backBook') : t('backWorld')
       closeBtn.setAttribute('aria-label', backLabel)
       closeBtn.title = backLabel
       show(animal)

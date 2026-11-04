@@ -1,3 +1,5 @@
+import { formatDate, formatDateShort } from '../ui/i18n'
+
 /**
  * ともだち帳の保存。
  * 動物を集める図鑑ではなく、出会った個体とのつながりを記録する場所。
@@ -106,16 +108,16 @@ export function createFriendBookStore(): FriendBookStore {
   }
 }
 
-/** 「2026年11月2日」の形 */
+/** 「2026年11月2日」の形（英語は「Nov 2, 2026」） */
 export function formatMetDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+  return formatDate(d)
 }
 
-/** 「11月2日」の形（ともだち帳のカード用） */
+/** 「11月2日」の形（ともだち帳のカード用。英語は「Nov 2」） */
 export function formatMetDateShort(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return `${d.getMonth() + 1}月${d.getDate()}日`
+  return formatDateShort(d)
 }

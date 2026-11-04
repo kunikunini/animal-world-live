@@ -1,5 +1,7 @@
 import { ANIMALS } from '../data/animals'
 import { faceBackground, faceParts } from './faces'
+import { esc } from './html'
+import { t, type I18nKey } from './i18n'
 
 /**
  * 物語: 初回だけ 3 コマ。絵と一言だけで、説明文にしない。
@@ -77,10 +79,10 @@ function scene3(): string {
   </svg>`
 }
 
-const PANELS: Array<{ art: () => string; text: string }> = [
-  { art: scene1, text: 'ある日、きみのもとに ふしぎな双眼鏡がとどいた。' },
-  { art: scene2, text: 'のぞいてみると、どうぶつたちの世界につながっていた。' },
-  { art: scene3, text: 'ともだちになったら、ともだち帳に書いておこう。' },
+const PANELS: Array<{ art: () => string; text: I18nKey }> = [
+  { art: scene1, text: 'story1' },
+  { art: scene2, text: 'story2' },
+  { art: scene3, text: 'story3' },
 ]
 
 function readSeen(): boolean {
@@ -114,13 +116,13 @@ export function createStory(): StoryView {
   const render = () => {
     const panel = PANELS[index]
     art.innerHTML = panel.art()
-    text.textContent = panel.text
+    text.textContent = t(panel.text)
     dots.innerHTML = PANELS.map((_, i) => `<span class="story-dot${i === index ? ' is-on' : ''}"></span>`).join('')
     const last = index === PANELS.length - 1
     nextBtn.innerHTML = last
-      ? '<svg class="ico ico-fill"><use href="#i-bino" /></svg>のぞいてみる'
-      : 'つぎへ'
-    if (last) nextBtn.setAttribute('aria-label', 'アニマルワールドに入る')
+      ? `<svg class="ico ico-fill"><use href="#i-bino" /></svg>${esc(t('peek'))}`
+      : esc(t('next'))
+    if (last) nextBtn.setAttribute('aria-label', t('enterWorld'))
     else nextBtn.removeAttribute('aria-label')
   }
 

@@ -23,6 +23,7 @@ import { createHome } from './ui/home'
 import { createStory } from './ui/story'
 import { createIris } from './ui/iris'
 import { createSettings } from './ui/settings'
+import { animalName, applyStatic, onLangChange, t } from './ui/i18n'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
@@ -69,6 +70,7 @@ function createShell() {
   const syncBookNew = () => hud.setBookNew(store.unseen().length > 0)
   syncBookNew()
   store.onChange(syncBookNew)
+  onLangChange(syncBookNew)
   observe.onOpenChange((open) => {
     if (open) return
     if (book.isOpen()) book.restoreFocus()
@@ -177,7 +179,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
 
   // 出会い: そばにいるライオンの頭の上に「双眼鏡 + 名前」のピン。タップでその個体の観察モニター
   const labels = createWorldLabels()
-  for (const lion of lions) labels.add(lion.id, getAnimal(lion.id)?.name ?? lion.id)
+  const nameOf = (id: string) => {
+    const a = getAnimal(id)
+    return a ? animalName(a) : id
+  }
+  for (const lion of lions) labels.add(lion.id, nameOf(lion.id))
+  onLangChange(() => {
+    for (const lion of lions) labels.rename(lion.id, nameOf(lion.id))
+  })
   const encounterIcon = createEncounterIcon()
   let encounterId: string | null = null
   encounterIcon.onTap(() => {
@@ -350,7 +359,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
         const size = encounterIcon.size()
         const x = clamp(((sx + 1) / 2) * window.innerWidth, size.w / 2 + 12, window.innerWidth - size.w / 2 - 12)
         const y = clamp(((1 - sy) / 2) * window.innerHeight, safe.top + size.h, window.innerHeight - safe.bottom)
-        encounterIcon.set({ x, y }, getAnimal(nextId)?.name)
+        encounterIcon.set({ x, y }, nameOf(nextId))
         obstacles.push({ l: x - size.w / 2, r: x + size.w / 2, t: y - size.h, b: y })
       }
     } else {
@@ -371,7 +380,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
         .filter((l) => met.has(l.id))
         .map((l) => ({
           id: l.id,
-          name: getAnimal(l.id)?.name ?? l.id,
+          name: nameOf(l.id),
           x: l.position.x,
           z: l.position.z,
           active: nextId === l.id,
@@ -388,7 +397,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
         lion.notice(time)
         // 出会いの記録。地図に出るのはここから
         met.mark(lion.id)
-        hud.toast(`${getAnimal(lion.id)?.name ?? lion.id}のそばに来ました`, 'bino')
+        hud.toast(t('nearby', { name: nameOf(lion.id) }), 'bino')
       }
     }
 
@@ -496,6 +505,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
 }
 
 function main(): void {
+  applyStatic()
   const canvas = document.getElementById('world') as HTMLCanvasElement
   const shell = createShell()
   const webgl = hasWebGL(canvas)

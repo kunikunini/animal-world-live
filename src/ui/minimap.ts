@@ -1,4 +1,5 @@
 import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
+import { t } from './i18n'
 
 /**
  * 地図の描画。左上のミニマップと、広げた全体地図の両方で使う。
@@ -172,16 +173,20 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
   b.textBaseline = 'top'
   b.fillText('N', c, 8 * u)
 
-  // 広げた地図だけ、場所の名前を入れる。個体の名前はこれらを避けて置く
-  const staticBoxes: Box[] = []
-  if (options.labels) {
+  // 広げた地図だけ、場所の名前を入れる。個体の名前はこれらを避けて置く。
+  // 言語を切り替えられるので、地形と違って毎回描く（3 つだけなので軽い）
+  const drawPlaceLabels = (ctx: CanvasRenderingContext2D): Box[] => {
+    const boxes: Box[] = []
+    if (!options.labels) return boxes
     const pill = (text: string, left: number, top: number) => {
-      drawPill(b, text, left, top, u)
-      staticBoxes.push({ l: left, t: top, r: left + pillWidth(b, text, u), b: top + 16 * u })
+      drawPill(ctx, text, left, top, u)
+      boxes.push({ l: left, t: top, r: left + pillWidth(ctx, text, u), b: top + 16 * u })
     }
-    pill('水場', px(WATERHOLE.x) + (WATERHOLE.radius + 3) * k, py(WATERHOLE.z) - 8 * u)
-    pill('コピエ', px(KOPJE.x) - pillWidth(b, 'コピエ', u) / 2, py(KOPJE.z) - (KOPJE.radius + 6) * k - 8 * u)
-    pill('観察スポット', px(SPOT.x) + 8 * u, py(SPOT.z) - 8 * u)
+    pill(t('waterhole'), px(WATERHOLE.x) + (WATERHOLE.radius + 3) * k, py(WATERHOLE.z) - 8 * u)
+    const kopje = t('kopje')
+    pill(kopje, px(KOPJE.x) - pillWidth(ctx, kopje, u) / 2, py(KOPJE.z) - (KOPJE.radius + 6) * k - 8 * u)
+    pill(t('spot'), px(SPOT.x) + 8 * u, py(SPOT.z) - 8 * u)
+    return boxes
   }
 
   const draw = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
@@ -190,6 +195,7 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
     ctx.globalAlpha = options.baseAlpha ?? 1
     ctx.drawImage(base, 0, 0)
     ctx.globalAlpha = 1
+    const placeBoxes = drawPlaceLabels(ctx)
 
     // 出会った個体: 黄褐色の点に暗い縁。そばにいる個体は少し大きく。ともだちは緑の輪を足す
     for (const l of lions) {
@@ -234,7 +240,7 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
 
     if (options.labels) {
       // 名前のピル。点の右 → 左 → 下 → 上の順に、置けるところへ。重なる時は下へずらす
-      const placed: Box[] = [...staticBoxes]
+      const placed: Box[] = [...placeBoxes]
       const h = 16 * u
       const put = (text: string, x: number, y: number) => {
         const w = pillWidth(ctx, text, u)
@@ -255,8 +261,8 @@ export function createMapRenderer(size: number, options: { labels: boolean; base
         placed.push(box)
         drawPill(ctx, text, box.l, box.t, u)
       }
-      for (const l of lions) put(l.friend ? `${l.name}（ともだち）` : l.name, px(l.x), py(l.z))
-      put('あなた', px(player.x), py(player.z))
+      for (const l of lions) put(l.friend ? t('friendTag', { name: l.name }) : l.name, px(l.x), py(l.z))
+      put(t('you'), px(player.x), py(player.z))
     }
   }
 

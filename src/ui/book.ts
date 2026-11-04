@@ -4,6 +4,7 @@ import type { FriendBookStore } from '../data/friends'
 import { formatMetDateShort } from '../data/friends'
 import { faceMarkup } from './faces'
 import { esc } from './html'
+import { animalName, t } from './i18n'
 
 /** 帳をどこから開いたか。ホームからなら「のぞいてみる」、ワールドからなら「ワールドに戻る」 */
 export type BookOrigin = 'home' | 'world'
@@ -56,14 +57,15 @@ export function createBookView(store: FriendBookStore): BookView {
         const animal = getAnimal(e.animalId)
         if (!animal) return ''
         const fresh = freshIds.includes(animal.id)
-        const label = fresh ? `${animal.name}（あたらしいともだち）に会いに行く` : `${animal.name}に会いに行く`
+        const name = animalName(animal)
+        const label = fresh ? t('visitNew', { name }) : t('visit', { name })
         return `
           <li>
             <button class="fcard${fresh ? ' is-new' : ''}" type="button" data-visit="${esc(animal.id)}" aria-label="${esc(label)}">
               <span class="fface">${faceMarkup(animal)}<span class="badge-see" aria-hidden="true"><svg><use href="#i-bino" /></svg></span></span>
-              ${fresh ? '<span class="tag-new" aria-hidden="true"><svg><use href="#i-sparkle" /></svg>あたらしい</span>' : ''}
-              <span class="fname">${esc(animal.name)}</span>
-              <span class="fsub">${esc(formatMetDateShort(e.firstMetAt))}に出会った</span>
+              ${fresh ? `<span class="tag-new" aria-hidden="true"><svg><use href="#i-sparkle" /></svg>${esc(t('tagNew'))}</span>` : ''}
+              <span class="fname">${esc(name)}</span>
+              <span class="fsub">${esc(t('metOn', { date: formatMetDateShort(e.firstMetAt) }))}</span>
             </button>
           </li>`
       })
@@ -91,7 +93,7 @@ export function createBookView(store: FriendBookStore): BookView {
     open = next
     root.hidden = !open
     if (open) {
-      worldLabel.textContent = origin === 'home' ? 'のぞいてみる' : 'ワールドに戻る'
+      worldLabel.textContent = origin === 'home' ? t('peek') : t('toWorld')
       worldBtn.hidden = origin === 'home' && !canEnterWorld
       freshIds = store.unseen().map((e) => e.animalId)
       lastVisitId = ''
