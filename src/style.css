@@ -317,14 +317,14 @@ button {
   /* スマホ横・PC（16:9） */
   --kv: url('/home/kv-phone-landscape.webp');
   --kv-ar: 1.7768;
-  /* 絵から切り抜いた双眼鏡（絵の幅・高さに対する割合）と、その中のレンズ（双眼鏡の幅・高さに対する割合） */
+  /* 絵から双眼鏡の縁に沿って切り抜いた双眼鏡（絵の幅・高さに対する割合）と、その中のレンズ（双眼鏡の幅・高さに対する割合）。
+     双眼鏡にかかる手・帽子・袖は別に切り抜き、動かさずに上へ重ねる（--front） */
   --bino: url('/home/kv-phone-landscape-bino.webp');
-  --bino-x: 30.38%; --bino-y: 41.45%; --bino-w: 39.47%; --bino-h: 39.53%;
-  --lens-l-x: 6.21%; --lens-l-y: 21.51%; --lens-l-w: 39.09%; --lens-l-h: 69.09%;
-  --lens-r-x: 55.00%; --lens-r-y: 21.77%; --lens-r-w: 38.64%; --lens-r-h: 68.55%;
-  /* レンズの前に帽子がかかる絵では、その部分を切り欠く（白＝見せる） */
-  --lens-l-mask: none;
-  --lens-r-mask: none;
+  --bino-x: 30.44%; --bino-y: 39.96%; --bino-w: 39.41%; --bino-h: 41.02%;
+  --lens-l-x: 6.07%; --lens-l-y: 24.35%; --lens-l-w: 39.15%; --lens-l-h: 66.58%;
+  --lens-r-x: 54.93%; --lens-r-y: 24.61%; --lens-r-w: 38.69%; --lens-r-h: 66.06%;
+  --front: url('/home/kv-phone-landscape-front.webp');
+  --front-x: 34.69%; --front-y: 63.44%; --front-w: 35.11%; --front-h: 19.13%;
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -343,10 +343,11 @@ button {
     --kv: url('/home/kv-tablet-landscape.webp');
     --kv-ar: 1.3333;
     --bino: url('/home/kv-tablet-landscape-bino.webp');
-    --bino-x: 29.21%; --bino-y: 44.48%; --bino-w: 42.06%; --bino-h: 33.06%;
-    --lens-l-x: 4.93%; --lens-l-y: 24.51%; --lens-l-w: 40.72%; --lens-l-h: 69.08%;
-    --lens-r-x: 54.02%; --lens-r-y: 24.23%; --lens-r-w: 41.05%; --lens-r-h: 69.64%;
-    --lens-r-mask: url('/home/kv-tablet-landscape-lens-r-mask.png');
+    --bino-x: 29.35%; --bino-y: 43.09%; --bino-w: 41.85%; --bino-h: 34.53%;
+    --lens-l-x: 4.62%; --lens-l-y: 27.47%; --lens-l-w: 40.92%; --lens-l-h: 66.13%;
+    --lens-r-x: 53.96%; --lens-r-y: 27.20%; --lens-r-w: 41.25%; --lens-r-h: 66.67%;
+    --front: url('/home/kv-tablet-landscape-front.webp');
+    --front-x: 28.25%; --front-y: 61.51%; --front-w: 43.92%; --front-h: 17.31%;
   }
 }
 
@@ -356,11 +357,11 @@ button {
     --kv: url('/home/kv-tablet-portrait.webp');
     --kv-ar: 0.75;
     --bino: url('/home/kv-tablet-portrait-bino.webp');
-    --bino-x: 25.60%; --bino-y: 47.44%; --bino-w: 48.25%; --bino-h: 22.44%;
-    --lens-l-x: 6.11%; --lens-l-y: 24.00%; --lens-l-w: 41.22%; --lens-l-h: 66.46%;
-    --lens-r-x: 54.77%; --lens-r-y: 23.69%; --lens-r-w: 41.22%; --lens-r-h: 66.77%;
-    --lens-l-mask: url('/home/kv-tablet-portrait-lens-l-mask.png');
-    --lens-r-mask: url('/home/kv-tablet-portrait-lens-r-mask.png');
+    --bino-x: 25.87%; --bino-y: 46.34%; --bino-w: 48.53%; --bino-h: 23.69%;
+    --lens-l-x: 5.50%; --lens-l-y: 27.41%; --lens-l-w: 40.99%; --lens-l-h: 62.97%;
+    --lens-r-x: 53.89%; --lens-r-y: 27.11%; --lens-r-w: 40.99%; --lens-r-h: 63.27%;
+    --front: url('/home/kv-tablet-portrait-front.webp');
+    --front-x: 24.59%; --front-y: 57.11%; --front-w: 44.75%; --front-h: 13.74%;
   }
 }
 
@@ -370,11 +371,11 @@ button {
     --kv: url('/home/kv-phone-portrait.webp');
     --kv-ar: 0.5628;
     --bino: url('/home/kv-phone-portrait-bino.webp');
-    --bino-x: 26.04%; --bino-y: 44.62%; --bino-w: 47.93%; --bino-h: 18.18%;
-    --lens-l-x: 6.21%; --lens-l-y: 25.33%; --lens-l-w: 41.91%; --lens-l-h: 62.17%;
-    --lens-r-x: 53.22%; --lens-r-y: 25.66%; --lens-r-w: 41.24%; --lens-r-h: 61.18%;
-    --lens-l-mask: none;
-    --lens-r-mask: none;
+    --bino-x: 26.35%; --bino-y: 43.72%; --bino-w: 48.88%; --bino-h: 18.84%;
+    --lens-l-x: 5.43%; --lens-l-y: 29.21%; --lens-l-w: 41.09%; --lens-l-h: 60.00%;
+    --lens-r-x: 51.52%; --lens-r-y: 29.52%; --lens-r-w: 40.43%; --lens-r-h: 59.05%;
+    --front: url('/home/kv-phone-portrait-front.webp');
+    --front-x: 24.76%; --front-y: 48.15%; --front-w: 51.12%; --front-h: 15.37%;
   }
 }
 
@@ -470,8 +471,6 @@ button {
   top: var(--lens-l-y);
   width: var(--lens-l-w);
   height: var(--lens-l-h);
-  -webkit-mask: var(--lens-l-mask) center / 100% 100% no-repeat;
-  mask: var(--lens-l-mask) center / 100% 100% no-repeat;
 }
 
 .home-lens.r {
@@ -479,8 +478,17 @@ button {
   top: var(--lens-r-y);
   width: var(--lens-r-w);
   height: var(--lens-r-h);
-  -webkit-mask: var(--lens-r-mask) center / 100% 100% no-repeat;
-  mask: var(--lens-r-mask) center / 100% 100% no-repeat;
+}
+
+/* 双眼鏡にかかる手・帽子・袖。動かさずに双眼鏡とレンズの絵の上へ重ねる（タップは下のボタンへ通す） */
+.home-front {
+  position: absolute;
+  left: var(--front-x);
+  top: var(--front-y);
+  width: var(--front-w);
+  height: var(--front-h);
+  background: var(--front) center / 100% 100% no-repeat;
+  pointer-events: none;
 }
 
 /* 絵の上に重ねる 2 層: 元の絵と同じふちの影（上が太く、横は細く、下はほとんどない）と、左上のうすい光。
