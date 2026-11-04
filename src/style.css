@@ -2031,12 +2031,13 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   z-index: 12;
 }
 
+/* 縦長 3:4 の大陸の地図。凡例までシートに収まる高さにする */
 .map-canvas {
   display: block;
-  width: min(100%, 62vh);
-  aspect-ratio: 1;
+  width: min(100%, calc((100vh - 300px) * 0.75));
+  aspect-ratio: 3 / 4;
   margin: 4px auto 12px;
-  border-radius: 50%;
+  border-radius: 18px;
   box-shadow: 0 0 0 4px #fff, var(--shadow-card);
   touch-action: none;
   cursor: pointer;
@@ -2079,7 +2080,7 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
 @media (max-height: 520px) and (orientation: landscape) {
   /* 横向き: 左に地図、右に凡例を縦に */
   .map .sheet-body { display: grid; grid-template-columns: auto 1fr; column-gap: 24px; align-items: start; overflow: hidden; }
-  .map-canvas { width: calc(100vh - 110px); height: calc(100vh - 110px); margin: 0; }
+  .map-canvas { width: calc((100vh - 110px) * 0.75); height: calc(100vh - 110px); margin: 0; }
   .map-legend { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; gap: 8px; }
   .map-legend li { white-space: nowrap; }
 }

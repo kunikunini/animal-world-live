@@ -1,4 +1,4 @@
-import { bindMapPick, createMapRenderer } from './minimap'
+import { CONTINENT_VIEW, bindMapPick, createMapRenderer } from './minimap'
 import type { MapPlayer, MinimapMarker } from './minimap'
 import { setViewOpen } from './transition'
 
@@ -20,11 +20,10 @@ export function createMapView(): MapView {
   const root = document.getElementById('map') as HTMLElement
   const canvas = document.getElementById('map-canvas') as HTMLCanvasElement
   const closeBtn = document.getElementById('map-close') as HTMLButtonElement
-  const renderer = createMapRenderer(800, { labels: true })
-  // 広げた地図は 4 つのワールド全体（西のジャングルから東の山まで、北の世界から南半球まで）
-  renderer.setView(-130, 0, 420)
-  canvas.width = renderer.size
-  canvas.height = renderer.size
+  // 広げた地図は海に浮かぶ大陸の全体（縦長 3:4。西のジャングルから東の海岸まで、北の世界から南半球まで）
+  const renderer = createMapRenderer({ width: 750, height: 1000, labels: true, box: CONTINENT_VIEW })
+  canvas.width = renderer.width
+  canvas.height = renderer.height
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
 
   let open = false

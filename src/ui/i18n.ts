@@ -39,7 +39,7 @@ const DICT = {
   expandMap: { ja: '地図を広げる', en: 'Open the map' },
   map: { ja: '地図', en: 'Map' },
   close: { ja: '閉じる', en: 'Close' },
-  mapCanvas: { ja: 'サバンナ全体の地図。北が上。タップした場所へ歩く', en: 'Map of the whole savanna. North is up. Tap a place to walk there' },
+  mapCanvas: { ja: '4 つのワールドがある大陸の地図。北が上。タップした場所へ歩く', en: 'Map of the continent and its four worlds. North is up. Tap a place to walk there' },
   legend: { ja: '凡例', en: 'Legend' },
   you: { ja: 'あなた', en: 'You' },
   metAnimals: { ja: '出会った動物', en: 'Animals you met' },
