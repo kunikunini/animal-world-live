@@ -7,7 +7,7 @@
       "poster": "tapir-capybara_20261104_poster.jpg",
       "duration": "3:05",
       "recordedOn": "2026-11-04",
-      "onR2": false,
+      "onR2": true,
       "title": { "ja": "バクとカピバラ", "en": "A tapir and a capybara" },
       "subjects": [
         { "species": ["アメリカバク"] },
@@ -20,7 +20,7 @@
       "poster": "hyena_20261104_poster.jpg",
       "duration": "3:03",
       "recordedOn": "2026-11-04",
-      "onR2": false,
+      "onR2": true,
       "title": { "ja": "ブチハイエナ", "en": "Spotted hyena" },
       "subjects": [{ "species": ["ブチハイエナ"] }]
     },
@@ -30,7 +30,7 @@
       "poster": "pelican-kangaroo-mara_20261104_poster.jpg",
       "duration": "3:04",
       "recordedOn": "2026-11-04",
-      "onR2": false,
+      "onR2": true,
       "title": { "ja": "ペリカンとカンガルーとマーラ", "en": "Pelicans, kangaroos and a mara" },
       "subjects": [
         { "species": ["モモイロペリカン"], "label": { "ja": "ペリカン", "en": "Pelicans" } },
@@ -44,7 +44,7 @@
       "poster": "pony_20261104_poster.jpg",
       "duration": "2:38",
       "recordedOn": "2026-11-04",
-      "onR2": false,
+      "onR2": true,
       "title": { "ja": "ポニー", "en": "Ponies" },
       "subjects": [{ "species": ["ポニー"] }]
     },
@@ -54,7 +54,7 @@
       "poster": "squirrel-monkey_20261104_poster.jpg",
       "duration": "2:41",
       "recordedOn": "2026-11-04",
-      "onR2": false,
+      "onR2": true,
       "title": { "ja": "リスザルのごはん", "en": "A squirrel monkey's meal" },
       "subjects": [{ "species": ["コモンリスザル"] }]
     }
