@@ -5,6 +5,8 @@ export interface SceneSetup {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   sun: THREE.DirectionalLight
+  /** 空と地面の照り返し。ワールドごとの明るさの切り替えに使う */
+  hemi: THREE.HemisphereLight
   sky: THREE.Mesh
   setDpr: (dpr: number) => void
   resize: () => void
@@ -141,5 +143,5 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
   resize()
   window.addEventListener('resize', resize)
 
-  return { renderer, scene, camera, sun, sky, setDpr, resize }
+  return { renderer, scene, camera, sun, hemi, sky, setDpr, resize }
 }

@@ -135,7 +135,7 @@ interface WorldHandle {
 function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false): WorldHandle {
   const { hud, observe, book, store, met, catalog, scope } = shell
   const mobile = isMobile()
-  const { renderer, scene, camera, sun, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
+  const { renderer, scene, camera, sun, hemi, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
   if (mobile) sun.shadow.mapSize.set(1024, 1024)
 
   const terrain = createTerrain()
@@ -350,8 +350,21 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     jungle: new THREE.Color('#cfe2d4'),
     south: new THREE.Color('#efdcc9'),
   }
+  // 明るさもワールドごと。サバンナだけ明るくし、照り返しを紫から乾いた草の色へ（影が濁らない）。
+  // ほかのワールドはいままでの値のまま
+  const baseExposure = renderer.toneMappingExposure
+  const LIGHT: Record<RegionKey, { exposure: number; sky: THREE.Color; ground: THREE.Color; intensity: number }> = {
+    africa: { exposure: 1.0, sky: new THREE.Color('#d0e4ff'), ground: new THREE.Color('#c4a26a'), intensity: 0.78 },
+    north: { exposure: baseExposure, sky: hemi.color.clone(), ground: hemi.groundColor.clone(), intensity: hemi.intensity },
+    jungle: { exposure: baseExposure, sky: hemi.color.clone(), ground: hemi.groundColor.clone(), intensity: hemi.intensity },
+    south: { exposure: baseExposure, sky: hemi.color.clone(), ground: hemi.groundColor.clone(), intensity: hemi.intensity },
+  }
+  const lightTarget = { exposure: baseExposure, sky: new THREE.Color(), ground: new THREE.Color(), intensity: hemi.intensity }
   const weights: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
   const fogTarget = new THREE.Color()
+  // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
+  let lightReady = false
+  let lightSnap = false
   const regionName = (key: RegionKey) => {
     if (key === 'africa') return t('catSavanna')
     const w = getWorld(key)
@@ -410,16 +423,38 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       arrived = false
       hud.toast(t('enterRegion', { world: regionName(regionKey) }), 'bino')
     }
-    if (frames % 8 === 0) {
+    if (frames % 8 === 0 || !lightReady) {
+      if (!lightReady) lightSnap = true
+      lightReady = true
       biomeAt(px, pz, weights)
       fogTarget.setRGB(0, 0, 0)
+      lightTarget.exposure = 0
+      lightTarget.intensity = 0
+      lightTarget.sky.setRGB(0, 0, 0)
+      lightTarget.ground.setRGB(0, 0, 0)
       for (const k of ['africa', 'north', 'jungle', 'south'] as const) {
-        fogTarget.r += FOG_TINT[k].r * weights[k]
-        fogTarget.g += FOG_TINT[k].g * weights[k]
-        fogTarget.b += FOG_TINT[k].b * weights[k]
+        const wk = weights[k]
+        fogTarget.r += FOG_TINT[k].r * wk
+        fogTarget.g += FOG_TINT[k].g * wk
+        fogTarget.b += FOG_TINT[k].b * wk
+        const L = LIGHT[k]
+        lightTarget.exposure += L.exposure * wk
+        lightTarget.intensity += L.intensity * wk
+        lightTarget.sky.r += L.sky.r * wk
+        lightTarget.sky.g += L.sky.g * wk
+        lightTarget.sky.b += L.sky.b * wk
+        lightTarget.ground.r += L.ground.r * wk
+        lightTarget.ground.g += L.ground.g * wk
+        lightTarget.ground.b += L.ground.b * wk
       }
     }
     fogColor.lerp(fogTarget, Math.min(1, dt * 2))
+    const lk = lightSnap ? 1 : Math.min(1, dt * 2)
+    lightSnap = false
+    renderer.toneMappingExposure += (lightTarget.exposure - renderer.toneMappingExposure) * lk
+    hemi.intensity += (lightTarget.intensity - hemi.intensity) * lk
+    hemi.color.lerp(lightTarget.sky, lk)
+    hemi.groundColor.lerp(lightTarget.ground, lk)
     for (const w of worldSpots) if (w !== here) w.spot.update(time, 999)
 
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
-import { WATER_LEVEL, terrainHeight } from './terrain'
+import { WATER_LEVEL, savannaTrail, terrainHeight } from './terrain'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, distToPassAxis } from './regions'
 import { toonMaterial } from '../render/toon'
 
@@ -49,8 +49,11 @@ function distToSegment(x: number, z: number, ax: number, az: number, bx: number,
   return Math.hypot(x - (ax + vx * t), z - (az + vz * t))
 }
 
-/** アカシア: 細い幹と平たい傘状の冠。InstancedMesh 2つで描く */
-function createAcacias(rand: () => number, group: THREE.Group, colliders: Collider[]): void {
+/**
+ * アカシア: 細い幹と、平たく横に広がる傘の冠。InstancedMesh 2つで描く。
+ * 冠は真ん中の 5 つ（並びを変えないよう、乱数の数は前と同じ）と、縁に足す 4 つ（別の乱数）で、上が平らな傘にする
+ */
+function createAcacias(rand: () => number, rand2: () => number, group: THREE.Group, colliders: Collider[]): void {
   const trees = [...ACACIAS]
   // 外側にもまばらに
   for (let i = 0; i < 18; i++) {
@@ -73,15 +76,18 @@ function createAcacias(rand: () => number, group: THREE.Group, colliders: Collid
   trunks.castShadow = true
   trunks.receiveShadow = true
 
-  const BLOBS = 5
-  const blobGeo = new THREE.SphereGeometry(1, 7, 5)
+  const CORE = 5
+  const RIM = 4
+  const BLOBS = CORE + RIM
+  const blobGeo = new THREE.SphereGeometry(1, 8, 5)
   const blobMat = toonMaterial()
   const blobs = new THREE.InstancedMesh(blobGeo, blobMat, trees.length * BLOBS)
   blobs.castShadow = true
   blobs.receiveShadow = true
 
-  const canopyA = new THREE.Color('#5f8a2e')
-  const canopyB = new THREE.Color('#86a33a')
+  const canopyA = new THREE.Color('#6a9234')
+  const canopyB = new THREE.Color('#93ad48')
+  const canopyDry = new THREE.Color('#a9a24e')
 
   trees.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
@@ -99,20 +105,38 @@ function createAcacias(rand: () => number, group: THREE.Group, colliders: Collid
 
     // 幹の先端（傾きを含む）
     const top = new THREE.Vector3(0, h, 0).applyQuaternion(_q).add(_p)
-    const spread = 3.2 * t.scale
-    for (let b = 0; b < BLOBS; b++) {
-      const a = (b / BLOBS) * Math.PI * 2 + rand() * 0.8
+    const spread = 3.6 * t.scale
+    // 木ごとに少しだけ乾いた色の木もある
+    const dryness = rand2() * 0.45
+    for (let b = 0; b < CORE; b++) {
+      const a = (b / CORE) * Math.PI * 2 + rand() * 0.8
       const r = b === 0 ? 0 : spread * (0.45 + rand() * 0.5)
-      const rx = 2.2 * t.scale * (0.8 + rand() * 0.5)
-      const ry = 0.7 * t.scale * (0.8 + rand() * 0.4)
-      _p.set(top.x + Math.cos(a) * r, top.y + (rand() - 0.3) * 0.5 * t.scale, top.z + Math.sin(a) * r)
+      const rx = 2.4 * t.scale * (0.8 + rand() * 0.5)
+      const ry = 0.5 * t.scale * (0.8 + rand() * 0.4)
+      // 上が平らにそろう傘（高さのばらつきは小さく）
+      _p.set(top.x + Math.cos(a) * r, top.y + (rand() - 0.3) * 0.22 * t.scale, top.z + Math.sin(a) * r)
       _e.set(0, rand() * Math.PI, 0)
       _q.setFromEuler(_e)
       _s.set(rx, ry, rx * (0.8 + rand() * 0.4))
       _m.compose(_p, _q, _s)
       const idx = i * BLOBS + b
       blobs.setMatrixAt(idx, _m)
-      _c.copy(canopyA).lerp(canopyB, rand())
+      _c.copy(canopyA).lerp(canopyB, rand()).lerp(canopyDry, dryness)
+      blobs.setColorAt(idx, _c)
+    }
+    // 縁: 外へ張り出す薄い葉の層。傘の端は少し垂れる
+    for (let b = 0; b < RIM; b++) {
+      const a = (b / RIM) * Math.PI * 2 + rand2() * 1.2
+      const r = spread * (1.0 + rand2() * 0.35)
+      const rx = 1.7 * t.scale * (0.8 + rand2() * 0.4)
+      _p.set(top.x + Math.cos(a) * r, top.y - (0.12 + rand2() * 0.2) * t.scale, top.z + Math.sin(a) * r)
+      _e.set(0, rand2() * Math.PI, 0)
+      _q.setFromEuler(_e)
+      _s.set(rx, 0.36 * t.scale, rx * 0.8)
+      _m.compose(_p, _q, _s)
+      const idx = i * BLOBS + CORE + b
+      blobs.setMatrixAt(idx, _m)
+      _c.copy(canopyA).lerp(canopyB, rand2() * 0.6).lerp(canopyDry, dryness)
       blobs.setColorAt(idx, _c)
     }
   })
@@ -454,6 +478,8 @@ function grassDensity(x: number, z: number): number {
   d += 0.45 * (1 - smoothstep(1, 14, foot))
   const far = Math.hypot(x, z)
   d *= 1 - smoothstep(95, 145, far) * 0.6
+  // 踏み分け道には草が生えない
+  d *= 1 - savannaTrail(x, z) * 0.9
   return Math.min(1, d)
 }
 
@@ -548,10 +574,10 @@ function createGrass(
   grass.frustumCulled = false
   grass.layers.set(NO_REFLECT_LAYER)
 
-  const gA = new THREE.Color('#ecc85a')
-  const gB = new THREE.Color('#d2a336')
-  const gC = new THREE.Color('#a3bf44')
-  const gD = new THREE.Color('#e9c57c')
+  const gA = new THREE.Color('#f2d26c')
+  const gB = new THREE.Color('#d8ab45')
+  const gC = new THREE.Color('#b2c65a')
+  const gD = new THREE.Color('#eed08a')
 
   const R = WALK_RADIUS + 30
   let placed = 0
@@ -590,6 +616,147 @@ function createGrass(
   return { mesh: grass, uniforms }
 }
 
+/** サバンナで、茂みやアリ塚を置いてはいけない所（道・峠・水場・コピエ・ライオン・スポット・スタート地点） */
+function savannaKeepClear(x: number, z: number, margin: number): boolean {
+  if (Math.hypot(x, z) > 112) return true
+  if (distToWater(x, z) < WATERHOLE.radius + 3 + margin) return true
+  if (distToKopje(x, z) < KOPJE.radius * 0.95 + margin) return true
+  if (Math.hypot(x - SPAWN.x, z - SPAWN.z) < 8 + margin) return true
+  if (Math.hypot(x - SPOT.x, z - SPOT.z) < 6 + margin) return true
+  if (LIONS.some((l) => Math.hypot(x - l.x, z - l.z) < 4 + margin)) return true
+  // スタート地点からコピエの登り口への道
+  if (distToSegment(x, z, SPAWN.x, SPAWN.z, KOPJE.x, KOPJE.z + KOPJE.radius) < 5 + margin) return true
+  if (savannaTrail(x, z) > 0.2) return true
+  if (Math.hypot(x, z) > 95 && distToPassAxis(x, z) < PASS_HALF_WIDTH + 3 + margin) return true
+  return false
+}
+
+/**
+ * 低い茂み（サバンナの灌木）。丸い葉の塊を 2〜3 つ寄せて 1 株にする。歩いて通り抜けられる（当たり判定なし）。
+ * 岩のそば・コピエの麓・水場の外まわりに集まり、平原にはまばら。小さいので影は受けない（縞が出るため）
+ */
+function createBushes(rand: () => number, group: THREE.Group, count: number): void {
+  const geo = new THREE.IcosahedronGeometry(1, 1)
+  const mat = toonMaterial()
+  const PER = 3
+  const mesh = new THREE.InstancedMesh(geo, mat, count * PER)
+  mesh.castShadow = true
+  mesh.receiveShadow = false
+  const olive = new THREE.Color('#7f9840')
+  const deep = new THREE.Color('#62803a')
+  const dry = new THREE.Color('#ab9f52')
+  // 集まる場所の中心
+  const hubs: Array<{ x: number; z: number; r: number }> = [
+    { x: KOPJE.x, z: KOPJE.z, r: KOPJE.radius + 10 },
+    { x: WATERHOLE.x, z: WATERHOLE.z, r: WATERHOLE.radius + 12 },
+  ]
+  let placed = 0
+  let guard = 0
+  while (placed < count && guard++ < count * 30) {
+    let x: number
+    let z: number
+    const pick = rand()
+    if (pick < 0.45) {
+      const hub = hubs[pick < 0.3 ? 0 : 1]
+      const a = rand() * Math.PI * 2
+      const r = hub.r + (rand() - 0.3) * 14
+      x = hub.x + Math.cos(a) * r
+      z = hub.z + Math.sin(a) * r
+    } else {
+      const a = rand() * Math.PI * 2
+      const r = 12 + Math.sqrt(rand()) * 98
+      x = Math.cos(a) * r
+      z = Math.sin(a) * r
+    }
+    if (savannaKeepClear(x, z, 0)) continue
+    const size = 0.55 + rand() * 0.75
+    const tone = rand()
+    for (let k = 0; k < PER; k++) {
+      const a = rand() * Math.PI * 2
+      const off = k === 0 ? 0 : size * (0.6 + rand() * 0.5)
+      const bx = x + Math.cos(a) * off
+      const bz = z + Math.sin(a) * off
+      const s = size * (k === 0 ? 1 : 0.6 + rand() * 0.3)
+      _p.set(bx, terrainHeight(bx, bz) + s * 0.35, bz)
+      _e.set(0, rand() * Math.PI, 0)
+      _q.setFromEuler(_e)
+      _s.set(s * 1.15, s * 0.72, s)
+      _m.compose(_p, _q, _s)
+      mesh.setMatrixAt(placed * PER + k, _m)
+      _c.copy(olive).lerp(deep, tone * 0.7).lerp(dry, Math.max(0, tone - 0.65) * 1.6 + rand() * 0.1)
+      mesh.setColorAt(placed * PER + k, _c)
+    }
+    placed++
+  }
+  mesh.count = placed * PER
+  mesh.instanceMatrix.needsUpdate = true
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  group.add(mesh)
+}
+
+/**
+ * アリ塚。赤土の、先の細い塔が平原にぽつぽつ立つ。道とスタートから離して置き、小さな当たり判定を付ける
+ */
+function createTermiteMounds(rand: () => number, group: THREE.Group, colliders: Collider[], count: number): void {
+  const geo = new THREE.CylinderGeometry(0.16, 1, 1, 7, 3)
+  geo.translate(0, 0.5, 0)
+  // 側面を少しでこぼこに
+  const pos = geo.attributes.position as THREE.BufferAttribute
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i)
+    if (y <= 0.01 || y >= 0.99) continue
+    const k = 1 + Math.sin(i * 2.7) * 0.08
+    pos.setX(i, pos.getX(i) * k)
+    pos.setZ(i, pos.getZ(i) * k)
+  }
+  geo.computeVertexNormals()
+  const mat = toonMaterial()
+  const mesh = new THREE.InstancedMesh(geo, mat, count * 2)
+  mesh.castShadow = true
+  mesh.receiveShadow = false
+  const red = new THREE.Color('#c0794a')
+  const ochre = new THREE.Color('#d39a64')
+  let placed = 0
+  let n = 0
+  let guard = 0
+  while (placed < count && guard++ < count * 60) {
+    const a = rand() * Math.PI * 2
+    const r = 22 + rand() * 86
+    const x = Math.cos(a) * r
+    const z = Math.sin(a) * r
+    if (savannaKeepClear(x, z, 7)) continue
+    if (colliders.some((c) => Math.hypot(x - c.x, z - c.z) < c.r + 6)) continue
+    const h = 1.6 + rand() * 1.8
+    const w = 0.7 + rand() * 0.35
+    const y = terrainHeight(x, z) - 0.15
+    _c.copy(red).lerp(ochre, rand())
+    // 本体と、脇の小さな塔
+    _p.set(x, y, z)
+    _e.set((rand() - 0.5) * 0.08, rand() * Math.PI, (rand() - 0.5) * 0.08)
+    _q.setFromEuler(_e)
+    _s.set(w, h, w * 0.9)
+    _m.compose(_p, _q, _s)
+    mesh.setMatrixAt(n, _m)
+    mesh.setColorAt(n, _c)
+    n++
+    const sa = rand() * Math.PI * 2
+    const sx = x + Math.cos(sa) * w * 0.7
+    const sz = z + Math.sin(sa) * w * 0.7
+    _p.set(sx, terrainHeight(sx, sz) - 0.1, sz)
+    _s.set(w * 0.55, h * (0.45 + rand() * 0.2), w * 0.5)
+    _m.compose(_p, _q, _s)
+    mesh.setMatrixAt(n, _m)
+    mesh.setColorAt(n, _c)
+    n++
+    colliders.push({ x, z, r: w * 0.85 })
+    placed++
+  }
+  mesh.count = n
+  mesh.instanceMatrix.needsUpdate = true
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  group.add(mesh)
+}
+
 export interface PropsOptions {
   /** 低性能端末では草の房を減らし、水の映り込みを描かない */
   mobile: boolean
@@ -602,12 +769,16 @@ export function createProps(options: PropsOptions): Props {
   const group = new THREE.Group()
   group.name = 'props'
 
+  // 茂み・アリ塚・アカシアの縁の葉は別の乱数で（いままでの木・岩・草の並びを変えない）
+  const rand2 = mulberry32(WORLD_SEED + 707)
   const colliders: Collider[] = []
-  createAcacias(rand, group, colliders)
+  createAcacias(rand, rand2, group, colliders)
   createRocks(rand, group, colliders)
   const water = createWater(group, options)
   createMountains(group)
   const grass = createGrass(rand, group, options.mobile ? 6000 : 16000, options.mobile ? 110 : 175)
+  createBushes(rand2, group, options.mobile ? 110 : 150)
+  createTermiteMounds(rand2, group, colliders, 7)
 
   return {
     group,

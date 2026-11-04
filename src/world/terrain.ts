@@ -111,28 +111,64 @@ export function terrainSlope(x: number, z: number, e = 0.75): number {
   return n.y
 }
 
-// 彩度高めの金の草原。影が乗っても色が残る明るさにする
-const colGrass = new THREE.Color('#cfa42f')
-const colGrassDry = new THREE.Color('#e0bf5c')
-const colGrassGreen = new THREE.Color('#9db840')
-const colEarth = new THREE.Color('#b8834a')
-const colRock = new THREE.Color('#a8876a')
+// 乾季のサバンナ。明るい麦わら色を基本に、淡く枯れた帯・こがね色の帯・低い所の若草色の差を広く取る。
+// 草のはげた赤土のまだらと、動物が通ってできた細い踏み分け道（白っぽい土）も入れる
+const colGrass = new THREE.Color('#d9ac42')
+const colGrassDry = new THREE.Color('#e8c978')
+const colGrassTawny = new THREE.Color('#c8923a')
+const colGrassGreen = new THREE.Color('#aec25a')
+const colEarth = new THREE.Color('#c58b57')
+const colBare = new THREE.Color('#cf9a68')
+const colTrail = new THREE.Color('#d8b886')
+const colRock = new THREE.Color('#b39176')
+const trailNoise = new Simplex2D(WORLD_SEED + 57)
+const bareNoise = new Simplex2D(WORLD_SEED + 63)
+
+/**
+ * 踏み分け道の濃さ（0..1）。細いノイズの尾根で、幅 2〜4m ほどの道が平原をうねる。
+ * 草むらもここを避ける（props の草の濃さに使う）。コピエと水場の中、峠の先は 0
+ */
+export function savannaTrail(x: number, z: number): number {
+  const d = Math.hypot(x, z)
+  if (d > 150) return 0
+  const n = Math.abs(trailNoise.noise(x * 0.016 + 4, z * 0.016 - 9))
+  const n2 = Math.abs(trailNoise.noise(x * 0.011 - 30, z * 0.011 + 12))
+  let t = Math.max(1 - smoothstep(0.008, 0.03, n), (1 - smoothstep(0.006, 0.024, n2)) * 0.7)
+  t *= 1 - smoothstep(120, 150, d)
+  const k = Math.hypot(x - KOPJE.x, z - KOPJE.z) / KOPJE.radius
+  t *= smoothstep(1.0, 1.25, k)
+  const dw = Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) / WATERHOLE.radius
+  t *= smoothstep(1.1, 1.6, dw)
+  return t
+}
 // 地層の帯。赤い層・黄土の層・暗い層が重なる
 const colStrata = [new THREE.Color('#c46c4a'), new THREE.Color('#e2aa6e'), new THREE.Color('#8f5f48')]
 
 function savannaColor(x: number, z: number, h: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.03 + 11, z * 0.03 - 5) * 0.5 + 0.5
-  out.copy(colGrass).lerp(colGrassDry, n)
+  out.copy(colGrass).lerp(colGrassDry, n * 0.7)
+  // 細かいむら（数 m）。一面ののっぺりした色に見せない
+  const fine = detail.noise(x * 0.11 - 2, z * 0.11 + 6)
+  out.lerp(fine > 0 ? colGrassDry : colGrassTawny, Math.abs(fine) * 0.35)
 
-  // 大きなまだら。草むらと同じノイズで、乾いた金色の帯とやや緑の帯を作る
+  // 大きなまだら。草むらと同じノイズで、淡く枯れた帯・こがね色の帯・若草色の帯を作る
   const big = patch.noise(x * 0.02 + 3, z * 0.02 - 7) * 0.5 + 0.5
-  out.lerp(colGrassDry, Math.max(0, big - 0.6) * 1.0)
-  out.lerp(colGrassGreen, Math.max(0, 0.42 - big) * 1.1)
+  out.lerp(colGrassDry, Math.max(0, big - 0.58) * 1.2)
+  out.lerp(colGrassTawny, Math.max(0, 0.5 - Math.abs(big - 0.46) * 6) * 0.45)
+  out.lerp(colGrassGreen, Math.max(0, 0.4 - big) * 1.7)
 
-  // 低い場所はやや緑、乾いた高い場所は淡い黄土
+  // 低い場所は若草色、乾いた高い場所は淡い麦わら色
   const rel = (h - 0) / 4
-  if (rel < 0) out.lerp(colGrassGreen, Math.min(1, -rel * 0.5))
-  else out.lerp(colGrassDry, Math.min(1, rel * 0.3))
+  if (rel < 0) out.lerp(colGrassGreen, Math.min(1, -rel * 0.6))
+  else out.lerp(colGrassDry, Math.min(1, rel * 0.35))
+
+  // 草のはげた赤土のまだら（ところどころ）
+  const bare = bareNoise.noise(x * 0.045 + 7, z * 0.045 - 3)
+  out.lerp(colBare, smoothstep(0.52, 0.72, bare) * 0.7)
+
+  // 踏み分け道
+  const trail = savannaTrail(x, z)
+  if (trail > 0) out.lerp(colTrail, trail * 0.6)
 
   // 水場のまわりは土と緑
   const dw = Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) / (WATERHOLE.radius * 1.9)
