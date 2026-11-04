@@ -195,9 +195,12 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     )
   }
 
-  /** 出会った個体のチップ（顔）。未出会いの個体は出さない（地図と同じルール）。2頭以上で見せる */
+  /** 出会った個体のチップ（顔）。未出会いの個体は出さない（地図と同じルール）。2頭以上で見せる。
+   *  いま見ている子と同じワールド・同じ種の子だけ（ライオンの家族の切り替え用。ほかのワールドの子は混ぜない） */
   const renderChips = () => {
-    const metAnimals = ANIMALS.filter((a) => met.has(a.id))
+    const metAnimals = ANIMALS.filter(
+      (a) => met.has(a.id) && a.species === current?.species && a.world === current?.world,
+    )
     chips.hidden = metAnimals.length < 2
     chips.innerHTML = metAnimals
       .map((a) => {

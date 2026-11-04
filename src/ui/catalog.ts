@@ -1,9 +1,11 @@
 import type { Animal } from '../data/animals'
-import { getAnimal } from '../data/animals'
+import { animalsInWorld, getAnimal } from '../data/animals'
+import { WORLDS, getWorld } from '../data/worlds'
+import type { WorldInfo, WorldKey } from '../data/worlds'
 import type { FriendBookStore } from '../data/friends'
 import { faceMarkup } from './faces'
 import { esc } from './html'
-import { animalName, onLangChange, speciesName, t } from './i18n'
+import { animalName, getLang, onLangChange, speciesName, subAreaName, t } from './i18n'
 import type { I18nKey } from './i18n'
 import { hideView, showView } from './transition'
 
@@ -11,6 +13,7 @@ import { hideView, showView } from './transition'
  * アニマルスコープ（動画一覧）。観察スポットでスコープをのぞくと開く。
  * いまある映像は実物、まだ無い枠（ライブ・ほかのワールド・ほかの動物・動物園）は形だけのシルエットで、押せない。
  * 段の並びは「ライブ → 注目 → ともだち → ワールド → どうぶつ → 人気 → おすすめ → 動物園」。
+ * 「ワールド」の段から、開いているワールド（D-36）の動物の一覧へ入れる。一覧は同じ画面の中で切り替える。
  */
 export interface CatalogView {
   /** withScope なら、のぞく演出に合わせた入り方（段が下から順に並ぶ）にする */
@@ -57,6 +60,18 @@ const LOGO =
 
 const times = (n: number, fn: (i: number) => string) => Array.from({ length: n }, (_, i) => fn(i)).join('')
 
+const worldName = (w: WorldInfo) => w.name[getLang()]
+
+/** ワールドのカードの絵（自作 SVG。地形の雰囲気だけ） */
+const WORLD_ART: Partial<Record<WorldKey, string>> = {
+  jungle:
+    '<path d="M0 132V96q30-18 58-4t62-6 62 2 50-6V132z" fill="#0f5a37"/><path d="M28 104c-4-26 6-48 22-60-10 18-12 38-8 60z" fill="#1f8a4f"/><path d="M40 52c14-10 34-10 46 0-16-2-30 0-46 0zM40 52c-14-8-30-6-40 4 14-4 26-4 40-4zM40 52c4-14 18-22 32-22-14 6-24 14-32 22z" fill="#7ad17f"/><path d="M182 108c-2-30 8-52 24-64-12 20-14 42-10 64z" fill="#1f8a4f"/><path d="M196 46c12-12 30-14 36-8-12 0-24 4-36 8zM196 46c-12-10-30-8-36 0 12-2 24-2 36 0z" fill="#7ad17f"/>',
+  south:
+    '<circle cx="178" cy="40" r="20" fill="#ffe08a"/><path d="M0 132v-30q60-10 116-6t116 2V132z" fill="#8f3720"/><path d="M58 98q6-26 40-28t52 8q10 10 16 20z" fill="#c95d36"/><path d="M70 92q14-14 34-14" stroke="#e98a5a" stroke-width="3" fill="none" stroke-linecap="round"/>',
+  north:
+    '<path d="M0 132V92l40-44 30 30 46-58 50 62 30-26 36 36V132z" fill="#2f5f96"/><path d="M116 20l-18 24 10-4 8 8 8-8 10 4zM40 48l-12 14 7-3 5 5 5-5 7 3z" fill="#fff"/><path d="M0 132v-22q58-12 116-6t116-4V132z" fill="#e9f4fb"/><path d="M180 112l10-28 10 28zM196 116l8-22 8 22z" fill="#1f4f3a"/>',
+}
+
 export function createCatalog(store: FriendBookStore): CatalogView {
   const root = document.getElementById('catalog') as HTMLElement
   let open = false
@@ -75,7 +90,58 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   const section = (key: string, title: string, body: string, extra = '') =>
     `<section class="cat-sec" data-sec="${key}"><h2 class="cat-h">${title}${extra}</h2>${body}</section>`
 
+  /** いま開いているワールドの一覧。null ならアニマルスコープの段の一覧 */
+  let page: WorldKey | null = null
+
+  const renderWorldPage = (w: WorldInfo) => {
+    const meta = (k: I18nKey) => esc(t(k))
+    const list = animalsInWorld(w.key)
+    // 区分 → 種 の順にまとめる。代表の種を先に、あとはデータの並び
+    const subs: string[] = []
+    for (const a of list) if (!subs.includes(a.subArea ?? '')) subs.push(a.subArea ?? '')
+    const body = subs
+      .map((sub) => {
+        const inSub = list.filter((a) => (a.subArea ?? '') === sub)
+        const species: string[] = []
+        for (const a of inSub) if (!species.includes(a.species)) species.push(a.species)
+        const rep = (sp: string) => (inSub.find((a) => a.species === sp)?.representative ? 0 : 1)
+        species.sort((x, y) => rep(x) - rep(y))
+        const blocks = species
+          .map((sp) => {
+            const faces = inSub
+              .filter((a) => a.species === sp)
+              .map((a) => {
+                const has = store.has(a.id)
+                return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
+              })
+              .join('')
+            return `<div class="wp-species"><h3 class="wp-species-h">${esc(speciesName(sp))}</h3><div class="wp-grid">${faces}</div></div>`
+          })
+          .join('')
+        const heading = sub && subs.length > 1 ? `<h2 class="cat-h">${esc(subAreaName(sub))}</h2>` : ''
+        return `<section class="cat-sec wp-sec">${heading}${blocks}</section>`
+      })
+      .join('')
+    const only = subs.length === 1 && subs[0] ? `<p class="wp-sub">${esc(subAreaName(subs[0]))}</p>` : ''
+    root.innerHTML = `
+      <div class="cat-scroll" tabindex="-1">
+        <div class="cat-glow" aria-hidden="true"></div>
+        <header class="cat-top">
+          <button type="button" class="cat-icon-btn" data-list="1" aria-label="${meta('catBackList')}" title="${meta('catBackList')}"><svg class="ico" aria-hidden="true"><use href="#i-back" /></svg></button>
+          <h1 class="cat-logo"><span>${esc(worldName(w))}</span></h1>
+          <button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button>
+        </header>
+        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}"><svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? ''}</svg><span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
+        ${body}
+      </div>`
+  }
+
   const render = () => {
+    const pageWorld = page ? getWorld(page) : undefined
+    if (pageWorld) {
+      renderWorldPage(pageWorld)
+      return
+    }
     const main = getAnimal(FEATURED.animalId)
     const friends = store
       .list()
@@ -127,14 +193,19 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       `<button type="button" class="cat-h-link" data-book="1">${meta('book')} ›</button>`,
     )
 
+    const worldCard = (w: WorldInfo) => {
+      const style = `--w1:${w.colors[0]};--w2:${w.colors[1]}`
+      const art = `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? '<path d="M0 132V96q58-20 116-6t116-4V132z" fill="rgba(255,255,255,.28)"/>'}</svg>`
+      if (!w.open)
+        return `<div class="cat-world cat-world-soon" style="${style}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span><span class="cat-world-tag">${meta('catWorldSoon')}</span></div>`
+      return `<button type="button" class="cat-world cat-world-open" style="${style}" data-world="${w.key}" aria-label="${esc(t('catWorldEnter', { world: worldName(w) }))}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span></button>`
+    }
     const worlds = section(
       'worlds',
       meta('catRowWorlds'),
-      `<div class="cat-row"><button type="button" class="cat-world" data-back="1"><img src="${SAVANNA_IMAGE}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${times(
-        3,
-        () =>
-          `<div class="cat-world cat-sil" aria-hidden="true"><svg class="cat-world-hill" viewBox="0 0 232 132" preserveAspectRatio="none"><path d="M0 92 Q 40 70 80 86 T 160 80 T 232 88 V132 H0 Z"/><circle cx="186" cy="38" r="16"/></svg><span class="cat-bar-sil cat-world-bar"></span></div>`,
-      )}</div>`,
+      `<div class="cat-row"><button type="button" class="cat-world" data-back="1"><img src="${SAVANNA_IMAGE}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
+        .map(worldCard)
+        .join('')}</div>`,
     )
 
     const animals = section(
@@ -204,6 +275,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       setOpen(false)
       return
     }
+    const worldKey = target.dataset.world as WorldKey | undefined
+    if (worldKey && getWorld(worldKey)?.open) {
+      goPage(worldKey)
+      return
+    }
+    if (target.dataset.list) {
+      goPage(null)
+      return
+    }
     if (target.dataset.book) {
       returnFocus = target
       bookListeners.forEach((fn) => fn())
@@ -236,8 +316,27 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     }
   })
 
+  /** ワールドの一覧と段の一覧を切り替える。戻った時は押したワールドのカードへフォーカスを返す */
+  const goPage = (next: WorldKey | null) => {
+    const from = page
+    page = next
+    returnFocus = null
+    render()
+    const scroller = scrollEl()
+    if (next) {
+      scroller?.focus({ preventScroll: true })
+      return
+    }
+    const card = from ? root.querySelector<HTMLElement>(`[data-world="${from}"]`) : null
+    const sec = root.querySelector<HTMLElement>('[data-sec="worlds"]')
+    if (scroller && sec) scroller.scrollTop = Math.max(0, sec.offsetTop - 12)
+    ;(card ?? scroller)?.focus({ preventScroll: true })
+  }
+
   window.addEventListener('keydown', (e) => {
-    if (open && e.key === 'Escape' && document.activeElement && root.contains(document.activeElement)) setOpen(false)
+    if (!open || e.key !== 'Escape' || !document.activeElement || !root.contains(document.activeElement)) return
+    if (page) goPage(null)
+    else setOpen(false)
   })
 
   store.onChange(() => {
@@ -256,6 +355,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     if (next === open) return
     open = next
     if (next) {
+      page = null
       render()
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)

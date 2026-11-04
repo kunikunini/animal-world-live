@@ -1,0 +1,1493 @@
+{
+ "$comment": "自動生成（tools/roster-from-csv.mjs）。手で直さない。出所は北海道アニマルワールドの飼育記録（2026-11-04 時点で施設にいる個体）。ワールド・区分・種・個体名・代表フラグだけで、担当者名・飼育エリア名・給餌の情報は含まない。ライオンは animals.json。",
+ "animals": [
+  {
+   "id": "r-184v168",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ラーテル",
+   "name": "ウィニー",
+   "representative": true
+  },
+  {
+   "id": "r-1v1pqub",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "グラントシマウマ",
+   "name": "グラン",
+   "representative": true
+  },
+  {
+   "id": "r-18xm0fl",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ブチハイエナ",
+   "name": "ピーター",
+   "representative": true
+  },
+  {
+   "id": "r-3zknaw",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ブチハイエナ",
+   "name": "ウーピー",
+   "representative": true
+  },
+  {
+   "id": "r-zuotzx",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ブチハイエナ",
+   "name": "アンバー",
+   "representative": true
+  },
+  {
+   "id": "r-1f1rjrh",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "スナネコ",
+   "name": "シェリ",
+   "representative": false
+  },
+  {
+   "id": "r-11x317i",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "虎",
+   "representative": true
+  },
+  {
+   "id": "r-gv7h2o",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "モア",
+   "representative": true
+  },
+  {
+   "id": "r-1rr0bkq",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "ネリネ",
+   "representative": true
+  },
+  {
+   "id": "r-14eo9as",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "ヨモギ",
+   "representative": true
+  },
+  {
+   "id": "r-1pkduzr",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "すず",
+   "representative": true
+  },
+  {
+   "id": "r-1iq7z27",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "はるか",
+   "representative": true
+  },
+  {
+   "id": "r-dcy6ez",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "かい",
+   "representative": true
+  },
+  {
+   "id": "r-dvwd1j",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "そう",
+   "representative": true
+  },
+  {
+   "id": "r-svhl8o",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ミーアキャット",
+   "name": "ビネ",
+   "representative": true
+  },
+  {
+   "id": "r-e1fyhj",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "アルダブラゾウガメ",
+   "name": "あるる",
+   "representative": false
+  },
+  {
+   "id": "r-pyzioz",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "パンケーキリクガメ",
+   "name": "バター",
+   "representative": false
+  },
+  {
+   "id": "r-1b2qxoi",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "パンケーキリクガメ",
+   "name": "シロップ",
+   "representative": false
+  },
+  {
+   "id": "r-wo6arh",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ケヅメリクガメ",
+   "name": "レオナルド",
+   "representative": false
+  },
+  {
+   "id": "r-w8jr1o",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ケヅメリクガメ",
+   "name": "ラルク",
+   "representative": false
+  },
+  {
+   "id": "r-1dc1imy",
+   "world": "africa",
+   "subArea": "サバンナ・砂漠",
+   "species": "ケヅメリクガメ",
+   "name": "メテオ",
+   "representative": false
+  },
+  {
+   "id": "r-6s8gun",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ベンガルトラ",
+   "name": "ティガー",
+   "representative": true
+  },
+  {
+   "id": "r-miy3ij",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "シャムワニ",
+   "name": "チロル",
+   "representative": false
+  },
+  {
+   "id": "r-1l14bjb",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "スローロリス",
+   "name": "おやき",
+   "representative": false
+  },
+  {
+   "id": "r-14a9x66",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ビントロング",
+   "name": "ビン",
+   "representative": true
+  },
+  {
+   "id": "r-fgmwjt",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ビントロング",
+   "name": "バジル",
+   "representative": true
+  },
+  {
+   "id": "r-10pu0va",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ビントロング",
+   "name": "パセリ",
+   "representative": true
+  },
+  {
+   "id": "r-1c6ro7x",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ビルマニシキヘビ",
+   "name": "のり次",
+   "representative": false
+  },
+  {
+   "id": "r-t4rjs9",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ビルマニシキヘビ",
+   "name": "蛍",
+   "representative": false
+  },
+  {
+   "id": "r-9f3yvx",
+   "world": "jungle",
+   "subArea": "アジア",
+   "species": "ビルマニシキヘビ",
+   "name": "吹雪",
+   "representative": false
+  },
+  {
+   "id": "r-1bcp4qe",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "ジミン",
+   "representative": true
+  },
+  {
+   "id": "r-ki6bjv",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "サナ",
+   "representative": true
+  },
+  {
+   "id": "r-dp4mxx",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "ルナ",
+   "representative": true
+  },
+  {
+   "id": "r-1yvwqhs",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "モモ",
+   "representative": true
+  },
+  {
+   "id": "r-lau52a",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "パーシー",
+   "representative": true
+  },
+  {
+   "id": "r-ljyirp",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "ジョージ",
+   "representative": true
+  },
+  {
+   "id": "r-1po87o6",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "ジュピター",
+   "representative": true
+  },
+  {
+   "id": "r-lqrtyq",
+   "world": "jungle",
+   "subArea": "アフリカ",
+   "species": "ワオキツネザル",
+   "name": "スペイシー",
+   "representative": true
+  },
+  {
+   "id": "r-1s6jkqg",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "フィグ",
+   "representative": true
+  },
+  {
+   "id": "r-1mdrnso",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "ヴィラ",
+   "representative": true
+  },
+  {
+   "id": "r-tcxh6y",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "ココ",
+   "representative": true
+  },
+  {
+   "id": "r-1hzv6wt",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "ヘーゼル",
+   "representative": true
+  },
+  {
+   "id": "r-lz1a5j",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "チリーヌ",
+   "representative": true
+  },
+  {
+   "id": "r-mn414n",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "マカ",
+   "representative": true
+  },
+  {
+   "id": "r-vsruwx",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "ミア",
+   "representative": true
+  },
+  {
+   "id": "r-r3eia6",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "キンカジュー",
+   "name": "クコ",
+   "representative": true
+  },
+  {
+   "id": "r-2js3ns",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "コモンマーモセット",
+   "name": "さつき",
+   "representative": false
+  },
+  {
+   "id": "r-1i3blrn",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "フタユビナマケモノ",
+   "name": "ウリン",
+   "representative": true
+  },
+  {
+   "id": "r-1nsptjq",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アカハナグマ",
+   "name": "カンナ",
+   "representative": false
+  },
+  {
+   "id": "r-7s4luj",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アカハナグマ",
+   "name": "ルア",
+   "representative": false
+  },
+  {
+   "id": "r-kjb7ow",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アカハナグマ",
+   "name": "みゅう",
+   "representative": false
+  },
+  {
+   "id": "r-kwuyay",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アカハナグマ",
+   "name": "ぷっぺ",
+   "representative": false
+  },
+  {
+   "id": "r-m9wrko",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アカハナグマ",
+   "name": "ぷぷ",
+   "representative": false
+  },
+  {
+   "id": "r-1kbzhj5",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アカハナグマ",
+   "name": "リン",
+   "representative": false
+  },
+  {
+   "id": "r-1cb853",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "アメリカバク",
+   "name": "ゆめこ",
+   "representative": false
+  },
+  {
+   "id": "r-lpd7lb",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "コモンリスザル",
+   "name": "テル",
+   "representative": false
+  },
+  {
+   "id": "r-1d0nygf",
+   "world": "jungle",
+   "subArea": "南米",
+   "species": "メガネカイマン",
+   "name": "吉",
+   "representative": false
+  },
+  {
+   "id": "r-sb6b8",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "フェン",
+   "representative": true
+  },
+  {
+   "id": "r-u1jc9u",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "ネガ",
+   "representative": true
+  },
+  {
+   "id": "r-dehppj",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "マリ",
+   "representative": true
+  },
+  {
+   "id": "r-1o4g48n",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "ユア",
+   "representative": true
+  },
+  {
+   "id": "r-m8zvr3",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "テオ",
+   "representative": true
+  },
+  {
+   "id": "r-tbv8ac",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "カムイ",
+   "representative": true
+  },
+  {
+   "id": "r-jyk4jt",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "白牙",
+   "representative": true
+  },
+  {
+   "id": "r-6tpbde",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "狼愛",
+   "representative": true
+  },
+  {
+   "id": "r-14gbuyv",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "白斗",
+   "representative": true
+  },
+  {
+   "id": "r-z6hhas",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "音狼",
+   "representative": true
+  },
+  {
+   "id": "r-12g4tqa",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホッキョクオオカミ",
+   "name": "白亜",
+   "representative": true
+  },
+  {
+   "id": "r-6jyoop",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ニホンザル",
+   "name": "ハナ",
+   "representative": false
+  },
+  {
+   "id": "r-109oir3",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ツキノワグマ",
+   "name": "ゴロウ",
+   "representative": true
+  },
+  {
+   "id": "r-1pz6900",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ツキノワグマ",
+   "name": "まっ君",
+   "representative": true
+  },
+  {
+   "id": "r-y5gzah",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "キタキツネ",
+   "name": "だいちゃん",
+   "representative": true
+  },
+  {
+   "id": "r-1dxjmk7",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "キタキツネ",
+   "name": "あずき",
+   "representative": true
+  },
+  {
+   "id": "r-17tlnq1",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ギンギツネ",
+   "name": "めい",
+   "representative": false
+  },
+  {
+   "id": "r-1wj5osd",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ホンドタヌキ",
+   "name": "タムタム",
+   "representative": false
+  },
+  {
+   "id": "r-1vmqxs9",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ウッドチャック",
+   "name": "ファス",
+   "representative": false
+  },
+  {
+   "id": "r-1m221tq",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "プレーリードッグ",
+   "name": "クッキー",
+   "representative": true
+  },
+  {
+   "id": "r-1svvkx9",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "プレーリードッグ",
+   "name": "マロン",
+   "representative": true
+  },
+  {
+   "id": "r-168gt41",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "プレーリードッグ",
+   "name": "たんぽぽ",
+   "representative": true
+  },
+  {
+   "id": "r-trs08o",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "ヤマアラシ",
+   "name": "こごみ",
+   "representative": false
+  },
+  {
+   "id": "r-h5a6qs",
+   "world": "north",
+   "subArea": "極北・北方林・日本の森・北米",
+   "species": "アメリカビーバー",
+   "name": "オーク",
+   "representative": false
+  },
+  {
+   "id": "r-1wuyhat",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "ユウト",
+   "representative": true
+  },
+  {
+   "id": "r-1xq14tb",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "シゲコ",
+   "representative": true
+  },
+  {
+   "id": "r-gfu6yx",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "順子",
+   "representative": true
+  },
+  {
+   "id": "r-1xu5t3u",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "ヒマワリ",
+   "representative": true
+  },
+  {
+   "id": "r-1betead",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "ソウタ",
+   "representative": true
+  },
+  {
+   "id": "r-fcbxri",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "カンタ",
+   "representative": true
+  },
+  {
+   "id": "r-1w3sm1x",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "ユイ",
+   "representative": true
+  },
+  {
+   "id": "r-1idja4d",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "オオカンガルー",
+   "name": "ツユ",
+   "representative": true
+  },
+  {
+   "id": "r-xeb8kq",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "アカカンガルー",
+   "name": "コカ",
+   "representative": false
+  },
+  {
+   "id": "r-1ptt844",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "パルマワラビー",
+   "name": "フジオ",
+   "representative": true
+  },
+  {
+   "id": "r-1jg2d5r",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "パルマワラビー",
+   "name": "フジコ",
+   "representative": true
+  },
+  {
+   "id": "r-nms5nq",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "パルマワラビー",
+   "name": "サチコ",
+   "representative": true
+  },
+  {
+   "id": "r-jlmnhe",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "パルマワラビー",
+   "name": "えみ",
+   "representative": true
+  },
+  {
+   "id": "r-wzy6il",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "パルマワラビー",
+   "name": "キキ",
+   "representative": true
+  },
+  {
+   "id": "r-17s4cuf",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "カピバラ",
+   "name": "マロ",
+   "representative": true
+  },
+  {
+   "id": "r-tixr54",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "カピバラ",
+   "name": "しずか",
+   "representative": true
+  },
+  {
+   "id": "r-setw77",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "カピバラ",
+   "name": "ラピ",
+   "representative": true
+  },
+  {
+   "id": "r-uwzwij",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "マーラ",
+   "name": "かぼす",
+   "representative": true
+  },
+  {
+   "id": "r-5q5tar",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "マーラ",
+   "name": "ゆず",
+   "representative": true
+  },
+  {
+   "id": "r-d66tme",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "マーラ",
+   "name": "ライム",
+   "representative": true
+  },
+  {
+   "id": "r-bl12jq",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "マーラ",
+   "name": "レモン",
+   "representative": true
+  },
+  {
+   "id": "r-4kj549",
+   "world": "south",
+   "subArea": "オーストラリア・南米",
+   "species": "マーラ",
+   "name": "ライチ",
+   "representative": true
+  },
+  {
+   "id": "r-1bxc2hn",
+   "world": "water",
+   "subArea": "",
+   "species": "モモイロペリカン",
+   "name": "クン",
+   "representative": false
+  },
+  {
+   "id": "r-19hi6qt",
+   "world": "water",
+   "subArea": "",
+   "species": "モモイロペリカン",
+   "name": "ポン",
+   "representative": false
+  },
+  {
+   "id": "r-mxbjt1",
+   "world": "water",
+   "subArea": "",
+   "species": "モモイロペリカン",
+   "name": "白鳳",
+   "representative": false
+  },
+  {
+   "id": "r-15mc14s",
+   "world": "water",
+   "subArea": "",
+   "species": "モモイロペリカン",
+   "name": "モネ",
+   "representative": false
+  },
+  {
+   "id": "r-1te1kpb",
+   "world": "water",
+   "subArea": "",
+   "species": "コツメカワウソ",
+   "name": "ハルト",
+   "representative": true
+  },
+  {
+   "id": "r-z8b2b9",
+   "world": "water",
+   "subArea": "",
+   "species": "コツメカワウソ",
+   "name": "ケント",
+   "representative": true
+  },
+  {
+   "id": "r-14fwtpy",
+   "world": "water",
+   "subArea": "",
+   "species": "コツメカワウソ",
+   "name": "ミナト",
+   "representative": true
+  },
+  {
+   "id": "r-wnbrx6",
+   "world": "water",
+   "subArea": "",
+   "species": "ケープペンギン",
+   "name": "リンリン",
+   "representative": true
+  },
+  {
+   "id": "r-1g92q4q",
+   "world": "water",
+   "subArea": "",
+   "species": "ケープペンギン",
+   "name": "テンテン",
+   "representative": true
+  },
+  {
+   "id": "r-vngj3f",
+   "world": "water",
+   "subArea": "",
+   "species": "ケープペンギン",
+   "name": "サム",
+   "representative": true
+  },
+  {
+   "id": "r-rg3fdf",
+   "world": "water",
+   "subArea": "",
+   "species": "ケープペンギン",
+   "name": "ポッちゃん",
+   "representative": true
+  },
+  {
+   "id": "r-ska0lm",
+   "world": "water",
+   "subArea": "",
+   "species": "ケープペンギン",
+   "name": "ことか",
+   "representative": true
+  },
+  {
+   "id": "r-2o3hoy",
+   "world": "water",
+   "subArea": "",
+   "species": "ケープペンギン",
+   "name": "満",
+   "representative": true
+  },
+  {
+   "id": "r-1woitmt",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "タイハクオウム",
+   "name": "プティ",
+   "representative": false
+  },
+  {
+   "id": "r-smint8",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "キバタン",
+   "name": "ルチル",
+   "representative": false
+  },
+  {
+   "id": "r-1ctlljj",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "キバタン",
+   "name": "こばち",
+   "representative": false
+  },
+  {
+   "id": "r-15qlj3k",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ヨウム",
+   "name": "ビッグ",
+   "representative": false
+  },
+  {
+   "id": "r-qrb0xd",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ヒメコンゴウインコ",
+   "name": "アビル",
+   "representative": false
+  },
+  {
+   "id": "r-1kt5wgo",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "オカメインコ",
+   "name": "おー",
+   "representative": false
+  },
+  {
+   "id": "r-1hoh9sb",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ベニコンゴウインコ",
+   "name": "テチ",
+   "representative": true
+  },
+  {
+   "id": "r-180v9vk",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ベニコンゴウインコ",
+   "name": "エレナ",
+   "representative": true
+  },
+  {
+   "id": "r-1k8zija",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "メンフクロウ",
+   "name": "アリシア",
+   "representative": true
+  },
+  {
+   "id": "r-17co4v7",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "メンフクロウ",
+   "name": "たけぞう",
+   "representative": true
+  },
+  {
+   "id": "r-18eo2hu",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "アカアシモリフクロウ",
+   "name": "ピース",
+   "representative": false
+  },
+  {
+   "id": "r-19kt440",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "アカアシモリフクロウ",
+   "name": "ピース２",
+   "representative": false
+  },
+  {
+   "id": "r-1d9v83x",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "モリフクロウ",
+   "name": "くく",
+   "representative": false
+  },
+  {
+   "id": "r-1uid875",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ナンベイヒナフクロウ",
+   "name": "りり",
+   "representative": false
+  },
+  {
+   "id": "r-tfcb9w",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "オオフクロウ",
+   "name": "王",
+   "representative": false
+  },
+  {
+   "id": "r-v7v5nl",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "オオフクロウ",
+   "name": "クイーン",
+   "representative": false
+  },
+  {
+   "id": "r-1ifdb8f",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ベンガルワシミミズク",
+   "name": "雅",
+   "representative": false
+  },
+  {
+   "id": "r-lt3s2t",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ベンガルワシミミズク",
+   "name": "武蔵",
+   "representative": false
+  },
+  {
+   "id": "r-20y5ed",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ウラルフクロウ",
+   "name": "うっちゃん",
+   "representative": false
+  },
+  {
+   "id": "r-8kxpb7",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ユーラシアワシミミズク",
+   "name": "モック",
+   "representative": true
+  },
+  {
+   "id": "r-agcxtp",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ユーラシアワシミミズク",
+   "name": "ムック",
+   "representative": true
+  },
+  {
+   "id": "r-1k82p5k",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ワシミミズク",
+   "name": "レラ",
+   "representative": false
+  },
+  {
+   "id": "r-x7famq",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ヒメコンドル",
+   "name": "エヴァ",
+   "representative": true
+  },
+  {
+   "id": "r-1iywx6s",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "クロワシミミズク",
+   "name": "ミルキー",
+   "representative": false
+  },
+  {
+   "id": "r-1hdd551",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ベンガル×ワシミミズク",
+   "name": "マック",
+   "representative": false
+  },
+  {
+   "id": "r-2spanw",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "アビシニアンワシミミズク",
+   "name": "チッチ",
+   "representative": false
+  },
+  {
+   "id": "r-1eujohi",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "アビシニアンワシミミズク",
+   "name": "カッチ",
+   "representative": false
+  },
+  {
+   "id": "r-9vwjox",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "アフリカワシミミズク",
+   "name": "しずか",
+   "representative": false
+  },
+  {
+   "id": "r-1y24uhx",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "アフリカオオコノハズク",
+   "name": "シトリン",
+   "representative": false
+  },
+  {
+   "id": "r-1syq5nu",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "インドオオコノハズク",
+   "name": "インディー",
+   "representative": false
+  },
+  {
+   "id": "r-j05jec",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "インドオオコノハズク",
+   "name": "樹",
+   "representative": false
+  },
+  {
+   "id": "r-hx4flt",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "スピックスコノハズク",
+   "name": "カカオ",
+   "representative": false
+  },
+  {
+   "id": "r-134r3jy",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "コキンメフクロウ",
+   "name": "ごもく",
+   "representative": false
+  },
+  {
+   "id": "r-o7h1ff",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ハリスホーク",
+   "name": "琥珀",
+   "representative": true
+  },
+  {
+   "id": "r-9677mx",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ハリスホーク",
+   "name": "天明",
+   "representative": true
+  },
+  {
+   "id": "r-pk1orh",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ハリスホーク",
+   "name": "ハリー",
+   "representative": true
+  },
+  {
+   "id": "r-1yfbvz7",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ワシノスリ",
+   "name": "昴",
+   "representative": false
+  },
+  {
+   "id": "r-1efv2h2",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ワシノスリ",
+   "name": "二葉",
+   "representative": false
+  },
+  {
+   "id": "r-1sqvpu3",
+   "world": "sky",
+   "subArea": "猛禽・鳥",
+   "species": "ラナーハヤブサ",
+   "name": "疾風",
+   "representative": false
+  },
+  {
+   "id": "r-13xwtgn",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "銀牙",
+   "representative": true
+  },
+  {
+   "id": "r-1swc4st",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "ロック",
+   "representative": true
+  },
+  {
+   "id": "r-17snyj3",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "風牙",
+   "representative": true
+  },
+  {
+   "id": "r-1fja9y0",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "アーニャ",
+   "representative": true
+  },
+  {
+   "id": "r-ic0n02",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "オセロ",
+   "representative": true
+  },
+  {
+   "id": "r-25xxux",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "ユキ",
+   "representative": true
+  },
+  {
+   "id": "r-4gn843",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "シベリアンハスキー",
+   "name": "ノエル",
+   "representative": true
+  },
+  {
+   "id": "r-5p9jcc",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "セントバーナード",
+   "name": "ヨーゼフ",
+   "representative": false
+  },
+  {
+   "id": "r-1vvrrpa",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ボーダーコリー",
+   "name": "シャイン",
+   "representative": false
+  },
+  {
+   "id": "r-4g2csd",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ピレネーシェパード",
+   "name": "エルサ",
+   "representative": false
+  },
+  {
+   "id": "r-ajq9z9",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ポニー",
+   "name": "めい",
+   "representative": true
+  },
+  {
+   "id": "r-1a86s4o",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ポニー",
+   "name": "きのこ",
+   "representative": true
+  },
+  {
+   "id": "r-1xvaqaj",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ポニー",
+   "name": "サクラ",
+   "representative": true
+  },
+  {
+   "id": "r-6pa8e7",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "ラテ",
+   "representative": true
+  },
+  {
+   "id": "r-iq24z1",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "マーブル",
+   "representative": true
+  },
+  {
+   "id": "r-155c4r9",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "ナツメ",
+   "representative": true
+  },
+  {
+   "id": "r-kwmsg2",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "みふゆ",
+   "representative": true
+  },
+  {
+   "id": "r-1bz26by",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "バウム",
+   "representative": true
+  },
+  {
+   "id": "r-1biqhym",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "まちこ",
+   "representative": true
+  },
+  {
+   "id": "r-7b8o7t",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "ツートン",
+   "representative": true
+  },
+  {
+   "id": "r-1pf5sq8",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "シキ",
+   "representative": true
+  },
+  {
+   "id": "r-fu4fft",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "マージュ",
+   "representative": true
+  },
+  {
+   "id": "r-si9hsm",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "フロー",
+   "representative": true
+  },
+  {
+   "id": "r-ablwzr",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "ラテjr",
+   "representative": true
+  },
+  {
+   "id": "r-dvxqve",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヤギ",
+   "name": "しずる",
+   "representative": true
+  },
+  {
+   "id": "r-ebp1us",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ホットベリーピック（ブタ）",
+   "name": "ローズ",
+   "representative": false
+  },
+  {
+   "id": "r-au3nhc",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヒツジ",
+   "name": "ポール",
+   "representative": false
+  },
+  {
+   "id": "r-1g237i4",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヒツジ",
+   "name": "バーバリー",
+   "representative": false
+  },
+  {
+   "id": "r-1wu0bkc",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヒツジ",
+   "name": "あさこ",
+   "representative": false
+  },
+  {
+   "id": "r-31ilah",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ヒツジ",
+   "name": "妙",
+   "representative": false
+  },
+  {
+   "id": "r-1ha5jn",
+   "world": "partner",
+   "subArea": "犬と家畜",
+   "species": "ギープ",
+   "name": "レア",
+   "representative": false
+  }
+ ]
+}

@@ -111,6 +111,11 @@ const DICT = {
   catRowPopular: { ja: '人気の動画', en: 'Popular' },
   catRowRecs: { ja: 'おすすめ', en: 'Recommended' },
   catRowZoos: { ja: '動物園からえらぶ', en: 'Pick a zoo' },
+  silhouetteOf: { ja: '{name}（写真はじゅんびちゅう）', en: '{name} (photo coming soon)' },
+  catWorldSoon: { ja: 'じゅんびちゅう', en: 'Coming soon' },
+  catWorldEnter: { ja: '{world}の動物を見る', en: 'See the animals of {world}' },
+  catBackList: { ja: 'アニマルスコープにもどる', en: 'Back to Animal Scope' },
+  catWorldLead: { ja: '会いたい子をえらんでね。写真と映像は、とどいた子から順に入ります。', en: 'Pick someone to meet. Photos and videos are added as they arrive.' },
   catSavanna: { ja: 'サバンナ', en: 'Savanna' },
   catWatch: { ja: '見る', en: 'Watch' },
   catMeet: { ja: '会いに行く', en: 'Go meet' },
@@ -123,6 +128,47 @@ export type I18nKey = keyof typeof DICT
 /** 種名。プロフィールの本文と違い、決まった言葉なので訳す */
 const SPECIES: Record<string, string> = {
   ライオン: 'Lion',
+  ベンガルトラ: 'Bengal tiger',
+  シャムワニ: 'Siamese crocodile',
+  スローロリス: 'Slow loris',
+  ビントロング: 'Binturong',
+  ビルマニシキヘビ: 'Burmese python',
+  ワオキツネザル: 'Ring-tailed lemur',
+  キンカジュー: 'Kinkajou',
+  コモンマーモセット: 'Common marmoset',
+  フタユビナマケモノ: 'Two-toed sloth',
+  アカハナグマ: 'South American coati',
+  アメリカバク: 'South American tapir',
+  コモンリスザル: 'Common squirrel monkey',
+  メガネカイマン: 'Spectacled caiman',
+  ホッキョクオオカミ: 'Arctic wolf',
+  ニホンザル: 'Japanese macaque',
+  ツキノワグマ: 'Asian black bear',
+  キタキツネ: 'Ezo red fox',
+  ギンギツネ: 'Silver fox',
+  ホンドタヌキ: 'Japanese raccoon dog',
+  ウッドチャック: 'Woodchuck',
+  プレーリードッグ: 'Prairie dog',
+  ヤマアラシ: 'Porcupine',
+  アメリカビーバー: 'North American beaver',
+  オオカンガルー: 'Eastern grey kangaroo',
+  アカカンガルー: 'Red kangaroo',
+  パルマワラビー: 'Parma wallaby',
+  カピバラ: 'Capybara',
+  マーラ: 'Patagonian mara',
+}
+
+/** ワールドの中の区分（roster の subArea） */
+const SUB_AREAS: Record<string, string> = {
+  アジア: 'Asia',
+  アフリカ: 'Africa',
+  南米: 'South America',
+  'オーストラリア・南米': 'Australia & South America',
+  '極北・北方林・日本の森・北米': 'Far north, boreal forest, Japanese woods & North America',
+}
+
+export function subAreaName(sub: string): string {
+  return lang === 'en' ? (SUB_AREAS[sub] ?? sub) : sub
 }
 
 function readLang(): Lang {

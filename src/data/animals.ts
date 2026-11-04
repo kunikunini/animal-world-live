@@ -1,4 +1,6 @@
 import raw from './animals.json'
+import rosterRaw from './roster.json'
+import type { WorldKey } from './worlds'
 
 /** 映像の再生元。今回実装するのは recorded（収録映像）だけ。将来 live を足せるよう型だけ用意する */
 export type VideoSourceKind = 'recorded' | 'live'
@@ -32,6 +34,12 @@ export interface Animal {
   /** 任意。写真がなくても UI は成立させる */
   photo?: string
   video: VideoSource
+  /** どのワールドの子か。ライオンは africa */
+  world?: WorldKey
+  /** ワールドの中の区分（ジャングルの「アジア」など）。無ければ空 */
+  subArea?: string
+  /** 3D の出会いと実写を先に作る代表の種か（D-32） */
+  representative?: boolean
 }
 
 interface AnimalsFile {
@@ -40,7 +48,45 @@ interface AnimalsFile {
 
 const data = raw as AnimalsFile
 
-export const ANIMALS: readonly Animal[] = data.animals
+/** roster.json の 1 行。CSV から自動生成（tools/roster-from-csv.mjs） */
+interface RosterRow {
+  id: string
+  world: WorldKey
+  subArea: string
+  species: string
+  name: string
+  representative: boolean
+}
+
+/**
+ * ライオン以外の個体。プロフィールの本文と映像はまだ無いので空のまま（埋めない）。
+ * 映像の url が空なら、モニターは「映像はじゅんびちゅう」を出し、収録映像のバッジも出さない。
+ */
+const rosterAnimals: Animal[] = (rosterRaw as { animals: RosterRow[] }).animals.map((r) => ({
+  id: r.id,
+  name: r.name,
+  species: r.species,
+  ageLabel: '',
+  family: '',
+  personality: '',
+  favorites: '',
+  identifyingMarks: '',
+  keeperComment: '',
+  status: 'ready',
+  video: { source: 'recorded', url: '', poster: '' },
+  world: r.world,
+  subArea: r.subArea,
+  representative: r.representative,
+}))
+
+const lions: Animal[] = data.animals.map((a) => ({ ...a, world: 'africa', subArea: '', representative: true }))
+
+export const ANIMALS: readonly Animal[] = [...lions, ...rosterAnimals]
+
+/** そのワールドの個体（データの並び順） */
+export function animalsInWorld(world: WorldKey): Animal[] {
+  return ANIMALS.filter((a) => a.world === world && a.status === 'ready')
+}
 
 export function getAnimal(id: string): Animal | undefined {
   return ANIMALS.find((a) => a.id === id)

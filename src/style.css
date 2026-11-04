@@ -2195,6 +2195,8 @@ body.is-reduce-motion .is-refresh {
 @media (max-width: 767px) and (orientation: portrait) {
   .m-video { aspect-ratio: auto; max-height: none; }
   .observe-video { flex: none; height: auto; aspect-ratio: 16 / 9; max-height: 40vh; }
+  /* 映像がまだ無い子: 映像の大きさの枠を残して「準備中」を見せる（帯だけに潰れないように） */
+  .m-video:has(> .observe-video[hidden]) { min-height: calc(var(--m-bar) + var(--safe-top) + min(56.25vw, 40vh)); }
   .m-sheet { margin-top: 0; }
 }
 
@@ -2536,6 +2538,59 @@ body.is-reduce-motion .is-refresh {
 .cat-world.cat-sil { display: block; cursor: default; }
 .cat-world-hill { position: absolute; inset: 0; width: 100%; height: 100%; fill: #4a372a; }
 .cat-world-bar { position: absolute; left: 14px; bottom: 14px; width: 88px; height: 12px; }
+/* 自作の絵のワールド（開いている／じゅんびちゅう） */
+.cat-world-open,
+.cat-world-soon { background: linear-gradient(180deg, var(--w1), var(--w2)); }
+.cat-world-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cat-world-open:focus-visible { outline: 3px solid var(--cream); outline-offset: 3px; }
+.cat-world-soon { cursor: default; filter: saturate(0.35) brightness(0.72); }
+.cat-world-tag {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ワールドの動物の一覧（アニマルスコープの中で切り替える） */
+.wp-banner {
+  position: relative;
+  margin: 4px 16px 8px;
+  min-height: 132px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--w1), var(--w2));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.wp-banner .cat-world-shade { background: linear-gradient(180deg, rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0.62)); }
+.wp-banner > p { position: relative; margin: 0; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45); }
+.wp-sub { font-size: 13px; font-weight: 800; opacity: 0.95; }
+.wp-lead { font-size: 13px; line-height: 1.6; max-width: 34em; }
+.wp-species { padding: 0 16px; margin-bottom: 18px; }
+.wp-species-h { margin: 0 0 10px; font-size: 15px; font-weight: 900; color: var(--cream); opacity: 0.9; }
+.wp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px 10px; }
+.wp-grid .cat-face { width: auto; position: relative; }
+.wp-grid .cat-face > span:not(.face-svg):not(.cat-face-check) { max-width: 100%; overflow-wrap: anywhere; text-align: center; }
+.cat-face-check {
+  position: absolute;
+  top: 0;
+  right: calc(50% - 44px);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #9ddc5c;
+  color: #1d2a14;
+  display: grid;
+  place-items: center;
+}
+.cat-face-check svg { width: 15px; height: 15px; }
 
 /* 人気（順位） */
 .cat-row-rank { gap: 14px; }
