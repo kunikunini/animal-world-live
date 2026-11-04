@@ -18,7 +18,8 @@ export interface LoadedAiLion {
 
 export async function loadAiLion(
   url: string,
-  opts: { height: number; animate: boolean; toon: boolean },
+  // length（頭から尾の先、+z 方向）があればそれに、なければ体高 height にそろえる
+  opts: { length?: number; height?: number; animate: boolean; toon: boolean },
 ): Promise<LoadedAiLion> {
   const loader = new GLTFLoader()
   loader.setMeshoptDecoder(MeshoptDecoder)
@@ -84,7 +85,7 @@ export async function loadAiLion(
   // 大きさと接地
   const box = new THREE.Box3().setFromObject(inner)
   const size = box.getSize(new THREE.Vector3())
-  const s = size.y > 0 ? opts.height / size.y : 1
+  const s = opts.length && size.z > 0 ? opts.length / size.z : opts.height && size.y > 0 ? opts.height / size.y : 1
   inner.scale.setScalar(s)
   inner.updateMatrixWorld(true)
   box.setFromObject(inner)

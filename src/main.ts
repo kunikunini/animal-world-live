@@ -192,26 +192,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         .catch((err) => console.warn('lion v2 model not loaded; keeping primitive', err))
     }
   }
-  // 実験（exp/lion-ai）: ?model=ai でアレックスを Meshy 生成モデルに差し替える。&anim=off で静止（呼吸と首振りだけ）
-  let aiMixer: THREE.AnimationMixer | null = null
-  // ?model=ai はクレイ版（本命）、?model=ai-real はリアル版（比較用）
+  // 実験（exp/lion-ai）: ?model=ai で群れの 5 頭を Meshy 生成モデル（クレイ版）に差し替える。
+  // ?model=ai-real はアレックスだけリアル版（比較用）。&anim=off で歩行を止める
+  const aiMixers: Record<string, THREE.AnimationMixer> = {}
   const aiModel = new URLSearchParams(location.search).get('model')
   if (aiModel === 'ai' || aiModel === 'ai-real') {
-    const alex = lions.find((l) => l.id === 'alex')
     const animate = new URLSearchParams(location.search).get('anim') !== 'off'
     // &mat=raw で Meshy の素材のまま（比較用）。既定はトゥーン素材に差し替える
     const toon = new URLSearchParams(location.search).get('mat') !== 'raw'
-    if (alex) {
-      // 体高はプリミティブと同じ倍率（群れの scale）の前の値。立ち姿のオスの頭頂あたり
-      loadAiLion(aiModel === 'ai' ? '/models/alex-ai.glb' : '/models/alex-ai-real.glb', { height: 1.15, animate, toon })
+    const files: Record<string, string> =
+      aiModel === 'ai'
+        ? { alex: 'alex-ai', angie: 'angie-ai', riley: 'riley-ai', claire: 'claire-ai', carla: 'kara-ai' }
+        : { alex: 'alex-ai-real' }
+    for (const [id, file] of Object.entries(files)) {
+      const lion = lions.find((l) => l.id === id)
+      if (!lion) continue
+      // 大きさはプリミティブ版に合わせる: 群れの中での体の長さ（頭から尾の先、群れの座標）をそろえる
+      const length = primitiveLength(lion.group)
+      loadAiLion(`/models/${file}.glb`, { length, animate, toon })
         .then((loaded) => {
           // 頭のボーンに既存の首振りをかけると、Meshy のボーンの軸の向きが違うため頭が後ろへ反る。
           // なので首振りはつながず、呼吸（全体の伸び縮み）だけ既存の仕組みに任せる
-          alex.swapModel(loaded.model, {})
-          aiMixer = loaded.mixer
-          console.info('[lion-ai] loaded', loaded.clipNames)
+          lion.swapModel(loaded.model, {})
+          if (loaded.mixer) aiMixers[id] = loaded.mixer
+          console.info('[lion-ai] loaded', id, loaded.clipNames)
         })
-        .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', err))
+        .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
     }
   }
 
@@ -421,7 +427,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     clouds.update(dt)
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
-    aiMixer?.update(dt)
+    for (const m of Object.values(aiMixers)) m.update(dt)
 
     // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
     const px = player.object.position.x
@@ -612,7 +618,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       views: viewNames(),
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
       // 実験（exp/lion-ai）: 歩行ループをコマ送りで確かめるため、生成モデルのミキサーを覗けるようにする
-      aiMixer: () => aiMixer,
+      aiMixers: () => aiMixers,
       renderer,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
       capture: (quality = 0.92) => {
@@ -750,3 +756,18 @@ function main(): void {
 }
 
 main()
+
+/** 実験（exp/lion-ai）: プリミティブ版の体の長さ（群れの座標系の z 方向、頭から尾の先まで） */
+function primitiveLength(group: THREE.Object3D): number {
+  group.updateMatrixWorld(true)
+  const inv = group.matrixWorld.clone().invert()
+  const box = new THREE.Box3()
+  const m = new THREE.Matrix4()
+  group.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
+    box.union(mesh.geometry.boundingBox!.clone().applyMatrix4(m.multiplyMatrices(inv, mesh.matrixWorld)))
+  })
+  return box.getSize(new THREE.Vector3()).z
+}
