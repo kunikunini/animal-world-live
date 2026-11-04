@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { SPAWN } from '../world/layout'
-import { clampToWalkable } from '../world/regions'
+import { clampToWalkable, routeTo } from '../world/regions'
 import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
 import { toonMaterial } from '../render/toon'
@@ -152,6 +152,12 @@ export function createPlayer(
   let reduceMotion = false
   let walkPhase = 0
   let stuckTime = 0
+  // 経由点にいちばん近づいた距離と、それから縮まっていない時間（岩の間で行ったり来たりする時の見切り）
+  let bestDist = Infinity
+  let noProgressTime = 0
+  // 自動で歩く時に岩の縁を滑る向き（0 は未定）。岩が並んだすき間で毎フレーム向きが入れ替わらないよう、滑り続ける間は保つ
+  let slideSign = 0
+  let slideIdle = 0
   let inputEnabled = true
   let cameraOverride: CameraOverride | null = null
 
@@ -194,6 +200,9 @@ export function createPlayer(
       return v
     })
     stuckTime = 0
+    bestDist = Infinity
+    noProgressTime = 0
+    slideSign = 0
     if (waypoints.length > 0) showMarker(waypoints[waypoints.length - 1])
   }
 
@@ -244,7 +253,8 @@ export function createPlayer(
     const hits = raycaster.intersectObject(terrain, true)
     if (hits.length === 0) return
     _hit.copy(hits[0].point)
-    goTo([{ x: _hit.x, z: _hit.z }])
+    // ワールドをまたぐ時は峠を通る（地図のタップと同じ道順）
+    goTo(routeTo(object.position, { x: _hit.x, z: _hit.z }))
   }
 
   const onPointerCancel = (e: PointerEvent) => {
@@ -329,6 +339,9 @@ export function createPlayer(
       if (dist < 0.2) {
         waypoints.shift()
         stuckTime = 0
+        bestDist = Infinity
+        noProgressTime = 0
+        slideSign = 0
       } else {
         _dir.divideScalar(dist)
         wanted = Math.min(dist, WALK_SPEED * dt)
@@ -340,6 +353,8 @@ export function createPlayer(
     // 当たり判定: 世界の端・岩・幹。地形はどこでも歩ける（崖の段も登れる）
     clampToWorld(object.position)
     const pushed = pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
+    slideIdle += dt
+    if (slideIdle > 0.3) slideSign = 0
     if (moving && pushed > 0 && wanted > 0) {
       // 岩に正面からぶつかって進めない時は、岩の縁に沿って横へ滑る（進みたい向きに近いほう）
       const progress = Math.hypot(object.position.x - _prev.x, object.position.z - _prev.z)
@@ -347,7 +362,12 @@ export function createPlayer(
         _push.normalize()
         const tx = -_push.z
         const tz = _push.x
-        const sign = tx * _dir.x + tz * _dir.z >= 0 ? 1 : -1
+        let sign = tx * _dir.x + tz * _dir.z >= 0 ? 1 : -1
+        if (waypoints.length > 0) {
+          if (slideSign === 0) slideSign = sign
+          sign = slideSign
+          slideIdle = 0
+        }
         object.position.x += tx * sign * wanted
         object.position.z += tz * sign * wanted
         clampToWorld(object.position)
@@ -381,6 +401,21 @@ export function createPlayer(
         }
       } else {
         stuckTime = 0
+      }
+      // 動けていても、経由点に 2 秒近づけていなければあきらめる（2 つの岩の間で 1 フレームごとに行ったり来たりする時）
+      if (waypoints.length > 0) {
+        const d = Math.hypot(waypoints[0].x - object.position.x, waypoints[0].z - object.position.z)
+        if (d < bestDist - 0.5) {
+          bestDist = d
+          noProgressTime = 0
+        } else {
+          noProgressTime += dt
+          if (noProgressTime > 2) {
+            waypoints = []
+            marker.visible = false
+            noProgressTime = 0
+          }
+        }
       }
     }
 

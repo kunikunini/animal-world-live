@@ -1,5 +1,5 @@
 import { smoothstep } from './noise'
-import { KOPJE, WALK_RADIUS } from './layout'
+import { KOPJE, SPOT, WALK_RADIUS } from './layout'
 
 /**
  * 地続きの 4 つのワールド（D-30 の 7 つのうち、3D にするもの）。
@@ -175,7 +175,13 @@ export function routeTo(from: { x: number; z: number }, to: { x: number; z: numb
     }
   }
   route.push(dest)
-  // コピエ（岩山）を横切る区間は、脇を回る経由点を足す（崖の岩に引っかからない）
+  // コピエの上へ行く・上から出る時は、南の登り口の坂（ふもと ↔ 頂上）を通る。崖の段の岩に挟まらない
+  const top = { x: SPOT.x, z: SPOT.z }
+  const startOn = onKopje(from)
+  const endOn = onKopje(dest)
+  if (endOn && !startOn) route.splice(route.length - 1, 0, ...(onRamp(dest) ? [SPOT.approach] : [SPOT.approach, top]))
+  if (startOn && !endOn) route.unshift(...(onRamp(from) ? [SPOT.approach] : [top, SPOT.approach]))
+  // コピエを横切る区間は、脇を回る経由点を足す（崖の岩に引っかからない）
   const out: Array<{ x: number; z: number }> = []
   let prev = { x: from.x, z: from.z }
   for (const p of route) {
@@ -188,14 +194,25 @@ export function routeTo(from: { x: number; z: number }, to: { x: number; z: numb
 /** コピエからこれより近くを通る区間は回り道にする（崖の岩は中心から 30m 以内）。回る経由点はこの距離に置く */
 const KOPJE_CLEAR = KOPJE.radius + 8
 const KOPJE_AROUND = KOPJE.radius + 12
+/** ここより内側はコピエの上（崖の段と台地） */
+const KOPJE_ON = KOPJE.radius + 2
+
+function onKopje(p: { x: number; z: number }): boolean {
+  return Math.hypot(p.x - KOPJE.x, p.z - KOPJE.z) < KOPJE_ON
+}
+
+/** 南の登り口の坂の上か（+z を中心にした扇形） */
+function onRamp(p: { x: number; z: number }): boolean {
+  return Math.abs(Math.atan2(p.x - KOPJE.x, p.z - KOPJE.z)) < KOPJE.rampHalfAngle + 0.25
+}
 
 /** a → b を out に足す（a は足さない）。コピエを横切るなら、いちばん近づく所の外側に経由点を置いて分ける */
 function aroundKopje(a: { x: number; z: number }, b: { x: number; z: number }, out: Array<{ x: number; z: number }>, depth: number): void {
   const c = closestOnSegment(KOPJE.x, KOPJE.z, a.x, a.z, b.x, b.z)
   const da = Math.hypot(a.x - KOPJE.x, a.z - KOPJE.z)
   const db = Math.hypot(b.x - KOPJE.x, b.z - KOPJE.z)
-  // コピエそのものへ行く時（端がコピエの近く）は、いままでどおりまっすぐ
-  if (depth >= 3 || c.d >= KOPJE_CLEAR || da < KOPJE_CLEAR || db < KOPJE_CLEAR) {
+  // コピエの上の区間（坂を登る・台地の上）はまっすぐ。いちばん近い所が端なら、コピエの前を横切っていない
+  if (depth >= 3 || c.d >= KOPJE_CLEAR || c.d > Math.min(da, db) - 0.5 || da < KOPJE_ON || db < KOPJE_ON) {
     out.push(b)
     return
   }
