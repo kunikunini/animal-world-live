@@ -2164,3 +2164,58 @@ body.is-reduce-motion .is-refresh {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ==========================================================================
+   スマホの観察モニター: 戻る・収録映像・音を出すは映像の上の帯に置き、映像には重ねない。
+   iPhone の映像の操作（全画面・音量・再生位置）が隠れないように。下のシートも映像に食い込ませない
+   ========================================================================== */
+@media (max-width: 767px), (max-height: 520px) and (orientation: landscape) {
+  .m-video {
+    --m-bar: calc(var(--icon-btn) + 16px);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--m-bar) + var(--safe-top));
+  }
+  .m-back { top: calc(8px + var(--safe-top)); left: calc(12px + var(--safe-left)); }
+  .m-badge { top: calc(8px + var(--safe-top) + (var(--icon-btn) - 32px) / 2); right: calc(12px + var(--safe-right)); }
+  .m-unmute {
+    top: calc(8px + var(--safe-top));
+    bottom: auto;
+    left: calc(12px + var(--icon-btn) + 10px + var(--safe-left));
+    right: auto;
+    width: var(--icon-btn);
+    height: var(--icon-btn);
+  }
+  .m-placeholder { top: calc(var(--m-bar) + var(--safe-top) + 8px); }
+  .observe-poster { top: calc(var(--m-bar) + var(--safe-top)); }
+  .observe-video { flex: 1; min-height: 0; }
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .m-video { aspect-ratio: auto; max-height: none; }
+  .observe-video { flex: none; height: auto; aspect-ratio: 16 / 9; max-height: 40vh; }
+  .m-sheet { margin-top: 0; }
+}
+
+/* 横向きのスマホは幅が 768px を超えて PC の配置（中央の浮いたパネル）が混ざるので、全画面の左右 2 分割に戻す */
+@media (max-height: 520px) and (orientation: landscape) {
+  .observe-panel {
+    inset: 0;
+    transform: none;
+    width: auto;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    gap: 0;
+    display: grid;
+    grid-template-columns: 50% 1fr;
+    grid-template-rows: 100%;
+    grid-template-areas: 'video sheet';
+    overflow: hidden;
+  }
+  .m-video { grid-area: video; align-self: stretch; height: 100%; max-height: none; border-radius: 0; }
+  .m-sheet { display: block; grid-area: sheet; height: 100%; overflow-y: auto; }
+  .chips, .hero, .cta-area, .fields { grid-area: auto; }
+}
