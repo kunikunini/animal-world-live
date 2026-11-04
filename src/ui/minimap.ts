@@ -2,6 +2,7 @@ import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable } from '../world/regions'
 import type { RegionKey } from '../world/regions'
 import { Simplex2D, smoothstep } from '../world/noise'
+import { savannaMapColor } from '../world/terrain'
 import { getWorld } from '../data/worlds'
 import { getLang, t } from './i18n'
 
@@ -60,10 +61,13 @@ const C = {
   beach: '#f6e7bd',
   coastLine: 'rgba(70, 52, 38, 0.5)',
   water: '#8fc6ec',
-  rock: '#b8834a',
-  ramp: '#c9a27a',
-  plateau: '#dcc29a',
-  tree: '#6fae2e',
+  // コピエは 3D の岩肌（少し明るくなった）と赤い地層に合わせる
+  rock: '#bf8a5a',
+  ramp: '#d3ab7f',
+  plateau: '#e2c89e',
+  // アカシアは 3D の傘の冠と同じ、少しくすんだ若葉色。明るい所を左上に重ねる
+  tree: '#7a9a38',
+  treeLit: '#a9bf58',
   road: '#fff6e6',
   roadEdge: 'rgba(110, 78, 48, 0.55)',
   spot: '#f4c242',
@@ -155,12 +159,25 @@ export function isLand(x: number, z: number): boolean {
 // 地面の色: ワールドごとの 2 色をノイズで揺らし、重みで混ぜる。荒い格子に描いて、地図では拡大してぼかす
 // ---------------------------------------------------------------------------
 const KEYS = REGIONS.map((r) => r.key)
+// サバンナは 3D の地面と同じ色の出し方（savannaMapColor）。地図では上から広く見えて、まだらが迷彩のように細かく見えるので、
+// 差を少し縮め、彩度を少し上げて、地図の明るい絵柄に合わせて白へ少し寄せる。この 2 色は、サバンナの重みが小さい山の向こうだけに使う（描く時間を抑える）
 const GROUND: Record<RegionKey, [[number, number, number], [number, number, number]]> = {
   africa: [hex('#f4da88'), hex('#d9ad44')],
   north: [hex('#f6f9fc'), hex('#c6d5e5')],
   jungle: [hex('#92c46c'), hex('#4c8c44')],
   south: [hex('#eeae7c'), hex('#c46e48')],
 }
+const SAVANNA_SAT = 1.3
+const SAVANNA_SPREAD = 0.7
+const SAVANNA_LIFT = 0.1
+/** まだらの差を縮める中心（平原のふつうの色） */
+const SAVANNA_MID = hex('#e2c06a')
+const savannaTone = (c: [number, number, number], i: number, lum: number): number => {
+  const v = lum + (c[i] - lum) * SAVANNA_SAT
+  const m = SAVANNA_MID[i] + (v - SAVANNA_MID[i]) * SAVANNA_SPREAD
+  return Math.min(255, Math.max(0, m + (255 - m) * SAVANNA_LIFT))
+}
+const _sav: [number, number, number] = [0, 0, 0]
 const warpNoise = new Simplex2D(4021)
 const toneNoise = new Simplex2D(5113)
 const _f = new Float32Array(REGIONS.length)
@@ -223,6 +240,14 @@ function groundTexture(): HTMLCanvasElement {
       for (let k = 0; k < KEYS.length; k++) {
         const wk = wts[k]
         if (wk <= 0) continue
+        if (k === 0 && wk > 0.15) {
+          savannaMapColor(x, z, _sav)
+          const lum = _sav[0] * 0.2126 + _sav[1] * 0.7152 + _sav[2] * 0.0722
+          r += wk * savannaTone(_sav, 0, lum)
+          gg += wk * savannaTone(_sav, 1, lum)
+          b += wk * savannaTone(_sav, 2, lum)
+          continue
+        }
         const [lo, hi] = GROUND[KEYS[k]]
         r += wk * (lo[0] + (hi[0] - lo[0]) * tone)
         gg += wk * (lo[1] + (hi[1] - lo[1]) * tone)
@@ -718,11 +743,16 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     b.arc(px(KOPJE.x), py(KOPJE.z), KOPJE.radius * KOPJE.plateau * k, 0, Math.PI * 2)
     b.fill()
 
-    // サバンナのアカシア
-    b.fillStyle = C.tree
+    // サバンナのアカシア: 平たい傘の冠
     for (const tr of ACACIAS) {
+      const rr = 3 * u * tr.scale * Math.min(1, k / ((width / 2) / MINIMAP_RADIUS)) ** 0.5
+      b.fillStyle = C.tree
       b.beginPath()
-      b.arc(px(tr.x), py(tr.z), 2.6 * u * tr.scale * Math.min(1, k / ((width / 2) / MINIMAP_RADIUS)) ** 0.5, 0, Math.PI * 2)
+      b.arc(px(tr.x), py(tr.z), rr, 0, Math.PI * 2)
+      b.fill()
+      b.fillStyle = C.treeLit
+      b.beginPath()
+      b.arc(px(tr.x) - rr * 0.28, py(tr.z) - rr * 0.28, rr * 0.5, 0, Math.PI * 2)
       b.fill()
     }
 

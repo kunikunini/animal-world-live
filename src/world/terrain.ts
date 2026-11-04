@@ -144,12 +144,14 @@ export function savannaTrail(x: number, z: number): number {
 // 地層の帯。赤い層・黄土の層・暗い層が重なる
 const colStrata = [new THREE.Color('#c46c4a'), new THREE.Color('#e2aa6e'), new THREE.Color('#8f5f48')]
 
-function savannaColor(x: number, z: number, h: number, out: THREE.Color): void {
+function savannaColor(x: number, z: number, h: number, out: THREE.Color, forMap = false): void {
   const n = detail.noise(x * 0.03 + 11, z * 0.03 - 5) * 0.5 + 0.5
   out.copy(colGrass).lerp(colGrassDry, n * 0.7)
-  // 細かいむら（数 m）。一面ののっぺりした色に見せない
-  const fine = detail.noise(x * 0.11 - 2, z * 0.11 + 6)
-  out.lerp(fine > 0 ? colGrassDry : colGrassTawny, Math.abs(fine) * 0.35)
+  // 細かいむら（数 m）。一面ののっぺりした色に見せない（地図の荒い格子では粒になるので入れない）
+  if (!forMap) {
+    const fine = detail.noise(x * 0.11 - 2, z * 0.11 + 6)
+    out.lerp(fine > 0 ? colGrassDry : colGrassTawny, Math.abs(fine) * 0.35)
+  }
 
   // 大きなまだら。草むらと同じノイズで、淡く枯れた帯・こがね色の帯・若草色の帯を作る
   const big = patch.noise(x * 0.02 + 3, z * 0.02 - 7) * 0.5 + 0.5
@@ -166,9 +168,11 @@ function savannaColor(x: number, z: number, h: number, out: THREE.Color): void {
   const bare = bareNoise.noise(x * 0.045 + 7, z * 0.045 - 3)
   out.lerp(colBare, smoothstep(0.52, 0.72, bare) * 0.7)
 
-  // 踏み分け道
-  const trail = savannaTrail(x, z)
-  if (trail > 0) out.lerp(colTrail, trail * 0.6)
+  // 踏み分け道（幅が地図の格子より細いので、地図には入れない）
+  if (!forMap) {
+    const trail = savannaTrail(x, z)
+    if (trail > 0) out.lerp(colTrail, trail * 0.6)
+  }
 
   // 水場のまわりは土と緑
   const dw = Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) / (WATERHOLE.radius * 1.9)
@@ -178,6 +182,9 @@ function savannaColor(x: number, z: number, h: number, out: THREE.Color): void {
     const mud = 1 - smoothstep(0.45, 0.7, dw)
     out.lerp(colEarth, mud * 0.9)
   }
+
+  // 地図はここまで（コピエは地図の上に別に描く。斜面の土は平原にはほとんどない）
+  if (forMap) return
 
   const slope = terrainSlope(x, z, 0.6)
 
@@ -203,6 +210,20 @@ function savannaColor(x: number, z: number, h: number, out: THREE.Color): void {
 
   // 急斜面は土が見える
   if (slope < 0.92) out.lerp(colEarth, Math.min(1, (0.92 - slope) * 4))
+}
+
+const _mapCol = new THREE.Color()
+const _mapRgb = { r: 0, g: 0, b: 0 }
+/**
+ * 地図に描くサバンナの地面の色（sRGB 0..255）。3D の地面と同じまだら・赤土・低い所の若草色・水場のまわりの土。
+ * 数 m の細かいむらと踏み分け道は、地図の格子（5m）より細かいので入れない
+ */
+export function savannaMapColor(x: number, z: number, out: [number, number, number]): void {
+  savannaColor(x, z, terrainHeight(x, z), _mapCol, true)
+  _mapCol.getRGB(_mapRgb, THREE.SRGBColorSpace)
+  out[0] = _mapRgb.r * 255
+  out[1] = _mapRgb.g * 255
+  out[2] = _mapRgb.b * 255
 }
 
 // 北の世界: 雪と、風で雪の飛んだ岩・枯れ草
