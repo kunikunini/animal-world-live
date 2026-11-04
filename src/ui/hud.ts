@@ -1,3 +1,5 @@
+import { esc } from './html'
+
 const STORAGE_KEY = 'awl.reduceMotion'
 
 export type ToastIcon = 'bino' | 'book' | 'home'
@@ -24,10 +26,6 @@ export interface Hud {
   /** モニターや帳が開いている間は「ホームへ」を重ねない */
   setOverlayOpen: (open: boolean) => void
   setFps: (fps: number) => void
-}
-
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
 function readStored(): boolean | null {
@@ -65,10 +63,13 @@ export function createHud(): Hud {
   const stored = readStored()
   let reduceMotion = stored ?? prefers
   checkbox.checked = reduceMotion
+  const toggleEl = checkbox.closest('.toggle') as HTMLElement
+  toggleEl.classList.toggle('is-on', reduceMotion)
 
   const motionListeners: Array<(on: boolean) => void> = []
   checkbox.addEventListener('change', () => {
     reduceMotion = checkbox.checked
+    toggleEl.classList.toggle('is-on', reduceMotion)
     writeStored(reduceMotion)
     motionListeners.forEach((fn) => fn(reduceMotion))
   })

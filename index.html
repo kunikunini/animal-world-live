@@ -133,7 +133,7 @@
     </section>
 
     <!-- 往復の演出: 双眼鏡の形（2 つの円）に絞られる幕 -->
-    <svg id="iris" class="iris" hidden aria-hidden="true"><path id="iris-path" fill="#13192b" fill-rule="evenodd" /></svg>
+    <svg id="iris" class="iris" hidden aria-hidden="true"><defs><mask id="iris-mask"><rect width="100%" height="100%" fill="#fff" /><circle id="iris-l" cx="0" cy="0" r="0" fill="#000" /><circle id="iris-r" cx="0" cy="0" r="0" fill="#000" /></mask></defs><rect width="100%" height="100%" fill="#13192b" mask="url(#iris-mask)" /></svg>
 
     <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く"></canvas>
     <button id="minimap-expand" class="icon-btn minimap-expand" type="button" hidden aria-label="地図を広げる" title="地図を広げる"><svg class="ico"><use href="#i-expand" /></svg></button>
@@ -174,7 +174,7 @@
           <div id="observe-poster" class="observe-poster" hidden>
             <div id="observe-poster-face" class="poster-face"></div>
             <p id="observe-poster-text" class="observe-poster-text"></p>
-            <button id="observe-retry" class="btn btn-hero btn-m" type="button" hidden>もう一度試す</button>
+            <button id="observe-retry" class="btn btn-m" type="button" hidden>もう一度試す</button>
           </div>
           <button id="observe-close" class="icon-btn m-back" type="button" aria-label="世界に戻る" title="世界に戻る"><svg class="ico"><use href="#i-back" /></svg></button>
           <span id="observe-badge" class="m-badge"><svg class="ico"><use href="#i-film" /></svg>収録映像</span>

@@ -1,10 +1,6 @@
 import type { Animal } from '../data/animals'
 import { faceMarkup } from './faces'
-
-/** 文字を HTML に安全に入れる */
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
-}
+import { esc } from './html'
 
 /** 項目カード。空の必須項目は「準備中」と正直に出す（埋めない）。任意項目は空なら出さない */
 function field(icon: string, label: string, value: string, options: { required?: boolean; keeper?: boolean } = {}): string {

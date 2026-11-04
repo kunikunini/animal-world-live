@@ -300,11 +300,11 @@ button {
   color: var(--leaf);
 }
 
-.toggle:has(input:checked) {
+.toggle.is-on {
   background: var(--leaf-tint);
 }
 
-.toggle:has(input:checked) .toggle-check {
+.toggle.is-on .toggle-check {
   display: block;
 }
 

@@ -112,7 +112,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
   scene.add(clouds.group)
 
   // 風景の生き物（鳥の群れ、遠くで草を食む生き物）。名前も出会いも無い
-  const fauna = createFauna({ mobile })
+  const fauna = createFauna({ mobile, colliders: props.colliders })
   scene.add(fauna.group)
 
   // 様式化ライオン。当たり判定も岩と同じ配列に入れる
@@ -274,15 +274,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
     hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
 
     // 出会い: そばにいる個体を決める。切り替えは「はっきり近い状態が少し続いたら」
-    const dist = new Map<string, number>()
-    const reachOf = new Map<string, number>()
     let closest: { id: string; d: number } | null = null
+    // いま出会っている個体の距離と届く範囲（範囲外なら null）
+    let currentD: number | null = null
     const heads = new Map<string, { x: number; y: number; d: number }>()
     for (const lion of lions) {
       const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
       const reach = lion.collider.r + 4.2
-      dist.set(lion.id, d)
-      reachOf.set(lion.id, reach)
+      if (lion.id === encounterId && d < reach) currentD = d
       if (d < reach && (!closest || d < closest.d)) closest = { id: lion.id, d }
       // 伏せたライオンの頭のあたり
       projected.copy(lion.position).setY(lion.position.y + 0.95 * lion.group.scale.y + 0.1).project(camera)
@@ -296,8 +295,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
       }
     }
     let nextId = encounterId
-    if (encounterId !== null && (dist.get(encounterId) ?? Infinity) < (reachOf.get(encounterId) ?? 0)) {
-      const currentD = dist.get(encounterId) as number
+    if (encounterId !== null && currentD !== null) {
       if (closest && closest.id !== encounterId && closest.d < currentD - SWITCH_MARGIN) {
         if (candidateId !== closest.id) {
           candidateId = closest.id
@@ -457,9 +455,18 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
       syncInput()
     },
     snapshot: () => {
+      // レンズに映すだけなので小さく縮めてから画像にする（全解像度の toDataURL は重い）
       try {
         postfx.render()
-        return canvas.toDataURL('image/jpeg', 0.6)
+        const small = document.createElement('canvas')
+        const w = 480
+        const h = Math.max(1, Math.round((w * canvas.height) / Math.max(1, canvas.width)))
+        small.width = w
+        small.height = h
+        const ctx = small.getContext('2d')
+        if (!ctx) return ''
+        ctx.drawImage(canvas, 0, 0, w, h)
+        return small.toDataURL('image/jpeg', 0.7)
       } catch {
         return ''
       }

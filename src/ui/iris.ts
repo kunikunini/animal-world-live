@@ -1,6 +1,7 @@
 /**
  * 往復の演出。画面が双眼鏡の形（重なった 2 つの円）に絞られ、また広がる。
  * close() で幕が閉じ、open() で開く。「動きをへらす」のときは短いフェードにする。
+ * 2 つの円の重なりも透けるよう、塗りではなくマスク（白い矩形から黒い円を抜く）で描く。
  */
 export interface Iris {
   close: () => Promise<void>
@@ -21,18 +22,22 @@ function easeOut(t: number): number {
 
 export function createIris(): Iris {
   const svg = document.getElementById('iris') as unknown as SVGSVGElement
-  const path = document.getElementById('iris-path') as unknown as SVGPathElement
+  const left = document.getElementById('iris-l') as unknown as SVGCircleElement
+  const right = document.getElementById('iris-r') as unknown as SVGCircleElement
   let reduceMotion = false
 
-  /** 外枠の矩形から 2 つの円を抜く（evenodd） */
+  /** 2 つの円の半径。0 で全面が幕 */
   const draw = (r: number) => {
     const w = window.innerWidth
     const h = window.innerHeight
     const off = Math.min(w, h) * 0.16
     const cy = h / 2
-    const circle = (cx: number) =>
-      r <= 0 ? '' : `M${cx - r} ${cy} a${r} ${r} 0 1 0 ${r * 2} 0 a${r} ${r} 0 1 0 ${-r * 2} 0 Z `
-    path.setAttribute('d', `M0 0 H${w} V${h} H0 Z ${circle(w / 2 - off)}${circle(w / 2 + off)}`)
+    left.setAttribute('cx', String(w / 2 - off))
+    right.setAttribute('cx', String(w / 2 + off))
+    left.setAttribute('cy', String(cy))
+    right.setAttribute('cy', String(cy))
+    left.setAttribute('r', String(Math.max(0, r)))
+    right.setAttribute('r', String(Math.max(0, r)))
   }
 
   /** 画面全体が円の中に入る半径 */

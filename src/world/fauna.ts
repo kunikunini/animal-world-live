@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { toonMaterial } from '../render/toon'
 import { terrainHeight } from './terrain'
+import type { Collider } from './props'
 
 /**
  * 風景の生き物。鳥の群れと、遠くの平原で草を食む生き物。
@@ -82,7 +83,7 @@ function createGrazer(coat: THREE.Material, belly: THREE.Material, horn: THREE.M
   return { group, head }
 }
 
-export function createFauna(options: { mobile: boolean }): Fauna {
+export function createFauna(options: { mobile: boolean; colliders: Collider[] }): Fauna {
   const group = new THREE.Group()
   group.name = 'fauna'
   let reduceMotion = false
@@ -110,6 +111,7 @@ export function createFauna(options: { mobile: boolean }): Fauna {
     g.group.rotation.y = h.yaw
     g.group.scale.setScalar(h.scale)
     group.add(g.group)
+    options.colliders.push({ x: h.x, z: h.z, r: 0.9 * h.scale })
     grazers.push({ head: g.head, phase: i * 1.7 })
   })
 

@@ -1,15 +1,12 @@
 import type { Animal } from '../data/animals'
 import { LIONS } from '../world/layout'
+import { esc } from './html'
 
 /**
  * 顔。写真（animal.photo）があれば写真、無ければ自作 SVG のライオンの顔で成立させる。
  * 写真の選定は人間がやるので、無い状態が基本。頭文字の丸は使わない（顔が主役）。
  * SVG の色はワールドのライオンの毛色（layout.ts）から取る。事実の描写ではなく様式化。
  */
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
-}
-
 /** 14 の角を持つ星形。たてがみに使う */
 function starPoints(cx: number, cy: number, outer: number, inner: number, n: number): string {
   const pts: string[] = []

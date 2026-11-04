@@ -3,6 +3,7 @@ import { getAnimal } from '../data/animals'
 import type { FriendBookStore } from '../data/friends'
 import { formatMetDateShort } from '../data/friends'
 import { faceMarkup } from './faces'
+import { esc } from './html'
 
 export interface BookView {
   open: () => void
@@ -10,10 +11,6 @@ export interface BookView {
   isOpen: () => boolean
   onVisit: (fn: (animal: Animal) => void) => void
   onOpenChange: (fn: (open: boolean) => void) => void
-}
-
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
 /**

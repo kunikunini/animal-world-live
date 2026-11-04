@@ -5,6 +5,7 @@ import type { FriendBookStore } from '../data/friends'
 import { formatMetDate } from '../data/friends'
 import { resolveVideoSource } from '../video/source'
 import { faceMarkup } from './faces'
+import { esc } from './html'
 import { renderHero, renderProfile } from './profile'
 import { playFriendChime } from './chime'
 
@@ -18,10 +19,6 @@ export interface ObserveView {
   /** 「ともだちになる」が押された直後 */
   onBefriend: (fn: (animal: Animal) => void) => void
   setReduceMotion: (on: boolean) => void
-}
-
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
 }
 
 /** 祝いの星。帯の周りに 8 個、散る方向を CSS 変数で渡す */
