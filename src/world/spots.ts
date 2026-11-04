@@ -15,11 +15,11 @@ export interface ObservationSpot {
  * 観察スポット。コピエ台地の頂上に、木の柱と光の輪を置く。
  * 精巧な双眼鏡は作らず、遠くからでも見つけられる目印にする。
  */
-export function createObservationSpot(): ObservationSpot {
+export function createObservationSpot(at: { x: number; z: number } = SPOT): ObservationSpot {
   const group = new THREE.Group()
   group.name = 'observation-spot'
-  const y = terrainHeight(SPOT.x, SPOT.z)
-  const position = new THREE.Vector3(SPOT.x, y, SPOT.z)
+  const y = terrainHeight(at.x, at.z)
+  const position = new THREE.Vector3(at.x, y, at.z)
   group.position.copy(position)
 
   const wood = toonMaterial({ color: '#7a5431' })

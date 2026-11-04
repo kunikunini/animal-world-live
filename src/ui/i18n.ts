@@ -116,6 +116,7 @@ const DICT = {
   catWorldEnter: { ja: '{world}の動物を見る', en: 'See the animals of {world}' },
   catBackList: { ja: 'アニマルスコープにもどる', en: 'Back to Animal Scope' },
   catWorldLead: { ja: '会いたい子をえらんでね。写真と映像は、とどいた子から順に入ります。', en: 'Pick someone to meet. Photos and videos are added as they arrive.' },
+  enterRegion: { ja: '{world}に来ました', en: 'Welcome to {world}' },
   catSavanna: { ja: 'サバンナ', en: 'Savanna' },
   catWatch: { ja: '見る', en: 'Watch' },
   catMeet: { ja: '会いに行く', en: 'Go meet' },

@@ -18,6 +18,8 @@ import { hideView, showView } from './transition'
 export interface CatalogView {
   /** withScope なら、のぞく演出に合わせた入り方（段が下から順に並ぶ）にする */
   open: (withScope: boolean) => void
+  /** そのワールドの動物の一覧で開く（3D のワールドの観察スポットから） */
+  openWorld: (key: WorldKey, withScope: boolean) => void
   /** 演出をとばした時: 入りの動きを止めて、すぐ全部見せる */
   settle: () => void
   close: () => void
@@ -351,11 +353,11 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     if (open) render()
   })
 
-  const setOpen = (next: boolean, withScope = false) => {
+  const setOpen = (next: boolean, withScope = false, startPage: WorldKey | null = null) => {
     if (next === open) return
     open = next
     if (next) {
-      page = null
+      page = startPage
       render()
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)
@@ -375,6 +377,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   return {
     open: (withScope) => setOpen(true, withScope),
+    openWorld: (key, withScope) => setOpen(true, withScope, getWorld(key)?.open ? key : null),
     settle: () => root.classList.remove('is-scope-in'),
     close: () => setOpen(false),
     isOpen: () => open,

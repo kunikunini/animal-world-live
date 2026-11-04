@@ -3,6 +3,9 @@ import { createScene } from './world/scene'
 import { createTerrain } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
+import { OUTER_REGIONS, biomeAt, regionAt } from './world/regions'
+import type { BiomeWeights, RegionKey } from './world/regions'
+import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
@@ -26,7 +29,7 @@ import { createIris } from './ui/iris'
 import { createSettings } from './ui/settings'
 import { createCatalog } from './ui/catalog'
 import { createScope } from './ui/scope'
-import { animalName, applyStatic, onLangChange, t } from './ui/i18n'
+import { animalName, applyStatic, getLang, onLangChange, t } from './ui/i18n'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
@@ -144,8 +147,19 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // サバンナから峠を抜けた先の 3 つのワールドの木や岩
   scene.add(createBiomeProps({ mobile, colliders: props.colliders }).group)
 
-  const spot = createObservationSpot()
-  scene.add(spot.group)
+  // 観察スポット: サバンナはコピエの頂上、ほかのワールドは中心。いるワールドのスポットが「いまのスポット」
+  const savannaSpot = createObservationSpot()
+  scene.add(savannaSpot.group)
+  const worldSpots = [
+    { key: 'africa' as RegionKey, spot: savannaSpot, route: [SPOT.approach, { x: SPOT.x, z: SPOT.z }] },
+    ...OUTER_REGIONS.map((r) => {
+      const s = createObservationSpot({ x: r.x, z: r.z })
+      scene.add(s.group)
+      return { key: r.key, spot: s, route: [{ x: r.x, z: r.z }] }
+    }),
+  ]
+  let here = worldSpots[0]
+  let spot = here.spot
 
   const atmosphere = createAtmosphere()
   atmosphere.group.traverse((o) => {
@@ -200,7 +214,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 着いている時は同じボタンが「スコープをのぞく」になる
   hud.onGoToSpot(() => {
     if (arrived) void openScope()
-    else player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
+    else player.goTo(here.route)
   })
 
   // 出会い: そばにいるライオンの頭の上に「双眼鏡 + 名前」のピン。タップでその個体の観察モニター
@@ -251,7 +265,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     body.classList.remove('is-unscoping')
     const animate = !body.classList.contains('is-reduce-motion')
     if (animate) body.classList.add('is-scoping')
-    catalog.open(animate)
+    // サバンナはアニマルスコープの段の一覧、ほかのワールドではそのワールドの動物の一覧から
+    if (here.key === 'africa') catalog.open(animate)
+    else catalog.openWorld(here.key, animate)
     if (animate) {
       const { skipped } = await scope.play()
       if (skipped) catalog.settle()
@@ -321,6 +337,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   window.addEventListener('resize', measureSafe)
 
   const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))
+  // いるワールドが変わったら、スポット・案内・霧の色を切り替える
+  const fogColor = (scene.fog as THREE.Fog).color
+  const fogBase = fogColor.clone()
+  const FOG_TINT: Record<RegionKey, THREE.Color> = {
+    africa: fogBase.clone(),
+    north: new THREE.Color('#e3ebf3'),
+    jungle: new THREE.Color('#cfe2d4'),
+    south: new THREE.Color('#efdcc9'),
+  }
+  const weights: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
+  const fogTarget = new THREE.Color()
+  const regionName = (key: RegionKey) => {
+    if (key === 'africa') return t('catSavanna')
+    const w = getWorld(key)
+    return w ? w.name[getLang()] : key
+  }
   const projected = new THREE.Vector3()
   let arrived = false
 
@@ -362,6 +394,29 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     clouds.update(dt)
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
+
+    // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
+    const px = player.object.position.x
+    const pz = player.object.position.z
+    const regionKey = regionAt(px, pz)
+    if (regionKey !== here.key) {
+      here = worldSpots.find((w) => w.key === regionKey) ?? worldSpots[0]
+      spot = here.spot
+      spotHead.copy(spot.position).add(new THREE.Vector3(0, 2.2, 0))
+      arrived = false
+      hud.toast(t('enterRegion', { world: regionName(regionKey) }), 'bino')
+    }
+    if (frames % 8 === 0) {
+      biomeAt(px, pz, weights)
+      fogTarget.setRGB(0, 0, 0)
+      for (const k of ['africa', 'north', 'jungle', 'south'] as const) {
+        fogTarget.r += FOG_TINT[k].r * weights[k]
+        fogTarget.g += FOG_TINT[k].g * weights[k]
+        fogTarget.b += FOG_TINT[k].b * weights[k]
+      }
+    }
+    fogColor.lerp(fogTarget, Math.min(1, dt * 2))
+    for (const w of worldSpots) if (w !== here) w.spot.update(time, 999)
 
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)

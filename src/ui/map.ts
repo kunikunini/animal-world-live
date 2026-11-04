@@ -21,6 +21,8 @@ export function createMapView(): MapView {
   const canvas = document.getElementById('map-canvas') as HTMLCanvasElement
   const closeBtn = document.getElementById('map-close') as HTMLButtonElement
   const renderer = createMapRenderer(800, { labels: true })
+  // 広げた地図は 4 つのワールド全体（西のジャングルから東の山まで、北の世界から南半球まで）
+  renderer.setView(-130, 0, 420)
   canvas.width = renderer.size
   canvas.height = renderer.size
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
