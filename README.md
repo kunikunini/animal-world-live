@@ -37,9 +37,16 @@ Work with zoos and sanctuaries so that, through live streaming, you can visit an
 
 ## About the footage
 
-All animal footage in this prototype is **recorded footage**, shot at Hokkaido Animal World during the hackathon (2026-11-03). It is not a live stream. Only the delivery version (720p, H.264/AAC, converted from HLG to SDR) and a poster image are included under `public/media/`; the original files are not in this repository. The facility has given permission to use the footage and photos.
+All animal footage in this prototype is **recorded footage**, shot at Hokkaido Animal World during the hackathon. It is not a live stream. The facility has given permission to use the footage and photos.
 
-The published site streams the footage from Cloudflare R2 (`https://media.kobakuni.com/<file>`); the copy in `public/media/` is the master and the fallback for local development. See "Deployment" below.
+- 2026-11-03: the lion family (Angie with the twins Claire and Carla)
+- 2026-11-04: a spotted hyena; a South American tapir with a capybara; great white pelicans with kangaroos and a mara; ponies; a common squirrel monkey (listed in `src/data/videos.json`)
+
+The species of each 2026-11-04 video come from the names of the original files. Which animal is on camera has not been checked, so for a species with several animals the same video is shown for each of them and the monitor says so. If only one animal of that species lives at the facility, the video is shown as that animal's.
+
+The delivery versions are 720p, H.264/AAC, converted from HLG to SDR. The original files are not in this repository. `public/media/` holds the poster images and the lion family video; the 2026-11-04 videos are kept out of the repository to keep it small and are served from R2. On the published site a video appears once it has been uploaded to R2 (`onR2` in `src/data/videos.json`); until then it appears only on the development server.
+
+The published site streams the footage from Cloudflare R2 (`https://media.kobakuni.com/<file>`); a copy in `public/media/` (when present) is the fallback for local development. See "Deployment" below.
 
 For animals without footage yet, a self-made placeholder video (color and text only, no external material) can be generated with ffmpeg:
 
@@ -116,9 +123,16 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 
 ## 映像について
 
-このプロトタイプで使う動物映像は、ハッカソン期間中（2026-11-03）に北海道アニマルワールドで収録した**収録映像**です。ライブ配信ではありません。配信用に最適化した版（720p、H.264/AAC、HLG から SDR へ変換）とポスター画像だけを `public/media/` に含めています。収録した元ファイルはリポジトリに入れていません。映像・写真の使用は施設の許諾を得ています。
+このプロトタイプで使う動物映像は、ハッカソン期間中に北海道アニマルワールドで収録した**収録映像**です。ライブ配信ではありません。映像・写真の使用は施設の許諾を得ています。
 
-公開サイトでは映像を Cloudflare R2（`https://media.kobakuni.com/<ファイル名>`）から配信します。`public/media/` の映像はマスターであり、ローカル開発時の予備です。詳しくは下の「公開」を参照してください。
+- 2026-11-03：ライオンの親子（アンジーと、ふたごのクレア・カーラ）
+- 2026-11-04：ブチハイエナ、アメリカバクとカピバラ、モモイロペリカンとカンガルーとマーラ、ポニー、コモンリスザル（一覧は `src/data/videos.json`）
+
+2026-11-04 の映像の種は、収録した元ファイルの名前から取っています。どの個体が映っているかは確かめていないので、同じ種が複数いる時はその子たちみんなに同じ映像を出し、モニターにそう書いています。施設にその種が 1 頭だけの時は、その子の映像として出しています。
+
+配信用の版は 720p、H.264/AAC（HLG から SDR へ変換）です。収録した元ファイルはリポジトリに入れていません。`public/media/` にはポスター画像とライオンの親子の映像を置いています。2026-11-04 の映像はリポジトリを軽くするためリポジトリに入れず、R2 から配信します。公開サイトでは R2 に上げ終えた映像だけを出し（`src/data/videos.json` の `onR2`）、上げるまでは開発サーバーでだけ見えます。
+
+公開サイトでは映像を Cloudflare R2（`https://media.kobakuni.com/<ファイル名>`）から配信します。`public/media/` に同じ名前の映像がある時は、ローカル開発時の予備になります。詳しくは下の「公開」を参照してください。
 
 映像がまだない個体には、色と文字だけの自作プレースホルダ映像を使えます。生成するには ffmpeg を入れて次を実行します（実写や外部の素材は使いません）。
 

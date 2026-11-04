@@ -8,7 +8,7 @@ import { faceMarkup } from './faces'
 import { esc } from './html'
 import { renderHero, renderProfile } from './profile'
 import { playFriendChime } from './chime'
-import { animalName, t } from './i18n'
+import { animalName, getLang, speciesName, t } from './i18n'
 import { refreshIn, setViewOpen } from './transition'
 
 export type ObserveOrigin = 'world' | 'book'
@@ -50,6 +50,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const hero = document.getElementById('observe-hero') as HTMLElement
   const badge = document.getElementById('observe-badge') as HTMLElement
   const placeholderNote = document.getElementById('observe-placeholder') as HTMLElement
+  const groupNote = document.getElementById('observe-group-note') as HTMLElement
   const video = document.getElementById('observe-video') as HTMLVideoElement
   const poster = document.getElementById('observe-poster') as HTMLElement
   const posterFace = document.getElementById('observe-poster-face') as HTMLElement
@@ -121,6 +122,10 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     const seq = ++loadSeq
     badge.hidden = !resolved
     placeholderNote.hidden = !(resolved?.placeholder ?? false)
+    // 種のみんなの映像: この子が映っているとは言わない
+    const group = resolved ? animal.videoGroup : undefined
+    groupNote.hidden = !group
+    if (group) groupNote.textContent = t('videoGroupNote', { label: group.label ? group.label[getLang()] : speciesName(animal.species) })
 
     if (!resolved) {
       video.pause()

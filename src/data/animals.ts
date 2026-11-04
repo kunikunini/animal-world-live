@@ -1,5 +1,7 @@
 import raw from './animals.json'
 import rosterRaw from './roster.json'
+import { videoForSpecies } from './videos'
+import type { VideoSubject } from './videos'
 import type { WorldKey } from './worlds'
 
 /** 映像の再生元。今回実装するのは recorded（収録映像）だけ。将来 live を足せるよう型だけ用意する */
@@ -40,6 +42,13 @@ export interface Animal {
   subArea?: string
   /** 3D の出会いと実写を先に作る代表の種か（D-32） */
   representative?: boolean
+  /** 種の映像（videos.json）の id。ライオンは無し */
+  videoId?: string
+  /**
+   * 映像がその種のみんなのもので、この子が映っているかは確かめていない時のまとまり。
+   * モニターに「どの子が映っているかは未確認」と出す。その種が 1 頭だけなら無し
+   */
+  videoGroup?: VideoSubject
 }
 
 interface AnimalsFile {
@@ -58,26 +67,38 @@ interface RosterRow {
   representative: boolean
 }
 
+const rosterRows = (rosterRaw as { animals: RosterRow[] }).animals
+
 /**
- * ライオン以外の個体。プロフィールの本文と映像はまだ無いので空のまま（埋めない）。
- * 映像の url が空なら、モニターは「映像はじゅんびちゅう」を出し、収録映像のバッジも出さない。
+ * ライオン以外の個体。プロフィールの本文はまだ無いので空のまま（埋めない）。
+ * 映像は種ごと（videos.json）。その種の映像が無ければ url は空で、モニターは「映像はじゅんびちゅう」を出し、
+ * 収録映像のバッジも出さない。
  */
-const rosterAnimals: Animal[] = (rosterRaw as { animals: RosterRow[] }).animals.map((r) => ({
-  id: r.id,
-  name: r.name,
-  species: r.species,
-  ageLabel: '',
-  family: '',
-  personality: '',
-  favorites: '',
-  identifyingMarks: '',
-  keeperComment: '',
-  status: 'ready',
-  video: { source: 'recorded', url: '', poster: '' },
-  world: r.world,
-  subArea: r.subArea,
-  representative: r.representative,
-}))
+const rosterAnimals: Animal[] = rosterRows.map((r) => {
+  const found = videoForSpecies(r.species)
+  // 映像のまとまり（例: カンガルー 2 種）に何頭いるか。1 頭ならその子の映像と言える
+  const groupSize = found ? rosterRows.filter((x) => found.subject.species.includes(x.species)).length : 0
+  return {
+    id: r.id,
+    name: r.name,
+    species: r.species,
+    ageLabel: '',
+    family: '',
+    personality: '',
+    favorites: '',
+    identifyingMarks: '',
+    keeperComment: '',
+    status: 'ready',
+    video: found
+      ? { source: 'recorded', url: found.video.url, fallbackUrl: found.video.fallbackUrl, poster: found.video.poster }
+      : { source: 'recorded', url: '', poster: '' },
+    world: r.world,
+    subArea: r.subArea,
+    representative: r.representative,
+    videoId: found?.video.id,
+    videoGroup: found && groupSize > 1 ? found.subject : undefined,
+  }
+})
 
 const lions: Animal[] = data.animals.map((a) => ({ ...a, world: 'africa', subArea: '', representative: true }))
 
@@ -95,4 +116,9 @@ export function getAnimal(id: string): Animal | undefined {
 /** 一覧に出してよい個体 */
 export function listReadyAnimals(): Animal[] {
   return ANIMALS.filter((a) => a.status === 'ready')
+}
+
+/** その映像に映っている種の子たち（まとまりごとに、データの並び順で） */
+export function animalsInVideo(videoId: string): Animal[] {
+  return ANIMALS.filter((a) => a.videoId === videoId && a.status === 'ready')
 }

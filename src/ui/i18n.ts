@@ -53,6 +53,7 @@ const DICT = {
   backWorld: { ja: '世界に戻る', en: 'Back to the world' },
   recorded: { ja: '収録映像', en: 'Recorded video' },
   placeholder: { ja: '仮映像（色と文字だけの自作プレースホルダ）', en: 'Placeholder video (homemade, colors and text only)' },
+  videoGroupNote: { ja: '{label}のみんなの映像です。どの子が映っているかは、まだ確かめていません', en: 'Shared video: {label}. We haven’t checked which one is on camera yet.' },
   unmute: { ja: '音を出す', en: 'Turn sound on' },
   videoFailed: { ja: '映像を再生できませんでした', en: 'Couldn’t play the video' },
   videoPending: { ja: '映像は準備中です', en: 'Video coming soon' },
@@ -122,6 +123,7 @@ const DICT = {
   catMeet: { ja: '会いに行く', en: 'Go meet' },
   catHeroTitle: { ja: '{a}と、\nふたごの{b}・{c}', en: '{a} and the twins, {b} & {c}' },
   catRecTitle: { ja: 'ライオン一家のひととき', en: 'A moment with the lion family' },
+  catHasVideo: { ja: '映像あり', en: 'Has video' },
 } satisfies Record<string, Record<Lang, string>>
 
 export type I18nKey = keyof typeof DICT
@@ -129,6 +131,9 @@ export type I18nKey = keyof typeof DICT
 /** 種名。プロフィールの本文と違い、決まった言葉なので訳す */
 const SPECIES: Record<string, string> = {
   ライオン: 'Lion',
+  ブチハイエナ: 'Spotted hyena',
+  モモイロペリカン: 'Great white pelican',
+  ポニー: 'Pony',
   ベンガルトラ: 'Bengal tiger',
   シャムワニ: 'Siamese crocodile',
   スローロリス: 'Slow loris',

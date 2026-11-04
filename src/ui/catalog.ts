@@ -1,5 +1,6 @@
 import type { Animal } from '../data/animals'
-import { animalsInWorld, getAnimal } from '../data/animals'
+import { animalsInVideo, animalsInWorld, getAnimal } from '../data/animals'
+import { SPECIES_VIDEOS, videoForSpecies } from '../data/videos'
 import { WORLDS, getWorld } from '../data/worlds'
 import type { WorldInfo, WorldKey } from '../data/worlds'
 import type { FriendBookStore } from '../data/friends'
@@ -117,7 +118,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
                 return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
               })
               .join('')
-            return `<div class="wp-species"><h3 class="wp-species-h">${esc(speciesName(sp))}</h3><div class="wp-grid">${faces}</div></div>`
+            const film = videoForSpecies(sp)
+              ? `<span class="wp-has-video"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('catHasVideo')}</span>`
+              : ''
+            return `<div class="wp-species"><h3 class="wp-species-h">${esc(speciesName(sp))}${film}</h3><div class="wp-grid">${faces}</div></div>`
           })
           .join('')
         const heading = sub && subs.length > 1 ? `<h2 class="cat-h">${esc(subAreaName(sub))}</h2>` : ''
@@ -210,6 +214,18 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         .join('')}</div>`,
     )
 
+    // 映像のある種（ライオンのあとに、映像ごと・映っている種ごと）。押すとその種の最初の子のモニター
+    const videoSpecies = SPECIES_VIDEOS.flatMap((v) => {
+      const inVideo = animalsInVideo(v.id)
+      return v.subjects.flatMap((sub) => {
+        const first = inVideo.find((a) => sub.species.includes(a.species))
+        if (!first) return []
+        const label = sub.label ? sub.label[getLang()] : speciesName(first.species)
+        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${faceMarkup(first, 'cat-face-img')}<span>${esc(label)}</span></button>`]
+      })
+    })
+    // 段が寂しくならないよう、5 つに満たない分は形だけのシルエット
+    const animalSils = Math.max(0, 4 - videoSpecies.length)
     const animals = section(
       'animals',
       meta('catRowAnimals'),
@@ -217,7 +233,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         lion
           ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}">${faceMarkup(lion, 'cat-face-img')}<span>${esc(speciesName(lion.species))}</span></button>`
           : ''
-      }${times(4, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
+      }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
 
     const popular = section(
@@ -230,6 +246,16 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       }${[2, 3, 4, 5].map((n) => `<div class="cat-rank cat-rank-sil" aria-hidden="true"><span class="cat-rank-n">${n}</span><div class="cat-sil">${PLAY}</div></div>`).join('')}</div>`,
     )
 
+    // 種の映像のカード（3 枚に満たない分は形だけのシルエット）
+    const recCards = SPECIES_VIDEOS.flatMap((v) => {
+      const first = animalsInVideo(v.id)[0]
+      if (!first) return []
+      const w = first.world ? getWorld(first.world) : undefined
+      const place = first.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
+      return [
+        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb"><img src="${esc(v.poster)}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+      ]
+    })
     const recs = section(
       'recs',
       meta('catRowRecs'),
@@ -237,8 +263,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         main
           ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb"><img src="${esc(FEATURED.poster)}" alt="" /><span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
           : ''
-      }${times(
-        3,
+      }${recCards.join('')}${times(
+        Math.max(0, 3 - recCards.length),
         () =>
           `<div class="cat-card" aria-hidden="true"><span class="cat-thumb cat-sil">${PLAY}</span><span class="cat-bar-sil" style="width:72%;height:12px"></span><span class="cat-bar-sil" style="width:46%"></span></div>`,
       )}</div>`,

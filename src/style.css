@@ -1834,6 +1834,18 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   width: 100%;
 }
 
+/* 種のみんなの映像の時の一言（この子が映っているとは言わない） */
+.m-group-note {
+  margin: 0 0 2px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(244, 194, 66, 0.16);
+  color: var(--ink-soft);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .friend-band {
   position: relative;
   display: flex;
@@ -2586,6 +2598,20 @@ body.is-reduce-motion .is-refresh {
 .wp-lead { font-size: 13px; line-height: 1.6; max-width: 34em; }
 .wp-species { padding: 0 16px; margin-bottom: 18px; }
 .wp-species-h { margin: 0 0 10px; font-size: 15px; font-weight: 900; color: var(--cream); opacity: 0.9; }
+.wp-has-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 9px 2px 7px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  vertical-align: 2px;
+}
+.wp-has-video .ico { width: 13px; height: 13px; }
 .wp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px 10px; }
 .wp-grid .cat-face { width: auto; position: relative; }
 .wp-grid .cat-face > span:not(.face-svg):not(.cat-face-check) { max-width: 100%; overflow-wrap: anywhere; text-align: center; }

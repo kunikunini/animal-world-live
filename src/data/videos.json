@@ -1,0 +1,62 @@
+{
+  "$comment": "ライオン以外の収録映像。ファイル名は public/media/ と R2（https://media.kobakuni.com/<file>）で同じ。subjects は元ファイルの名前に書かれた種だけ（映っていても名前に無い種は入れない）。どの個体が映っているかは確かめていないので、その種の子みんなに同じ映像を出し、モニターに「どの子かは未確認」と書く。その種が 1 頭しかいない時だけ、その子の映像として出す。onR2 は R2 に上げ終えたか。false の映像は開発サーバーでだけ出す（公開サイトでは R2 に無いと読めないので、上げるまで出さない）。",
+  "videos": [
+    {
+      "id": "tapir-capybara-20261104",
+      "file": "tapir-capybara_20261104_720p.mp4",
+      "poster": "tapir-capybara_20261104_poster.jpg",
+      "duration": "3:05",
+      "recordedOn": "2026-11-04",
+      "onR2": false,
+      "title": { "ja": "バクとカピバラ", "en": "A tapir and a capybara" },
+      "subjects": [
+        { "species": ["アメリカバク"] },
+        { "species": ["カピバラ"] }
+      ]
+    },
+    {
+      "id": "hyena-20261104",
+      "file": "hyena_20261104_720p.mp4",
+      "poster": "hyena_20261104_poster.jpg",
+      "duration": "3:03",
+      "recordedOn": "2026-11-04",
+      "onR2": false,
+      "title": { "ja": "ブチハイエナ", "en": "Spotted hyena" },
+      "subjects": [{ "species": ["ブチハイエナ"] }]
+    },
+    {
+      "id": "pelican-kangaroo-mara-20261104",
+      "file": "pelican-kangaroo-mara_20261104_720p.mp4",
+      "poster": "pelican-kangaroo-mara_20261104_poster.jpg",
+      "duration": "3:04",
+      "recordedOn": "2026-11-04",
+      "onR2": false,
+      "title": { "ja": "ペリカンとカンガルーとマーラ", "en": "Pelicans, kangaroos and a mara" },
+      "subjects": [
+        { "species": ["モモイロペリカン"], "label": { "ja": "ペリカン", "en": "Pelicans" } },
+        { "species": ["オオカンガルー", "アカカンガルー"], "label": { "ja": "カンガルー", "en": "Kangaroos" } },
+        { "species": ["マーラ"] }
+      ]
+    },
+    {
+      "id": "pony-20261104",
+      "file": "pony_20261104_720p.mp4",
+      "poster": "pony_20261104_poster.jpg",
+      "duration": "2:38",
+      "recordedOn": "2026-11-04",
+      "onR2": false,
+      "title": { "ja": "ポニー", "en": "Ponies" },
+      "subjects": [{ "species": ["ポニー"] }]
+    },
+    {
+      "id": "squirrel-monkey-20261104",
+      "file": "squirrel-monkey_20261104_720p.mp4",
+      "poster": "squirrel-monkey_20261104_poster.jpg",
+      "duration": "2:41",
+      "recordedOn": "2026-11-04",
+      "onR2": false,
+      "title": { "ja": "リスザルのごはん", "en": "A squirrel monkey's meal" },
+      "subjects": [{ "species": ["コモンリスザル"] }]
+    }
+  ]
+}
