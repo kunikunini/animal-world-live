@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { SPAWN, WALK_RADIUS } from '../world/layout'
+import { SPAWN } from '../world/layout'
+import { clampToWalkable } from '../world/regions'
 import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
 import { toonMaterial } from '../render/toon'
@@ -90,13 +91,9 @@ function createMarker(): THREE.Mesh {
   return m
 }
 
-/** 世界の端より外には出ない（それ以外はどこでも歩ける。水場にも入れる） */
+/** 世界の端より外には出ない（4 つのワールドと、そのあいだの峠の道は歩ける。水場にも入れる） */
 function clampToWorld(p: THREE.Vector3): void {
-  const r = Math.hypot(p.x, p.z)
-  if (r > WALK_RADIUS) {
-    p.x *= WALK_RADIUS / r
-    p.z *= WALK_RADIUS / r
-  }
+  clampToWalkable(p)
 }
 
 const _push = new THREE.Vector3()
@@ -130,7 +127,7 @@ function pushOutOfColliders(p: THREE.Vector3, radius: number, colliders: Collide
 
 export function createPlayer(
   camera: THREE.PerspectiveCamera,
-  terrain: THREE.Mesh,
+  terrain: THREE.Object3D,
   canvas: HTMLCanvasElement,
   scene: THREE.Scene,
   colliders: Collider[],
@@ -244,7 +241,7 @@ export function createPlayer(
     const rect = canvas.getBoundingClientRect()
     ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1)
     raycaster.setFromCamera(ndc, camera)
-    const hits = raycaster.intersectObject(terrain, false)
+    const hits = raycaster.intersectObject(terrain, true)
     if (hits.length === 0) return
     _hit.copy(hits[0].point)
     goTo([{ x: _hit.x, z: _hit.z }])

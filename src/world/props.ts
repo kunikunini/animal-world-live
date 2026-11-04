@@ -3,6 +3,7 @@ import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { WATER_LEVEL, terrainHeight } from './terrain'
+import { OUTER_REGIONS, PASS_HALF_WIDTH, distToPassAxis } from './regions'
 import { toonMaterial } from '../render/toon'
 
 /** 円柱の当たり判定（xz 平面の円）。キャラとカメラがめり込まないために使う */
@@ -58,7 +59,11 @@ function createAcacias(rand: () => number, group: THREE.Group, colliders: Collid
     const x = Math.cos(a) * r
     const z = Math.sin(a) * r
     if (distToWater(x, z) < 24) continue
-    trees.push({ x, z, scale: 0.8 + rand() * 0.5 })
+    // 乱数の順番はいままでどおり（サバンナの木の並びを変えない）
+    const scale = 0.8 + rand() * 0.5
+    // 峠の道はあけておく
+    if (Math.hypot(x, z) > 105 && distToPassAxis(x, z) < PASS_HALF_WIDTH + 4) continue
+    trees.push({ x, z, scale })
   }
 
   const trunkGeo = new THREE.CylinderGeometry(0.22, 0.5, 1, 7, 1)
@@ -156,7 +161,9 @@ function createRocks(rand: () => number, group: THREE.Group, colliders: Collider
     const x = Math.cos(a) * r
     const z = Math.sin(a) * r
     if (distToWater(x, z) < 16 || distToKopje(x, z) < KOPJE.radius + 4) continue
-    placements.push({ x, z, s: 0.5 + rand() * 1.4, sink: 0.35 })
+    const rs = 0.5 + rand() * 1.4
+    if (Math.hypot(x, z) > 105 && distToPassAxis(x, z) < PASS_HALF_WIDTH + 2) continue
+    placements.push({ x, z, s: rs, sink: 0.35 })
   }
 
   const geo = new THREE.DodecahedronGeometry(1, 0)
@@ -289,17 +296,35 @@ function createWater(
  * 近い層は赤く低く、遠い層は高く、霧に溶けて淡くなる。頂点カラー（麓は暗く、峰は明るい）に
  * トゥーンの陰影が乗るので、太陽の向きで面の明暗が出る。
  */
-function createMountains(group: THREE.Group): void {
+interface RangeLayer {
+  r: number
+  h: number
+  spread: number
+  segs: number
+  foot: string
+  peak: string
+  seed: number
+}
+
+interface RangeOptions {
+  /** 山並みの輪の中心 */
+  cx: number
+  cz: number
+  layers: RangeLayer[]
+  /** 輪を開けておく向き（ラジアン。x = cos, z = sin）と半角。となりのワールドに面した側 */
+  gap?: { angle: number; half: number }
+  /** サバンナの輪: 各ワールドへの峠を切る */
+  cutPasses?: boolean
+  name: string
+}
+
+/** 山並みの輪。外側の層ほど高く、色は麓から峰へ。gap と峠のところは地面の下まで下げる */
+function createRange(group: THREE.Group, o: RangeOptions): void {
   const ridgeNoise = new Simplex2D(WORLD_SEED + 77)
-  const layers = [
-    { r: 172, h: 20, spread: 10, segs: 200, foot: '#b86a4e', peak: '#e0a080', seed: 0.0 },
-    { r: 212, h: 36, spread: 16, segs: 180, foot: '#c07e6c', peak: '#e8b6a2', seed: 3.3 },
-    { r: 258, h: 54, spread: 24, segs: 160, foot: '#c89090', peak: '#eecbc4', seed: 7.1 },
-  ]
   const colFoot = new THREE.Color()
   const colPeak = new THREE.Color()
 
-  for (const L of layers) {
+  for (const L of o.layers) {
     const positions: number[] = []
     const colors: number[] = []
     const indices: number[] = []
@@ -315,12 +340,23 @@ function createMountains(group: THREE.Group): void {
       const sharp = 1 - Math.abs(ridge(a, 7, L.seed + 11))
       const fine = ridge(a, 19, L.seed + 23) * 0.5
       const height = L.h * (0.45 + 0.55 * broad) + L.spread * (sharp * 0.8 + fine * 0.4)
+      // 切れ目: 開けておく向きと峠では、山を地面の下まで下げる
+      let keep = 1
+      if (o.gap) {
+        const da = Math.abs(Math.atan2(Math.sin(a - o.gap.angle), Math.cos(a - o.gap.angle)))
+        keep = Math.min(keep, smoothstep(o.gap.half, o.gap.half + 0.35, da))
+      }
+      if (o.cutPasses) {
+        const mx = o.cx + Math.cos(a) * L.r
+        const mz = o.cz + Math.sin(a) * L.r
+        keep = Math.min(keep, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxis(mx, mz)))
+      }
       // 行0: 麓（外側・低い）、行1: 肩、行2: 峰
-      const ys = [-4, height * (0.42 + 0.12 * ridge(a, 5, L.seed + 31)), height]
+      const ys = [-4, height * (0.42 + 0.12 * ridge(a, 5, L.seed + 31)), height].map((y, row) => (row === 0 ? y : -6 + (y + 6) * keep))
       const rs = [L.r + 14, L.r + 5, L.r]
       for (let row = 0; row < rows; row++) {
         const rr = rs[row] + (row === 2 ? ridge(a, 13, L.seed + 41) * 3 : 0)
-        positions.push(Math.cos(a) * rr, ys[row], Math.sin(a) * rr)
+        positions.push(o.cx + Math.cos(a) * rr, ys[row], o.cz + Math.sin(a) * rr)
         const t = row === 0 ? 0 : row === 1 ? 0.45 : 0.85 + 0.15 * sharp
         _c.copy(colFoot).lerp(colPeak, t)
         colors.push(_c.r, _c.g, _c.b)
@@ -342,9 +378,60 @@ function createMountains(group: THREE.Group): void {
     geo.computeVertexNormals()
     const mesh = new THREE.Mesh(geo, toonMaterial({ vertexColors: true, side: THREE.DoubleSide }))
     mesh.frustumCulled = false
-    mesh.name = `mountains-${L.r}`
+    mesh.name = `${o.name}-${L.r}`
     group.add(mesh)
   }
+}
+
+/**
+ * 遠くの山脈。サバンナの輪（いままでの 3 層）には各ワールドへの峠を切る。
+ * ほかのワールドにも、それぞれの色の山並みを、サバンナに面した側を開けて置く
+ */
+function createMountains(group: THREE.Group): void {
+  createRange(group, {
+    cx: 0,
+    cz: 0,
+    cutPasses: true,
+    name: 'mountains',
+    layers: [
+      { r: 172, h: 20, spread: 10, segs: 200, foot: '#b86a4e', peak: '#e0a080', seed: 0.0 },
+      { r: 212, h: 36, spread: 16, segs: 180, foot: '#c07e6c', peak: '#e8b6a2', seed: 3.3 },
+      { r: 258, h: 54, spread: 24, segs: 160, foot: '#c89090', peak: '#eecbc4', seed: 7.1 },
+    ],
+  })
+  for (const r of OUTER_REGIONS) {
+    const toOrigin = Math.atan2(-r.z, -r.x)
+    const look = OUTER_LOOKS[r.key as 'north' | 'jungle' | 'south']
+    createRange(group, {
+      cx: r.x,
+      cz: r.z,
+      gap: { angle: toOrigin, half: 0.95 },
+      name: `mountains-${r.key}`,
+      layers: look.map((l, i) => ({ ...l, segs: 150, seed: 11 + i * 4.1 + r.x * 0.01 })),
+    })
+  }
+}
+
+/** ほかのワールドの山並みの色と高さ */
+const OUTER_LOOKS: Record<'north' | 'jungle' | 'south', Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
+  // 北: 青い麓に白い雪の峰
+  north: [
+    { r: 150, h: 26, spread: 14, foot: '#8ea6c2', peak: '#ffffff' },
+    { r: 188, h: 44, spread: 20, foot: '#9fb4d0', peak: '#f7fbff' },
+    { r: 230, h: 64, spread: 26, foot: '#b6c6de', peak: '#ffffff' },
+  ],
+  // ジャングル: 濃い緑の丸い山
+  jungle: [
+    { r: 150, h: 20, spread: 8, foot: '#22683b', peak: '#4fa456' },
+    { r: 188, h: 32, spread: 12, foot: '#2f7a4a', peak: '#6dbb6a' },
+    { r: 230, h: 46, spread: 16, foot: '#5f9f7a', peak: '#9fd0a0' },
+  ],
+  // 南半球: 赤い台地
+  south: [
+    { r: 150, h: 14, spread: 6, foot: '#9c4127', peak: '#de7f4c' },
+    { r: 188, h: 24, spread: 9, foot: '#b45a38', peak: '#eb9a66' },
+    { r: 230, h: 36, spread: 12, foot: '#c9806a', peak: '#f0bfa0' },
+  ],
 }
 
 /**

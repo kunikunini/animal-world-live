@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { createScene } from './world/scene'
 import { createTerrain } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
+import { createBiomeProps } from './world/biomes'
 import { createPlayer } from './player/controller'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
@@ -140,6 +141,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   camera.layers.enable(NO_REFLECT_LAYER)
   const props = createProps({ mobile, camera })
   scene.add(props.group)
+  // サバンナから峠を抜けた先の 3 つのワールドの木や岩
+  scene.add(createBiomeProps({ mobile, colliders: props.colliders }).group)
 
   const spot = createObservationSpot()
   scene.add(spot.group)
