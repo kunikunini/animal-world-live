@@ -423,11 +423,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
     spot.update(time, distance)
-    const wasArrived = arrived
     arrived = distance < SPOT.arriveRadius
+    // 着いたらボタンが「スコープをのぞく」に変わる。のぞくのは押した時だけ（勝手には開かない）
     hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
-    // 立った瞬間に一度だけのぞく。戻ったあと、もう一度見たい時はボタンから
-    if (arrived && !wasArrived && !observe.isOpen() && !book.isOpen() && !mapView.isOpen()) void openScope()
 
     // 出会い: そばにいる個体を決める。切り替えは「はっきり近い状態が少し続いたら」
     let closest: { id: string; d: number } | null = null

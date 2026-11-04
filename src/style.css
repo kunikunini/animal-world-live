@@ -2259,6 +2259,8 @@ body.is-reduce-motion .is-refresh {
   transition: scale 0.45s cubic-bezier(0.5, 0, 0.75, 0), filter 0.45s;
   transform-origin: 50% 46%;
 }
+/* 縦に並ぶ段は縮めない（横スクロールの段は中身の高さを最小にしないので、詰まると潰れて上の縁だけになる） */
+.catalog .cat-scroll > * { flex-shrink: 0; }
 .catalog.is-leave.is-out .cat-scroll { scale: 0.86; filter: blur(4px); }
 .cat-glow {
   position: absolute;
@@ -2878,3 +2880,107 @@ body.is-scoping .toast { display: none; }
 body.is-reduce-motion .cat-live-dot { animation: none; }
 body.is-reduce-motion .catalog .cat-scroll { transition: none; }
 body.is-reduce-motion .catalog.is-leave.is-out .cat-scroll { scale: none; filter: none; }
+
+/* ==========================================================================
+   観察スポットに着いた時の「スコープをのぞく」。押さないと入れないので、押したくなる大きなボタンにする
+   ぽんと出る → ふわふわ浮く・光が走る・金の輪が広がる・双眼鏡があたりを見回す・きらきら
+   ========================================================================== */
+@keyframes spot-pop { 0% { opacity: 0; scale: 0.3; } 55% { opacity: 1; scale: 1.12; } 78% { scale: 0.96; } 100% { opacity: 1; scale: 1; } }
+@keyframes spot-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+@keyframes spot-shine { 0%, 50% { background-position: -220% 0, 0 0; } 85%, 100% { background-position: 320% 0, 0 0; } }
+@keyframes spot-ring { 0% { box-shadow: 0 0 0 0 rgba(244, 194, 66, 0.85); } 100% { box-shadow: 0 0 0 22px rgba(244, 194, 66, 0); } }
+@keyframes spot-look { 0%, 55%, 100% { rotate: 0deg; } 66% { rotate: -16deg; } 80% { rotate: 14deg; } 92% { rotate: -5deg; } }
+@keyframes spot-twinkle { 0%, 100% { opacity: 0.2; scale: 0.6; rotate: 0deg; } 50% { opacity: 1; scale: 1.15; rotate: 90deg; } }
+
+.hud-spot[data-mode="scope"] {
+  isolation: isolate;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: calc(18px + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: auto;
+  min-width: 0;
+  height: 64px;
+  min-height: 64px;
+  padding: 0 28px 0 12px;
+  gap: 12px;
+  border-radius: var(--r-pill);
+  border: 3px solid #fff;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(150, 50, 0, 0.35);
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.65) 50%, rgba(255, 255, 255, 0) 70%) no-repeat,
+    linear-gradient(160deg, #ff9a3c 0%, var(--sun) 52%, #e04f0a 100%);
+  background-size: 55% 100%, 100% 100%;
+  background-position: -220% 0, 0 0;
+  box-shadow: 0 6px 0 #b8460a, 0 14px 28px rgba(242, 106, 27, 0.5);
+  animation:
+    spot-pop 0.6s cubic-bezier(0.3, 0.9, 0.3, 1.2) both,
+    spot-bob 2.4s ease-in-out 0.6s infinite,
+    spot-shine 3s ease-in-out 0.9s infinite;
+}
+.hud-spot[data-mode="scope"]:hover {
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.65) 50%, rgba(255, 255, 255, 0) 70%) no-repeat,
+    linear-gradient(160deg, #ffa64f 0%, #f5772a 52%, #e45812 100%);
+  background-size: 55% 100%, 100% 100%;
+}
+/* 押すと沈む */
+.hud-spot[data-mode="scope"]:active {
+  transform: translateX(-50%) translateY(5px);
+  box-shadow: 0 1px 0 #b8460a, 0 6px 14px rgba(242, 106, 27, 0.45);
+}
+/* 金の輪（ボタンの外にだけ出る） */
+.hud-spot[data-mode="scope"]::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: inherit;
+  animation: spot-ring 1.8s ease-out 0.5s infinite;
+  pointer-events: none;
+}
+/* きらきら（右上と左下） */
+.hud-spot[data-mode="scope"]::after {
+  content: '✦';
+  position: absolute;
+  right: 6px;
+  top: -16px;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: -1px -1px 0 #fff, 1px 1px 0 #fff, -232px 60px 0 #fff6b0;
+  animation: spot-twinkle 1.6s ease-in-out 0.6s infinite;
+  pointer-events: none;
+}
+.hud-spot[data-mode="scope"] .ico {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+  animation: spot-look 2.8s ease-in-out 1s infinite;
+}
+.hud-spot[data-mode="scope"] .hud-spot-text { display: inline; }
+
+/* スマホ縦: スティックの上、画面のまん中に出す */
+@media (max-width: 480px) {
+  .hud-spot[data-mode="scope"] { bottom: calc(24px + 124px + 22px + var(--safe-bottom)); }
+}
+/* スマホ横: 下のまん中（スティックとジャンプの間） */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud-spot[data-mode="scope"] { bottom: calc(14px + var(--safe-bottom)); height: 56px; min-height: 56px; font-size: 17px; }
+  .hud-spot[data-mode="scope"] .ico { width: 36px; height: 36px; padding: 6px; }
+}
+
+body.is-reduce-motion .hud-spot[data-mode="scope"],
+body.is-reduce-motion .hud-spot[data-mode="scope"] .ico,
+body.is-reduce-motion .hud-spot[data-mode="scope"]::before,
+body.is-reduce-motion .hud-spot[data-mode="scope"]::after { animation: none; }
+body.is-reduce-motion .hud-spot[data-mode="scope"]::before { box-shadow: 0 0 0 4px rgba(244, 194, 66, 0.7); }
