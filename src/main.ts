@@ -23,6 +23,8 @@ import { createHome } from './ui/home'
 import { createStory } from './ui/story'
 import { createIris } from './ui/iris'
 import { createSettings } from './ui/settings'
+import { createCatalog } from './ui/catalog'
+import { createScope } from './ui/scope'
 import { animalName, applyStatic, onLangChange, t } from './ui/i18n'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
@@ -57,6 +59,18 @@ function createShell() {
   const story = createStory()
   const iris = createIris()
   const settings = createSettings()
+  const catalog = createCatalog(store)
+  const scope = createScope()
+
+  // アニマルスコープの一覧から: 映像のカードでモニター、帳のボタンで帳（閉じると一覧に戻る）
+  catalog.onWatch((animal) => {
+    met.mark(animal.id)
+    observe.open(animal, 'world')
+  })
+  catalog.onOpenBook(() => book.open('world'))
+  book.onOpenChange((open) => {
+    if (!open && !observe.isOpen()) catalog.restoreFocus()
+  })
 
   // ともだち帳の「会いに行く」: 3D を歩かずに映像へ直行
   book.onVisit((animal) => {
@@ -74,6 +88,7 @@ function createShell() {
   observe.onOpenChange((open) => {
     if (open) return
     if (book.isOpen()) book.restoreFocus()
+    else if (catalog.isOpen()) catalog.restoreFocus()
     else if (store.unseen().length > 0) hud.pulseBook()
   })
   // 登録直後の「ともだち帳を見る」: モニターを閉じて帳を開く（新しい子の札が見える）
@@ -95,7 +110,7 @@ function createShell() {
   applyMotion(settings.reduceMotion)
   settings.onReduceMotionChange(applyMotion)
 
-  return { store, met, hud, observe, book, home, story, iris, settings }
+  return { store, met, hud, observe, book, home, story, iris, settings, catalog, scope }
 }
 
 type Shell = ReturnType<typeof createShell>
@@ -113,7 +128,7 @@ interface WorldHandle {
  * （ホームにいる間に裏で準備しておき、「のぞいてみる」で待たせないため）
  */
 function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false): WorldHandle {
-  const { hud, observe, book, store, met } = shell
+  const { hud, observe, book, store, met, catalog, scope } = shell
   const mobile = isMobile()
   const { renderer, scene, camera, sun, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
   if (mobile) sun.shadow.mapSize.set(1024, 1024)
@@ -179,8 +194,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   if (mobile || new URLSearchParams(location.search).get('stick') === '1') joystick.show()
 
   // 「観察スポットへ」: 南の登り口を経由して台地の頂上へ
+  // 着いている時は同じボタンが「スコープをのぞく」になる
   hud.onGoToSpot(() => {
-    player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
+    if (arrived) void openScope()
+    else player.goTo([SPOT.approach, { x: SPOT.x, z: SPOT.z }])
   })
 
   // 出会い: そばにいるライオンの頭の上に「双眼鏡 + 名前」のピン。タップでその個体の観察モニター
@@ -207,8 +224,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   // 何かの画面が開いている間は、ワールドのタップとキーを止め、「ホームへ」も重ねない
   let paused = startPaused
+  // アニマルスコープの一覧を見ている間は true。描画も止める（canvas は最後の絵のまま一覧の下に隠れる）
+  let viewing = false
   const syncInput = () => {
-    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen()
+    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()
     player.setInputEnabled(!blocked && !paused)
     joystick.setEnabled(!blocked && !paused)
     hud.setOverlayOpen(blocked)
@@ -217,6 +236,38 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   observe.onOpenChange(syncInput)
   book.onOpenChange(syncInput)
   syncInput()
+
+  // 観察スポットに立つ → スコープをのぞく演出 → アニマルスコープ（動画一覧）
+  const body = document.body
+  let unscopeTimer = 0
+  const openScope = async () => {
+    if (viewing || paused || observe.isOpen() || book.isOpen() || mapView.isOpen()) return
+    viewing = true
+    player.goTo([])
+    window.clearTimeout(unscopeTimer)
+    body.classList.remove('is-unscoping')
+    const animate = !body.classList.contains('is-reduce-motion')
+    if (animate) body.classList.add('is-scoping')
+    catalog.open(animate)
+    if (animate) {
+      const { skipped } = await scope.play()
+      if (skipped) catalog.settle()
+    }
+    body.classList.remove('is-scoping')
+    if (catalog.isOpen()) body.classList.add('is-viewing')
+  }
+  catalog.onOpenChange((open) => {
+    syncInput()
+    if (open) return
+    // 一覧を閉じた: 世界がぼけた寄りから戻ってくる。HUD もふわっと戻る
+    viewing = false
+    clock.getDelta()
+    body.classList.remove('is-viewing', 'is-scoping')
+    if (!body.classList.contains('is-reduce-motion')) {
+      body.classList.add('is-unscoping')
+      unscopeTimer = window.setTimeout(() => body.classList.remove('is-unscoping'), 650)
+    }
+  })
 
   // 左上のミニマップ。タップした場所へ歩く（画面が開いている間は無効）。「地図を広げる」で全体地図
   const minimap = createMinimap()
@@ -289,7 +340,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 止めたまま作った時に描く枚数（後処理のシェーダーもここで用意される）
   let warmFrames = startPaused ? 2 : 0
   const tick = () => {
-    if (paused) {
+    if (paused || viewing) {
       if (warmFrames > 0) {
         warmFrames--
         postfx.render()
@@ -312,8 +363,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
     spot.update(time, distance)
+    const wasArrived = arrived
     arrived = distance < SPOT.arriveRadius
-    hud.setGoToSpotVisible(!arrived && !player.isAutoWalking())
+    hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
+    // 立った瞬間に一度だけのぞく。戻ったあと、もう一度見たい時はボタンから
+    if (arrived && !wasArrived && !observe.isOpen() && !book.isOpen() && !mapView.isOpen()) void openScope()
 
     // 出会い: そばにいる個体を決める。切り替えは「はっきり近い状態が少し続いたら」
     let closest: { id: string; d: number } | null = null

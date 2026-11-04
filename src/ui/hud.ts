@@ -19,8 +19,8 @@ export interface Hud {
   pulseBook: () => void
   /** まだ帳で見ていない新しいともだちがいる間、帳のボタンに点を付ける（数は出さない） */
   setBookNew: (on: boolean) => void
-  /** 「観察スポットへ」ボタンの表示切り替え */
-  setGoToSpotVisible: (visible: boolean) => void
+  /** 「観察スポットへ」ボタン。go: スポットへ歩く／scope: 着いている時の「スコープをのぞく」／hidden: 出さない */
+  setSpotMode: (mode: 'go' | 'scope' | 'hidden') => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
   setSpotLabel: (screen: { x: number; y: number } | null, distance: number) => void
   /** ボタンを持たない小さな通知。2〜3秒で消える */
@@ -64,6 +64,21 @@ export function createHud(): Hud {
   fpsEl.hidden = new URLSearchParams(location.search).get('debug') !== '1'
 
   let lastLabelVisible = false
+  let spotMode: 'go' | 'scope' | 'hidden' = 'go'
+  const spotText = goToSpotBtn.querySelector<HTMLElement>('[data-i18n]')
+  const applySpotMode = () => {
+    goToSpotBtn.hidden = spotMode === 'hidden'
+    const key = spotMode === 'scope' ? 'scopeOpen' : 'gotoSpot'
+    goToSpotBtn.dataset.mode = spotMode
+    goToSpotBtn.dataset.i18nAria = key
+    goToSpotBtn.dataset.i18nTitle = key
+    goToSpotBtn.setAttribute('aria-label', t(key))
+    goToSpotBtn.title = t(key)
+    if (spotText) {
+      spotText.dataset.i18n = key
+      spotText.textContent = t(key)
+    }
+  }
   let toastTimer = 0
 
   return {
@@ -95,8 +110,10 @@ export function createHud(): Hud {
       bookDot.hidden = !on
       openBookBtn.setAttribute('aria-label', on ? t('bookNew') : t('book'))
     },
-    setGoToSpotVisible: (visible) => {
-      goToSpotBtn.hidden = !visible
+    setSpotMode: (mode) => {
+      if (mode === spotMode) return
+      spotMode = mode
+      applySpotMode()
     },
     setSpotLabel: (screen, distance) => {
       const visible = screen !== null
