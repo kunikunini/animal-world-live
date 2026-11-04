@@ -320,8 +320,11 @@ button {
   /* 絵から切り抜いた双眼鏡（絵の幅・高さに対する割合）と、その中のレンズ（双眼鏡の幅・高さに対する割合） */
   --bino: url('/home/kv-phone-landscape-bino.webp');
   --bino-x: 30.38%; --bino-y: 41.45%; --bino-w: 39.47%; --bino-h: 39.53%;
-  --lens-l-x: 6.48%; --lens-l-y: 22.07%; --lens-l-w: 38.50%; --lens-l-h: 68.31%;
-  --lens-r-x: 55.53%; --lens-r-y: 22.58%; --lens-r-w: 38.35%; --lens-r-h: 68.04%;
+  --lens-l-x: 6.21%; --lens-l-y: 21.51%; --lens-l-w: 39.09%; --lens-l-h: 69.09%;
+  --lens-r-x: 55.00%; --lens-r-y: 21.77%; --lens-r-w: 38.64%; --lens-r-h: 68.55%;
+  /* レンズの前に帽子がかかる絵では、その部分を切り欠く（白＝見せる） */
+  --lens-l-mask: none;
+  --lens-r-mask: none;
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -341,8 +344,9 @@ button {
     --kv-ar: 1.3333;
     --bino: url('/home/kv-tablet-landscape-bino.webp');
     --bino-x: 29.21%; --bino-y: 44.48%; --bino-w: 42.06%; --bino-h: 33.06%;
-    --lens-l-x: 5.87%; --lens-l-y: 25.30%; --lens-l-w: 39.04%; --lens-l-h: 66.23%;
-    --lens-r-x: 55.03%; --lens-r-y: 25.30%; --lens-r-w: 39.04%; --lens-r-h: 66.23%;
+    --lens-l-x: 4.93%; --lens-l-y: 24.51%; --lens-l-w: 40.72%; --lens-l-h: 69.08%;
+    --lens-r-x: 54.02%; --lens-r-y: 24.23%; --lens-r-w: 41.05%; --lens-r-h: 69.64%;
+    --lens-r-mask: url('/home/kv-tablet-landscape-lens-r-mask.png');
   }
 }
 
@@ -353,8 +357,10 @@ button {
     --kv-ar: 0.75;
     --bino: url('/home/kv-tablet-portrait-bino.webp');
     --bino-x: 25.60%; --bino-y: 47.44%; --bino-w: 48.25%; --bino-h: 22.44%;
-    --lens-l-x: 6.69%; --lens-l-y: 25.15%; --lens-l-w: 39.91%; --lens-l-h: 64.35%;
-    --lens-r-x: 55.64%; --lens-r-y: 24.65%; --lens-r-w: 39.80%; --lens-r-h: 64.17%;
+    --lens-l-x: 6.11%; --lens-l-y: 24.00%; --lens-l-w: 41.22%; --lens-l-h: 66.46%;
+    --lens-r-x: 54.77%; --lens-r-y: 23.69%; --lens-r-w: 41.22%; --lens-r-h: 66.77%;
+    --lens-l-mask: url('/home/kv-tablet-portrait-lens-l-mask.png');
+    --lens-r-mask: url('/home/kv-tablet-portrait-lens-r-mask.png');
   }
 }
 
@@ -365,8 +371,10 @@ button {
     --kv-ar: 0.5628;
     --bino: url('/home/kv-phone-portrait-bino.webp');
     --bino-x: 26.04%; --bino-y: 44.62%; --bino-w: 47.93%; --bino-h: 18.18%;
-    --lens-l-x: 6.91%; --lens-l-y: 25.96%; --lens-l-w: 40.73%; --lens-l-h: 60.43%;
-    --lens-r-x: 53.63%; --lens-r-y: 25.91%; --lens-r-w: 40.29%; --lens-r-h: 59.77%;
+    --lens-l-x: 6.21%; --lens-l-y: 25.33%; --lens-l-w: 41.91%; --lens-l-h: 62.17%;
+    --lens-r-x: 53.22%; --lens-r-y: 25.66%; --lens-r-w: 41.24%; --lens-r-h: 61.18%;
+    --lens-l-mask: none;
+    --lens-r-mask: none;
   }
 }
 
@@ -448,7 +456,8 @@ button {
 }
 
 /* レンズ: 4 つのワールドを順に（サバンナ＝絵のままのライオン → 北の世界 → ジャングル → 南半球）。
-   1 枚の横長の絵の左半分を左のレンズに、右半分を右のレンズに映す */
+   1 枚の横長の絵の左半分を左のレンズに、右半分を右のレンズに映す。
+   円は元の絵のレンズの青いふちの内側に当てはめたもの（ふちの影ごと覆い、影は下で描き直す） */
 .home-lens {
   position: absolute;
   display: block;
@@ -456,40 +465,59 @@ button {
   overflow: hidden;
 }
 
-.home-lens.l { left: var(--lens-l-x); top: var(--lens-l-y); width: var(--lens-l-w); height: var(--lens-l-h); }
-.home-lens.r { left: var(--lens-r-x); top: var(--lens-r-y); width: var(--lens-r-w); height: var(--lens-r-h); }
+.home-lens.l {
+  left: var(--lens-l-x);
+  top: var(--lens-l-y);
+  width: var(--lens-l-w);
+  height: var(--lens-l-h);
+  -webkit-mask: var(--lens-l-mask) center / 100% 100% no-repeat;
+  mask: var(--lens-l-mask) center / 100% 100% no-repeat;
+}
 
+.home-lens.r {
+  left: var(--lens-r-x);
+  top: var(--lens-r-y);
+  width: var(--lens-r-w);
+  height: var(--lens-r-h);
+  -webkit-mask: var(--lens-r-mask) center / 100% 100% no-repeat;
+  mask: var(--lens-r-mask) center / 100% 100% no-repeat;
+}
+
+/* 絵の上に重ねる 2 層: 元の絵と同じふちの影（上が太く、横は細く、下はほとんどない）と、左上のうすい光。
+   絵と一緒に出し入れする（ライオンの時は元の絵の影だけになるように） */
 .lens-pic {
+  --lip: radial-gradient(circle farthest-side at 50% 52%, rgba(14, 20, 42, 0) 91.5%, rgba(14, 20, 42, 0.55) 96%, rgba(14, 20, 42, 0.8) 100%);
+  --gloss: radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 34%);
   position: absolute;
   inset: 0;
   display: block;
   opacity: 0;
   background-repeat: no-repeat;
-  background-size: 200% auto;
+  background-size: 100% 100%, 100% 100%, 200% auto;
   animation: home-lens-slot 24s linear infinite both;
 }
 
-.home-lens.l .lens-pic { background-position: 0% 50%; }
-.home-lens.r .lens-pic { background-position: 100% 50%; }
-.lens-pic.north { background-image: url('/home/lens-north.webp'); animation-delay: 5s; }
-.lens-pic.jungle { background-image: url('/home/lens-jungle.webp'); animation-delay: 11s; }
-.lens-pic.south { background-image: url('/home/lens-south.webp'); animation-delay: 17s; }
-
-/* レンズのガラス: 内側のふちの影と、左上の光 */
-.home-lens::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 2px rgba(16, 36, 80, 0.28), inset 0 0.5em 1em rgba(10, 20, 50, 0.18);
-  background: radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 38%);
-}
+.home-lens.l .lens-pic { background-position: center, center, 0% 50%; }
+.home-lens.r .lens-pic { background-position: center, center, 100% 50%; }
+/* 次の絵は上の層に重なって出てくるので、前の絵（北・ジャングル）は次が出きるまで残してから消す。
+   最後の南半球だけはゆっくり消えて、元の絵のライオンに戻る。重なるのはいつも 2 枚だけ */
+.lens-pic.north { background-image: var(--lip), var(--gloss), url('/home/lens-north.webp'); animation-name: home-lens-hold; animation-delay: 5s; }
+.lens-pic.jungle { background-image: var(--lip), var(--gloss), url('/home/lens-jungle.webp'); animation-name: home-lens-hold; animation-delay: 11s; }
+.lens-pic.south { background-image: var(--lip), var(--gloss), url('/home/lens-south.webp'); animation-delay: 17s; }
 
 @keyframes home-lens-slot {
   0% { opacity: 0; }
   5% { opacity: 1; }
   25% { opacity: 1; }
   30% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes home-lens-hold {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  30% { opacity: 1; }
+  30.5% { opacity: 0; }
   100% { opacity: 0; }
 }
 
