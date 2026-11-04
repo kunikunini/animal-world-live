@@ -350,6 +350,14 @@ function createRange(group: THREE.Group, o: RangeOptions): void {
         const mx = o.cx + Math.cos(a) * L.r
         const mz = o.cz + Math.sin(a) * L.r
         keep = Math.min(keep, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxis(mx, mz)))
+        // 外側の層はほかのワールドの歩ける円の中を横切る。円（＋余白）にかかる所も地面の下まで下げる。
+        // 麓から峰（稜線のゆれ込み）までの帯で測る
+        const ca = Math.cos(a)
+        const sa = Math.sin(a)
+        for (const r of OUTER_REGIONS) {
+          const d = distToSegment(r.x, r.z, o.cx + ca * (L.r - 3), o.cz + sa * (L.r - 3), o.cx + ca * (L.r + 14), o.cz + sa * (L.r + 14))
+          keep = Math.min(keep, smoothstep(r.walk + 8, r.walk + 36, d))
+        }
       }
       // 行0: 麓（外側・低い）、行1: 肩、行2: 峰
       const ys = [-4, height * (0.42 + 0.12 * ridge(a, 5, L.seed + 31)), height].map((y, row) => (row === 0 ? y : -6 + (y + 6) * keep))

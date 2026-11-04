@@ -1,5 +1,5 @@
 import { smoothstep } from './noise'
-import { WALK_RADIUS } from './layout'
+import { KOPJE, WALK_RADIUS } from './layout'
 
 /**
  * 地続きの 4 つのワールド（D-30 の 7 つのうち、3D にするもの）。
@@ -115,6 +115,102 @@ export function clampToWalkable(p: { x: number; z: number }): void {
   }
   p.x = bx
   p.z = bz
+}
+
+/**
+ * 歩ける場所のどの枝にいるか。サバンナの円の中は africa、峠とその先のワールドの円はそのワールド。
+ * 円の中なら inCircle。峠どうし・ワールドどうしはサバンナでしかつながらない
+ */
+function branchOf(x: number, z: number): { key: RegionKey; inCircle: boolean } {
+  const tol = 0.5
+  if (Math.hypot(x - SAVANNA.x, z - SAVANNA.z) <= SAVANNA.walk + tol) return { key: 'africa', inCircle: true }
+  let best: Region = OUTER_REGIONS[0]
+  let bd = Infinity
+  for (const r of OUTER_REGIONS) {
+    if (Math.hypot(x - r.x, z - r.z) <= r.walk + tol) return { key: r.key, inCircle: true }
+    const s = passSegment(r)
+    const d = closestOnSegment(x, z, s.ax, s.az, s.bx, s.bz).d
+    if (d < bd) {
+      bd = d
+      best = r
+    }
+  }
+  return { key: best.key, inCircle: false }
+}
+
+/** 峠の軸の上の点。t = 原点からの距離 */
+function onPassAxis(r: Region, t: number): { x: number; z: number } {
+  const len = Math.hypot(r.x, r.z)
+  return { x: (r.x / len) * t, z: (r.z / len) * t }
+}
+
+/**
+ * from から to へ歩く経由点の列（最後が目的地）。目的地が歩けない場所なら、いちばん近い縁へ寄せる。
+ * ワールドをまたぐときは峠を通る: 今のワールドの峠 → サバンナ → 目的地の峠 → 目的地。
+ * 円と峠の道はそれぞれ凸なので、円の中から峠へ入る時は峠の口（円の内側の軸上）を経由する
+ */
+export function routeTo(from: { x: number; z: number }, to: { x: number; z: number }): Array<{ x: number; z: number }> {
+  const dest = { x: to.x, z: to.z }
+  clampToWalkable(dest)
+  const a = branchOf(from.x, from.z)
+  const b = branchOf(dest.x, dest.z)
+  const route: Array<{ x: number; z: number }> = []
+  // 峠の口: サバンナ側は円の 15m 内側、ワールド側は円の 5m 内側（どちらも峠の道の中）
+  const savannaMouth = (r: Region) => onPassAxis(r, SAVANNA.walk - 15)
+  const outerMouth = (r: Region) => onPassAxis(r, Math.hypot(r.x, r.z) - r.walk + 5)
+  const outer = (k: RegionKey) => OUTER_REGIONS.find((r) => r.key === k) as Region
+  if (a.key === b.key) {
+    // 同じ枝: 円の中どうし・峠の中どうしはまっすぐ。円と峠のあいだは峠の口を通る
+    if (a.key !== 'africa' && a.inCircle !== b.inCircle) route.push(outerMouth(outer(a.key)))
+  } else {
+    if (a.key !== 'africa') {
+      const r = outer(a.key)
+      if (a.inCircle) route.push(outerMouth(r))
+      route.push(savannaMouth(r))
+    }
+    if (b.key !== 'africa') {
+      const r = outer(b.key)
+      route.push(savannaMouth(r))
+      if (b.inCircle) route.push(outerMouth(r))
+    }
+  }
+  route.push(dest)
+  // コピエ（岩山）を横切る区間は、脇を回る経由点を足す（崖の岩に引っかからない）
+  const out: Array<{ x: number; z: number }> = []
+  let prev = { x: from.x, z: from.z }
+  for (const p of route) {
+    aroundKopje(prev, p, out, 0)
+    prev = p
+  }
+  return out
+}
+
+/** コピエからこれより近くを通る区間は回り道にする（崖の岩は中心から 30m 以内）。回る経由点はこの距離に置く */
+const KOPJE_CLEAR = KOPJE.radius + 8
+const KOPJE_AROUND = KOPJE.radius + 12
+
+/** a → b を out に足す（a は足さない）。コピエを横切るなら、いちばん近づく所の外側に経由点を置いて分ける */
+function aroundKopje(a: { x: number; z: number }, b: { x: number; z: number }, out: Array<{ x: number; z: number }>, depth: number): void {
+  const c = closestOnSegment(KOPJE.x, KOPJE.z, a.x, a.z, b.x, b.z)
+  const da = Math.hypot(a.x - KOPJE.x, a.z - KOPJE.z)
+  const db = Math.hypot(b.x - KOPJE.x, b.z - KOPJE.z)
+  // コピエそのものへ行く時（端がコピエの近く）は、いままでどおりまっすぐ
+  if (depth >= 3 || c.d >= KOPJE_CLEAR || da < KOPJE_CLEAR || db < KOPJE_CLEAR) {
+    out.push(b)
+    return
+  }
+  let ux = c.x - KOPJE.x
+  let uz = c.z - KOPJE.z
+  let len = Math.hypot(ux, uz)
+  if (len < 1e-3) {
+    // 真ん中を通る: 進む向きの左を回る
+    ux = -(b.z - a.z)
+    uz = b.x - a.x
+    len = Math.hypot(ux, uz) || 1
+  }
+  const d = { x: KOPJE.x + (ux / len) * KOPJE_AROUND, z: KOPJE.z + (uz / len) * KOPJE_AROUND }
+  aroundKopje(a, d, out, depth + 1)
+  aroundKopje(d, b, out, depth + 1)
 }
 
 export interface BiomeWeights {

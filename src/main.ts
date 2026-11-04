@@ -4,7 +4,7 @@ import { createTerrain } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
 import { createResidents } from './world/residents'
-import { OUTER_REGIONS, biomeAt, regionAt } from './world/regions'
+import { OUTER_REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
@@ -292,15 +292,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   // 左上のミニマップ。タップした場所へ歩く（画面が開いている間は無効）。「地図を広げる」で全体地図
   const minimap = createMinimap()
+  // 地図のタップ: ワールドをまたぐ時は峠を通って歩く（北とジャングルのように直接つながっていないワールドもある）
+  const walkTo = (x: number, z: number) => player.goTo(routeTo(player.object.position, { x, z }))
   minimap.onPick((x, z) => {
     if (observe.isOpen() || book.isOpen() || mapView.isOpen()) return
-    player.goTo([{ x, z }])
+    walkTo(x, z)
   })
   minimap.onExpand(() => {
     if (observe.isOpen() || book.isOpen()) return
     mapView.open()
   })
-  mapView.onPick((x, z) => player.goTo([{ x, z }]))
+  mapView.onPick(walkTo)
   mapView.onOpenChange(() => syncInput())
   minimap.show()
   let minimapTimer = 0
