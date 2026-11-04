@@ -12,6 +12,8 @@ export interface Iris {
   close: () => Promise<void>
   open: () => Promise<void>
   setReduceMotion: (on: boolean) => void
+  /** 幕が閉じている間の「じゅんびちゅう」。少し待っても開かない時だけ浮かび上がる（CSS の遅延） */
+  setWaiting: (on: boolean) => void
 }
 
 const CLOSE_MS = 420
@@ -33,6 +35,7 @@ const nextFrame = () => new Promise<number>((resolve) => requestAnimationFrame(r
 export function createIris(): Iris {
   const canvas = document.getElementById('iris') as HTMLCanvasElement
   const ctx = canvas.getContext('2d')
+  const wait = document.getElementById('iris-wait') as HTMLElement
   let reduceMotion = false
 
   const fit = () => {
@@ -105,6 +108,7 @@ export function createIris(): Iris {
       // 幕の裏でワールドの最初の重いフレームを済ませてから開く
       await nextFrame()
       await nextFrame()
+      wait.hidden = true
       if (reduceMotion) {
         await run(260, (t) => (canvas.style.opacity = String(1 - t)))
       } else {
@@ -117,6 +121,9 @@ export function createIris(): Iris {
     },
     setReduceMotion: (on) => {
       reduceMotion = on
+    },
+    setWaiting: (on) => {
+      wait.hidden = !on
     },
   }
 }

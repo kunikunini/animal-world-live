@@ -29,6 +29,7 @@ const DICT = {
     en: 'WebGL doesn’t seem to be available here. Please try another browser or device.',
   },
   story: { ja: 'おはなし', en: 'Story' },
+  gettingReady: { ja: 'じゅんびちゅう…', en: 'Getting ready…' },
   skip: { ja: 'スキップ', en: 'Skip' },
   next: { ja: 'つぎへ', en: 'Next' },
   story1: { ja: 'ある日、きみのもとに ふしぎな双眼鏡がとどいた。', en: 'One day, a pair of magic binoculars arrived for you.' },

@@ -139,6 +139,7 @@
 
     <!-- 往復の演出: 双眼鏡の形（2 つの円）に絞られる幕。iOS Safari でも確実に描き直せるよう canvas で描く -->
     <canvas id="iris" class="iris" hidden aria-hidden="true"></canvas>
+    <div id="iris-wait" class="iris-wait" hidden role="status"><svg class="ico ico-fill" aria-hidden="true"><use href="#i-bino" /></svg><span data-i18n="gettingReady">じゅんびちゅう…</span></div>
 
     <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く" data-i18n-aria="minimap"></canvas>
     <button id="minimap-expand" class="icon-btn minimap-expand" type="button" hidden aria-label="地図を広げる" data-i18n-aria="expandMap" title="地図を広げる" data-i18n-title="expandMap"><svg class="ico"><use href="#i-expand" /></svg></button>

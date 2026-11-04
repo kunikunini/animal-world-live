@@ -106,7 +106,11 @@ interface WorldHandle {
   snapshot: () => string
 }
 
-function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
+/**
+ * ワールドを組み立てる。startPaused なら止めたまま作り、数フレームだけ描いてシェーダーを先に用意する
+ * （ホームにいる間に裏で準備しておき、「のぞいてみる」で待たせないため）
+ */
+function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false): WorldHandle {
   const { hud, observe, book, store, met } = shell
   const mobile = isMobile()
   const { renderer, scene, camera, sun, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
@@ -200,7 +204,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
   const mapView = createMapView()
 
   // 何かの画面が開いている間は、ワールドのタップとキーを止め、「ホームへ」も重ねない
-  let paused = false
+  let paused = startPaused
   const syncInput = () => {
     const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen()
     player.setInputEnabled(!blocked && !paused)
@@ -280,8 +284,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
   let frames = 0
   let currentDpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2)
 
+  // 止めたまま作った時に描く枚数（後処理のシェーダーもここで用意される）
+  let warmFrames = startPaused ? 2 : 0
   const tick = () => {
     if (paused) {
+      if (warmFrames > 0) {
+        warmFrames--
+        postfx.render()
+      }
       requestAnimationFrame(tick)
       return
     }
@@ -504,6 +514,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
   }
 }
 
+function nextFrames(n: number): Promise<void> {
+  return new Promise((resolve) => {
+    const step = () => (--n <= 0 ? resolve() : requestAnimationFrame(step))
+    requestAnimationFrame(step)
+  })
+}
+
 function main(): void {
   applyStatic()
   const canvas = document.getElementById('world') as HTMLCanvasElement
@@ -524,8 +541,12 @@ function main(): void {
     try {
       if (shell.story.shouldShow()) await shell.story.play()
       await shell.iris.close()
-      if (!world) world = startWorld(canvas, shell)
-      else world.resume()
+      // 裏での準備が間に合っていなければ、幕に「じゅんびちゅう」を出してから組み立てる
+      shell.iris.setWaiting(true)
+      if (!world) {
+        await nextFrames(2)
+        world = startWorld(canvas, shell)
+      } else world.resume()
       shell.home.hide()
       document.body.classList.add('in-world')
       canvas.focus()
@@ -537,6 +558,7 @@ function main(): void {
       shell.home.showFallback()
       await shell.iris.open()
     } finally {
+      shell.iris.setWaiting(false)
       busy = false
     }
   }
@@ -557,6 +579,23 @@ function main(): void {
   shell.home.onEnter(() => {
     void enterWorld()
   })
+
+  // ホームが表示されて落ち着いたら、裏でワールドを組み立てておく（ホームの絵が不透明で隠している）。
+  // 失敗しても world は null のままにして、「のぞいてみる」の時にもう一度試し、だめなら案内を出す
+  const prewarm = () => {
+    if (world || busy || !webgl || !shell.home.isOpen()) return
+    try {
+      world = startWorld(canvas, shell, true)
+    } catch (err) {
+      console.warn('world prewarm failed', err)
+      world = null
+    }
+  }
+  const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => void }).requestIdleCallback
+  window.setTimeout(() => {
+    if (idle) idle(prewarm, { timeout: 1500 })
+    else prewarm()
+  }, 1200)
   // 帳の出口: ワールドからならそのまま閉じて戻る。ホームからなら閉じてワールドへ入る
   shell.book.onGoWorld((from) => {
     shell.book.close()

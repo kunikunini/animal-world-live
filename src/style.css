@@ -756,6 +756,41 @@ button {
   pointer-events: auto;
 }
 
+/* 幕が閉じたまま待つ時の「じゅんびちゅう」。0.3 秒たっても開かない時だけ浮かぶ（すぐ開く時は見えない） */
+.iris-wait {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 41;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  pointer-events: none;
+  animation: iris-wait-in 0.3s ease-out 0.3s both;
+}
+
+.iris-wait .ico {
+  width: 56px;
+  height: 56px;
+  fill: var(--sun);
+  color: var(--sun);
+}
+
+@keyframes iris-wait-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ワールドの部品は、ワールドにいる時だけ見せる（ホームの裏で準備・一時停止している間に、フォーカスが届かないように） */
+body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin, .hud-toast) {
+  visibility: hidden;
+}
+
 /* ==========================================================================
    ワールドの HUD。部品ごとに固定配置し、縦・横・PC で位置を変える
    ========================================================================== */
