@@ -1,9 +1,8 @@
 import type { FriendBookStore } from '../data/friends'
 
 /**
- * ホーム: 平穏ないつもの世界。入口（アニマルスコープ）と、ともだち帳の居場所。
- * 2.5 層の絵（CSS 変数 --px/--py でポインタに合わせて少し動く）。
- * ワールドから帰ってくると、スコープのレンズに最後に見た景色が映り、
+ * ホーム: キービジュアル 1 枚と、入口（「のぞいてみる」と絵の中の双眼鏡）、ともだち帳の居場所。
+ * 絵は画面の縦横比で CSS が選ぶ。
  * まだ帳で見ていない新しいともだちがいれば、帳のボタンに印が付く（印は帳を閉じた時に消える）。
  */
 export interface HomeView {
@@ -14,8 +13,6 @@ export interface HomeView {
   onEnter: (fn: () => void) => void
   /** 「ともだち帳」 */
   onBook: (fn: () => void) => void
-  /** スコープのレンズに映す画像（data URL）。ワールドのスナップショット */
-  setPeek: (url: string) => void
   setReduceMotion: (on: boolean) => void
   /** WebGL が無い時: 入口を無効にして案内を出す */
   showFallback: () => void
@@ -29,8 +26,6 @@ export function createHome(store: FriendBookStore): HomeView {
   const newDot = document.getElementById('home-new-dot') as HTMLElement
   const fallback = document.getElementById('fallback') as HTMLElement
   const fallbackBook = document.getElementById('fallback-book') as HTMLButtonElement
-  const peekL = document.getElementById('home-peek-l') as unknown as SVGImageElement
-  const peekR = document.getElementById('home-peek-r') as unknown as SVGImageElement
 
   let open = true
   let reduceMotion = false
@@ -56,20 +51,12 @@ export function createHome(store: FriendBookStore): HomeView {
   bookBtn.addEventListener('click', openBook)
   fallbackBook.addEventListener('click', openBook)
 
-  // 視差: ポインタの位置で層を少しずらす。動きをへらす時は止める
-  const onMove = (e: PointerEvent) => {
-    if (reduceMotion || !open) return
-    const px = (e.clientX / window.innerWidth - 0.5) * 2
-    const py = (e.clientY / window.innerHeight - 0.5) * 2
-    root.style.setProperty('--px', px.toFixed(3))
-    root.style.setProperty('--py', py.toFixed(3))
-  }
-  root.addEventListener('pointermove', onMove)
-
   return {
     show: () => {
       open = true
       root.hidden = false
+      // overflow: clip が効かない古いブラウザでも、ずれたまま出さない
+      root.scrollTop = 0
       // 帰ってきた時、新しいともだちがいれば帳のボタンを少し弾ませる
       syncDot()
       if (!newDot.hidden && !reduceMotion) bookBtn.classList.add('is-new')
@@ -77,8 +64,6 @@ export function createHome(store: FriendBookStore): HomeView {
     hide: () => {
       open = false
       root.hidden = true
-      root.style.setProperty('--px', '0')
-      root.style.setProperty('--py', '0')
     },
     isOpen: () => open,
     onEnter: (fn) => {
@@ -87,18 +72,9 @@ export function createHome(store: FriendBookStore): HomeView {
     onBook: (fn) => {
       bookListeners.push(fn)
     },
-    setPeek: (url) => {
-      if (!url) return
-      peekL.setAttribute('href', url)
-      peekR.setAttribute('href', url)
-    },
     setReduceMotion: (on) => {
       reduceMotion = on
       root.classList.toggle('is-still', on)
-      if (on) {
-        root.style.setProperty('--px', '0')
-        root.style.setProperty('--py', '0')
-      }
     },
     showFallback: () => {
       fallback.hidden = false

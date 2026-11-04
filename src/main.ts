@@ -679,12 +679,11 @@ function main(): void {
     }
   }
 
-  // ワールド → 幕が閉じる → ホーム（レンズに最後の景色）→ 幕が開く
+  // ワールド → 幕が閉じる → ホーム → 幕が開く
   const goHome = async () => {
     if (busy || !world) return
     busy = true
     await shell.iris.close()
-    shell.home.setPeek(world.snapshot())
     world.pause()
     shell.home.show()
     document.body.classList.remove('in-world')

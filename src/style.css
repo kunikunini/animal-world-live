@@ -309,247 +309,232 @@ button {
 }
 
 /* ==========================================================================
-   ホーム: 入口。空・丘・太陽・雲・木の 2.5 層と、丘の奥のアニマルスコープ
+   ホーム: キービジュアル 1 枚と、入口・ともだち帳のボタン
+   絵は画面の縦横比にいちばん近いものを選ぶ（切り抜きではなく、その形のために描いた 4 枚）。
+   はみ出しは縦横とも少しまで。それより縦長・横長の画面では、ぼかした同じ絵で余白を埋める
    ========================================================================== */
 .home {
+  /* スマホ横・PC（16:9） */
+  --kv: url('/home/kv-phone-landscape.webp');
+  --kv-ar: 1.7768;
+  /* 絵の中の双眼鏡（絵の幅・高さに対する割合）。タップで入る */
+  --scope-x: 30%;
+  --scope-y: 40%;
+  --scope-w: 40%;
+  --scope-h: 38%;
   position: fixed;
   inset: 0;
   z-index: 10;
+  /* 絵とぼかしの層は画面より大きい。フォーカスなどで箱がスクロールしないよう clip にする */
   overflow: hidden;
+  overflow: clip;
+  container-type: size;
   background: linear-gradient(180deg, var(--h-sky) 0%, var(--h-sky-light) 70%);
   font-family: var(--font-home);
   color: var(--h-navy);
 }
 
-.home-sun {
+/* タブレット横（4:3） */
+@media (max-aspect-ratio: 20/13) {
+  .home {
+    --kv: url('/home/kv-tablet-landscape.webp');
+    --kv-ar: 1.3333;
+    --scope-x: 29%;
+    --scope-y: 42%;
+    --scope-w: 42%;
+    --scope-h: 33%;
+  }
+}
+
+/* タブレット縦（3:4） */
+@media (max-aspect-ratio: 1/1) {
+  .home {
+    --kv: url('/home/kv-tablet-portrait.webp');
+    --kv-ar: 0.75;
+    --scope-x: 27%;
+    --scope-y: 44%;
+    --scope-w: 46%;
+    --scope-h: 24%;
+  }
+}
+
+/* スマホ縦（9:16） */
+@media (max-aspect-ratio: 13/20) {
+  .home {
+    --kv: url('/home/kv-phone-portrait.webp');
+    --kv-ar: 0.5628;
+    --scope-x: 27%;
+    --scope-y: 44%;
+    --scope-w: 46%;
+    --scope-h: 19%;
+  }
+}
+
+/* 余白を埋める、ぼかした同じ絵 */
+.home::before {
+  content: '';
   position: absolute;
-  top: 5%;
-  right: 6%;
-  width: 150px;
-  height: 150px;
-  transform: translate(calc(var(--px, 0) * -8px), calc(var(--py, 0) * -6px));
+  inset: -48px;
+  background: var(--kv) center / cover no-repeat;
+  filter: blur(24px);
 }
 
-.home-cloud {
-  position: absolute;
-  width: 220px;
-  height: 90px;
-  animation: home-drift 40s linear infinite;
-}
-
-.home-cloud.c1 {
-  top: 14%;
-  left: -4%;
-}
-
-.home-cloud.c2 {
-  top: 26%;
-  left: 58%;
-  width: 170px;
-  animation-duration: 55s;
-}
-
-.home-cloud.c3 {
-  top: 8%;
-  left: 34%;
-  width: 130px;
-  animation-duration: 48s;
-}
-
-@keyframes home-drift {
-  from { transform: translateX(0); }
-  to { transform: translateX(120px); }
-}
-
-.home-hills {
-  position: absolute;
-  left: -20px;
-  right: -20px;
-  bottom: 0;
-  height: 44%;
-  transform: translateX(calc(var(--px, 0) * 10px));
-}
-
-.home-hills svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.home-tree {
-  position: absolute;
-  bottom: 28%;
-  width: 120px;
-  transform: translateX(calc(var(--px, 0) * 14px));
-}
-
-.home-tree.l {
-  left: 4%;
-}
-
-.home-tree.r {
-  right: 5%;
-  bottom: 31%;
-  width: 100px;
-}
-
-/* 小道・主人公・柱（絵）と、その上に立つスコープ（ボタン）。同じ座標系（400×480）で重ねる */
-.home-stage {
+/* 絵そのもの。画面を覆う大きさにするが、はみ出しは縦 8%・横 30% まで。上はロゴがあるので、はみ出しは下側を多めに */
+.home-kv {
+  --kv-w: min(max(100cqw, 100cqh * var(--kv-ar)), 108cqh * var(--kv-ar), 130cqw);
+  --kv-gap: calc(100cqh - var(--kv-w) / var(--kv-ar));
   position: absolute;
   left: 50%;
-  bottom: calc(118px + var(--safe-bottom));
-  width: 400px;
-  height: 480px;
+  top: max(var(--kv-gap) * 0.35, var(--kv-gap) * 0.5);
+  width: var(--kv-w);
+  aspect-ratio: var(--kv-ar);
   transform: translateX(-50%);
+  background: var(--kv) center / 100% 100% no-repeat;
 }
 
-.home-path {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+/* 余白が出るほど横長・縦長の画面では、絵の端をぼかした絵へなじませる */
+@media (min-aspect-ratio: 48/25) {
+  .home-kv {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  }
+}
+
+@media (max-aspect-ratio: 13/30) {
+  .home-kv {
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+  }
 }
 
 .home-scope {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 62.5%;
+  left: var(--scope-x);
+  top: var(--scope-y);
+  width: var(--scope-w);
+  height: var(--scope-h);
   padding: 0;
   border: 0;
-  border-radius: 40px;
+  border-radius: 40%;
   background: transparent;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.home-scope svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  display: block;
-}
-
-.home-scope:active .home-scope-body {
-  transform: scale(0.97);
-  transform-origin: 200px 170px;
+.home-scope:active {
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
 }
 
 .home-scope:focus-visible {
   outline: 4px solid #fff;
-  outline-offset: 2px;
+  outline-offset: 4px;
 }
 
-.home-glow {
-  animation: home-pulse 2.4s ease-in-out infinite;
-  transform-origin: 200px 170px;
-}
-
-@keyframes home-pulse {
-  0%, 100% { opacity: 0.75; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.08); }
-}
-
-.home-title {
+/* 右上: ともだち帳（白い丸ボタン）と設定 */
+.home-corner {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(28px + var(--safe-top));
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  text-align: center;
-  pointer-events: none;
-}
-
-.home-logo {
-  margin: 0;
-  min-height: 1em;
-  font-family: var(--font-logo);
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  -webkit-text-stroke: 2.5px var(--h-navy);
-  paint-order: stroke fill;
-  text-shadow: 0 5px 0 var(--h-navy);
-}
-
-.home-logo span:nth-child(4n + 1) { color: var(--h-sun); }
-.home-logo span:nth-child(4n + 2) { color: var(--h-pink); }
-.home-logo span:nth-child(4n + 3) { color: #fff; }
-.home-logo span:nth-child(4n) { color: var(--h-grass); }
-
-.home-logo .sp {
-  display: inline-block;
-  width: 0.35em;
-}
-
-.home-tagline {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 900;
-  line-height: 1.35;
-  padding: 10px 22px;
-  border-radius: var(--r-pill);
-  background: #fff;
-  box-shadow: 0 8px 0 rgba(31, 42, 68, 0.18);
-}
-
-.home-story {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 2px 0 rgba(31, 42, 68, 0.35);
-}
-
-.home-cta-sub {
+  top: calc(var(--safe-top) + clamp(12px, 2.6cqh, 28px));
+  right: calc(var(--safe-right) + clamp(12px, 2.2cqw, 28px));
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  gap: 0.5em;
+  font-size: clamp(15px, min(2.6cqh, 4.2cqw), 22px);
 }
 
-.home-settings {
-  flex: none;
+.home .home-book {
+  position: relative;
+  min-height: 2.35em;
+  padding: 0 1.05em 0 0.9em;
+  gap: 0.45em;
+  font-family: var(--font-home);
+  font-size: 1em;
+  font-weight: 900;
+  color: var(--h-navy);
+  background: #fff;
+  box-shadow: 0 0.14em 0 rgba(31, 42, 68, 0.12), 0 0.45em 1.1em rgba(31, 42, 68, 0.2);
 }
 
+.home .home-book .ico {
+  width: 1.25em;
+  height: 1.25em;
+  color: #2f6bff;
+}
+
+.home .home-book.is-new {
+  animation: home-pulse-btn 1.2s ease-in-out 3;
+}
+
+.home .home-settings {
+  width: 2.35em;
+  height: 2.35em;
+  background: #fff;
+  color: var(--h-navy);
+  box-shadow: 0 0.14em 0 rgba(31, 42, 68, 0.12), 0 0.45em 1.1em rgba(31, 42, 68, 0.2);
+}
+
+.home .home-settings .ico {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/* 下のまん中: のぞいてみる（オレンジの大きなボタン。白いふちと、角のきらきら） */
 .home-cta {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(22px + var(--safe-bottom));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  padding: 0 16px;
-  flex-wrap: wrap;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + clamp(14px, 5.5cqh, 64px));
+  transform: translateX(-50%);
+  font-size: clamp(20px, min(4.3cqh, 6.6cqw), 40px);
 }
 
-.home .btn-hero {
+.home .home-enter {
+  min-height: 2.65em;
+  min-width: min(8.6em, 82cqw);
+  padding: 0 1.4em;
+  gap: 0.42em;
+  border: 0.13em solid #fff;
   font-family: var(--font-home);
+  font-size: 1em;
   font-weight: 900;
-  font-size: 22px;
-  min-height: 68px;
-  padding: 0 34px;
-  background: var(--h-orange);
-  box-shadow: 0 8px 0 var(--h-orange-deep), 0 14px 28px rgba(31, 42, 68, 0.25);
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: linear-gradient(180deg, #ffae58 0%, #ff8a2c 46%, #f66c12 100%);
+  box-shadow:
+    inset 0 0.12em 0 rgba(255, 255, 255, 0.35),
+    0 0.14em 0 #c9520c,
+    0 0 0 0.17em rgba(255, 200, 120, 0.4),
+    0 0.55em 1.2em rgba(110, 50, 10, 0.35);
+  text-shadow: 0 0.06em 0 rgba(150, 60, 0, 0.35);
 }
 
-.home .btn-hero:hover {
-  background: #ff8a36;
+.home .home-enter:hover {
+  background: linear-gradient(180deg, #ffad5c 0%, #ff8c33 46%, #f46f1a 100%);
 }
 
-.home .btn-hero .ico-fill {
-  width: 30px;
-  height: 30px;
+.home .home-enter .ico-fill {
+  width: 1.3em;
+  height: 1.3em;
 }
 
+.home-spark {
+  position: absolute;
+  top: -1em;
+  width: 1.6em;
+  height: 1.6em;
+  fill: none;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(150, 80, 0, 0.35));
+}
+
+.home-spark.l {
+  left: -0.85em;
+}
+
+.home-spark.r {
+  right: -0.85em;
+  transform: scaleX(-1);
+}
+
+/* WebGL が無い時の案内の中の「ともだち帳」 */
 .home .btn-quiet {
   position: relative;
   font-family: var(--font-home);
@@ -558,10 +543,6 @@ button {
   color: var(--h-navy);
   background: #fff;
   box-shadow: 0 6px 0 rgba(31, 42, 68, 0.18);
-}
-
-.home .btn-quiet.is-new {
-  animation: home-pulse-btn 1.2s ease-in-out 3;
 }
 
 .badge-dot {
@@ -607,38 +588,6 @@ button {
   margin: 0;
   font-size: 15px;
   line-height: 1.6;
-}
-
-@media (max-width: 600px) {
-  .home-sun { width: 110px; height: 110px; top: 40%; right: -14px; }
-  .home-cloud.c1 { top: 36%; left: -10%; width: 180px; }
-  .home-cloud.c2 { top: 50%; left: 70%; width: 120px; }
-  .home-cloud.c3 { display: none; }
-  .home-tree.l { left: -24px; width: 96px; }
-  .home-tree.r { right: -16px; width: 84px; }
-  .home-stage { width: 340px; height: 408px; }
-  .home-logo { font-size: 30px; }
-  .home-tagline { font-size: 17px; padding: 8px 18px; }
-  .home-story { font-size: 14px; }
-  .home-cta { flex-direction: column; gap: 10px; }
-  .home .btn-hero { width: 100%; max-width: 360px; }
-}
-
-@media (max-height: 520px) and (orientation: landscape) {
-  /* 横向き: 左にタイトルとボタン、右にスコープと主人公 */
-  .home-stage { left: 71%; width: 230px; height: 276px; bottom: calc(66px + var(--safe-bottom)); }
-  .home-title { left: 20px; right: auto; width: 50%; top: calc(14px + var(--safe-top)); gap: 8px; justify-items: start; text-align: left; padding: 0; }
-  .home-logo { font-size: 28px; text-shadow: 0 3px 0 var(--h-navy); }
-  .home-tagline { font-size: 15px; padding: 6px 16px; }
-  .home-story { font-size: 13px; }
-  .home-sun { width: 90px; height: 90px; top: 6%; right: 4%; }
-  .home-cloud.c1 { top: 30%; left: 2%; width: 150px; }
-  .home-cloud.c2 { top: 22%; left: 72%; width: 120px; }
-  .home-cloud.c3 { display: none; }
-  .home-tree { width: 80px; bottom: 30%; }
-  .home-cta { left: 20px; right: auto; justify-content: flex-start; bottom: calc(14px + var(--safe-bottom)); gap: 10px; }
-  .home .btn-hero { min-height: 56px; font-size: 18px; padding: 0 26px; box-shadow: 0 6px 0 var(--h-orange-deep), 0 10px 20px rgba(31, 42, 68, 0.25); }
-  .home .btn-quiet { min-height: 44px; font-size: 15px; }
 }
 
 /* ==========================================================================
