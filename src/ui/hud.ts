@@ -1,13 +1,11 @@
 import { esc } from './html'
 
-const STORAGE_KEY = 'awl.reduceMotion'
-
 export type ToastIcon = 'bino' | 'book' | 'home'
 
 export interface Hud {
   show: () => void
-  reduceMotion: boolean
-  onReduceMotionChange: (fn: (on: boolean) => void) => void
+  /** 設定（ホーム）の「動きをへらす」。弾みとトーストの出方に使う */
+  setReduceMotion: (on: boolean) => void
   onGoToSpot: (fn: () => void) => void
   /** 「ともだち帳」ボタン */
   onOpenBook: (fn: () => void) => void
@@ -30,28 +28,8 @@ export interface Hud {
   setFps: (fps: number) => void
 }
 
-function readStored(): boolean | null {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY)
-    if (v === '1') return true
-    if (v === '0') return false
-  } catch {
-    // localStorage が使えない環境では既定値にする
-  }
-  return null
-}
-
-function writeStored(on: boolean): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, on ? '1' : '0')
-  } catch {
-    // 保存できなくても動作は続ける
-  }
-}
-
 export function createHud(): Hud {
   const root = document.getElementById('hud') as HTMLElement
-  const checkbox = document.getElementById('reduce-motion') as HTMLInputElement
   const fpsEl = document.getElementById('fps') as HTMLElement
   const goToSpotBtn = document.getElementById('goto-spot') as HTMLButtonElement
   const spotLabel = document.getElementById('spot-label') as HTMLElement
@@ -62,20 +40,7 @@ export function createHud(): Hud {
   const goHomeBtn = document.getElementById('go-home') as HTMLButtonElement
   const bookDot = document.getElementById('hud-book-dot') as HTMLElement
 
-  const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const stored = readStored()
-  let reduceMotion = stored ?? prefers
-  checkbox.checked = reduceMotion
-  const toggleEl = checkbox.closest('.toggle') as HTMLElement
-  toggleEl.classList.toggle('is-on', reduceMotion)
-
-  const motionListeners: Array<(on: boolean) => void> = []
-  checkbox.addEventListener('change', () => {
-    reduceMotion = checkbox.checked
-    toggleEl.classList.toggle('is-on', reduceMotion)
-    writeStored(reduceMotion)
-    motionListeners.forEach((fn) => fn(reduceMotion))
-  })
+  let reduceMotion = false
 
   const goToListeners: Array<() => void> = []
   goToSpotBtn.addEventListener('click', () => goToListeners.forEach((fn) => fn()))
@@ -103,11 +68,8 @@ export function createHud(): Hud {
     show: () => {
       root.hidden = false
     },
-    get reduceMotion() {
-      return reduceMotion
-    },
-    onReduceMotionChange: (fn) => {
-      motionListeners.push(fn)
+    setReduceMotion: (on) => {
+      reduceMotion = on
     },
     onGoToSpot: (fn) => {
       goToListeners.push(fn)

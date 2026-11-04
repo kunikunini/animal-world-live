@@ -507,6 +507,17 @@ button {
   text-shadow: 0 2px 0 rgba(31, 42, 68, 0.35);
 }
 
+.home-cta-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.home-settings {
+  flex: none;
+}
+
 .home-cta {
   position: absolute;
   left: 0;
@@ -791,12 +802,6 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.hud-toggle {
-  position: absolute;
-  top: calc(16px + 56px + 8px + var(--safe-top));
-  right: calc(16px + var(--safe-right));
 }
 
 .hud-book {
@@ -1088,12 +1093,26 @@ button {
     width: 36px;
     height: 36px;
   }
-  .hud-spot { left: 16px; right: 16px; transform: none; min-width: 0; }
-  .hud-spot:active { transform: scale(0.98); }
-  .hud-jump { width: 64px; height: 64px; bottom: calc(134px + var(--safe-bottom)); }
-  .hud-toggle { top: auto; right: calc(20px + var(--safe-right)); bottom: calc(206px + var(--safe-bottom)); }
+  /* 観察スポットへは双眼鏡だけの丸ボタンにして地図の下へ。手元はスティックとジャンプだけにする */
+  .hud-spot {
+    left: calc(16px + var(--safe-left));
+    top: calc(16px + 92px + 14px + var(--safe-top));
+    bottom: auto;
+    transform: none;
+    width: 56px;
+    min-width: 0;
+    min-height: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .hud-spot:active { transform: scale(0.94); }
+  .hud-spot-text { display: none; }
+  .hud-spot .ico { width: 30px; height: 30px; margin: 0; }
+  .hud-jump { width: 64px; height: 64px; bottom: calc(28px + var(--safe-bottom)); }
+  .stick { bottom: calc(24px + var(--safe-bottom)); }
   .hud-book { min-height: 48px; font-size: 16px; }
-  .toast.hud-toast { top: calc(16px + 92px + 10px + var(--safe-top)); }
+  .toast.hud-toast { top: calc(16px + 92px + 10px + var(--safe-top)); max-width: calc(100% - 2 * (16px + 56px + 12px)); }
 }
 
 /* ---- スマホ横 ---- */
@@ -1106,12 +1125,25 @@ button {
     height: 32px;
   }
   .minimap-expand .ico { width: 16px; height: 16px; }
-  .hud-spot { min-width: 240px; min-height: 52px; font-size: 18px; bottom: calc(12px + var(--safe-bottom)); }
+  .hud-spot {
+    left: calc(12px + var(--safe-left));
+    top: calc(12px + 72px + 12px + var(--safe-top));
+    bottom: auto;
+    transform: none;
+    width: 48px;
+    min-width: 0;
+    min-height: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .hud-spot:active { transform: scale(0.94); }
+  .hud-spot-text { display: none; }
+  .hud-spot .ico { width: 26px; height: 26px; margin: 0; }
   .hud-jump { width: 56px; height: 56px; right: calc(16px + var(--safe-right)); bottom: calc(22px + var(--safe-bottom)); }
   .hud-nav { top: calc(10px + var(--safe-top)); right: calc(12px + var(--safe-right)); }
   .hud-book { min-height: 40px; font-size: 14px; padding: 0 14px 0 10px; }
   .hud-nav .icon-btn { width: 40px; height: 40px; }
-  .hud-toggle { top: auto; right: calc(16px + var(--safe-right)); bottom: calc(86px + var(--safe-bottom)); }
   .toggle { min-height: 36px; }
   .stick { width: 110px; height: 110px; left: calc(16px + var(--safe-left)); bottom: calc(12px + var(--safe-bottom)); }
   .stick-knob { width: 48px; height: 48px; }
@@ -1192,6 +1224,89 @@ button {
 
 .sheet-foot .btn {
   width: 100%;
+}
+
+/* 設定シート */
+.set-list {
+  display: grid;
+  gap: 12px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.set-row > .ico {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  color: var(--sky);
+}
+
+.set-text {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.set-text strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.set-text small {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.switch {
+  flex: none;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 0;
+  border-radius: 16px;
+  background: var(--ink-faint);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s;
+}
+
+.switch:checked {
+  background: var(--leaf);
+}
+
+.switch:checked::after {
+  transform: translateX(20px);
+}
+
+.switch:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
 }
 
 .note-small {

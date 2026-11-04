@@ -22,6 +22,7 @@ import { createJoystick } from './ui/joystick'
 import { createHome } from './ui/home'
 import { createStory } from './ui/story'
 import { createIris } from './ui/iris'
+import { createSettings } from './ui/settings'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
@@ -54,6 +55,7 @@ function createShell() {
   const home = createHome(store)
   const story = createStory()
   const iris = createIris()
+  const settings = createSettings()
 
   // ともだち帳の「会いに行く」: 3D を歩かずに映像へ直行
   book.onVisit((animal) => {
@@ -84,11 +86,12 @@ function createShell() {
     book.setReduceMotion(on)
     home.setReduceMotion(on)
     iris.setReduceMotion(on)
+    hud.setReduceMotion(on)
   }
-  applyMotion(hud.reduceMotion)
-  hud.onReduceMotionChange(applyMotion)
+  applyMotion(settings.reduceMotion)
+  settings.onReduceMotionChange(applyMotion)
 
-  return { store, met, hud, observe, book, home, story, iris }
+  return { store, met, hud, observe, book, home, story, iris, settings }
 }
 
 type Shell = ReturnType<typeof createShell>
@@ -223,8 +226,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
     encounterIcon.setReduceMotion(on)
     fauna.setReduceMotion(on)
   }
-  applyReduceMotion(hud.reduceMotion)
-  hud.onReduceMotionChange(applyReduceMotion)
+  // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
+  applyReduceMotion(shell.settings.reduceMotion)
+  shell.settings.onReduceMotionChange(applyReduceMotion)
   hud.show()
 
   // ピンを画面の端に寄せる時の余白。下は HUD（スティック・ジャンプ・観察スポットへ）の上端から測る
@@ -237,7 +241,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell): WorldHandle {
     for (const el of [stickEl, jumpEl, spotBtnEl]) {
       if (!el || el.hidden) continue
       const r = el.getBoundingClientRect()
-      if (r.height === 0) continue
+      // スマホでは観察スポットへが地図の下（上側）にあるので、下の余白には数えない
+      if (r.height === 0 || r.top < window.innerHeight / 2) continue
       reserve = Math.max(reserve, window.innerHeight - r.top)
     }
     safe.bottom = Math.min(window.innerHeight * 0.45, reserve + 12)

@@ -31,6 +31,7 @@
       <symbol id="i-find" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5.5 5.5" /></symbol>
       <symbol id="i-family" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2" /><circle cx="16.5" cy="10.5" r="2.6" /><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M14 19c0-2.3 1.4-3.8 3.5-3.8S21 16.7 21 19" /></symbol>
       <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16A2.5 2.5 0 0 1 4 13.5v-7z" /></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" /><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5" /><circle cx="12" cy="12" r="6.6" /></symbol>
       <symbol id="i-sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9l5 6M21 9l-5 6" /></symbol>
     </svg>
 
@@ -109,7 +110,10 @@
 
       <div class="home-cta">
         <button id="enter" class="btn btn-hero" type="button" aria-label="アニマルワールドに入る"><svg class="ico ico-fill"><use href="#i-bino" /></svg>のぞいてみる</button>
-        <button id="entry-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="home-new-dot" class="badge-dot" hidden></span></button>
+        <div class="home-cta-sub">
+          <button id="entry-book" class="btn btn-quiet" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="home-new-dot" class="badge-dot" hidden></span></button>
+          <button id="home-settings" class="icon-btn home-settings" type="button" aria-label="設定" title="設定"><svg class="ico"><use href="#i-gear" /></svg></button>
+        </div>
       </div>
 
       <div id="fallback" class="fallback" hidden>
@@ -132,8 +136,8 @@
       </div>
     </section>
 
-    <!-- 往復の演出: 双眼鏡の形（2 つの円）に絞られる幕 -->
-    <svg id="iris" class="iris" hidden aria-hidden="true"><defs><mask id="iris-mask"><rect width="100%" height="100%" fill="#fff" /><circle id="iris-l" cx="0" cy="0" r="0" fill="#000" /><circle id="iris-r" cx="0" cy="0" r="0" fill="#000" /></mask></defs><rect width="100%" height="100%" fill="#13192b" mask="url(#iris-mask)" /></svg>
+    <!-- 往復の演出: 双眼鏡の形（2 つの円）に絞られる幕。iOS Safari でも確実に描き直せるよう canvas で描く -->
+    <canvas id="iris" class="iris" hidden aria-hidden="true"></canvas>
 
     <canvas id="minimap" class="minimap" hidden role="img" aria-label="地図。タップした場所へ歩く"></canvas>
     <button id="minimap-expand" class="icon-btn minimap-expand" type="button" hidden aria-label="地図を広げる" title="地図を広げる"><svg class="ico"><use href="#i-expand" /></svg></button>
@@ -200,6 +204,24 @@
       <p id="befriend-status" class="visually-hidden" role="status"></p>
     </section>
 
+    <!-- 設定: ホームの歯車から開く -->
+    <section id="settings" class="sheet-wrap" hidden aria-label="設定">
+      <div class="sheet">
+        <div class="grabber"></div>
+        <header class="sheet-head">
+          <h2 class="sheet-title"><svg class="ico"><use href="#i-gear" /></svg>設定</h2>
+          <button id="settings-close" class="icon-btn" type="button" aria-label="閉じる" title="閉じる"><svg class="ico"><use href="#i-close" /></svg></button>
+        </header>
+        <div class="sheet-body set-list">
+          <label class="set-row">
+            <svg class="ico"><use href="#i-motion" /></svg>
+            <span class="set-text"><strong>動きをへらす</strong><small>画面の揺れ・アニメーションを少なくします</small></span>
+            <input id="reduce-motion" class="switch" type="checkbox" role="switch" />
+          </label>
+        </div>
+      </div>
+    </section>
+
     <!-- ともだち帳: 顔のカードグリッド -->
     <section id="book" class="sheet-wrap" hidden aria-label="ともだち帳">
       <div class="sheet">
@@ -228,13 +250,7 @@
         <button id="open-book" class="btn btn-nav hud-book" type="button"><svg class="ico"><use href="#i-book" /></svg>ともだち帳<span id="hud-book-dot" class="badge-dot" hidden></span></button>
         <button id="go-home" class="icon-btn" type="button" aria-label="ホームへ" title="ホームへ"><svg class="ico"><use href="#i-home" /></svg></button>
       </div>
-      <label class="toggle hud-toggle">
-        <input id="reduce-motion" type="checkbox" />
-        <svg class="ico"><use href="#i-motion" /></svg>
-        <span>動きをへらす</span>
-        <svg class="ico toggle-check"><use href="#i-check" /></svg>
-      </label>
-      <button id="goto-spot" class="btn btn-hero hud-spot" type="button"><svg class="ico ico-fill"><use href="#i-bino" /></svg>観察スポットへ</button>
+      <button id="goto-spot" class="btn btn-hero hud-spot" type="button" aria-label="観察スポットへ" title="観察スポットへ"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span class="hud-spot-text">観察スポットへ</span></button>
       <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" title="ジャンプ"><svg class="ico"><use href="#i-jump" /></svg></button>
       <div id="fps" class="fps" hidden></div>
     </div>
