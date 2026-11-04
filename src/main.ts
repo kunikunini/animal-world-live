@@ -194,14 +194,20 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   // 実験（exp/lion-ai）: ?model=ai でアレックスを Meshy 生成モデルに差し替える。&anim=off で静止（呼吸と首振りだけ）
   let aiMixer: THREE.AnimationMixer | null = null
-  if (new URLSearchParams(location.search).get('model') === 'ai') {
+  // ?model=ai はクレイ版（本命）、?model=ai-real はリアル版（比較用）
+  const aiModel = new URLSearchParams(location.search).get('model')
+  if (aiModel === 'ai' || aiModel === 'ai-real') {
     const alex = lions.find((l) => l.id === 'alex')
     const animate = new URLSearchParams(location.search).get('anim') !== 'off'
+    // &mat=raw で Meshy の素材のまま（比較用）。既定はトゥーン素材に差し替える
+    const toon = new URLSearchParams(location.search).get('mat') !== 'raw'
     if (alex) {
       // 体高はプリミティブと同じ倍率（群れの scale）の前の値。立ち姿のオスの頭頂あたり
-      loadAiLion('/models/alex-ai.glb', { height: 1.15, animate })
+      loadAiLion(aiModel === 'ai' ? '/models/alex-ai.glb' : '/models/alex-ai-real.glb', { height: 1.15, animate, toon })
         .then((loaded) => {
-          alex.swapModel(loaded.model, { neck: animate ? undefined : loaded.head })
+          // 頭のボーンに既存の首振りをかけると、Meshy のボーンの軸の向きが違うため頭が後ろへ反る。
+          // なので首振りはつながず、呼吸（全体の伸び縮み）だけ既存の仕組みに任せる
+          alex.swapModel(loaded.model, {})
           aiMixer = loaded.mixer
           console.info('[lion-ai] loaded', loaded.clipNames)
         })
@@ -605,6 +611,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       lions,
       views: viewNames(),
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
+      // 実験（exp/lion-ai）: 歩行ループをコマ送りで確かめるため、生成モデルのミキサーを覗けるようにする
+      aiMixer: () => aiMixer,
+      renderer,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
       capture: (quality = 0.92) => {
         postfx.render()
