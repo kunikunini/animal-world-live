@@ -4148,8 +4148,9 @@ body.is-reduce-motion .guide.is-refresh { animation: none; }
 .guide.is-final .guide-btn { background: var(--sun); color: #fff; box-shadow: var(--shadow-sun); }
 .guide.is-final .guide-ico { background: var(--gold-tint); }
 
-/* ともだち帳が開いている間は、下のタブに重ねない */
+/* ともだち帳が開いている間は、下のタブに重ねない。帳からモニターを開いた時はモニターが上なので元の位置 */
 body.book-open .guide { bottom: calc(96px + var(--safe-bottom)); }
+body.observe-open .guide { bottom: calc(24px + var(--safe-bottom)); }
 
 /* スマホ縦: スティック（左下、下から 24px・124px）とジャンプの上に、横いっぱいで出す */
 @media (max-width: 480px) {

@@ -29,7 +29,12 @@ export interface Guide {
   setInWorld: (on: boolean) => void
   /** 節目に来たことを伝える。先の節目なら手前も済んだことにする（順番どおりでなくても詰まらない） */
   reach: (step: GuideStep) => void
+  /** 歩いた距離（m）を足す。始まってから 3m で「歩く」が済む（始める時に 0 に戻す） */
+  walk: (meters: number) => void
 }
+
+/** 「歩く」が済む距離（m） */
+const WALK_DONE = 3
 
 function readDone(): boolean {
   try {
@@ -60,6 +65,7 @@ export function createGuide(): Guide {
   let inWorld = false
   // 0〜5 は節目の案内、6 は「できた」のカード
   let index = 0
+  let walked = 0
 
   const render = () => {
     const last = index >= GUIDE_STEPS.length
@@ -80,6 +86,7 @@ export function createGuide(): Guide {
   const start = () => {
     active = true
     index = 0
+    walked = 0
     render()
     sync()
   }
@@ -91,6 +98,14 @@ export function createGuide(): Guide {
     sync()
   }
 
+  const reach = (step: GuideStep) => {
+    if (!active) return
+    const i = GUIDE_STEPS.indexOf(step)
+    if (i < index) return
+    index = i + 1
+    render()
+  }
+
   btn.addEventListener('click', stop)
   onLangChange(() => {
     if (active) render()
@@ -98,6 +113,8 @@ export function createGuide(): Guide {
 
   return {
     autoStart: (hasFriends) => {
+      // 途中でホームへ戻って入り直した時は、続きから（最初に戻さない）
+      if (active) return
       if (forced) {
         start()
         return
@@ -114,12 +131,11 @@ export function createGuide(): Guide {
       inWorld = on
       sync()
     },
-    reach: (step) => {
-      if (!active) return
-      const i = GUIDE_STEPS.indexOf(step)
-      if (i < index) return
-      index = i + 1
-      render()
+    reach,
+    walk: (meters) => {
+      if (!active || index > 0) return
+      walked += meters
+      if (walked >= WALK_DONE) reach('walk')
     },
   }
 }

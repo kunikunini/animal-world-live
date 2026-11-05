@@ -265,8 +265,6 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
-  let walked = 0
-  let guideWasActive = false
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
 
@@ -602,15 +600,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     player.update(dt)
     // あそび方ナビ「歩く」: タップ移動・スティック・キー・スポットへの自動歩行のどれでも、少し歩いたら済み
     if (guide.isActive()) {
-      // 始まった瞬間に歩いた距離を 0 に戻す（「もう一度見る」で前の分が残らないように）
-      if (!guideWasActive) walked = 0
-      const p = player.object.position
-      walked += Math.hypot(p.x - walkX, p.z - walkZ)
-      if (walked > 3) guide.reach('walk')
+      guide.walk(Math.hypot(player.object.position.x - walkX, player.object.position.z - walkZ))
       // すでに札が出ている子のそばで始めた時は「そば」の段は済み
       if (encounterId !== null) guide.reach('near')
     }
-    guideWasActive = guide.isActive()
     walkX = player.object.position.x
     walkZ = player.object.position.z
     props.update(time)
