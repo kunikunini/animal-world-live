@@ -88,12 +88,12 @@
       "favorites": "",
       "identifyingMarks": "",
       "keeperComment": "",
-      "status": "preparing",
+      "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "",
-        "poster": "",
-        "placeholder": true
+        "url": "https://media.kobakuni.com/lions-3_20261104_720p.mp4",
+        "fallbackUrl": "/media/lions-3_20261104_720p.mp4",
+        "poster": "/media/lions-3_20261104_poster.jpg"
       }
     }
   ]
