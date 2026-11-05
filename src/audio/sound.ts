@@ -167,6 +167,21 @@ async function fetchBuffer(path: string): Promise<AudioBuffer | null> {
   }
 }
 
+/**
+ * ループの長さ（秒）。BGM と環境音のファイルは、ループの前後に「ループの続き」を LOOP_PAD 秒ずつ足してある
+ * （mp3 の両端は数ミリ秒ぶれるので、そこを使わずに内側だけをくり返す）。loops.json が無い時はファイル全体をくり返す
+ */
+const LOOP_PAD = 0.25
+let loopLengths: Promise<Record<string, number>> | null = null
+function getLoopLengths(): Promise<Record<string, number>> {
+  if (!loopLengths) {
+    loopLengths = fetch(BASE + 'loops.json')
+      .then((r) => (r.ok ? (r.json() as Promise<Record<string, number>>) : {}))
+      .catch(() => ({}))
+  }
+  return loopLengths
+}
+
 function loadLoop(file: string): Promise<AudioBuffer | null> {
   let p = loops.get(file)
   if (!p) {
@@ -210,19 +225,25 @@ async function syncLayer(layer: Layer): Promise<void> {
   if (want === layer.key) return
   stopLayer(layer)
   if (!want) return
-  const buf = await loadLoop(want)
+  const [buf, lengths] = await Promise.all([loadLoop(want), getLoopLengths()])
   // 読み込みの間に行き先が変わった、または別の呼び出しが先に鳴らした
   if (!buf || !ctx || layer.want !== want || layer.key !== null || !layer.bus) return
   const src = ctx.createBufferSource()
   src.buffer = buf
   src.loop = true
+  const len = lengths[want.replace(/\.mp3$/, '')]
+  const padded = typeof len === 'number' && buf.duration >= len + LOOP_PAD * 2 - 0.01
+  if (padded) {
+    src.loopStart = LOOP_PAD
+    src.loopEnd = LOOP_PAD + len
+  }
   const gain = ctx.createGain()
   const now = ctx.currentTime
   gain.gain.setValueAtTime(0, now)
   gain.gain.linearRampToValueAtTime(1, now + FADE_S)
   src.connect(gain)
   gain.connect(layer.bus)
-  src.start(now)
+  src.start(now, padded ? LOOP_PAD : 0)
   layer.src = src
   layer.gain = gain
   layer.key = want
@@ -362,7 +383,7 @@ export const sound = {
             playFriendChime(ctx, seBus)
             logPlayed('chime')
           }
-        } else playShot('se-friend.mp3')
+        } else playShot('se-friend.mp3', 1, 0.3) // 合成チャイムと聴きくらべやすいよう、大きさをそろえる
         return
       default:
         playShot(`se-${name}.mp3`)
@@ -418,7 +439,7 @@ export const sound = {
   },
   /** 開発用: 今の状態（検証で使う） */
   debug() {
-    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, ...state }
+    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
   },
 }
 
