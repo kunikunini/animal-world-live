@@ -277,9 +277,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     body.classList.remove('is-unscoping')
     const animate = !body.classList.contains('is-reduce-motion')
     if (animate) body.classList.add('is-scoping')
-    // サバンナはアニマルスコープの段の一覧、ほかのワールドではそのワールドの動物の一覧から
-    if (here.key === 'africa') catalog.open(animate)
-    else catalog.openWorld(here.key, animate)
+    // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
+    catalog.open(animate)
     if (animate) {
       const { skipped } = await scope.play()
       if (skipped) catalog.settle()

@@ -11,16 +11,14 @@ import type { I18nKey } from './i18n'
 import { hideView, showView } from './transition'
 
 /**
- * アニマルスコープ（動画一覧）。観察スポットでスコープをのぞくと開く。
+ * アニマルスコープ（動画一覧）。どのワールドの観察スポットでも、スコープをのぞくと同じ一覧が開く。
  * いまある映像は実物、まだ無い枠（ライブ・ほかのワールド・ほかの動物・動物園）は形だけのシルエットで、押せない。
  * 段の並びは「ライブ → 注目 → ともだち → ワールド → どうぶつ → 人気 → おすすめ → 動物園」。
- * 「ワールド」の段から、開いているワールド（D-36）の動物の一覧へ入れる。一覧は同じ画面の中で切り替える。
+ * 「ワールド」の段から、開いているワールド（D-36）の動物の一覧へ入れる（サバンナも同じ）。一覧は同じ画面の中で切り替える。
  */
 export interface CatalogView {
   /** withScope なら、のぞく演出に合わせた入り方（段が下から順に並ぶ）にする */
   open: (withScope: boolean) => void
-  /** そのワールドの動物の一覧で開く（3D のワールドの観察スポットから） */
-  openWorld: (key: WorldKey, withScope: boolean) => void
   /** 演出をとばした時: 入りの動きを止めて、すぐ全部見せる */
   settle: () => void
   close: () => void
@@ -137,7 +135,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
           <h1 class="cat-logo"><span>${esc(worldName(w))}</span></h1>
           <button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button>
         </header>
-        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}"><svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? ''}</svg><span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
+        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}">${w.key === 'africa' ? `<img class="cat-world-art" src="${SAVANNA_IMAGE}" alt="" style="object-fit:cover" />` : `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? ''}</svg>`}<span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
         ${body}
       </div>`
   }
@@ -209,7 +207,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const worlds = section(
       'worlds',
       meta('catRowWorlds'),
-      `<div class="cat-row"><button type="button" class="cat-world" data-back="1"><img src="${SAVANNA_IMAGE}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
+      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${SAVANNA_IMAGE}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
         .map(worldCard)
         .join('')}</div>`,
     )
@@ -403,7 +401,6 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   return {
     open: (withScope) => setOpen(true, withScope),
-    openWorld: (key, withScope) => setOpen(true, withScope, getWorld(key)?.open ? key : null),
     settle: () => root.classList.remove('is-scope-in'),
     close: () => setOpen(false),
     isOpen: () => open,
