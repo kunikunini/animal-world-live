@@ -677,3 +677,9 @@
 - 書き出し（PIL）: `public/favicon.ico`（余白を少し詰めて 16/32/48）、`favicon-32.png`、`apple-touch-icon.png`（180）、`icon-192.png`・`icon-512.png` と `site.webmanifest`。SNS のカード `public/og.jpg` は新しく生成せず、ホームのキービジュアル（`artwork/hero-key-visuals/smartphone-landscape-16x9.png`）を 1200 幅に縮めて上下を切り 1200×630 の JPEG に（クローラーが WebP を読めない所があるため）。ロゴと「世界中の動物たちと、友達になろう。」が切れないことを目視
 - `index.html` に description、OGP（type・site_name・title・description・url・image と幅高さ・alt・locale）、Twitter（summary_large_image）。画像と URL は本番 `https://animal-world-live.pages.dev` の絶対 URL。説明文は README の冒頭の言い方に合わせ、ライブ配信に読めないよう「収録映像」と書く。`staff.html` にも favicon だけ
 - 検証: `npm run build` 通過、`dist/` にアイコン 5 点・`og.jpg`・`site.webmanifest` があり、`dist/index.html` の参照先と一致。dev サーバーは他のチャットが上限まで使っていて起動できず、ブラウザのタブでの見え方は push 後の本番で確認
+
+## 2026-11-05 アイコンを黄色の背景・未来型の双眼鏡に作り直す
+- 指示: アイコンの背景を黄色にして、双眼鏡を子どもが喜びそうなカッコいい未来型に。赤や黒のアクセントカラーを入れる
+- 生成: 同じく `generate-images`（Codex 経由の GPT Image 2）で 2 案。背景は `#FFD21F` 付近の単色、流線形のボディとパネルの継ぎ目、武器や軍用品に見えないこと、文字・人物・動物なし。c＝白とシルバーに赤のパネル・黒のレンズ枠・青く光るレンズ、d＝赤のボディに黒のパーツ・シルバーの縁・シアンに光るレンズ。原本は `artwork/icon/app-icon-{c,d}.png`
+- 選定: 16/32/64px で並べると、c は白いボディが黄色に溶けて形が弱く、d は赤と黒が黄色の上でくっきり読めるので d を採用
+- 書き出し: 前回と同じ手順で favicon.ico（16/32/48）・favicon-32・apple-touch-icon・icon-192/512 を d から作り直し。`site.webmanifest` の background_color を黄色（`#fecf05`、画像の地の色）に。SNS のカード（og.jpg）は変えていない
