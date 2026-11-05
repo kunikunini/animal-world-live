@@ -625,11 +625,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const MOSAIC_MS = 1760
   /** モザイクの最初のマス目の大きさ（CSS px） */
   const MOSAIC_MAX = 46
-  /** 空撮の長さ（ms）と、そのうち空から回って見渡す割合（残りで主人公の後ろへ降りる） */
-  const FLY_MS = 7000
-  const FLY_ORBIT = 0.64
-  /** 空撮で回る角度（ラジアン） */
-  const FLY_SWEEP = 1.9
+  /** 空撮の長さ（ms）。空から見渡す・動物の群れのまわりを回る・主人公の後ろへ降りる */
+  const FLY_MS = 10000
   const FLY_KEY = 'awl.flyover.v1'
   const flyForced = new URLSearchParams(location.search).get('flyover') === '1'
   const flySeen = new Set<string>()
@@ -665,40 +662,99 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const easeInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
   const introElapsed = () => (introStart === null ? 0 : performance.now() - introStart)
   const introLength = () => (fly ? FLY_MS : INTRO_MS)
+  /**
+   * そのワールドでいちばん見ばえのする動物の群れ（同じ種で 30m 以内に集まっている子たち。体の大きさの合計がいちばん大きい群れ）。
+   * 空撮の途中で、この群れのそばを低く飛んで見せる。size は群れの子の平均の大きさ（当たりの半径、m）。いなければ null
+   */
+  const biggestGroup = (key: RegionKey): { at: THREE.Vector3; size: number } | null => {
+    const groups: Array<{ species: string; x: number; y: number; z: number; n: number; r: number }> = []
+    for (const l of lions) {
+      if (regionAt(l.position.x, l.position.z) !== key) continue
+      const species = getAnimal(l.id)?.species ?? l.id
+      const g = groups.find((it) => it.species === species && Math.hypot(it.x - l.position.x, it.z - l.position.z) < 30)
+      if (g) {
+        g.x = (g.x * g.n + l.position.x) / (g.n + 1)
+        g.y = (g.y * g.n + l.position.y) / (g.n + 1)
+        g.z = (g.z * g.n + l.position.z) / (g.n + 1)
+        g.n += 1
+        g.r += l.collider.r
+      } else {
+        groups.push({ species, x: l.position.x, y: l.position.y, z: l.position.z, n: 1, r: l.collider.r })
+      }
+    }
+    groups.sort((a, b) => b.r - a.r)
+    const g = groups[0]
+    return g ? { at: new THREE.Vector3(g.x, g.y, g.z), size: g.r / g.n } : null
+  }
+  /**
+   * 空撮の道すじ: 高い空から回って全体を見渡す（3 点）→ 動物の群れへ下りていき、群れを見たまままわりを低く回る（3 点）
+   * → 主人公の後ろの高いところ → いつものカメラの位置。
+   * 点と点の間は同じ時間で、なめらかな曲線（Catmull-Rom）でつなぐ。注視点も点ごとに決めて、区間ごとになめらかに移す
+   */
+  let flyCurve: THREE.CatmullRomCurve3 | null = null
+  let flyLooks: THREE.Vector3[] = []
   const setupFly = (key: RegionKey) => {
     const r = REGIONS.find((it) => it.key === key) ?? REGIONS[0]
     player.followPose(followPos, followLook)
-    fly = {
-      key,
-      cx: r.x,
-      cy: terrainHeight(r.x, r.z),
-      cz: r.z,
-      radius: r.walk,
-      // 回り終わりが、いつものカメラの方角（主人公の後ろ）になるように
-      endAngle: Math.atan2(followPos.x - r.x, followPos.z - r.z),
+    const cy = terrainHeight(r.x, r.z)
+    const center = new THREE.Vector3(r.x, cy, r.z)
+    const found = biggestGroup(key)
+    const group = found?.at ?? null
+    // 小さい子の群れほど近くを飛ぶ（ライオンくらいで 1、小さい子は 0.45 まで寄る）
+    const near = clamp((found?.size ?? 1) / 1.0, 0.45, 1)
+    // 群れの方角（いなければ主人公の後ろの方角）で回り終わる
+    const target = group ?? followPos
+    const endAngle = Math.atan2(target.x - r.x, target.z - r.z)
+    const R = r.walk
+    const ring = (angle: number, dist: number, h: number) =>
+      new THREE.Vector3(r.x + Math.sin(angle) * dist, cy + h, r.z + Math.cos(angle) * dist)
+    const points = [ring(endAngle - 2.3, R * 1.15, R * 0.85), ring(endAngle - 1.3, R * 1.05, R * 0.75), ring(endAngle - 0.35, R * 0.95, R * 0.55)]
+    const looks = [center.clone(), center.clone(), center.clone()]
+    if (group) {
+      // 群れへ: 外側（ワールドの縁の側）から近づいて、横をかすめて通り過ぎる
+      const out = new THREE.Vector3(group.x - r.x, 0, group.z - r.z)
+      if (out.lengthSq() < 1) out.set(Math.sin(endAngle), 0, Math.cos(endAngle))
+      out.normalize()
+      const side = new THREE.Vector3(out.z, 0, -out.x)
+      const gLook = group.clone().setY(group.y + Math.max(0.4, near))
+      // 近づく → 横 → 回り込んだ向こう側（群れを見たまま、まわりを半周ほど）
+      points.push(group.clone().addScaledVector(out, 24 * near).addScaledVector(side, -8 * near).setY(group.y + 10 * near))
+      looks.push(gLook.clone())
+      points.push(group.clone().addScaledVector(out, 4 * near).addScaledVector(side, 13 * near).setY(group.y + 5 * near))
+      looks.push(gLook.clone())
+      points.push(group.clone().addScaledVector(out, -9 * near).addScaledVector(side, 8 * near).setY(group.y + 6 * near))
+      looks.push(gLook.clone())
     }
+    // 主人公の後ろの高いところを通ってから、いつもの位置へ後ろから降りる（台地や岩をかすめない、真上から見下ろさない）
+    const back = new THREE.Vector3(followPos.x - followLook.x, 0, followPos.z - followLook.z)
+    if (back.lengthSq() < 0.01) back.set(0, 0, 1)
+    back.normalize()
+    points.push(followPos.clone().addScaledVector(back, 16).setY(followPos.y + 8))
+    looks.push(followLook.clone())
+    points.push(followPos.clone())
+    looks.push(followLook.clone())
+    flyCurve = new THREE.CatmullRomCurve3(points, false, 'centripetal')
+    flyLooks = looks
+    fly = { key, cx: r.x, cy, cz: r.z, radius: R, endAngle }
     document.body.classList.add('world-fly')
   }
+  const smooth = (x: number) => x * x * (3 - 2 * x)
   /** 空撮のカメラ。p は 0〜1 */
   const flyCamera = (p: number) => {
-    if (!fly) return
-    const orbitAt = (u: number, out: THREE.Vector3) => {
-      const a = fly!.endAngle - FLY_SWEEP * (1 - easeInOut(u))
-      const dist = fly!.radius * (1.15 - 0.3 * u)
-      const h = fly!.radius * (0.85 - 0.25 * u)
-      out.set(fly!.cx + Math.sin(a) * dist, fly!.cy + h, fly!.cz + Math.cos(a) * dist)
-    }
+    if (!fly || !flyCurve) return
+    const n = flyLooks.length - 1
+    // 全体をゆっくり始めてゆっくり止める（ゆるい曲線にして、群れのそばの区間の時間を削らない）。
+    // 最後の点（主人公の後ろ）は毎フレーム今の位置に合わせる
+    const u = 0.5 - 0.5 * Math.cos(Math.PI * p)
     player.followPose(followPos, followLook)
-    if (p <= FLY_ORBIT) {
-      orbitAt(p / FLY_ORBIT, flyPos)
-      flyLook.set(fly.cx, fly.cy, fly.cz)
-    } else {
-      // 空から主人公の後ろへ降りる。注視点もワールドのまん中から主人公へ移す
-      const e = easeInOut((p - FLY_ORBIT) / (1 - FLY_ORBIT))
-      orbitAt(1, flyPos)
-      flyPos.lerp(followPos, e)
-      flyLook.set(fly.cx, fly.cy, fly.cz).lerp(followLook, e)
-    }
+    flyCurve.points[n].copy(followPos)
+    flyLooks[n].copy(followLook)
+    flyCurve.getPoint(u, flyPos)
+    const seg = Math.min(n - 1, Math.floor(u * n))
+    const local = u * n - seg
+    // 地面より下にはもぐらない
+    flyPos.y = Math.max(flyPos.y, terrainHeight(flyPos.x, flyPos.z) + 2.5)
+    flyLook.copy(flyLooks[seg]).lerp(flyLooks[seg + 1], smooth(local))
     camera.position.copy(flyPos)
     camera.lookAt(flyLook)
     player.setCameraOverride(flyOverride)
