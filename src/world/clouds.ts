@@ -20,6 +20,8 @@ export function createClouds(): Clouds {
   const BLOBS = 7
   const geo = new THREE.SphereGeometry(1, 10, 7)
   const mat = toonMaterial({ color: '#ffffff' })
+  // 下から見上げても灰色に沈まない、白い雲（影の側はうすい青灰色）
+  mat.emissive.set('#8d9bb4')
   const mesh = new THREE.InstancedMesh(geo, mat, CLUSTERS * BLOBS)
   mesh.frustumCulled = false
 

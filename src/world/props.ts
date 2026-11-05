@@ -85,9 +85,10 @@ function createAcacias(rand: () => number, rand2: () => number, group: THREE.Gro
   blobs.castShadow = true
   blobs.receiveShadow = true
 
-  const canopyA = new THREE.Color('#6a9234')
-  const canopyB = new THREE.Color('#93ad48')
-  const canopyDry = new THREE.Color('#a9a24e')
+  // トップの絵のような、鮮やかな若葉色
+  const canopyA = new THREE.Color('#56a02a')
+  const canopyB = new THREE.Color('#84bc3a')
+  const canopyDry = new THREE.Color('#a2aa3c')
 
   trees.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
@@ -426,9 +427,10 @@ function createMountains(group: THREE.Group): void {
     cutPasses: true,
     name: 'mountains',
     layers: [
-      { r: 172, h: 20, spread: 10, segs: 200, foot: '#b86a4e', peak: '#e0a080', seed: 0.0 },
-      { r: 212, h: 36, spread: 16, segs: 180, foot: '#c07e6c', peak: '#e8b6a2', seed: 3.3 },
-      { r: 258, h: 54, spread: 24, segs: 160, foot: '#c89090', peak: '#eecbc4', seed: 7.1 },
+      // トップの絵の遠い山のような青紫。奥ほど淡く
+      { r: 172, h: 20, spread: 10, segs: 200, foot: '#7a72b4', peak: '#b2a9de', seed: 0.0 },
+      { r: 212, h: 36, spread: 16, segs: 180, foot: '#8086c4', peak: '#bcc1ea', seed: 3.3 },
+      { r: 258, h: 54, spread: 24, segs: 160, foot: '#98a3d6', peak: '#d3d9f4', seed: 7.1 },
     ],
   })
   for (const r of OUTER_REGIONS) {
@@ -574,10 +576,10 @@ function createGrass(
   grass.frustumCulled = false
   grass.layers.set(NO_REFLECT_LAYER)
 
-  const gA = new THREE.Color('#f2d26c')
-  const gB = new THREE.Color('#d8ab45')
-  const gC = new THREE.Color('#b2c65a')
-  const gD = new THREE.Color('#eed08a')
+  const gA = new THREE.Color('#fcd424')
+  const gB = new THREE.Color('#e6ad16')
+  const gC = new THREE.Color('#aacd22')
+  const gD = new THREE.Color('#f8d34e')
 
   const R = WALK_RADIUS + 30
   let placed = 0
@@ -642,9 +644,9 @@ function createBushes(rand: () => number, group: THREE.Group, count: number): vo
   const mesh = new THREE.InstancedMesh(geo, mat, count * PER)
   mesh.castShadow = true
   mesh.receiveShadow = false
-  const olive = new THREE.Color('#7f9840')
-  const deep = new THREE.Color('#62803a')
-  const dry = new THREE.Color('#ab9f52')
+  const olive = new THREE.Color('#6aa636')
+  const deep = new THREE.Color('#4f8c30')
+  const dry = new THREE.Color('#a5a842')
   // 集まる場所の中心
   const hubs: Array<{ x: number; z: number; r: number }> = [
     { x: KOPJE.x, z: KOPJE.z, r: KOPJE.radius + 10 },

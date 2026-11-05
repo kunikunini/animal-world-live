@@ -113,14 +113,16 @@ export function terrainSlope(x: number, z: number, e = 0.75): number {
 
 // 乾季のサバンナ。明るい麦わら色を基本に、淡く枯れた帯・こがね色の帯・低い所の若草色の差を広く取る。
 // 草のはげた赤土のまだらと、動物が通ってできた細い踏み分け道（白っぽい土）も入れる
-const colGrass = new THREE.Color('#d9ac42')
-const colGrassDry = new THREE.Color('#e8c978')
-const colGrassTawny = new THREE.Color('#c8923a')
-const colGrassGreen = new THREE.Color('#aec25a')
-const colEarth = new THREE.Color('#c58b57')
-const colBare = new THREE.Color('#cf9a68')
-const colTrail = new THREE.Color('#d8b886')
-const colRock = new THREE.Color('#b39176')
+// トップの絵に寄せて、草は鮮やかな黄金色と若草色に（スマホは色補正のパスが無いので、素の色で鮮やかにする）。
+// 岩は少し灰色に寄せて、上にいる金色の動物が沈まないようにする
+const colGrass = new THREE.Color('#e8ae14')
+const colGrassDry = new THREE.Color('#f3cc2a')
+const colGrassTawny = new THREE.Color('#d8921a')
+const colGrassGreen = new THREE.Color('#a6ca1e')
+const colEarth = new THREE.Color('#c98a50')
+const colBare = new THREE.Color('#df9833')
+const colTrail = new THREE.Color('#e3ba60')
+const colRock = new THREE.Color('#9c8c86')
 const trailNoise = new Simplex2D(WORLD_SEED + 57)
 const bareNoise = new Simplex2D(WORLD_SEED + 63)
 
@@ -193,7 +195,8 @@ function savannaColor(x: number, z: number, h: number, out: THREE.Color, forMap 
   if (k.dk < 1.15) {
     const rockW = 1 - smoothstep(0.92, 1.12, k.dk)
     out.lerp(colRock, rockW * 0.9)
-    if (slope > 0.96) out.lerp(colGrassDry, 0.3 * rockW)
+    // 段の上の草はうすく（草を鮮やかにしたので、多いと台地が黄色くなり、上にいるライオンが沈む）
+    if (slope > 0.96) out.lerp(colGrassDry, 0.14 * rockW)
     if (k.cliff < 1 && k.dk > KOPJE.plateau) {
       out.lerp(colEarth, (1 - k.cliff) * 0.55 * rockW)
       // 坂の下のほうには草が入り込む

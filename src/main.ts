@@ -13,6 +13,7 @@ import { createObservationSpot } from './world/spots'
 import { createAtmosphere } from './world/atmosphere'
 import { createClouds } from './world/clouds'
 import { createPostFx } from './render/postfx'
+import { vividToon } from './render/toon'
 import { LIONS, SPOT } from './world/layout'
 import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
@@ -179,6 +180,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // ほかのワールドで会える子（トラ・オオカミ）も同じ伏せの体で作り、出会いの仕組みに乗せる
   const lions = [...LIONS.map((l) => createLion(l)), ...createResidents()]
   for (const lion of lions) {
+    vividToon(lion.group)
     scene.add(lion.group)
     props.colliders.push(lion.collider)
   }
@@ -187,7 +189,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const angie = lions.find((l) => l.id === 'angie')
     if (angie) {
       loadLionModel('/models/angie-v2.glb')
-        .then((loaded) => angie.swapModel(loaded.model, loaded.parts))
+        .then((loaded) => {
+          angie.swapModel(loaded.model, loaded.parts)
+          vividToon(angie.group)
+        })
         .catch((err) => console.warn('lion v2 model not loaded; keeping primitive', err))
     }
   }
@@ -343,23 +348,65 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const spotHead = spot.position.clone().add(new THREE.Vector3(0, 2.2, 0))
   // いるワールドが変わったら、スポット・案内・霧の色を切り替える
   const fogColor = (scene.fog as THREE.Fog).color
-  const fogBase = fogColor.clone()
   const FOG_TINT: Record<RegionKey, THREE.Color> = {
-    africa: fogBase.clone(),
+    // サバンナはトップの絵に寄せて、地平線の空に近い澄んだ水色へ
+    africa: new THREE.Color('#a6cff0'),
     north: new THREE.Color('#e3ebf3'),
     jungle: new THREE.Color('#cfe2d4'),
     south: new THREE.Color('#efdcc9'),
   }
-  // 明るさもワールドごと。サバンナだけ明るくし、照り返しを紫から乾いた草の色へ（影が濁らない）。
+  // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
+  // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
   // ほかのワールドはいままでの値のまま
   const baseExposure = renderer.toneMappingExposure
-  const LIGHT: Record<RegionKey, { exposure: number; sky: THREE.Color; ground: THREE.Color; intensity: number }> = {
-    africa: { exposure: 1.0, sky: new THREE.Color('#d0e4ff'), ground: new THREE.Color('#c4a26a'), intensity: 0.78 },
-    north: { exposure: baseExposure, sky: hemi.color.clone(), ground: hemi.groundColor.clone(), intensity: hemi.intensity },
-    jungle: { exposure: baseExposure, sky: hemi.color.clone(), ground: hemi.groundColor.clone(), intensity: hemi.intensity },
-    south: { exposure: baseExposure, sky: hemi.color.clone(), ground: hemi.groundColor.clone(), intensity: hemi.intensity },
+  const skyU = (sky.material as THREE.ShaderMaterial).uniforms as { uTop: { value: THREE.Color }; uHorizon: { value: THREE.Color } }
+  const fog = scene.fog as THREE.Fog
+  interface Light {
+    exposure: number
+    sky: THREE.Color
+    ground: THREE.Color
+    intensity: number
+    sun: number
+    top: THREE.Color
+    horizon: THREE.Color
+    near: number
+    far: number
+    /** PC の色補正（スマホは色補正なし）。サバンナは素の色を鮮やかにしたので、重ねすぎないよう弱める */
+    gradeSat: number
+    gradeContrast: number
   }
-  const lightTarget = { exposure: baseExposure, sky: new THREE.Color(), ground: new THREE.Color(), intensity: hemi.intensity }
+  const baseLight = (): Light => ({
+    exposure: baseExposure,
+    sky: hemi.color.clone(),
+    ground: hemi.groundColor.clone(),
+    intensity: hemi.intensity,
+    sun: sun.intensity,
+    top: skyU.uTop.value.clone(),
+    horizon: skyU.uHorizon.value.clone(),
+    near: fog.near,
+    far: fog.far,
+    gradeSat: postfx.grade.saturation,
+    gradeContrast: postfx.grade.contrast,
+  })
+  const LIGHT: Record<RegionKey, Light> = {
+    africa: {
+      exposure: 0.95,
+      sky: new THREE.Color('#c4dcff'),
+      ground: new THREE.Color('#c4a26a'),
+      intensity: 0.64,
+      sun: 2.3,
+      top: new THREE.Color('#0a4cd4'),
+      horizon: new THREE.Color('#5ea6ee'),
+      near: 130,
+      far: 520,
+      gradeSat: 1.04,
+      gradeContrast: 1.06,
+    },
+    north: baseLight(),
+    jungle: baseLight(),
+    south: baseLight(),
+  }
+  const lightTarget: Light = { ...baseLight() }
   const weights: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
   const fogTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
@@ -430,8 +477,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       fogTarget.setRGB(0, 0, 0)
       lightTarget.exposure = 0
       lightTarget.intensity = 0
+      lightTarget.sun = 0
+      lightTarget.near = 0
+      lightTarget.far = 0
+      lightTarget.gradeSat = 0
+      lightTarget.gradeContrast = 0
       lightTarget.sky.setRGB(0, 0, 0)
       lightTarget.ground.setRGB(0, 0, 0)
+      lightTarget.top.setRGB(0, 0, 0)
+      lightTarget.horizon.setRGB(0, 0, 0)
       for (const k of ['africa', 'north', 'jungle', 'south'] as const) {
         const wk = weights[k]
         fogTarget.r += FOG_TINT[k].r * wk
@@ -446,6 +500,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         lightTarget.ground.r += L.ground.r * wk
         lightTarget.ground.g += L.ground.g * wk
         lightTarget.ground.b += L.ground.b * wk
+        lightTarget.sun += L.sun * wk
+        lightTarget.near += L.near * wk
+        lightTarget.far += L.far * wk
+        lightTarget.gradeSat += L.gradeSat * wk
+        lightTarget.gradeContrast += L.gradeContrast * wk
+        lightTarget.top.r += L.top.r * wk
+        lightTarget.top.g += L.top.g * wk
+        lightTarget.top.b += L.top.b * wk
+        lightTarget.horizon.r += L.horizon.r * wk
+        lightTarget.horizon.g += L.horizon.g * wk
+        lightTarget.horizon.b += L.horizon.b * wk
       }
     }
     fogColor.lerp(fogTarget, Math.min(1, dt * 2))
@@ -455,6 +520,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     hemi.intensity += (lightTarget.intensity - hemi.intensity) * lk
     hemi.color.lerp(lightTarget.sky, lk)
     hemi.groundColor.lerp(lightTarget.ground, lk)
+    sun.intensity += (lightTarget.sun - sun.intensity) * lk
+    fog.near += (lightTarget.near - fog.near) * lk
+    fog.far += (lightTarget.far - fog.far) * lk
+    postfx.grade.saturation += (lightTarget.gradeSat - postfx.grade.saturation) * lk
+    postfx.grade.contrast += (lightTarget.gradeContrast - postfx.grade.contrast) * lk
+    skyU.uTop.value.lerp(lightTarget.top, lk)
+    skyU.uHorizon.value.lerp(lightTarget.horizon, lk)
     for (const w of worldSpots) if (w !== here) w.spot.update(time, 999)
 
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
@@ -612,6 +684,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   if (import.meta.env.DEV) {
     // 開発時だけ、ブラウザのコンソールから中身を覗けるようにする
     ;(window as unknown as { __awl: unknown }).__awl = {
+      renderer,
+      hemi,
       camera,
       sun,
       scene,

@@ -61,13 +61,13 @@ const C = {
   beach: '#f6e7bd',
   coastLine: 'rgba(70, 52, 38, 0.5)',
   water: '#8fc6ec',
-  // コピエは 3D の岩肌（少し明るくなった）と赤い地層に合わせる
-  rock: '#bf8a5a',
-  ramp: '#d3ab7f',
-  plateau: '#e2c89e',
-  // アカシアは 3D の傘の冠と同じ、少しくすんだ若葉色。明るい所を左上に重ねる
-  tree: '#7a9a38',
-  treeLit: '#a9bf58',
+  // コピエは 3D の岩肌（少し灰色）に合わせる
+  rock: '#b39484',
+  ramp: '#cdb49a',
+  plateau: '#d9cbb8',
+  // アカシアは 3D の傘の冠と同じ、鮮やかな若葉色。明るい所を左上に重ねる
+  tree: '#5fa52e',
+  treeLit: '#92c44a',
   road: '#fff6e6',
   roadEdge: 'rgba(110, 78, 48, 0.55)',
   spot: '#f4c242',
@@ -160,18 +160,18 @@ export function isLand(x: number, z: number): boolean {
 // ---------------------------------------------------------------------------
 const KEYS = REGIONS.map((r) => r.key)
 // サバンナは 3D の地面と同じ色の出し方（savannaMapColor）。地図では上から広く見えて、まだらが迷彩のように細かく見えるので、
-// 差を少し縮め、彩度を少し上げて、地図の明るい絵柄に合わせて白へ少し寄せる。この 2 色は、サバンナの重みが小さい山の向こうだけに使う（描く時間を抑える）
+// 差を少し縮め、地図の明るい絵柄に合わせて白へ少し寄せる（素の色はもう鮮やかなので、彩度はそのまま）。この 2 色は、サバンナの重みが小さい山の向こうだけに使う（描く時間を抑える）
 const GROUND: Record<RegionKey, [[number, number, number], [number, number, number]]> = {
   africa: [hex('#f4da88'), hex('#d9ad44')],
   north: [hex('#f6f9fc'), hex('#c6d5e5')],
   jungle: [hex('#92c46c'), hex('#4c8c44')],
   south: [hex('#eeae7c'), hex('#c46e48')],
 }
-const SAVANNA_SAT = 1.3
+const SAVANNA_SAT = 1.0
 const SAVANNA_SPREAD = 0.7
-const SAVANNA_LIFT = 0.1
+const SAVANNA_LIFT = 0.14
 /** まだらの差を縮める中心（平原のふつうの色） */
-const SAVANNA_MID = hex('#e2c06a')
+const SAVANNA_MID = hex('#eac445')
 const savannaTone = (c: [number, number, number], i: number, lum: number): number => {
   const v = lum + (c[i] - lum) * SAVANNA_SAT
   const m = SAVANNA_MID[i] + (v - SAVANNA_MID[i]) * SAVANNA_SPREAD
@@ -287,9 +287,9 @@ const RANGES: Array<{ cx: number; cz: number; pass: boolean; style: PeakStyle; s
     style: 'peak',
     snow: false,
     layers: [
-      [172, '#b86a4e', '#e0a080'],
-      [212, '#c07e6c', '#e8b6a2'],
-      [258, '#c89090', '#eecbc4'],
+      [172, '#7a72b4', '#b2a9de'],
+      [212, '#8086c4', '#bcc1ea'],
+      [258, '#98a3d6', '#d3d9f4'],
     ],
   },
   ...OUTER_REGIONS.map((r) => {

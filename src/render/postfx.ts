@@ -10,6 +10,8 @@ export interface PostFx {
   /** 低性能時はパスを切って素の描画にする */
   setEnabled: (on: boolean) => void
   enabled: boolean
+  /** 彩度とコントラスト（ワールドごとに切り替える） */
+  grade: { saturation: number; contrast: number }
 }
 
 /**
@@ -63,14 +65,19 @@ const GradeShader = {
 export function createPostFx(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): PostFx {
   const composer = new EffectComposer(renderer)
   composer.addPass(new RenderPass(scene, camera))
-  composer.addPass(new ShaderPass(GradeShader))
+  const gradePass = new ShaderPass(GradeShader)
+  composer.addPass(gradePass)
   composer.addPass(new OutputPass())
 
   const fx: PostFx = {
     enabled: true,
+    grade: { saturation: GradeShader.uniforms.uSaturation.value, contrast: GradeShader.uniforms.uContrast.value },
     render: () => {
-      if (fx.enabled) composer.render()
-      else renderer.render(scene, camera)
+      if (fx.enabled) {
+        gradePass.uniforms.uSaturation.value = fx.grade.saturation
+        gradePass.uniforms.uContrast.value = fx.grade.contrast
+        composer.render()
+      } else renderer.render(scene, camera)
     },
     setSize: (w, h, dpr) => {
       composer.setPixelRatio(dpr)
