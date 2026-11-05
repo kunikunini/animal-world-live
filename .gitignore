@@ -24,6 +24,7 @@ public/models/*
 !public/models/hero-teal.glb
 !public/models/hero-pink.glb
 !public/models/hero-bluecap.glb
+!public/models/hero-purple.glb
 !public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）

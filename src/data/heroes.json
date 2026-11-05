@@ -38,5 +38,15 @@
       "ja": "青い帽子の子",
       "en": "Blue cap"
     }
+  },
+  {
+    "id": "purple",
+    "model": "/models/hero-purple.glb",
+    "thumb": "/heroes/purple.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "紫の服の子",
+      "en": "Purple hoodie"
+    }
   }
 ]
