@@ -540,7 +540,10 @@ function createGrass(
 
   const uniforms = { uTime: { value: 0 }, uSway: { value: 1 }, uLodFar: { value: lodFar } }
   const mat = toonMaterial({ vertexColors: true })
-  mat.onBeforeCompile = (shader) => {
+  // toonMaterial のクレイの見た目を残したまま、風の揺れを足す
+  const baseCompile = mat.onBeforeCompile
+  mat.onBeforeCompile = (shader, renderer) => {
+    baseCompile.call(mat, shader, renderer)
     shader.uniforms.uTime = uniforms.uTime
     shader.uniforms.uSway = uniforms.uSway
     shader.uniforms.uLodFar = uniforms.uLodFar

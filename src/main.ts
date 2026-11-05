@@ -14,7 +14,7 @@ import { createAtmosphere } from './world/atmosphere'
 import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
-import { vividToon } from './render/toon'
+import { getClay, setClay, vividToon } from './render/toon'
 import { LIONS, SPOT } from './world/layout'
 import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
@@ -625,6 +625,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     fog.far += (lightTarget.far - fog.far) * lk
     postfx.grade.saturation += (lightTarget.gradeSat - postfx.grade.saturation) * lk
     postfx.grade.contrast += (lightTarget.gradeContrast - postfx.grade.contrast) * lk
+    // サバンナだけクレイアニメ（粘土）の見た目。峠でほかのワールドの見た目へ溶ける
+    setClay(getClay() + (weights.africa - getClay()) * lk)
     skyU.uTop.value.lerp(lightTarget.top, lk)
     skyU.uHorizon.value.lerp(lightTarget.horizon, lk)
     skyU.uGlow.value.lerp(lightTarget.sunGlow, lk)
