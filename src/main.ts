@@ -32,13 +32,14 @@ import { createHome } from './ui/home'
 import { createStory } from './ui/story'
 import { createIris } from './ui/iris'
 import { createSettings } from './ui/settings'
+import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { createScope } from './ui/scope'
 import { animalName, applyStatic, getLang, onLangChange, t } from './ui/i18n'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
-import { getAnimal } from './data/animals'
+import { getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
@@ -70,11 +71,26 @@ function createShell() {
   const settings = createSettings()
   const catalog = createCatalog(store)
   const scope = createScope()
+  const guide = createGuide()
+
+  // あそび方ナビの節目。映像を開いた時、その子がすでにともだちなら「ともだちになる」の段は済んだことにする（もう一度見る時に詰まらない）
+  const guideWatched = (animal: Animal) => {
+    guide.reach('open')
+    if (store.has(animal.id)) guide.reach('befriend')
+  }
+  observe.onBefriend(() => guide.reach('befriend'))
+  observe.onOpenChange((open) => document.body.classList.toggle('observe-open', open))
+  book.onOpenChange((open) => {
+    document.body.classList.toggle('book-open', open)
+    if (open) guide.reach('book')
+  })
+  book.onVisit(() => guide.reach('visit'))
 
   // アニマルスコープの一覧から: 映像のカードでモニター、帳のボタンで帳（閉じると一覧に戻る）
   catalog.onWatch((animal) => {
     met.mark(animal.id)
     observe.open(animal, 'world')
+    guideWatched(animal)
   })
   catalog.onOpenBook(() => book.open('world'))
   book.onOpenChange((open) => {
@@ -85,6 +101,7 @@ function createShell() {
   book.onVisit((animal) => {
     met.mark(animal.id)
     observe.open(animal, 'book')
+    guideWatched(animal)
   })
   hud.onOpenBook(() => book.open('world'))
   home.onBook(() => book.open('home'))
@@ -119,7 +136,7 @@ function createShell() {
   applyMotion(settings.reduceMotion)
   settings.onReduceMotionChange(applyMotion)
 
-  return { store, met, hud, observe, book, home, story, iris, settings, catalog, scope }
+  return { store, met, hud, observe, book, home, story, iris, settings, catalog, scope, guide, guideWatched }
 }
 
 type Shell = ReturnType<typeof createShell>
@@ -137,7 +154,7 @@ interface WorldHandle {
  * （ホームにいる間に裏で準備しておき、「のぞいてみる」で待たせないため）
  */
 function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false): WorldHandle {
-  const { hud, observe, book, store, met, catalog, scope } = shell
+  const { hud, observe, book, store, met, catalog, scope, guide, guideWatched } = shell
   const mobile = isMobile()
   const { renderer, scene, camera, sun, hemi, sky, setDpr } = createScene(canvas, mobile ? 1.5 : 2)
   if (mobile) sun.shadow.mapSize.set(1024, 1024)
@@ -248,6 +265,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
+  let walked = 0
+  let guideWasActive = false
+  let walkX = player.object.position.x
+  let walkZ = player.object.position.z
 
   hud.onJump(() => player.jump())
 
@@ -280,6 +301,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (!animal) return
     met.mark(animal.id)
     observe.open(animal, 'world')
+    guideWatched(animal)
   })
 
   // 広げた全体地図（ミニマップの「地図を広げる」から開く）
@@ -578,6 +600,19 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (frames % 60 === 0) measureSafe()
 
     player.update(dt)
+    // あそび方ナビ「歩く」: タップ移動・スティック・キー・スポットへの自動歩行のどれでも、少し歩いたら済み
+    if (guide.isActive()) {
+      // 始まった瞬間に歩いた距離を 0 に戻す（「もう一度見る」で前の分が残らないように）
+      if (!guideWasActive) walked = 0
+      const p = player.object.position
+      walked += Math.hypot(p.x - walkX, p.z - walkZ)
+      if (walked > 3) guide.reach('walk')
+      // すでに札が出ている子のそばで始めた時は「そば」の段は済み
+      if (encounterId !== null) guide.reach('near')
+    }
+    guideWasActive = guide.isActive()
+    walkX = player.object.position.x
+    walkZ = player.object.position.z
     props.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
@@ -778,6 +813,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         // 出会いの記録。地図に出るのはここから
         met.mark(lion.id)
         hud.toast(t('nearby', { name: nameOf(lion.id) }), 'bino')
+        guide.reach('near')
       }
     }
 
@@ -928,6 +964,9 @@ function main(): void {
       document.body.classList.add('in-world')
       canvas.focus()
       await shell.iris.open()
+      // 初めての人には、幕が開いてからあそび方ナビを出す
+      shell.guide.autoStart(shell.store.list().length > 0)
+      shell.guide.setInWorld(true)
     } catch (err) {
       console.error(err)
       shell.home.show()
@@ -945,6 +984,7 @@ function main(): void {
     if (busy || !world) return
     busy = true
     await shell.iris.close()
+    shell.guide.setInWorld(false)
     world.pause()
     shell.home.show()
     document.body.classList.remove('in-world')
@@ -979,6 +1019,11 @@ function main(): void {
   })
   shell.hud.onGoHome(() => {
     void goHome()
+  })
+  // 設定の「あそび方をもう一度見る」: ナビを最初に戻してワールドへ
+  shell.settings.onReplayGuide(() => {
+    shell.guide.start()
+    void enterWorld()
   })
 }
 

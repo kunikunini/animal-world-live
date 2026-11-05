@@ -14,6 +14,8 @@ export interface Settings {
   isOpen: () => boolean
   readonly reduceMotion: boolean
   onReduceMotionChange: (fn: (on: boolean) => void) => void
+  /** 「あそび方をもう一度見る」が押された（シートは閉じてから伝える） */
+  onReplayGuide: (fn: () => void) => void
 }
 
 function readMotion(): boolean | null {
@@ -40,6 +42,7 @@ export function createSettings(): Settings {
   const closeBtn = document.getElementById('settings-close') as HTMLButtonElement
   const openBtn = document.getElementById('home-settings') as HTMLButtonElement
   const motion = document.getElementById('reduce-motion') as HTMLInputElement
+  const replayBtn = document.getElementById('replay-guide') as HTMLButtonElement
 
   const prefers = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   let reduceMotion = readMotion() ?? prefers
@@ -69,6 +72,11 @@ export function createSettings(): Settings {
     else openBtn.focus()
   }
   openBtn.addEventListener('click', () => setOpen(true))
+  const replayListeners: Array<() => void> = []
+  replayBtn.addEventListener('click', () => {
+    setOpen(false)
+    replayListeners.forEach((fn) => fn())
+  })
   closeBtn.addEventListener('click', () => setOpen(false))
   root.addEventListener('click', (e) => {
     if (e.target === root) setOpen(false)
@@ -86,6 +94,9 @@ export function createSettings(): Settings {
     },
     onReduceMotionChange: (fn) => {
       motionListeners.push(fn)
+    },
+    onReplayGuide: (fn) => {
+      replayListeners.push(fn)
     },
   }
 }

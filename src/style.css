@@ -4056,6 +4056,15 @@ button.ch-mine[aria-expanded='true'] {
   text-decoration: none;
 }
 
+/* ボタンの行（あそび方をもう一度見る）: リンクの行と同じ見た目にする */
+button.set-row {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .set-open {
   flex: none;
   padding: 6px 14px;
@@ -4071,4 +4080,92 @@ button.ch-mine[aria-expanded='true'] {
   .ch-visit span { display: none; }
   .ch-visit { width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 50%; }
   .ch-visit .ico { width: 24px; height: 24px; }
+}
+
+/* ==========================================================================
+   あそび方ナビ（初回の案内）。画面の下の小さなカード。モニターや帳の上にも出す（ともだちになる・帳の段があるため）
+   ========================================================================== */
+.guide {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + var(--safe-bottom));
+  transform: translateX(-50%);
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(480px, calc(100% - 32px));
+  padding: 10px 14px 12px 10px;
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-float);
+  transition: opacity var(--t-view) var(--ease-soft), translate var(--t-view) var(--ease-soft);
+}
+.guide.is-out { opacity: 0; translate: 0 12px; }
+body.is-reduce-motion .guide { translate: none !important; }
+body.is-reduce-motion .guide.is-refresh { animation: none; }
+
+.guide-ico {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--sun-tint);
+  display: grid;
+  place-items: center;
+}
+.guide-ico .ico { width: 26px; height: 26px; color: var(--sun); fill: var(--sun); }
+
+.guide-main { flex: 1; min-width: 0; }
+.guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.guide-title { font-size: 12px; font-weight: 800; color: var(--ink-soft); letter-spacing: 0.04em; }
+.guide-count { color: var(--sun); }
+.guide-text {
+  margin: 2px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 800;
+}
+.guide-btn {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ink-faint);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.guide.is-final .guide-btn { background: var(--sun); color: #fff; box-shadow: var(--shadow-sun); }
+.guide.is-final .guide-ico { background: var(--gold-tint); }
+
+/* ともだち帳が開いている間は、下のタブに重ねない */
+body.book-open .guide { bottom: calc(96px + var(--safe-bottom)); }
+
+/* スマホ縦: スティック（左下、下から 24px・124px）とジャンプの上に、横いっぱいで出す */
+@media (max-width: 480px) {
+  .guide {
+    left: calc(12px + var(--safe-left));
+    right: calc(12px + var(--safe-right));
+    bottom: calc(24px + 124px + 12px + var(--safe-bottom));
+    width: auto;
+    transform: none;
+    gap: 0;
+    padding: 8px 12px 10px;
+    background: rgba(255, 255, 255, 0.96);
+  }
+  .guide-ico { display: none; }
+  .guide-text { font-size: 14px; line-height: 1.4; }
+  body.book-open .guide { bottom: calc(84px + var(--safe-bottom)); }
+  /* モニターは全画面でスティックが無いので、いちばん下に寄せる（プロフィールの札の上に少しだけ重なる） */
+  body.observe-open .guide { bottom: calc(12px + var(--safe-bottom)); }
 }
