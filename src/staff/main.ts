@@ -152,7 +152,7 @@ const bubblePreview = (n: NoticeInput, when = '出す時の時刻'): string => {
   } else {
     inner = `${n.title ? `<strong class="pv-ntitle">${esc(n.title)}</strong>` : ''}${body || '<span class="pv-empty">（本文）</span>'}`
   }
-  const sender = n.kind === 'reply' ? 'お手紙へのお返事' : 'スタッフからのお知らせ'
+  const sender = n.kind === 'reply' ? '飼育員さんからのお返事' : 'スタッフからのお知らせ'
   return `<div class="pv"><span class="pv-sender">${sender}</span><div class="pv-line"><div class="pv-bubble">${inner}</div><span class="pv-meta">${esc(when)}</span></div></div>`
 }
 
@@ -162,7 +162,7 @@ const renderCompose = (a: Animal): string => {
     .map((k) => `<button type="button" class="st-chip${form.kind === k ? ' is-on' : ''}" data-kind="${k}" aria-pressed="${form.kind === k}">${KIND_LABEL[k]}</button>`)
     .join('')
   const replyHead = isReply
-    ? `<div class="st-reply-head"><span class="st-pill st-pill-draft">お手紙へのお返事</span><blockquote class="st-quote">${esc(form.quote)}</blockquote><p class="st-help">お返事は下書きにだけ保存できます。「下書き・承認」で承認した時に、ともだち帳へ出ます。</p><button type="button" class="st-btn st-btn-quiet" data-cancel-reply="1">お返事をやめる</button></div>`
+    ? `<div class="st-reply-head"><span class="st-pill st-pill-draft">お手紙へのお返事</span><blockquote class="st-quote">${esc(form.quote)}</blockquote><p class="st-help">お返事は下書きにだけ保存できます。「下書き・承認」で承認した時に、ともだち帳へ「飼育員さんからのお返事」として出ます（動物が書いた形にはなりません）。</p><button type="button" class="st-btn st-btn-quiet" data-cancel-reply="1">お返事をやめる</button></div>`
     : `<div class="st-kinds" role="group" aria-label="種類">${kinds}</div>`
   const fields = `
     ${form.kind !== 'reply' ? `<label class="st-field"><span>見出し</span><input id="f-title" type="text" maxlength="40" value="${esc(form.title)}" placeholder="${form.kind === 'photo' ? '写真のひとこと（任意）' : '見出し'}" /></label>` : ''}

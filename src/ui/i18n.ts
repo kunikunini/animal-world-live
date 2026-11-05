@@ -93,7 +93,7 @@ const DICT = {
   noticeSchedule: { ja: '収録の予定', en: 'Recording plan' },
   noticeScheduleNote: { ja: 'ライブ配信ではありません。収録した映像は、あとでここで見られます', en: 'Not a live stream. The recorded video will be viewable here later' },
   noticePhoto: { ja: 'きょうの写真', en: 'Photo of the day' },
-  noticeReply: { ja: 'お手紙へのお返事', en: 'Reply to your letter' },
+  noticeReply: { ja: '飼育員さんからのお返事', en: 'Reply from the keeper' },
   unreadNotices: { ja: '新しいお知らせが{n}件', en: '{n} new notices' },
   undo: { ja: 'とりけす', en: 'Take back' },
   undoConfirm: { ja: 'このお手紙をとりけす', en: 'Take back this letter' },
