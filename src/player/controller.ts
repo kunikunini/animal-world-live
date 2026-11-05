@@ -4,6 +4,7 @@ import { clampToWalkable, routeTo } from '../world/regions'
 import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
 import { toonMaterial } from '../render/toon'
+import { refineRoute } from './pathfind'
 
 export interface CameraOverride {
   position: { x: number; y: number; z: number }
@@ -193,7 +194,8 @@ export function createPlayer(
   }
 
   const goTo = (points: Array<{ x: number; z: number }>) => {
-    waypoints = points.map((p) => {
+    // 岩でふさがれた区間は、格子の上で回り道を探して経由点を差し込む（崖の岩の間や一枚岩の裏へも着く）
+    waypoints = refineRoute(object.position, points, colliders, PLAYER_RADIUS).map((p) => {
       const v = new THREE.Vector3(p.x, 0, p.z)
       clampToWorld(v)
       v.y = terrainHeight(v.x, v.z)
