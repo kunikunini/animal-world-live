@@ -3812,6 +3812,47 @@ body.is-reduce-motion .catalog.is-leave.is-out .cat-scroll { scale: none; filter
   .hud-spot[data-mode="scope"] .ico { width: 36px; height: 36px; padding: 6px; }
 }
 
+/* 吹き出し: 双眼鏡が画面に見えている間は、双眼鏡の右上に出してしっぽで指す（左下の点の位置は hud.ts の --ax / --ay）。
+   見えない時（カメラの後ろ・画面の端）は is-anchored が外れて、上の下のまん中に戻る */
+.hud-spot[data-mode="scope"].is-anchored {
+  left: 0;
+  right: auto;
+  top: 0;
+  bottom: auto;
+  transform: translate(var(--ax, 50vw), var(--ay, 50vh)) translateY(-100%);
+  transform-origin: 0% 100%;
+}
+.hud-spot[data-mode="scope"].is-anchored:active {
+  transform: translate(var(--ax, 50vw), var(--ay, 50vh)) translateY(calc(-100% + 5px));
+}
+.hud-spot-tail { display: none; }
+.hud-spot[data-mode="scope"].is-anchored .hud-spot-tail {
+  display: block;
+  position: absolute;
+  left: 16px;
+  bottom: -10px;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  background: #0f0b07;
+  border-right: 3px solid #e2b445;
+  border-bottom: 3px solid #e2b445;
+  border-bottom-right-radius: 5px;
+  /* 角（右下）を左下へ向ける＝双眼鏡を指す */
+  transform: rotate(80deg);
+  pointer-events: none;
+}
+/* 左上に出す時は、しっぽを右下にして右下へ向ける */
+.hud-spot[data-mode="scope"].is-anchored.is-flip { transform-origin: 100% 100%; }
+.hud-spot[data-mode="scope"].is-anchored.is-flip .hud-spot-tail { left: auto; right: 16px; transform: rotate(10deg); }
+/* スマホ縦: 吹き出しは少し小さく（双眼鏡のまわりの景色をふさぎすぎない） */
+@media (max-width: 480px) {
+  .hud-spot[data-mode="scope"].is-anchored { height: 56px; min-height: 56px; padding: 0 22px 0 10px; gap: 10px; font-size: 17px; }
+  .hud-spot[data-mode="scope"].is-anchored .ico { width: 36px; height: 36px; padding: 6px; }
+}
+/* 真上に出す時は、しっぽを下のまん中にして真下へ向ける */
+.hud-spot[data-mode="scope"].is-anchored.is-center { transform-origin: 50% 100%; }
+.hud-spot[data-mode="scope"].is-anchored.is-center .hud-spot-tail { left: calc(50% - 9px); transform: rotate(45deg); }
 body.is-reduce-motion .hud-spot[data-mode="scope"],
 body.is-reduce-motion .hud-spot[data-mode="scope"] .ico,
 body.is-reduce-motion .hud-spot[data-mode="scope"]::before,

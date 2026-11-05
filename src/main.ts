@@ -592,6 +592,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // ワールドに入った時の大きな名前。日本語の時は英語の名前を上に小さく添える
   const regionTitle = createRegionTitle()
   const projected = new THREE.Vector3()
+  const camRight = new THREE.Vector3()
   let arrived = false
 
   // 出会いの対象の切り替えに間を置く（家族が固まっている場所でピンが飛び回らないように）
@@ -749,7 +750,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
-    spot.update(time, distance)
+    spot.update(time, distance, player.object.position)
     arrived = distance < SPOT.arriveRadius
     // 着いたらボタンが「スコープをのぞく」に変わる。のぞくのは押した時だけ（勝手には開かない）
     hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
@@ -865,6 +866,25 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       )
     } else {
       hud.setSpotLabel(null, distance)
+    }
+
+    // 着いている時は「スコープをのぞく」を双眼鏡の右上の吹き出しにする（双眼鏡が画面の外なら下のまん中のまま）
+    if (arrived) {
+      camRight.setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize()
+      // 双眼鏡の右上と左上（右に入らない時は左上に出す）
+      projected.copy(spot.head).addScaledVector(camRight, 0.42).setY(spot.head.y + 0.22).project(camera)
+      const rightX = ((projected.x + 1) / 2) * window.innerWidth
+      const onScreen = projected.z < 1 && Math.abs(projected.x) < 0.95 && Math.abs(projected.y) < 0.95
+      const topY = ((1 - projected.y) / 2) * window.innerHeight
+      projected.copy(spot.head).addScaledVector(camRight, -0.42).setY(spot.head.y + 0.22).project(camera)
+      const leftX = ((projected.x + 1) / 2) * window.innerWidth
+      if (onScreen) {
+        hud.setScopeAnchor({ x: rightX, leftX, y: topY })
+      } else {
+        hud.setScopeAnchor(null)
+      }
+    } else {
+      hud.setScopeAnchor(null)
     }
 
     sun.target.position.copy(player.object.position)

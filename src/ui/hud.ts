@@ -23,6 +23,11 @@ export interface Hud {
   setSpotMode: (mode: 'go' | 'scope' | 'hidden') => void
   /** 3D空間の位置に重ねるスポットのラベル。screen が null なら隠す */
   setSpotLabel: (screen: { x: number; y: number } | null, distance: number) => void
+  /**
+   * 着いている時の「スコープをのぞく」を、双眼鏡の右上の吹き出しにする。x は双眼鏡の右上、leftX は左上、y は上端の高さ。
+   * 右に入らない時は左上、どちらにも入らない時（狭い画面で双眼鏡がまん中）は真上に出す。null なら下のまん中に戻す
+   */
+  setScopeAnchor: (screen: { x: number; leftX: number; y: number } | null) => void
   /** ボタンを持たない小さな通知。2〜3秒で消える */
   toast: (text: string, icon?: ToastIcon) => void
   /** モニターや帳が開いている間は「ホームへ」を重ねない */
@@ -81,6 +86,15 @@ export function createHud(): Hud {
   }
   let toastTimer = 0
 
+  // 吹き出しの大きさ（画面からはみ出さないように寄せる時に使う）。付け外しと文言の切り替えの時だけ測る
+  let anchored = false
+  let bubbleW = 0
+  let bubbleH = 0
+  const measureBubble = () => {
+    bubbleW = goToSpotBtn.offsetWidth
+    bubbleH = goToSpotBtn.offsetHeight
+  }
+
   return {
     show: () => {
       root.hidden = false
@@ -114,6 +128,29 @@ export function createHud(): Hud {
       if (mode === spotMode) return
       spotMode = mode
       applySpotMode()
+      if (anchored) measureBubble()
+    },
+    setScopeAnchor: (screen) => {
+      const on = screen !== null && spotMode === 'scope'
+      if (on !== anchored) {
+        anchored = on
+        goToSpotBtn.classList.toggle('is-anchored', on)
+        if (!on) goToSpotBtn.classList.remove('is-flip', 'is-center')
+        if (on) measureBubble()
+      }
+      if (!on || !screen) return
+      // 右上に入らなければ左上（しっぽは右下）、どちらにも入らなければ真上（しっぽは下のまん中）
+      const fitsRight = screen.x + bubbleW <= window.innerWidth - 12
+      const flip = !fitsRight && screen.leftX - bubbleW >= 12
+      const center = !fitsRight && !flip
+      goToSpotBtn.classList.toggle('is-flip', flip)
+      goToSpotBtn.classList.toggle('is-center', center)
+      const left = flip ? screen.leftX - bubbleW : center ? (screen.x + screen.leftX) / 2 - bubbleW / 2 : screen.x
+      // 上は帳のボタンの列より下、下は画面の内側に寄せる
+      const x = Math.min(Math.max(left, 12), window.innerWidth - bubbleW - 12)
+      const y = Math.min(Math.max(screen.y, bubbleH + 84), window.innerHeight - 16)
+      goToSpotBtn.style.setProperty('--ax', `${x.toFixed(0)}px`)
+      goToSpotBtn.style.setProperty('--ay', `${y.toFixed(0)}px`)
     },
     setSpotLabel: (screen, distance) => {
       const visible = screen !== null
