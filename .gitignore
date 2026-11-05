@@ -17,12 +17,13 @@ public/media/*
 
 # ローカルの開発ツール設定
 .claude/
-# 3D モデル: 群れの 5 頭（lion-*.glb）と主人公（hero-boy.glb）とトラ（tiger-tigger.glb）とシマウマ（zebra-gran.glb）、どれも Meshy で生成・最適化したものと、出所のメモだけ追跡する。Blender 実験の出力などは入れない
+# 3D モデル: 群れの 5 頭（lion-*.glb）と主人公（hero-boy.glb）とトラ（tiger-tigger.glb）とシマウマ（zebra-gran.glb）とカピバラ（capybara-shizuka.glb）、どれも Meshy で生成・最適化したものと、出所のメモだけ追跡する。Blender 実験の出力などは入れない
 public/models/*
 !public/models/lion-*.glb
 !public/models/hero-boy.glb
 !public/models/tiger-tigger.glb
 !public/models/zebra-gran.glb
+!public/models/capybara-shizuka.glb
 !public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）

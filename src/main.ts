@@ -255,7 +255,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
   }
   // ほかのワールドの子の生成モデル（exp/animals-1。ライオンと同じ作り方: クレイ版の絵 → Meshy → 四足リグ＋歩行）。
-  // 既定は生成モデル。?model=primitive（全部）か、種ごとの ?tiger=primitive でプリミティブ版（伏せ）に戻して見比べられる。
+  // 既定は生成モデル。?model=primitive（全部）か、種ごとの ?tiger=primitive・?capybara=primitive でプリミティブ版（伏せ）に戻して見比べられる。
   // プリミティブ版の無い子（グラン）は place の場所に、モデルが読めた時だけ新しく置く（読めなければ居ないまま。?zebra=off でも置かない）
   {
     const q = new URLSearchParams(location.search)
@@ -266,11 +266,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       file: string
       posture: PostureFix
       walk: { speed: number; radius: number; idle: [number, number] }
+      /** 尾の無い子: 止まっている間の尾の揺れ（生活感レイヤー）も骨に写さない */
+      noTail?: boolean
       /** プリミティブ版が無い子の置き場所（体の長さ m は群れの座標。ライオンの成獣は 2.9） */
       place?: { x: number; z: number; yaw: number; length: number }
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [8, 16] } },
+      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
+      // 接地だけだと腰 90〜95%。標準の強さだと腰が上がり過ぎる（最大 113%）ので、前脚を強く・後ろ脚を弱めに寄せる。
+      // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
+      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.6, spine: 0.9, tail: 1, front: 0.9, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] } },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
       { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.5, idle: [6, 14] }, place: { x: -22, z: 14, yaw: 0.9, length: 3.3 } },
@@ -294,7 +300,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             lions.push(host)
             labels.add(host.id, nameOf(host.id))
           }
-          host.swapModel(ai.model, ai.parts)
+          // 尾の無い子は、Lion.update が書く尾の揺れを使わない入れ物に向ける（ai.parts.tail は 0 のまま）
+          host.swapModel(ai.model, r.noTail ? { ...ai.parts, tail: new THREE.Object3D() } : ai.parts)
           host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const w = createLionWander(host, ai, props.colliders, r.walk)
