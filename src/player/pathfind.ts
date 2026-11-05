@@ -193,10 +193,11 @@ function gridDetour(a: Pt, b: Pt, near: Collider[], radius: number): Pt[] | null
 /** 目的地が岩の中なら、岩の外のいちばん近い所へ出す（岩をタップしたら、その岩のふもとまで歩く）。
  * 中心から外へ向けて輪の上の点を順に試し、岩にかからず歩ける最初の点にする（押し出しだと、並んだ岩のくぼみで行き詰まる） */
 function outOfRocks(p: Pt, colliders: Collider[], radius: number): Pt {
+  // 目的地は岩のすぐ際でよい（回り道の余裕 MARGIN は要らない。修正前と同じく岩に触れる所まで寄れる）
   const clear = (x: number, z: number): boolean => {
     if (!isWalkable(x, z)) return false
     for (const c of colliders) {
-      const r = c.r + radius + MARGIN
+      const r = c.r + radius + 0.05
       const dx = x - c.x
       const dz = z - c.z
       if (dx * dx + dz * dz < r * r) return false
@@ -204,8 +205,8 @@ function outOfRocks(p: Pt, colliders: Collider[], radius: number): Pt {
     return true
   }
   if (clear(p.x, p.z)) return p
-  for (let ring = 1; ring <= 40; ring += 1) {
-    const n = 8 + ring * 4
+  for (let ring = 0.5; ring <= 40; ring += 0.5) {
+    const n = 8 + Math.ceil(ring * 4)
     for (let k = 0; k < n; k++) {
       const ang = (k / n) * Math.PI * 2
       const x = p.x + Math.cos(ang) * ring
