@@ -29,6 +29,11 @@ export interface PlayerController {
   teleport: (x: number, z: number, heading?: number, camYaw?: number) => void
   /** 開発用: 追従カメラを止めて固定の位置・注視点にする。null で戻す */
   setCameraOverride: (override: CameraOverride | null) => void
+  /**
+   * ワールドに入る演出のカメラ。0 で主人公のすぐそば（低い位置から寄り）、1 でいつもの距離。null で演出を終える。
+   * 演出の間はカメラを遅れなく置く（寄りから引きがなめらかに見えるように）
+   */
+  setIntro: (t: number | null) => void
   dispose: () => void
 }
 
@@ -42,6 +47,10 @@ const CAM_MAX = 18
 const CAM_PITCH = 0.36
 const CAM_PITCH_MIN = -0.42
 const CAM_PITCH_MAX = 1.35
+/** 入る演出の最初のカメラ: 主人公のすぐそば、低め、注視点は主人公の胸のあたり */
+const INTRO_DIST = 1.7
+const INTRO_PITCH = 0.1
+const INTRO_LOOK_Y = 0.8
 const DRAG_THRESHOLD = 8
 const PLAYER_RADIUS = 0.45
 const CAMERA_RADIUS = 0.7
@@ -161,6 +170,7 @@ export function createPlayer(
   let slideIdle = 0
   let inputEnabled = true
   let cameraOverride: CameraOverride | null = null
+  let intro: number | null = null
 
   const keys = new Set<string>()
   let stickX = 0
@@ -170,19 +180,25 @@ export function createPlayer(
 
   /** 追従カメラの位置と注視点。向き・仰角・距離から求め、岩と地面にめり込ませない */
   const placeCamera = (immediate: boolean, dt = 0) => {
-    const cp = Math.cos(camPitch)
+    // 入る演出の間は、寄り（t=0）からいつもの距離（t=1）へ距離・仰角・注視点の高さを混ぜる
+    const k = intro ?? 1
+    const dist = INTRO_DIST + (camDist - INTRO_DIST) * k
+    const pitch = INTRO_PITCH + (camPitch - INTRO_PITCH) * k
+    const cp = Math.cos(pitch)
     _camPos.set(
-      object.position.x + Math.sin(camYaw) * cp * camDist,
+      object.position.x + Math.sin(camYaw) * cp * dist,
       0,
-      object.position.z + Math.cos(camYaw) * cp * camDist,
+      object.position.z + Math.cos(camYaw) * cp * dist,
     )
     pushOutOfColliders(_camPos, CAMERA_RADIUS, colliders)
     const groundAtCam = terrainHeight(_camPos.x, _camPos.z)
-    _camPos.y = Math.max(object.position.y + 1.0 + Math.sin(camPitch) * camDist, groundAtCam + 0.6)
-    if (immediate) camera.position.copy(_camPos)
+    const lift = 0.7 + 0.3 * k
+    _camPos.y = Math.max(object.position.y + lift + Math.sin(pitch) * dist, groundAtCam + 0.6)
+    if (immediate || intro !== null) camera.position.copy(_camPos)
     else camera.position.lerp(_camPos, reduceMotion ? 1 : Math.min(1, 6 * dt))
     // 見上げるときは注視点を上げて、空が画面に入るようにする
-    _look.set(object.position.x, object.position.y + 2.0 + Math.max(0, -camPitch) * 6, object.position.z)
+    const lookY = INTRO_LOOK_Y + (2.0 - INTRO_LOOK_Y) * k
+    _look.set(object.position.x, object.position.y + lookY + Math.max(0, -camPitch) * 6 * k, object.position.z)
     camera.lookAt(_look)
   }
   placeCamera(true)
@@ -515,6 +531,10 @@ export function createPlayer(
     },
     setCameraOverride: (override) => {
       cameraOverride = override
+    },
+    setIntro: (t) => {
+      intro = t
+      placeCamera(true)
     },
     dispose,
   }

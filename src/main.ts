@@ -151,6 +151,10 @@ interface WorldHandle {
   resume: () => void
   /** いまの画面を画像にする（ホームのスコープのレンズに映す） */
   snapshot: () => string
+  /** 入る演出の準備（幕が開く前に呼ぶ）。最初の絵からモザイクと主人公の寄りにしておく */
+  prepareIntro: () => void
+  /** 入る演出を始める（幕が開いたら呼ぶ）。終わったら解決する */
+  playIntro: () => Promise<void>
 }
 
 /**
@@ -338,12 +342,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 広げた全体地図（ミニマップの「地図を広げる」から開く）
   const mapView = createMapView()
 
+  // 入る演出の間は true（操作を止め、HUD を隠す）
+  let introOn = false
   // 何かの画面が開いている間は、ワールドのタップとキーを止め、「ホームへ」も重ねない
   let paused = startPaused
   // アニマルスコープの一覧を見ている間は true。描画も止める（canvas は最後の絵のまま一覧の下に隠れる）
   let viewing = false
   const syncInput = () => {
-    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()
+    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen() || introOn
     player.setInputEnabled(!blocked && !paused)
     joystick.setEnabled(!blocked && !paused)
     hud.setOverlayOpen(blocked)
@@ -601,6 +607,68 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   // ワールドに入った時の大きな名前。日本語の時は英語の名前を上に小さく添える
   const regionTitle = createRegionTitle()
+  const showRegionTitle = (key: RegionKey) => {
+    regionTitle.show(
+      regionName(key),
+      getLang() === 'ja' ? regionName(key, 'en').toUpperCase() : '',
+      t('enterRegion', { world: regionName(key) }),
+    )
+  }
+
+  // ホームから入る演出: 幕が開くとモザイクがかかった世界がだんだん見えてきて、主人公のすぐそばからゆっくり引き、
+  // 途中でいまいるワールドの名前がふわっと出る。モザイクは描いた絵を小さく縮めた 2D の canvas を、
+  // 画素をにじませずに全面へ引き伸ばして重ねる（後処理の有無に関係なく、どの端末でも同じに見える）
+  const INTRO_MS = 3200
+  /** モザイクの最初のマス目の大きさ（CSS px） */
+  const MOSAIC_MAX = 46
+  const mosaic = document.getElementById('world-mosaic') as HTMLCanvasElement
+  const mosaicCtx = mosaic.getContext('2d')
+  let introStart: number | null = null
+  let introTitled = false
+  let introDone: (() => void) | null = null
+  const easeInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
+  const introProgress = () => (introStart === null ? 0 : Math.min(1, (performance.now() - introStart) / INTRO_MS))
+  /** 描く前に: カメラを寄りから引きへ */
+  const introCamera = () => {
+    const p = introProgress()
+    player.setIntro(easeInOut(clamp((p - 0.04) / 0.96, 0, 1)))
+  }
+  /** 描いた後に: モザイク・名前・終わり */
+  const introAfterRender = () => {
+    const p = introProgress()
+    // モザイクは前半（55%）でほどけ、最後の 2 割で透けて消える
+    const m = Math.min(1, p / 0.55)
+    const block = 1 + (MOSAIC_MAX - 1) * Math.pow(1 - m, 2.2)
+    if (mosaicCtx && block > 1.5) {
+      const w = Math.max(2, Math.round(window.innerWidth / block))
+      const h = Math.max(2, Math.round(window.innerHeight / block))
+      if (mosaic.width !== w) mosaic.width = w
+      if (mosaic.height !== h) mosaic.height = h
+      mosaicCtx.imageSmoothingEnabled = true
+      mosaicCtx.drawImage(canvas, 0, 0, w, h)
+      mosaic.style.opacity = m < 0.8 ? '1' : String(1 - (m - 0.8) / 0.2)
+      mosaic.hidden = false
+    } else {
+      mosaic.hidden = true
+    }
+    if (!introTitled && p >= 0.4) {
+      introTitled = true
+      showRegionTitle(here.key)
+    }
+    if (p >= 1) endIntro()
+  }
+  const endIntro = () => {
+    if (!introOn) return
+    introOn = false
+    introStart = null
+    player.setIntro(null)
+    mosaic.hidden = true
+    document.body.classList.remove('world-intro')
+    syncInput()
+    const done = introDone
+    introDone = null
+    done?.()
+  }
   const projected = new THREE.Vector3()
   const camRight = new THREE.Vector3()
   let arrived = false
@@ -674,12 +742,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       spot = here.spot
       spotHead.copy(spot.position).add(new THREE.Vector3(0, 2.2, 0))
       arrived = false
-      const lang = getLang()
-      regionTitle.show(
-        regionName(regionKey),
-        lang === 'ja' ? regionName(regionKey, 'en').toUpperCase() : '',
-        t('enterRegion', { world: regionName(regionKey) }),
-      )
+      showRegionTitle(regionKey)
     }
     if (frames % 8 === 0 || !lightReady) {
       if (!lightReady) lightSnap = true
@@ -898,11 +961,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       hud.setScopeAnchor(null)
     }
 
+    if (introOn) introCamera()
     sun.target.position.copy(player.object.position)
     sun.position.copy(player.object.position).add(sunOffset)
     sky.position.copy(camera.position)
 
     postfx.render()
+    if (introOn) introAfterRender()
 
     // 簡易 FPS 計測と DPR の自動調整
     fpsAcc += dt
@@ -975,6 +1040,26 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       clock.getDelta()
       syncInput()
     },
+    prepareIntro: () => {
+      introTitled = false
+      introStart = null
+      // 「動きをへらす」では寄り・引きとモザイクをせず、名前だけ出す（playIntro で）
+      if (reduceMotionNow) return
+      introOn = true
+      document.body.classList.add('world-intro')
+      player.setIntro(0)
+      syncInput()
+    },
+    playIntro: () => {
+      if (!introOn) {
+        showRegionTitle(here.key)
+        return Promise.resolve()
+      }
+      introStart = performance.now()
+      return new Promise<void>((resolve) => {
+        introDone = resolve
+      })
+    },
     snapshot: () => {
       // レンズに映すだけなので小さく縮めてから画像にする（全解像度の toDataURL は重い）
       try {
@@ -1028,11 +1113,13 @@ function main(): void {
         await nextFrames(2)
         world = startWorld(canvas, shell)
       } else world.resume()
+      world.prepareIntro()
       shell.home.hide()
       document.body.classList.add('in-world')
       canvas.focus()
       await shell.iris.open()
-      // 初めての人には、幕が開いてからあそび方ナビを出す
+      // 幕が開いたら入る演出（モザイク → 寄りから引き → ワールドの名前）。終わってからあそび方ナビを出す
+      await world.playIntro()
       shell.guide.autoStart(shell.store.list().length > 0)
       shell.guide.setInWorld(true)
     } catch (err) {
