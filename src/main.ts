@@ -827,6 +827,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     looks.push(followLook.clone())
     points.push(followPos.clone())
     looks.push(followLook.clone())
+    // 地形に潜らない: 低く飛ぶ点は、まわり（半径 7m）のいちばん高い地面より 3m 上に（ふれあいワールドのヤギの岩場のような盛り上がりの上を通るため）
+    for (let i = 0; i < points.length - 1; i++) {
+      const p = points[i]
+      let ground = terrainHeight(p.x, p.z)
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2
+        ground = Math.max(ground, terrainHeight(p.x + Math.cos(a) * 7, p.z + Math.sin(a) * 7))
+      }
+      p.y = Math.max(p.y, ground + 3)
+    }
     flyCurve = new THREE.CatmullRomCurve3(points, false, 'centripetal')
     flyLooks = looks
     fly = { key, cx: r.x, cy, cz: r.z, radius: R, endAngle }
