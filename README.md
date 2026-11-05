@@ -17,7 +17,7 @@ An entry for **Built with Claude: Japan 2026**, built from scratch during the ha
 ## What works now
 
 - Walk anywhere in a savanna of blue sky and golden grass. Tap/click to move, WASD also works, Space or the "Jump" button to jump. Drag to look around (including up and down), scroll to zoom.
-- A minimap at the top left, and an "Open map" overlay. The map is not a radar but a record of encounters: only animals you have met appear (friends are marked). Tap a spot to walk there.
+- A minimap at the top left, and an "Open map" overlay. The map is not a radar but a record of encounters: only animals you have met appear (friends are marked). The open map labels them by species, one name per species in each world (not every individual's name), and an "Animal names" button hides the labels. Tap a spot to walk there.
 - A family of five lions lives in the world as stylized figures (Angie and the twins on the plateau, Alex a little apart, Riley by the waterhole). Approach and their names appear; stand close and "Look through binoculars" opens that animal's observation monitor. The 3D figures are a "sign" of the encounter, not a reproduction of real behavior.
 - Observation monitor with **recorded footage** of the real animals. Angie, Claire and Carla play footage recorded during the hackathon (2026-11-03). A "Recorded" badge is always shown; nothing is presented as live.
 - Each animal's profile (family, identifying marks, keeper's comment). Fields without final text show "Coming soon" instead of placeholder prose.
@@ -115,7 +115,7 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 ## いま動くもの
 
 - 青空と金の草原のサバンナをどこでも歩ける（タップ／クリックで移動、WASD でも移動、Space か「ジャンプ」で跳ぶ。ドラッグで視点を回し上下にも向け、ホイールで寄る）
-- 左上のミニマップと「地図を広げる」の全体地図。地図はレーダーではなく出会いの記録で、出会った動物だけが載る（ともだちは区別）。タップした場所へ歩ける
+- 左上のミニマップと「地図を広げる」の全体地図。地図はレーダーではなく出会いの記録で、出会った動物だけが載る（ともだちは区別）。広げた地図の名前は個体名ではなく種の名前で、ワールドごとに同じ種は 1 つ。「動物の名前」ボタンで隠せる。タップした場所へ歩ける
 - ライオンの家族5頭が様式化した姿でワールドにいる（台地にアンジーと双子、少し離れてアレックス、水場のそばにライリー）。近づくと名前が出て、そばに来ると「双眼鏡で見る」からその個体の観察モニターへ。3Dの姿は本物の行動を写したものではなく、出会いの「しるし」
 - 観察モニターで実在するライオンの**収録映像**を見る。アンジー・クレア・カーラはハッカソン期間中（2026-11-03）に収録した映像を再生。「収録映像」バッジを常時表示し、ライブ配信に見える表示はしない
 - 個体のプロフィール（家族・見分けポイント・飼育員コメント。原稿が入るまでは「準備中」と表示）

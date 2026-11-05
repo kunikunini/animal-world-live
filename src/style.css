@@ -2831,6 +2831,32 @@ button.bk-tab:hover {
 /* ==========================================================================
    全体地図
    ========================================================================== */
+/* 地図の「動物の名前」: 押されている間は出す（空色＋チェック）、押していない時は隠す（灰色・チェックなし） */
+.map-names {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px 0 10px;
+  border: 2px solid var(--ink-faint);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.map-names .ico { width: 18px; height: 18px; opacity: 0; transition: opacity 0.15s; }
+.map-names[aria-pressed="true"] {
+  border-color: var(--sky);
+  background: var(--sky-tint);
+  color: var(--sky-deep);
+}
+.map-names[aria-pressed="true"] .ico { opacity: 1; }
+
 .map {
   z-index: 12;
 }
@@ -4317,7 +4343,8 @@ body.is-reduce-motion .guide-bar i { transition: none; }
 /* ともだち帳が開いている間は、下のタブの上。帳からモニターを開いた時はモニターが上なので下に戻す */
 body.book-open .guide { top: auto; bottom: calc(96px + var(--safe-bottom)); }
 body.observe-open .guide { top: auto; bottom: calc(24px + var(--safe-bottom)); }
-body:is(.book-open, .observe-open) .guide.is-out { translate: 0 12px; }
+body.map-open .guide { top: auto; bottom: calc(24px + var(--safe-bottom)); }
+body:is(.book-open, .observe-open, .map-open) .guide.is-out { translate: 0 12px; }
 
 /* 狭い PC・タブレット: 地図の右に寄せる（上の帳のボタンより下なので右は端まで使える） */
 @media (min-width: 481px) and (max-width: 760px) {

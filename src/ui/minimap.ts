@@ -1,5 +1,5 @@
 import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
-import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable } from '../world/regions'
+import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
 import { Simplex2D, smoothstep } from '../world/noise'
 import { savannaMapColor } from '../world/terrain'
@@ -16,11 +16,13 @@ import { getLang, t } from './i18n'
 export interface MinimapMarker {
   id: string
   name: string
+  /** 種の名前（表示用）。広げた地図では個体名ではなく、同じワールドの同じ種をまとめて種の名前を 1 つ出す */
+  species?: string
   x: number
   z: number
   /** 強調（そばにいる個体など） */
   active?: boolean
-  /** ともだち帳に登録済み。緑の輪で区別し、広げた地図では名前に添える */
+  /** ともだち帳に登録済み。緑の輪で区別する */
   friend?: boolean
 }
 
@@ -45,6 +47,26 @@ export interface MapRenderer {
   toWorld: (mx: number, my: number) => { x: number; z: number } | null
   /** 丸い窓の見る範囲。中心（世界座標）と半径（m）。box の地図では使わない */
   setView: (cx: number, cz: number, radius: number) => void
+  /** 広げた地図の動物の名前（種の名前）を出すかどうか */
+  setNames: (on: boolean) => void
+}
+
+/** 出会った子を「ワールド × 種」でまとめる（1 つのワールドに同じ種の名前は 1 つ）。名前はその子たちのまん中に置く */
+function speciesGroups(markers: MinimapMarker[]): Array<{ name: string; x: number; z: number }> {
+  const groups: Array<{ name: string; region: RegionKey; x: number; z: number; n: number }> = []
+  for (const m of markers) {
+    const name = m.species ?? m.name
+    const region = regionAt(m.x, m.z)
+    const g = groups.find((it) => it.name === name && it.region === region)
+    if (g) {
+      g.x = (g.x * g.n + m.x) / (g.n + 1)
+      g.z = (g.z * g.n + m.z) / (g.n + 1)
+      g.n += 1
+    } else {
+      groups.push({ name, region, x: m.x, z: m.z, n: 1 })
+    }
+  }
+  return groups
 }
 
 /** 自分のまわりを見るミニマップの半径（いままでのサバンナ全体と同じ） */
@@ -832,6 +854,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     return boxes
   }
 
+  let showNames = true
   const draw = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
     if (dirty) drawBase()
     ctx.clearRect(0, 0, width, height)
@@ -909,7 +932,8 @@ export function createMapRenderer(options: { width: number; height?: number; lab
         placed.push(found)
         drawPill(ctx, text, found.l, found.t, u)
       }
-      for (const l of lions) put(l.friend ? t('friendTag', { name: l.name }) : l.name, px(l.x), py(l.z))
+      // 動物は個体名ではなく種の名前（同じワールドの同じ種は 1 つにまとめる）。増えても名前だらけにならない
+      if (showNames) for (const g of speciesGroups(lions)) put(g.name, px(g.x), py(g.z))
       put(t('you'), px(player.x), py(player.z))
     }
   }
@@ -923,7 +947,16 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     return { x, z }
   }
 
-  return { width, height, draw, toWorld, setView }
+  return {
+    width,
+    height,
+    draw,
+    toWorld,
+    setView,
+    setNames: (on) => {
+      showNames = on
+    },
+  }
 }
 
 /** キャンバス上のタップ位置を世界座標に変換して通知する */

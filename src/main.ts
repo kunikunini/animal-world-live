@@ -37,7 +37,7 @@ import { createSettings } from './ui/settings'
 import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { createScope } from './ui/scope'
-import { animalName, applyStatic, getLang, onLangChange, t, tIn } from './ui/i18n'
+import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
 import { createRegionTitle } from './ui/regionTitle'
 import { createFauna } from './world/fauna'
@@ -315,6 +315,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const a = getAnimal(id)
     return a ? animalName(a) : id
   }
+  // 広げた地図に出す種の名前
+  const speciesOf = (id: string) => {
+    const a = getAnimal(id)
+    return a ? speciesName(a.species) : undefined
+  }
+
   for (const lion of lions) labels.add(lion.id, nameOf(lion.id))
   onLangChange(() => {
     for (const lion of lions) labels.rename(lion.id, nameOf(lion.id))
@@ -393,7 +399,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     mapView.open()
   })
   mapView.onPick(walkTo)
-  mapView.onOpenChange(() => syncInput())
+  mapView.onOpenChange((open) => {
+    // 地図が開いている間は、あそび方ナビのカードを下に（地図の見出しと「動物の名前」をふさがない）
+    document.body.classList.toggle('map-open', open)
+    syncInput()
+  })
   minimap.show()
   let minimapTimer = 0
 
@@ -833,6 +843,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         .map((l) => ({
           id: l.id,
           name: nameOf(l.id),
+          species: speciesOf(l.id),
           x: l.position.x,
           z: l.position.z,
           active: nextId === l.id,
@@ -849,7 +860,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         lion.notice(time)
         // 出会いの記録。地図に出るのはここから
         met.mark(lion.id)
-        hud.toast(t('nearby', { name: nameOf(lion.id) }), 'bino')
+        // 「〇〇のそばに来ました」の通知は出さない（頭の上の名前の札で分かる）
         guide.reach('near')
       }
     }
