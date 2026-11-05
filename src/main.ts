@@ -165,6 +165,8 @@ interface WorldHandle {
   playIntro: () => Promise<void>
   /** ホームで選んだ主人公に替える（読み込めたら差し替え、だめなら既定の子 → いままでの姿） */
   setHero: (id: string) => void
+  /** いま読み込み中の主人公が出そろうまで（読み込んでいなければすぐ）。幕を開ける前に待つ */
+  heroReady: () => Promise<void>
 }
 
 /**
@@ -343,7 +345,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       putHero(null, null)
     }
   }
-  void chooseHero(getHeroId())
+  let heroTask: Promise<void> = chooseHero(getHeroId())
 
   hud.onJump(() => player.jump())
 
@@ -1340,8 +1342,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       }
     },
     setHero: (id) => {
-      void chooseHero(id)
+      heroTask = chooseHero(id)
     },
+    heroReady: () => heroTask,
   }
 }
 
@@ -1380,6 +1383,8 @@ function main(): void {
         await nextFrames(2)
         world = startWorld(canvas, shell)
       } else world.resume()
+      // 選んだ子の読み込みを少しだけ待つ（入る演出の寄りで前の子が一瞬映らないように。遅い回線でも 2.5 秒で先へ進む）
+      await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
       world.prepareIntro()
       shell.home.hide()
       document.body.classList.add('in-world')

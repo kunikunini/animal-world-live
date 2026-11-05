@@ -103,8 +103,8 @@
         <button id="entry-book" class="btn home-book" type="button"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span><span id="home-new-dot" class="badge-dot" hidden></span></button>
       </div>
 
-      <!-- だれで冒険する？: 名簿（src/data/heroes.json）の子どもたちを対等に並べ、押した子を選ぶ（選んだ子は次に開いた時も同じ） -->
-      <div id="home-pick" class="home-pick">
+      <!-- だれで冒険する？: 「のぞいてみる」を押すと出てくる。名簿（src/data/heroes.json）の子どもたちを対等に並べ、押した子で出発する（選んだ子は次に開いた時も同じ） -->
+      <div id="home-pick" class="home-pick" hidden>
         <span id="home-pick-title" class="home-pick-title" data-i18n="pickHero">だれで冒険する？</span>
         <div id="home-pick-row" class="home-pick-row" role="radiogroup" aria-labelledby="home-pick-title"></div>
       </div>

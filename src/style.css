@@ -632,14 +632,16 @@ button {
   transform: scaleX(-1);
 }
 
-/* だれで冒険する？: 「のぞいてみる」の上に、子どもたちの顔を同じ大きさで 1 列に。クリームの地に白いふち（ホームのボタンと同じ粘土の質感）。
+/* だれで冒険する？: 「のぞいてみる」を押すと、その場所に、子どもたちの顔を同じ大きさで 1 列に。クリームの地に白いふち（ホームのボタンと同じ粘土の質感）。
    選んだ子は太陽のオレンジの輪と、右下の印。押せる大きさは 44px 以上 */
 .home-pick {
   --pick: clamp(44px, min(7.2cqh, 12.4cqw), 72px);
   position: absolute;
   left: 50%;
-  bottom: calc(var(--safe-bottom) + clamp(14px, 5.5cqh, 64px) + 2.65 * clamp(20px, min(4.3cqh, 6.6cqw), 40px) + clamp(12px, 2.4cqh, 26px));
-  transform: translateX(-50%);
+  /* 出ている間は「のぞいてみる」を隠すので、同じ高さに出す */
+  bottom: calc(var(--safe-bottom) + clamp(14px, 5.5cqh, 64px));
+  /* まん中寄せは translate で（出てくる scale と合わせても中心がずれない。transform だと拡大の途中で横にずれる） */
+  translate: -50% 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -650,8 +652,19 @@ button {
   background: rgba(255, 246, 230, 0.92);
   box-shadow: 0 2px 0 rgba(31, 42, 68, 0.1), 0 8px 20px rgba(31, 42, 68, 0.22);
   font-family: var(--font-home);
-  animation: home-pop 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s backwards;
+  /* 出てくる動きは scale と opacity だけで（位置合わせの translate とは別のプロパティ） */
+  animation: home-pick-in 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
+.home-pick[hidden] { display: none; }
+
+@keyframes home-pick-in {
+  0% { scale: 0.7; opacity: 0; }
+  100% { scale: 1; opacity: 1; }
+}
+
+/* 選んでいる間は「のぞいてみる」を下げて、子どもたちの列を主役にする */
+.home-cta { transition: opacity 0.2s ease; }
+.home.is-picking .home-cta { opacity: 0; pointer-events: none; }
 
 .home-pick-title {
   font-size: clamp(13px, min(2.1cqh, 3.6cqw), 19px);
@@ -724,7 +737,7 @@ button {
 
   .home-pick {
     --pick: clamp(44px, 5.4cqh, 60px);
-    bottom: calc(var(--safe-bottom) + clamp(12px, 2.6cqh, 30px) + 2.65 * clamp(20px, min(4.3cqh, 6.6cqw), 40px) + clamp(8px, 1.2cqh, 14px));
+    bottom: calc(var(--safe-bottom) + clamp(12px, 2.6cqh, 30px));
     flex-direction: row;
     gap: clamp(8px, 1.2cqw, 14px);
     padding: clamp(6px, 0.9cqh, 9px) clamp(10px, 1.2cqw, 14px) clamp(6px, 0.9cqh, 9px) clamp(14px, 1.6cqw, 20px);
@@ -743,7 +756,8 @@ button {
     --pick: 44px;
     left: calc(var(--safe-left) + 10px);
     bottom: calc(var(--safe-bottom) + 10px);
-    transform: none;
+    translate: none;
+    transform-origin: 0 100%;
     flex-direction: column;
     gap: 4px;
     padding: 6px 10px 10px;
