@@ -4,7 +4,7 @@ import { WORLD_SEED } from './layout'
 import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import type { Collider } from './props'
-import { CREEK, LAGOON, SEA_LEVEL, creekDist, farmPathDist, lagoonDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, LAGOON, SEA_LEVEL, creekDist, farmPathDist, farmPens, lagoonDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 
 /**
@@ -590,21 +590,6 @@ function partnerToOrigin(r: Region): number {
   return Math.atan2(-r.z, -r.x)
 }
 
-/**
- * ふれあいワールドの放牧場（中心からのずれ。木の柵の輪で、広場の側に入り口を 1 つ開ける）。
- * 動物はこのあと、それぞれの放牧場に置く予定（residents.ts）
- */
-export function farmPens(): Array<{ x: number; z: number; r: number; gate: number }> {
-  const r = region('partner')
-  const a0 = partnerToOrigin(r)
-  return [a0 + Math.PI * 0.55, a0 + Math.PI, a0 - Math.PI * 0.55].map((a, i) => {
-    const d = 60 + i * 2
-    const x = Math.cos(a) * d
-    const z = Math.sin(a) * d
-    return { x, z, r: 15 + (i === 1 ? 3 : 0), gate: Math.atan2(-z, -x) }
-  })
-}
-
 /** ふれあいワールド: 放牧場の木の柵、赤い納屋、干し草、丸い木、花。乱数は別の列 */
 function createPartner(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('partner')
@@ -751,7 +736,7 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
   const flowerSpots: Array<{ x: number; z: number }> = []
   const clumps = scatter(rand, r, mobile ? 50 : 80, { min: 10, max: r.walk + 10, clearing: 9, path: 4 })
   for (const c of clumps) {
-    if (onPath(c.x, c.z, 1)) continue
+    if (onPath(c.x, c.z, 1) || inPen(c.x, c.z, 1)) continue
     for (let k = 0; k < 9; k++) flowerSpots.push({ x: c.x + (rand() - 0.5) * 3.2, z: c.z + (rand() - 0.5) * 3.2 })
   }
   const flowerGeo = new THREE.IcosahedronGeometry(0.13, 0)
@@ -764,6 +749,120 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
   })
   finish(flowerMesh)
   group.add(flowerMesh)
+
+  // ヤギの岩場: 岩山のまわりの岩の飾り、横に立つ岩の柱、てっぺんから柱へ渡す板の橋
+  {
+    const gx = r.x + GOAT_ROCKS.dx
+    const gz = r.z + GOAT_ROCKS.dz
+    const stone = toonMaterial({ color: '#9c948e' })
+    // 岩の板: 段ごとに平たい岩を半分埋めて並べ、のっぺりした丘ではなく、ごつごつした岩場に見せる。
+    // 板の上面は地面の高さのすぐ上なので、上を歩ける（当たり判定なし）。縁にはごろごろした岩
+    const slabs: Array<{ x: number; z: number; s: number; flat: number }> = []
+    const rings: Array<[number, number]> = [
+      [0.0, 2],
+      [0.24, 7],
+      [0.42, 10],
+      [0.6, 14],
+      [0.76, 17],
+      [0.92, 20],
+    ]
+    for (const [f, n] of rings) {
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + rand() * 0.35
+        const d = GOAT_ROCKS.radius * f * (0.92 + rand() * 0.16) + (f === 0 ? rand() * 1.5 : 0)
+        // 入り口の坂の真ん中（登り道）はあけて、踏み石を並べる（下）
+        if (f > 0.2 && Math.cos(a - GOAT_ROCKS.gate) > 0.96) continue
+        slabs.push({ x: gx + Math.cos(a) * d, z: gz + Math.sin(a) * d, s: (f > 0.85 ? 1.0 : 1.7) * (0.75 + rand() * 0.5), flat: f > 0.85 ? 0.75 : 0.42 })
+      }
+    }
+    // 登り道の踏み石: 入り口から頂上へ、平たい石を段に
+    for (let k = 0; k < 6; k++) {
+      const d = GOAT_ROCKS.radius * (1.02 - k * 0.17)
+      const a = GOAT_ROCKS.gate + (k % 2 ? 0.08 : -0.08)
+      slabs.push({ x: gx + Math.cos(a) * d, z: gz + Math.sin(a) * d, s: 1.05, flat: 0.28 })
+    }
+    const slabMesh = instanced(new THREE.IcosahedronGeometry(1, 0), toonMaterial(), slabs.length)
+    const rockA = new THREE.Color('#9e968f')
+    const rockB = new THREE.Color('#bdb5ab')
+    slabs.forEach((b, i) => {
+      _q.setFromEuler(_e.set((rand() - 0.5) * 0.25, rand() * 3, (rand() - 0.5) * 0.25))
+      _m.compose(_p.set(b.x, terrainHeight(b.x, b.z) - b.s * b.flat * 0.3, b.z), _q, _s.set(b.s * 1.4, b.s * b.flat, b.s * 1.2))
+      slabMesh.setMatrixAt(i, _m)
+      slabMesh.setColorAt(i, _c.copy(rockA).lerp(rockB, rand()))
+    })
+    finish(slabMesh)
+    group.add(slabMesh)
+    // 岩の柱: 岩山の横（入り口から見て左）。平らな頂に板を張る
+    const side = GOAT_ROCKS.gate + Math.PI / 2
+    const px = gx + Math.cos(side) * 12.5
+    const pz = gz + Math.sin(side) * 12.5
+    const startD = 3.2
+    const sx = gx + Math.cos(side) * startD
+    const sz = gz + Math.sin(side) * startD
+    const sy = terrainHeight(sx, sz)
+    const groundY = terrainHeight(px, pz)
+    const pillarTop = sy - 0.3
+    const pillar = new THREE.Group()
+    pillar.position.set(px, groundY, pz)
+    const tall = pillarTop - groundY
+    for (let k = 0; k < 3; k++) {
+      const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), stone)
+      const t = (k + 0.5) / 3
+      rock.position.y = tall * t - 0.2
+      rock.scale.set(1.9 - k * 0.25, tall / 3 * 0.75, 1.7 - k * 0.2)
+      rock.rotation.y = k * 1.3
+      pillar.add(rock)
+    }
+    const deckGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.18, 10)
+    const deck = new THREE.Mesh(deckGeo, wood)
+    deck.position.y = tall + 0.05
+    pillar.add(deck)
+    pillar.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) {
+        o.castShadow = true
+        o.receiveShadow = true
+      }
+    })
+    group.add(pillar)
+    colliders.push({ x: px, z: pz, r: 1.9 })
+    // 板の橋: 岩山の上から柱の頂へ。板を並べ、両側に細い手すり
+    const ex = px - Math.cos(side) * 1.3
+    const ez = pz - Math.sin(side) * 1.3
+    const ey = pillarTop + 0.14
+    const len = Math.hypot(ex - sx, ez - sz)
+    const bridge = new THREE.Group()
+    bridge.position.set(sx, sy + 0.1, sz)
+    // 向き（y）のあとに傾き（x）をかける
+    bridge.rotation.order = 'YXZ'
+    bridge.rotation.y = Math.atan2(ex - sx, ez - sz)
+    const drop = ey - (sy + 0.1)
+    bridge.rotation.x = -Math.atan2(drop, len)
+    const span = Math.hypot(len, drop)
+    const PLANKS = Math.round(span / 0.32)
+    const plankGeo = new THREE.BoxGeometry(1.1, 0.07, 0.26)
+    const planks = instanced(plankGeo, wood, PLANKS)
+    for (let k = 0; k < PLANKS; k++) {
+      _m.compose(_p.set(0, 0, (k + 0.5) * (span / PLANKS)), _q.identity(), _s.set(1, 1, 1))
+      planks.setMatrixAt(k, _m)
+    }
+    finish(planks)
+    planks.computeBoundingSphere()
+    bridge.add(planks)
+    for (const sgn of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, span), wood)
+      rail.position.set(sgn * 0.55, 0.55, span / 2)
+      bridge.add(rail)
+      for (let k = 0; k <= 4; k++) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.55, 0.06), wood)
+        post.position.set(sgn * 0.55, 0.27, (k / 4) * span)
+        bridge.add(post)
+      }
+    }
+    bridge.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) o.castShadow = true
+    })
+    group.add(bridge)
+  }
 
   // 広場の水飲みおけ（木の箱に水色の水面）
   const tx = r.x + Math.cos(a0 + Math.PI / 2) * 9

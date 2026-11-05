@@ -2,7 +2,7 @@ import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
 import { Simplex2D, smoothstep } from '../world/noise'
-import { CREEK, FARM_LOOP, LAGOON, savannaMapColor } from '../world/terrain'
+import { CREEK, FARM_LOOP, GOAT_ROCKS, LAGOON, savannaMapColor } from '../world/terrain'
 import { getWorld } from '../data/worlds'
 import { getLang, t } from './i18n'
 
@@ -410,7 +410,7 @@ const REGION_LABEL_AT: Record<RegionKey, [number, number]> = {
   jungle: [-300, -64],
   south: [0, 366],
   water: [300, -98],
-  partner: [-254, 316],
+  partner: [-258, 204],
 }
 
 // ---------------------------------------------------------------------------
@@ -811,6 +811,15 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.setLineDash([4 * u, 3 * u])
       b.stroke()
       b.setLineDash([])
+      // ヤギの岩場: 岩肌の円と、頂上の明るい岩
+      b.fillStyle = C.rock
+      b.beginPath()
+      b.arc(px(farm.x + GOAT_ROCKS.dx), py(farm.z + GOAT_ROCKS.dz), GOAT_ROCKS.radius * k, 0, Math.PI * 2)
+      b.fill()
+      b.fillStyle = C.plateau
+      b.beginPath()
+      b.arc(px(farm.x + GOAT_ROCKS.dx), py(farm.z + GOAT_ROCKS.dz), GOAT_ROCKS.radius * 0.4 * k, 0, Math.PI * 2)
+      b.fill()
     }
 
     // コピエ: 岩肌の円、南の坂、頂上の台地
@@ -914,6 +923,11 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     const kopje = t('kopje')
     pill(kopje, px(KOPJE.x) - pillWidth(ctx, kopje, u) / 2, py(KOPJE.z) - (KOPJE.radius + 6) * k - 8 * u)
     pill(t('spot'), px(SPOT.x) + 8 * u, py(SPOT.z) - 8 * u)
+    const farm = OUTER_REGIONS.find((r) => r.key === 'partner')
+    if (farm) {
+      const goat = t('goatRocks')
+      pill(goat, px(farm.x + GOAT_ROCKS.dx) - pillWidth(ctx, goat, u) / 2, py(farm.z + GOAT_ROCKS.dz) + (GOAT_ROCKS.radius + 3) * k)
+    }
     return boxes
   }
 

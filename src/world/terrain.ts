@@ -174,11 +174,63 @@ export function farmPathDist(lx: number, lz: number): number {
   const toPass = t > FARM_LOOP - 2 ? Math.abs(lx * uz - lz * ux) : Infinity
   return Math.min(ring, toPass)
 }
-/** ふれあいワールドの高さ: ゆるい丘の牧草地。中心の広場は平ら */
+/**
+ * ふれあいワールドの放牧場（中心からのずれ。木の柵の輪で、広場の側に入り口を 1 つ開ける）。
+ * 広場の向こう（峠と反対の側）のいちばん大きい放牧場は、ヤギの岩場（GOAT_ROCKS）。
+ * 動物はこのあと、それぞれの放牧場に置く予定（residents.ts）
+ */
+export function farmPens(): Array<{ x: number; z: number; r: number; gate: number }> {
+  return [PARTNER_TO_ORIGIN + Math.PI * 0.55, PARTNER_TO_ORIGIN + Math.PI, PARTNER_TO_ORIGIN - Math.PI * 0.55].map((a, i) => {
+    const d = 60 + i * 2
+    const x = Math.cos(a) * d
+    const z = Math.sin(a) * d
+    return { x, z, r: 15 + (i === 1 ? 4 : 0), gate: Math.atan2(-z, -x) }
+  })
+}
+
+/**
+ * ヤギの岩場: 大きい放牧場の中の段々の岩山（地形として盛り上げるので、ヤギも主人公も上に立てる）。
+ * 中心は放牧場の中心から入り口と反対の側へ少しずらし、入り口の側を低い段にする。
+ * 横に岩の柱を立て、岩山のてっぺんから板の橋を渡す（biomes.ts）
+ */
+const goatPen = farmPens()[1]
+export const GOAT_ROCKS = {
+  /** ワールドの中心からのずれ */
+  dx: goatPen.x - Math.cos(goatPen.gate) * 3,
+  dz: goatPen.z - Math.sin(goatPen.gate) * 3,
+  radius: 11,
+  height: 4.8,
+  /** 段の数 */
+  steps: 4,
+  /** 入り口の向き（ラジアン、x = cos, z = sin） */
+  gate: goatPen.gate,
+}
+const goatNoise = new Simplex2D(WORLD_SEED + 241)
+/** ヤギの岩場の盛り上がり（0..1）と、岩肌らしさ（0..1）。ワールドの中心からのずれで測る */
+export function goatRocksShape(lx: number, lz: number): { w: number; rock: number } {
+  const dx = lx - GOAT_ROCKS.dx
+  const dz = lz - GOAT_ROCKS.dz
+  let d = Math.hypot(dx, dz) / GOAT_ROCKS.radius
+  if (d >= 1.25) return { w: 0, rock: 0 }
+  // 縁を波打たせて、丸いお椀に見せない
+  d += goatNoise.noise(lx * 0.12, lz * 0.12) * 0.12
+  if (d >= 1) return { w: 0, rock: 0 }
+  // 入り口の側はなだらかに（ヤギと子どもが登る坂）、奥は段の崖
+  const toGate = Math.cos(Math.atan2(dz, dx) - GOAT_ROCKS.gate)
+  const w = 1 - smoothstep(0.18, 1, d)
+  const cliff = smoothstep(-0.2, 0.5, -toGate)
+  const stepped = terrace(w, GOAT_ROCKS.steps)
+  return { w: lerp(w, stepped, 0.55 + 0.45 * cliff), rock: smoothstep(0.95, 0.75, d) }
+}
+
+/** ふれあいワールドの高さ: ゆるい丘の牧草地。中心の広場は平ら。ヤギの岩場は段々に盛り上げる */
 function partnerHeight(x: number, z: number): number {
   const r = Math.hypot(x - PARTNER.x, z - PARTNER.z)
   const hills = simplex.fbm(x * 0.009 - 5, z * 0.009 + 2, 3, 2.0, 0.5) * 3.2 + outerNoise.fbm(x * 0.04, z * 0.04, 2, 2, 0.5) * 0.2
-  return lerp(hills * 0.15 + 0.4, hills, smoothstep(14, 45, r))
+  let h = lerp(hills * 0.15 + 0.4, hills, smoothstep(14, 45, r))
+  const g = goatRocksShape(x - PARTNER.x, z - PARTNER.z)
+  if (g.w > 0) h += g.w * GOAT_ROCKS.height
+  return h
 }
 
 const _w: BiomeWeights = emptyWeights()
@@ -407,6 +459,8 @@ const colPastureDeep = new THREE.Color('#6cba42')
 const colClover = new THREE.Color('#b8e070')
 const colFarmPath = new THREE.Color('#d6b47c')
 const colFarmYard = new THREE.Color('#cfb07a')
+const colGoatRock = new THREE.Color('#a8a09a')
+const colGoatRockDark = new THREE.Color('#8a817c')
 function partnerColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.045 + 8, z * 0.045 - 2) * 0.5 + 0.5
   out.copy(colPasture).lerp(colPastureDeep, n * 0.7)
@@ -417,6 +471,13 @@ function partnerColor(x: number, z: number, _h: number, slope: number, out: THRE
   // 中心の広場（土をならした所）と、牧場の小道
   out.lerp(colFarmYard, (1 - smoothstep(7, 12, Math.hypot(lx, lz))) * 0.85)
   out.lerp(colFarmPath, (1 - smoothstep(1.6, 3.2, farmPathDist(lx, lz))) * 0.9)
+  // ヤギの岩場: 岩肌。段の上の平らな所には草が少し残り、段の崖は濃い灰色
+  const g = goatRocksShape(lx, lz)
+  if (g.rock > 0) {
+    out.lerp(colGoatRock, g.rock * (slope > 0.95 ? 0.7 : 0.95))
+    if (slope < 0.85) out.lerp(colGoatRockDark, Math.min(1, (0.85 - slope) * 3) * g.rock)
+    return
+  }
   if (slope < 0.9) out.lerp(colPastureDeep, Math.min(1, (0.9 - slope) * 4))
 }
 

@@ -50,6 +50,7 @@ const DICT = {
   spot: { ja: '観察スポット', en: 'Viewing spot' },
   waterhole: { ja: '水場', en: 'Waterhole' },
   kopje: { ja: 'コピエ', en: 'Kopje' },
+  goatRocks: { ja: 'ヤギの岩場', en: 'Goat rocks' },
   monitor: { ja: '観察モニター', en: 'Viewing monitor' },
   monitorOf: { ja: '{name}の観察モニター', en: '{name} — viewing monitor' },
   retry: { ja: 'もう一度試す', en: 'Try again' },
