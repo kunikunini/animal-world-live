@@ -1506,6 +1506,9 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
 .set-list {
   display: grid;
   gap: 12px;
+  /* 行を中身の高さにする（シートの高さが足りない時に行が押しつぶされて重ならないように） */
+  grid-auto-rows: max-content;
+  align-content: start;
 }
 
 .set-row {
@@ -1552,6 +1555,61 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
 
 .set-row-lang .set-text {
   flex: 1 1 150px;
+}
+
+/* 音量: つまみとミュート。狭い時は次の行へ */
+.set-row-vol {
+  flex-wrap: wrap;
+  cursor: default;
+}
+
+.set-row-vol .set-text {
+  flex: 1 1 150px;
+}
+
+.vol-ctl {
+  flex: 1 1 180px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.vol {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  accent-color: var(--sky);
+  cursor: pointer;
+}
+
+.vol-mute {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  color: var(--sky);
+  cursor: pointer;
+}
+
+.vol-mute .ico {
+  width: 24px;
+  height: 24px;
+}
+
+.vol-mute.is-muted {
+  color: var(--ink-soft);
+}
+
+.vol-mute:focus-visible,
+.vol:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
 }
 
 /* 狭い時は切り替えを次の行へ（アイコンの幅だけ下げる） */

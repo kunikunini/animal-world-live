@@ -33,6 +33,7 @@ import { createJoystick } from './ui/joystick'
 import { createHome } from './ui/home'
 import { createStory } from './ui/story'
 import { createIris } from './ui/iris'
+import { REGION_SOUND, sound } from './audio/sound'
 import { createSettings } from './ui/settings'
 import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
@@ -87,7 +88,12 @@ function createShell() {
   book.onOpenChange((open) => {
     document.body.classList.toggle('book-open', open)
     if (open) guide.reach('book')
+    // ともだち帳を開いている間は「ふれあい・パートナー」の曲。閉じたら開く前の曲へ戻る
+    if (open) sound.play('book')
+    sound.setBgmOverride(open ? 'partner' : null)
   })
+  // 収録映像を見ている間は BGM と環境音を下げる
+  observe.onOpenChange((open) => sound.setDuck(open))
   book.onVisit(() => guide.reach('visit'))
 
   // アニマルスコープの一覧から: 映像のカードでモニター、帳のボタンで帳（閉じると一覧に戻る）
@@ -272,6 +278,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   window.addEventListener('resize', applyPostSize)
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
+  // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
+  const stepBiome = { africa: 0, north: 0, jungle: 0, south: 0 }
+  player.onStep((x, z) => sound.play(biomeAt(x, z, stepBiome).north > 0.5 ? 'step-snow' : 'step-grass'))
+  player.onJump(() => sound.play('jump'))
+  player.onLand(() => sound.play('land'))
   scene.add(player.object)
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
@@ -370,6 +381,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     body.classList.remove('is-unscoping')
     const animate = !body.classList.contains('is-reduce-motion')
     if (animate) body.classList.add('is-scoping')
+    // 開く音は「構える」（双眼鏡の形に絞られる 0.3 秒目）に合わせる
+    sound.cancelTap()
+    if (animate) window.setTimeout(() => sound.play('scope-open'), 250)
+    else sound.play('scope-open')
     // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
     catalog.open(animate)
     if (animate) {
@@ -384,6 +399,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (open) return
     // 一覧を閉じた: 世界がぼけた寄りから戻ってくる。HUD もふわっと戻る
     viewing = false
+    sound.play('scope-close')
     clock.getDelta()
     body.classList.remove('is-viewing', 'is-scoping')
     if (!body.classList.contains('is-reduce-motion')) {
@@ -893,6 +909,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const px = player.object.position.x
     const pz = player.object.position.z
     const regionKey = regionAt(px, pz)
+    // そのワールドの BGM と環境音（変わった時だけクロスフェード）
+    sound.setBgm(REGION_SOUND[regionKey] ?? 'savanna')
+    sound.setAmb(REGION_SOUND[regionKey] ?? 'savanna')
     if (regionKey !== here.key) {
       here = worldSpots.find((w) => w.key === regionKey) ?? worldSpots[0]
       spot = here.spot
@@ -1254,6 +1273,8 @@ function nextFrames(n: number): Promise<void> {
 
 function main(): void {
   applyStatic()
+  sound.init()
+  sound.setBgm('home')
   const canvas = document.getElementById('world') as HTMLCanvasElement
   const shell = createShell()
   const webgl = hasWebGL(canvas)
@@ -1306,6 +1327,8 @@ function main(): void {
     await shell.iris.close()
     shell.guide.setInWorld(false)
     world.pause()
+    sound.setBgm('home')
+    sound.setAmb(null)
     shell.home.show()
     document.body.classList.remove('in-world')
     await shell.iris.open()

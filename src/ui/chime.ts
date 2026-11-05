@@ -1,27 +1,12 @@
 /**
  * 「ともだちになる」の優しい効果音。外部の音源ファイルは使わず、その場で合成する。
- * ユーザーの操作の直後にだけ鳴らす（自動再生しない）。
+ * ユーザーの操作の直後にだけ鳴らす（自動再生しない）。鳴らす先は audio/sound.ts の効果音の音量。
  */
-
-let ctx: AudioContext | null = null
-
-function getContext(): AudioContext | null {
-  try {
-    if (!ctx) ctx = new AudioContext()
-    if (ctx.state === 'suspended') void ctx.resume()
-    return ctx
-  } catch {
-    return null
-  }
-}
-
-export function playFriendChime(): void {
-  const ac = getContext()
-  if (!ac) return
+export function playFriendChime(ac: AudioContext, out: AudioNode): void {
   const now = ac.currentTime
   const master = ac.createGain()
   master.gain.value = 0.0001
-  master.connect(ac.destination)
+  master.connect(out)
   master.gain.exponentialRampToValueAtTime(0.09, now + 0.02)
   master.gain.exponentialRampToValueAtTime(0.0001, now + 1.1)
 

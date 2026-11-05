@@ -1,5 +1,9 @@
 import { t } from './i18n'
 import { hideView, showView } from './transition'
+import { sound } from '../audio/sound'
+
+/** 同じ子の出会いの音を鳴らし直すまでの間（札が出たり消えたりしても何度も鳴らさない） */
+const ENCOUNTER_COOLDOWN_MS = 12000
 
 /**
  * 出会いの導線。そばに来たライオンの頭の上に「双眼鏡 + 名前」のピンを浮かべ、尻尾で頭を指す。
@@ -34,6 +38,7 @@ export function createEncounterIcon(): EncounterIcon {
 
   let visible = false
   let currentName = ''
+  const heardAt = new Map<string, number>()
   let w = 0
   let h = 0
 
@@ -41,6 +46,12 @@ export function createEncounterIcon(): EncounterIcon {
     set: (screen, name) => {
       const next = screen !== null
       if (next !== visible) {
+        if (next) {
+          const key = name ?? currentName
+          const now = performance.now()
+          if (now - (heardAt.get(key) ?? -Infinity) > ENCOUNTER_COOLDOWN_MS) sound.play('encounter')
+          heardAt.set(key, now)
+        }
         if (next) showView(el)
         else hideView(el)
         visible = next

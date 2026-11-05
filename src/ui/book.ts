@@ -4,6 +4,7 @@ import type { FriendBookStore } from '../data/friends'
 import { createChatReadStore } from '../data/chatRead'
 import { createLetterStore } from '../data/letters'
 import { createNoticeStore } from '../data/notices'
+import { sound } from '../audio/sound'
 import { WORLDS } from '../data/worlds'
 import type { WorldKey } from '../data/worlds'
 import { createChatView, formatWhen, noticeHeading } from './chat'
@@ -243,6 +244,14 @@ export function createBookView(store: FriendBookStore): BookView {
   const rerenderList = () => {
     if (open && !chat.isOpen()) render()
   }
+  // 新しいお知らせが届いたら（スタッフ画面で出された数が増えたら）お知らせの音
+  const publishedCount = () => notices.list().filter((n) => n.status === 'published').length
+  let lastPublished = publishedCount()
+  notices.onChange(() => {
+    const n = publishedCount()
+    if (n > lastPublished) sound.play('notice')
+    lastPublished = n
+  })
   notices.onChange(rerenderList)
   letters.onChange(rerenderList)
   read.onChange(rerenderList)

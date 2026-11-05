@@ -1,4 +1,5 @@
 import { esc } from './html'
+import { sound } from '../audio/sound'
 import { t } from './i18n'
 import { hideView, showView } from './transition'
 
@@ -169,6 +170,7 @@ export function createHud(): Hud {
         : ''
       toastEl.innerHTML = `${iconHtml}<span>${esc(text)}</span>`
       showView(toastEl)
+      sound.play('notice')
       window.clearTimeout(toastTimer)
       toastTimer = window.setTimeout(() => hideView(toastEl), 2500)
     },

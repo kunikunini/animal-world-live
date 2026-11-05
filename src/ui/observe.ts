@@ -7,7 +7,7 @@ import { resolveVideoSource } from '../video/source'
 import { faceMarkup } from './faces'
 import { esc } from './html'
 import { renderHero, renderProfile } from './profile'
-import { playFriendChime } from './chime'
+import { sound } from '../audio/sound'
 import { animalName, getLang, speciesName, t } from './i18n'
 import { refreshIn, setViewOpen } from './transition'
 
@@ -340,7 +340,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
       befriended.classList.add('is-pop')
     }
     celebrate()
-    playFriendChime()
+    sound.play('friend')
     status.textContent = t('addedStatus', { name: animalName(current) })
     // 押したボタンは消えるので、次の行き先へフォーカスを移す（キーボード・読み上げの人が迷わない）
     if (!seeBookBtn.hidden) seeBookBtn.focus()

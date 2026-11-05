@@ -36,6 +36,10 @@ export interface PlayerController {
   setIntro: (t: number | null) => void
   /** いつもの追従カメラの位置と注視点（演出の終わりに、空からここへ降りてくる）。カメラは動かさない */
   followPose: (position: THREE.Vector3, lookAt: THREE.Vector3) => void
+  /** 音: 足が地面に着いた（歩きの揺れの 1 歩ごと）・跳んだ・着地した。x, z は主人公の位置 */
+  onStep: (fn: (x: number, z: number) => void) => void
+  onJump: (fn: () => void) => void
+  onLand: (fn: () => void) => void
   dispose: () => void
 }
 
@@ -230,10 +234,17 @@ export function createPlayer(
     if (waypoints.length > 0) showMarker(waypoints[waypoints.length - 1])
   }
 
+  const stepListeners: Array<(x: number, z: number) => void> = []
+  const jumpListeners: Array<() => void> = []
+  const landListeners: Array<() => void> = []
+  /** いまの歩きの揺れが何歩目か（半周期ごとに 1 歩） */
+  let stepCount = 0
+
   const jump = () => {
     if (!inputEnabled || airY !== null) return
     airY = object.position.y
     vy = JUMP_SPEED
+    jumpListeners.forEach((fn) => fn())
   }
 
   // --- 入力 ---
@@ -406,6 +417,7 @@ export function createPlayer(
       if (airY <= ground) {
         airY = null
         object.position.y = ground
+        landListeners.forEach((fn) => fn())
       } else {
         object.position.y = airY
       }
@@ -450,6 +462,13 @@ export function createPlayer(
       diff = Math.atan2(Math.sin(diff), Math.cos(diff))
       heading += diff * Math.min(1, TURN_SPEED * dt)
       walkPhase += dt * 9
+      // 足音: 揺れが底に来るたび（sin の 0 をまたぐたび）に 1 歩。空中と、ほとんど進んでいない時は鳴らさない
+      const n = Math.floor(walkPhase / Math.PI)
+      const actual = Math.hypot(object.position.x - _prev.x, object.position.z - _prev.z)
+      if (n !== stepCount) {
+        stepCount = n
+        if (airY === null && dt > 0 && actual / dt > 1) stepListeners.forEach((fn) => fn(object.position.x, object.position.z))
+      }
     }
     object.rotation.y = heading
 
@@ -521,6 +540,15 @@ export function createPlayer(
       reduceMotion = on
     },
     jump,
+    onStep: (fn) => {
+      stepListeners.push(fn)
+    },
+    onJump: (fn) => {
+      jumpListeners.push(fn)
+    },
+    onLand: (fn) => {
+      landListeners.push(fn)
+    },
     teleport: (x, z, nextHeading, nextCamYaw) => {
       waypoints = []
       marker.visible = false

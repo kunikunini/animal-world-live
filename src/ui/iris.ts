@@ -8,6 +8,8 @@
  * 進み方はフレームごとの経過を最大 1/30 秒に抑えて足す。ワールドの初回構築やシェーダーの
  * コンパイルでフレームが詰まっても、演出が一気に飛ばずに見える。
  */
+import { sound } from '../audio/sound'
+
 export interface Iris {
   close: () => Promise<void>
   open: () => Promise<void>
@@ -89,6 +91,8 @@ export function createIris(): Iris {
 
   return {
     close: async () => {
+      // 双眼鏡を構える音（幕が双眼鏡の形に絞られる）
+      sound.play('scope-open')
       fit()
       canvas.hidden = false
       canvas.classList.add('is-blocking')
@@ -109,6 +113,8 @@ export function createIris(): Iris {
       await nextFrame()
       await nextFrame()
       wait.hidden = true
+      // 双眼鏡を下ろす音（幕が開く）
+      sound.play('scope-close')
       if (reduceMotion) {
         await run(260, (t) => (canvas.style.opacity = String(1 - t)))
       } else {
