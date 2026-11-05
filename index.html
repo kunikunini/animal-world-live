@@ -156,6 +156,12 @@
     </div>
 
     <div id="hud-toast" class="toast hud-toast" hidden role="status"></div>
+    <!-- ワールドに入った時の名前（大きな文字でふわっと出て消える）。読み上げは visually-hidden の文 -->
+    <div id="region-title" class="region-title" hidden>
+      <span id="region-title-sub" class="rt-sub" aria-hidden="true"></span>
+      <span id="region-title-main" class="rt-main" aria-hidden="true"></span>
+      <span id="region-title-spoken" class="visually-hidden" role="status"></span>
+    </div>
 
     <!-- 観察モニター: 映像 → 顔と名前 → ともだちになる → 項目カード -->
     <!-- アニマルスコープ: 観察スポットでのぞく動画一覧と、のぞく演出 -->

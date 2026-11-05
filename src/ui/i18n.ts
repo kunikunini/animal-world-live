@@ -295,6 +295,11 @@ export function t(key: I18nKey, vars: Record<string, string | number> = {}): str
   return s
 }
 
+/** 言語を指定して引く（ワールドの名前に、もう一方の言語の名前を添える時） */
+export function tIn(l: Lang, key: I18nKey): string {
+  return DICT[key][l]
+}
+
 export function animalName(animal: Animal): string {
   return lang === 'en' && animal.nameEn ? animal.nameEn : animal.name
 }

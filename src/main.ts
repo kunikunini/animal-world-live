@@ -37,7 +37,9 @@ import { createSettings } from './ui/settings'
 import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { createScope } from './ui/scope'
-import { animalName, applyStatic, getLang, onLangChange, t } from './ui/i18n'
+import { animalName, applyStatic, getLang, onLangChange, t, tIn } from './ui/i18n'
+import type { Lang } from './ui/i18n'
+import { createRegionTitle } from './ui/regionTitle'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
@@ -582,11 +584,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
   let lightReady = false
   let lightSnap = false
-  const regionName = (key: RegionKey) => {
-    if (key === 'africa') return t('catSavanna')
+  const regionName = (key: RegionKey, l: Lang = getLang()) => {
+    if (key === 'africa') return tIn(l, 'catSavanna')
     const w = getWorld(key)
-    return w ? w.name[getLang()] : key
+    return w ? w.name[l] : key
   }
+  // ワールドに入った時の大きな名前。日本語の時は英語の名前を上に小さく添える
+  const regionTitle = createRegionTitle()
   const projected = new THREE.Vector3()
   let arrived = false
 
@@ -659,7 +663,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       spot = here.spot
       spotHead.copy(spot.position).add(new THREE.Vector3(0, 2.2, 0))
       arrived = false
-      hud.toast(t('enterRegion', { world: regionName(regionKey) }), 'bino')
+      const lang = getLang()
+      regionTitle.show(
+        regionName(regionKey),
+        lang === 'ja' ? regionName(regionKey, 'en').toUpperCase() : '',
+        t('enterRegion', { world: regionName(regionKey) }),
+      )
     }
     if (frames % 8 === 0 || !lightReady) {
       if (!lightReady) lightSnap = true
