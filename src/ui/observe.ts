@@ -269,6 +269,65 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     video.muted = false
     unmuteBtn.hidden = true
   })
+  // 動画の操作（全画面の中など）で音を出した時も「音を出す」を消す（残ったままにしない）
+  video.addEventListener('volumechange', () => {
+    if (!video.muted) unmuteBtn.hidden = true
+  })
+
+  /**
+   * 全画面とピクチャーインピクチャー。<video controls> の操作から入れる（iPhone は専用の全画面プレーヤー）。
+   * - 戻ってきた時: iPhone の Safari で、全画面から戻った後に「戻る」が効かなくなる報告があった（このリポジトリの環境では再現できていない）。
+   *   ページの位置を 0 に戻し、観察モニターの重なりを作り直し、フォーカスを「戻る」へ戻す
+   * - 閉じる時: 全画面・ピクチャーインピクチャーのままなら先に普通の表示へ戻す（閉じた後に映像だけ浮いて残らないように）
+   */
+  const fsVideo = video as HTMLVideoElement & {
+    webkitDisplayingFullscreen?: boolean
+    webkitExitFullscreen?: () => void
+    webkitPresentationMode?: string
+    webkitSetPresentationMode?: (mode: string) => void
+  }
+  const resetScroll = () => {
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }
+  const afterFullscreen = () => {
+    if (!open) return
+    resetScroll()
+    root.classList.add('is-relayer')
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        root.classList.remove('is-relayer')
+        resetScroll()
+        if (open) closeBtn.focus({ preventScroll: true })
+      }),
+    )
+    // iPhone は全画面を閉じるアニメーションの後にもう一度位置が動くことがある
+    window.setTimeout(resetScroll, 400)
+  }
+  video.addEventListener('webkitendfullscreen', afterFullscreen)
+  const onFullscreenChange = () => {
+    const d = document as Document & { webkitFullscreenElement?: Element | null }
+    if (!document.fullscreenElement && !d.webkitFullscreenElement) afterFullscreen()
+  }
+  document.addEventListener('fullscreenchange', onFullscreenChange)
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange)
+  video.addEventListener('leavepictureinpicture', afterFullscreen)
+
+  const leaveFullscreen = () => {
+    try {
+      if (fsVideo.webkitDisplayingFullscreen) fsVideo.webkitExitFullscreen?.()
+    } catch {
+      // 戻せなくても閉じる処理は続ける
+    }
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+    if (document.pictureInPictureElement === video) void document.exitPictureInPicture().catch(() => undefined)
+    try {
+      if (fsVideo.webkitPresentationMode && fsVideo.webkitPresentationMode !== 'inline') fsVideo.webkitSetPresentationMode?.('inline')
+    } catch {
+      // 同上
+    }
+  }
 
   befriendBtn.addEventListener('click', () => {
     if (!current) return
@@ -298,6 +357,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     open = next
     setViewOpen(root, open)
     if (!open) {
+      leaveFullscreen()
       loadSeq++
       video.pause()
       status.textContent = ''

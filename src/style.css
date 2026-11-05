@@ -2435,6 +2435,11 @@ button.bk-tab:hover {
   -webkit-backdrop-filter: blur(4px);
 }
 
+/* 動画の全画面から戻った直後だけ、重なり（合成レイヤー）を作り直す（ui/observe.ts の afterFullscreen） */
+.observe.is-relayer {
+  transform: translateZ(0);
+}
+
 .observe-panel {
   position: absolute;
   inset: 0;
