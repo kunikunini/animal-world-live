@@ -27,8 +27,10 @@ export type FriendSound = 'chime' | 'new'
 
 const BASE = `${import.meta.env.BASE_URL}audio/`
 const FADE_S = 1.8
-/** デコードして持っておく BGM・環境音の数 */
-const KEEP_LOOPS = 4
+/** 同じ場所の 2 曲を交互にする時のクロスフェード（秒） */
+const SWAP_S = 3
+/** デコードして持っておく BGM・環境音の数（いまの 2 曲＋フェード中の前の曲＋環境音） */
+const KEEP_LOOPS = 5
 /** 足音のバリエーション */
 const STEP_VARIANTS = 3
 
@@ -69,12 +71,16 @@ function write(key: string, value: string): void {
 
 interface Layer {
   bus: GainNode | null
-  /** 鳴らしたい曲（解放前・読み込み中も持つ） */
+  /** 鳴らしたい場所の曲（1 曲目のファイル名。解放前・読み込み中も持つ） */
   want: string | null
-  /** いま鳴っている曲 */
+  /** いま鳴っている場所の曲（1 曲目のファイル名） */
   key: string | null
+  /** いま鳴っているファイル（1 曲目か 2 曲目） */
+  track: string | null
   src: AudioBufferSourceNode | null
   gain: GainNode | null
+  /** 次の曲へ切り替えるタイマー */
+  timer: number
 }
 
 const state = {
@@ -93,8 +99,8 @@ let seBus: GainNode | null = null
 let duck = 1
 let bgmBase: BgmKey | null = null
 let bgmOverride: BgmKey | null = null
-const bgm: Layer = { bus: null, want: null, key: null, src: null, gain: null }
-const amb: Layer = { bus: null, want: null, key: null, src: null, gain: null }
+const bgm: Layer = { bus: null, want: null, key: null, track: null, src: null, gain: null, timer: 0 }
+const amb: Layer = { bus: null, want: null, key: null, track: null, src: null, gain: null, timer: 0 }
 
 const loops = new Map<string, Promise<AudioBuffer | null>>()
 const loopOrder: string[] = []
@@ -182,6 +188,15 @@ function getLoopLengths(): Promise<Record<string, number>> {
   return loopLengths
 }
 
+/** その場所の 2 曲目（bgm-home.mp3 → bgm-home-2.mp3） */
+function secondOf(file: string): string {
+  return file.replace(/\.mp3$/, '-2.mp3')
+}
+
+function baseOf(file: string): string {
+  return file.replace(/\.mp3$/, '')
+}
+
 function loadLoop(file: string): Promise<AudioBuffer | null> {
   let p = loops.get(file)
   if (!p) {
@@ -193,7 +208,8 @@ function loadLoop(file: string): Promise<AudioBuffer | null> {
   loopOrder.push(file)
   // 古いものを捨てる（いま鳴っている・鳴らしたい曲は残す）
   while (loopOrder.length > KEEP_LOOPS) {
-    const old = loopOrder.find((f) => f !== bgm.key && f !== bgm.want && f !== amb.key && f !== amb.want)
+    const keep = [bgm.key, bgm.want, bgm.track, amb.key, amb.want].filter(Boolean).flatMap((f) => [f, secondOf(f as string)])
+    const old = loopOrder.find((f) => !keep.includes(f))
     if (!old) break
     loopOrder.splice(loopOrder.indexOf(old), 1)
     loops.delete(old)
@@ -201,22 +217,72 @@ function loadLoop(file: string): Promise<AudioBuffer | null> {
   return p
 }
 
-function stopLayer(layer: Layer): void {
-  if (!ctx || !layer.src || !layer.gain) return
+function fadeOut(src: AudioBufferSourceNode, gain: GainNode, seconds: number): void {
+  if (!ctx) return
   const now = ctx.currentTime
-  const { src, gain } = layer
   gain.gain.cancelScheduledValues(now)
   gain.gain.setValueAtTime(gain.gain.value, now)
-  gain.gain.linearRampToValueAtTime(0, now + FADE_S)
+  gain.gain.linearRampToValueAtTime(0, now + seconds)
   try {
-    src.stop(now + FADE_S + 0.05)
+    src.stop(now + seconds + 0.05)
   } catch {
     // すでに止まっている
   }
-  window.setTimeout(() => gain.disconnect(), (FADE_S + 0.3) * 1000)
+  window.setTimeout(() => gain.disconnect(), (seconds + 0.3) * 1000)
+}
+
+function stopLayer(layer: Layer): void {
+  window.clearTimeout(layer.timer)
+  if (ctx && layer.src && layer.gain) fadeOut(layer.src, layer.gain, FADE_S)
   layer.src = null
   layer.gain = null
   layer.key = null
+  layer.track = null
+}
+
+/**
+ * その場所の曲を 1 つ鳴らす（ループ再生のまま）。2 曲目があれば、ループ 1 回分の少し前から
+ * もう片方の曲へ SWAP_S 秒でクロスフェードし、それを交互にくり返す。タイマーが遅れても、鳴っている曲はループするので途切れない
+ */
+function playTrack(layer: Layer, list: string[], index: number, buf: AudioBuffer, lengths: Record<string, number>, fadeS: number): void {
+  if (!ctx || !layer.bus) return
+  const file = list[index]
+  const src = ctx.createBufferSource()
+  src.buffer = buf
+  src.loop = true
+  const len = lengths[baseOf(file)]
+  const padded = typeof len === 'number' && buf.duration >= len + LOOP_PAD * 2 - 0.01
+  if (padded) {
+    src.loopStart = LOOP_PAD
+    src.loopEnd = LOOP_PAD + len
+  }
+  const gain = ctx.createGain()
+  const now = ctx.currentTime
+  gain.gain.setValueAtTime(0, now)
+  gain.gain.linearRampToValueAtTime(1, now + fadeS)
+  src.connect(gain)
+  gain.connect(layer.bus)
+  src.start(now, padded ? LOOP_PAD : 0)
+  layer.src = src
+  layer.gain = gain
+  layer.track = file
+  if (list.length < 2) return
+  const nextIndex = (index + 1) % list.length
+  const next = list[nextIndex]
+  // 次の曲は切り替えの少し前から読んでおく
+  const playFor = (padded ? len : buf.duration) - SWAP_S
+  const key = layer.key
+  window.clearTimeout(layer.timer)
+  layer.timer = window.setTimeout(async () => {
+    if (layer.src !== src || layer.key !== key) return
+    const nextBuf = await loadLoop(next)
+    if (!nextBuf || layer.src !== src || layer.key !== key) return
+    fadeOut(src, gain, SWAP_S)
+    playTrack(layer, list, nextIndex, nextBuf, lengths, SWAP_S)
+  }, Math.max(1, playFor) * 1000)
+  window.setTimeout(() => {
+    if (layer.src === src) void loadLoop(next)
+  }, Math.max(0, playFor - 8) * 1000)
 }
 
 async function syncLayer(layer: Layer): Promise<void> {
@@ -228,25 +294,11 @@ async function syncLayer(layer: Layer): Promise<void> {
   const [buf, lengths] = await Promise.all([loadLoop(want), getLoopLengths()])
   // 読み込みの間に行き先が変わった、または別の呼び出しが先に鳴らした
   if (!buf || !ctx || layer.want !== want || layer.key !== null || !layer.bus) return
-  const src = ctx.createBufferSource()
-  src.buffer = buf
-  src.loop = true
-  const len = lengths[want.replace(/\.mp3$/, '')]
-  const padded = typeof len === 'number' && buf.duration >= len + LOOP_PAD * 2 - 0.01
-  if (padded) {
-    src.loopStart = LOOP_PAD
-    src.loopEnd = LOOP_PAD + len
-  }
-  const gain = ctx.createGain()
-  const now = ctx.currentTime
-  gain.gain.setValueAtTime(0, now)
-  gain.gain.linearRampToValueAtTime(1, now + FADE_S)
-  src.connect(gain)
-  gain.connect(layer.bus)
-  src.start(now, padded ? LOOP_PAD : 0)
-  layer.src = src
-  layer.gain = gain
   layer.key = want
+  // 2 曲目が loops.json にあれば交互にする（環境音は 1 本）
+  const second = secondOf(want)
+  const list = baseOf(second) in lengths ? [want, second] : [want]
+  playTrack(layer, list, 0, buf, lengths, FADE_S)
 }
 
 function syncBgm(): void {
@@ -439,7 +491,7 @@ export const sound = {
   },
   /** 開発用: 今の状態（検証で使う） */
   debug() {
-    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
+    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmTrack: bgm.track, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
   },
 }
 
