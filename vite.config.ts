@@ -32,6 +32,13 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
+    // 2 ページ: アプリ（index.html）とスタッフ画面（staff.html）
+    rollupOptions: {
+      input: {
+        main: join(root, 'index.html'),
+        staff: join(root, 'staff.html'),
+      },
+    },
   },
   server: {
     host: true,

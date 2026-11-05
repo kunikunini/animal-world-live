@@ -1,10 +1,13 @@
 import type { Animal } from '../data/animals'
 import { getAnimal } from '../data/animals'
 import type { FriendBookStore } from '../data/friends'
+import { createChatReadStore } from '../data/chatRead'
 import { createLetterStore } from '../data/letters'
+import { createNoticeStore } from '../data/notices'
 import { WORLDS } from '../data/worlds'
 import type { WorldKey } from '../data/worlds'
-import { createChatView, formatWhen } from './chat'
+import { createChatView, formatWhen, noticeHeading } from './chat'
+import { createGuardianGate } from './guardian'
 import { faceMarkup } from './faces'
 import { esc } from './html'
 import { animalName, getLang, onLangChange, t } from './i18n'
@@ -47,7 +50,10 @@ export function createBookView(store: FriendBookStore): BookView {
   const worldLabel = document.getElementById('book-world-label') as HTMLElement
 
   const letters = createLetterStore()
-  const chat = createChatView(letters, (id) => store.get(id)?.firstMetAt)
+  const notices = createNoticeStore()
+  const read = createChatReadStore()
+  const chat = createChatView({ letters, notices, read, friendSince: (id) => store.get(id)?.firstMetAt })
+  const gate = createGuardianGate()
 
   let open = false
   let reduceMotion = false
@@ -67,6 +73,8 @@ export function createBookView(store: FriendBookStore): BookView {
     preview: string
     /** 並び順と右端の時刻に使う（いちばん新しい出来事） */
     at: string
+    /** まだ開いていないお知らせの数 */
+    unread: number
   }
 
   const rows = (): Row[] =>
@@ -76,8 +84,22 @@ export function createBookView(store: FriendBookStore): BookView {
         const animal = getAnimal(e.animalId)
         if (!animal) return null
         const last = letters.lastFor(animal.id)
-        const preview = last ? last.text : animal.video.url ? t('sysVideo', { name: animalName(animal) }) : t('metOn', { date: formatWhen(e.firstMetAt) })
-        return { animal, fresh: freshIds.includes(animal.id), preview, at: last ? last.sentAt : e.firstMetAt }
+        const published = notices.publishedFor(animal.id)
+        const lastNotice = published[published.length - 1]
+        const lastRead = read.lastReadAt(animal.id) ?? ''
+        const unread = published.filter((n) => (n.publishedAt ?? n.createdAt) > lastRead).length
+        // 下書き（最後のひとこと）は、お手紙とお知らせの新しい方
+        let preview = animal.video.url ? t('sysVideo', { name: animalName(animal) }) : t('metOn', { date: formatWhen(e.firstMetAt) })
+        let at = e.firstMetAt
+        if (last) {
+          preview = last.text
+          at = last.sentAt
+        }
+        if (lastNotice && (lastNotice.publishedAt ?? lastNotice.createdAt) > at) {
+          preview = lastNotice.kind === 'notice' && lastNotice.title ? lastNotice.title : lastNotice.kind === 'notice' ? lastNotice.body : noticeHeading(lastNotice)
+          at = lastNotice.publishedAt ?? lastNotice.createdAt
+        }
+        return { animal, fresh: freshIds.includes(animal.id), preview, at, unread }
       })
       .filter((r): r is Row => r !== null)
       .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
@@ -101,15 +123,21 @@ export function createBookView(store: FriendBookStore): BookView {
     renderChips(all)
     list.innerHTML = all
       .filter(matches)
-      .map(({ animal, fresh, preview, at }) => {
+      .map(({ animal, fresh, preview, at, unread }) => {
         const name = animalName(animal)
-        const label = fresh ? t('openChatNew', { name }) : t('openChat', { name })
+        let label = fresh ? t('openChatNew', { name }) : t('openChat', { name })
+        if (unread > 0) label += `。${t('unreadNotices', { n: unread })}`
+        const side = fresh
+          ? `<span class="bk-new"><svg aria-hidden="true"><use href="#i-sparkle" /></svg>${esc(t('tagNew'))}</span>`
+          : unread > 0
+            ? `<span class="bk-unread" aria-hidden="true">${unread}</span>`
+            : ''
         return `
           <li>
-            <button class="bk-row${fresh ? ' is-new' : ''}" type="button" data-chat="${esc(animal.id)}" aria-label="${esc(label)}">
+            <button class="bk-row${fresh ? ' is-new' : ''}${unread > 0 ? ' has-unread' : ''}" type="button" data-chat="${esc(animal.id)}" aria-label="${esc(label)}">
               <span class="bk-ava">${faceMarkup(animal)}</span>
               <span class="bk-row-main"><span class="bk-name">${esc(name)}</span><span class="bk-prev">${esc(preview)}</span></span>
-              <span class="bk-row-side"><span class="bk-time">${esc(formatWhen(at))}</span>${fresh ? `<span class="bk-new"><svg aria-hidden="true"><use href="#i-sparkle" /></svg>${esc(t('tagNew'))}</span>` : ''}</span>
+              <span class="bk-row-side"><span class="bk-time">${esc(formatWhen(at))}</span>${side}</span>
             </button>
           </li>`
       })
@@ -123,6 +151,7 @@ export function createBookView(store: FriendBookStore): BookView {
   const rowOf = (id: string) => list.querySelector<HTMLButtonElement>(`button[data-chat="${CSS.escape(id)}"]`)
 
   const showList = (focusId: string) => {
+    gate.close()
     chat.hide()
     listPage.hidden = false
     render()
@@ -156,6 +185,11 @@ export function createBookView(store: FriendBookStore): BookView {
   })
   chat.onBack(() => showList(lastRowId))
   chat.onVisit((animal) => visitListeners.forEach((fn) => fn(animal)))
+  // おうえん: トークの上に「おとなの方へ」を重ねる。閉じたらハートのボタンへ戻る
+  chat.onSupport((animal) => gate.open(animal))
+  gate.onClose(() => {
+    if (chat.isOpen()) (document.getElementById('chat-support') as HTMLButtonElement | null)?.focus()
+  })
 
   const setOpen = (next: boolean) => {
     if (open === next) return
@@ -167,6 +201,7 @@ export function createBookView(store: FriendBookStore): BookView {
       freshIds = store.unseen().map((e) => e.animalId)
       lastRowId = ''
       filter = 'all'
+      gate.close()
       chat.hide()
       listPage.hidden = false
       render()
@@ -177,6 +212,7 @@ export function createBookView(store: FriendBookStore): BookView {
     } else {
       const seen = freshIds
       freshIds = []
+      gate.close()
       chat.hide()
       store.markSeen(seen)
     }
@@ -190,7 +226,8 @@ export function createBookView(store: FriendBookStore): BookView {
   })
   window.addEventListener('keydown', (e) => {
     if (!open || e.key !== 'Escape') return
-    if (chat.isOpen()) showList(lastRowId)
+    if (gate.isOpen()) gate.close()
+    else if (chat.isOpen()) showList(lastRowId)
     else setOpen(false)
   })
   worldBtn.addEventListener('click', () => {
@@ -202,9 +239,14 @@ export function createBookView(store: FriendBookStore): BookView {
     for (const e of store.unseen()) if (!freshIds.includes(e.animalId)) freshIds.push(e.animalId)
     if (!chat.isOpen()) render()
   })
-  onLangChange(() => {
+  // スタッフ画面（別タブ）が出したお知らせ・お手紙の変化で、一覧の下書きと未読を更新
+  const rerenderList = () => {
     if (open && !chat.isOpen()) render()
-  })
+  }
+  notices.onChange(rerenderList)
+  letters.onChange(rerenderList)
+  read.onChange(rerenderList)
+  onLangChange(rerenderList)
 
   return {
     open: (from) => {
@@ -221,12 +263,14 @@ export function createBookView(store: FriendBookStore): BookView {
     },
     restoreFocus: () => {
       if (!open) return
+      if (gate.isOpen()) return
       if (chat.isOpen()) chat.focusVisit()
       else (rowOf(lastRowId) ?? closeBtn).focus()
     },
     setReduceMotion: (on) => {
       reduceMotion = on
       chat.setReduceMotion(on)
+      gate.setReduceMotion(on)
       list.classList.toggle('is-still', on)
     },
     onGoWorld: (fn) => {

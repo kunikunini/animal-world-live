@@ -198,11 +198,16 @@
               <button class="seg-btn" type="button" data-lang="en" lang="en">English</button>
             </span>
           </div>
+          <a class="set-row set-row-link" href="/staff.html" target="_blank" rel="noopener">
+            <svg class="ico"><use href="#i-bubble" /></svg>
+            <span class="set-text"><strong data-i18n="staffScreen">スタッフ画面（試作）</strong><small data-i18n="staffScreenDesc">お知らせを出す・お手紙を読む（この端末の中だけ）</small></span>
+            <span class="set-open" data-i18n="open">ひらく</span>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- ともだち帳: 顔のカードグリッド -->
+    <!-- ともだち帳: LINE のトーク一覧の形 -->
     <section id="book" class="sheet-wrap book" hidden aria-label="ともだち帳" data-i18n-aria="book">
       <div class="sheet book-panel">
         <!-- 一覧（LINE のトーク一覧の形。ともだちだけが並ぶ） -->
@@ -230,15 +235,39 @@
             <span id="chat-face" class="ch-face" aria-hidden="true"></span>
             <div class="ch-who"><span id="chat-name" class="ch-name"></span><span id="chat-sub" class="ch-sub"></span></div>
             <button id="chat-visit" class="ch-visit" type="button"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span data-i18n="chatVisit">会いに行く</span></button>
+            <button id="chat-support" class="bk-icon ch-support" type="button" aria-label="おうえん（おとなの方へ）" title="おうえん"><svg class="ico"><use href="#i-heart" /></svg></button>
           </header>
-          <ul id="chat-log" class="ch-log" aria-live="polite"></ul>
+          <ul id="chat-log" class="ch-log"></ul>
           <div class="ch-compose">
             <div id="chat-quick" class="ch-quicks" role="group" aria-label="ひとことで送る" data-i18n-aria="quickPhrases"></div>
             <form id="chat-form" class="ch-form" autocomplete="off">
               <input id="chat-input" class="ch-input" type="text" name="letter" maxlength="200" enterkeyhint="send" aria-label="お手紙" data-i18n-aria="letterInput" />
               <button class="ch-send" type="submit" aria-label="おくる" data-i18n-aria="send" title="おくる" data-i18n-title="send"><svg class="ico"><use href="#i-send" /></svg></button>
             </form>
+            <p id="chat-error" class="ch-error" role="alert" hidden></p>
             <p id="chat-note" class="ch-note"></p>
+            <p id="chat-status" class="sr-only" aria-live="polite"></p>
+          </div>
+        </div>
+        <!-- おうえん（投げ銭）の前の「おとなの方へ」。決済はまだ無いので、通った先は準備中の案内 -->
+        <div id="book-gate" class="bk-page bk-gate" hidden>
+          <header class="bk-head">
+            <button id="gate-back" class="bk-icon" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-back" /></svg></button>
+            <h2 class="bk-title"><svg class="ico"><use href="#i-heart" /></svg><span data-i18n="gateTitle">おとなの方へ</span></h2>
+            <span class="bk-head-spacer" aria-hidden="true"></span>
+          </header>
+          <div class="bk-body gate-body">
+            <form id="gate-form" class="gate-form" autocomplete="off">
+              <p class="gate-text" data-i18n="gateBody">おうえん（投げ銭）はおとなが行います。確認のため、生まれた年を西暦4けたで入力してください。入力した年は保存しません。</p>
+              <label class="gate-field"><span data-i18n="gateYear">生まれた年</span><input id="gate-year" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="1990" autocomplete="off" /></label>
+              <p id="gate-error" class="ch-error" role="alert" hidden></p>
+              <button class="btn btn-nav gate-go" type="submit" data-i18n="gateGo">すすむ</button>
+            </form>
+            <div id="gate-support" class="gate-support" hidden>
+              <h3 id="gate-support-title" class="gate-h3"></h3>
+              <p class="gate-pending"><span class="ch-sample-tag" data-i18n="pending">準備中</span><span data-i18n="supportPending">投げ銭は準備中です。お金を送るしくみ（決済）はまだありません。</span></p>
+              <p class="gate-text" data-i18n="supportPlan">ゆくゆくは、ここから施設へ応援のお金を送れるようにする予定です。使い道は施設からのお知らせで届く形を考えています。</p>
+            </div>
           </div>
         </div>
       </div>

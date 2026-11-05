@@ -3811,3 +3811,257 @@ body.is-reduce-motion .hud-spot[data-mode="scope"] .ico,
 body.is-reduce-motion .hud-spot[data-mode="scope"]::before,
 body.is-reduce-motion .hud-spot[data-mode="scope"]::after { animation: none; }
 body.is-reduce-motion .hud-spot[data-mode="scope"]::before { box-shadow: 0 0 0 4px rgba(244, 194, 66, 0.7); }
+
+/* ==========================================================================
+   ともだち帳（続き）: 未読の数、お知らせのカード、とりけす、エラー、おとなの方へ、設定のスタッフ画面リンク
+   ========================================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* まだ開いていないお知らせの数（黄色の丸） */
+.bk-unread {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--bk-mine);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+}
+
+.bk-row.has-unread .bk-name {
+  color: var(--ink);
+}
+
+.bk-row.has-unread .bk-prev {
+  color: var(--ink);
+}
+
+/* お知らせのカード（収録の予定・きょうの写真） */
+.ch-card-pad {
+  padding: 4px 8px 2px;
+}
+
+.ch-card-kind {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 6px 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--sky-deep);
+  letter-spacing: 0.02em;
+}
+
+.ch-card-kind .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.ch-card-date {
+  margin: 4px 6px 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.ch-card-body {
+  margin: 4px 6px 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ch-photo {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--sun-tint);
+}
+
+.ch-ntitle {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* お返事の中の、元のお手紙の引用 */
+.ch-quote {
+  display: block;
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--bk-mine);
+  border-radius: 6px;
+  background: var(--gold-tint);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.ch-quote-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+/* 自分の吹き出しはボタン（押すと「とりけす」） */
+button.ch-mine {
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.ch-mine[aria-expanded='true'] {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.ch-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 0 0;
+}
+
+.ch-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 12px 0 8px;
+  border: 2px solid var(--ink-faint);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ch-undo .ico {
+  width: 16px;
+  height: 16px;
+}
+
+.ch-error {
+  margin: 8px 4px 0;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: var(--sun-tint);
+  color: var(--sun-deep);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* ハート（おうえん）。会いに行くの右 */
+.ch-support {
+  color: var(--h-pink);
+}
+
+.ch-support .ico {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* おとなの方へ */
+.bk-gate {
+  background: var(--bk-floor);
+}
+
+.gate-body {
+  padding: 20px 20px 24px;
+}
+
+.gate-form,
+.gate-support {
+  display: grid;
+  gap: 16px;
+}
+
+.gate-support.is-refresh {
+  animation: refresh-in 0.3s var(--ease-soft);
+}
+
+.gate-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.gate-field {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.gate-field input {
+  min-height: 52px;
+  padding: 0 16px;
+  border: 2px solid var(--ink-faint);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.gate-field input:focus {
+  outline: none;
+  border-color: var(--sky);
+}
+
+.gate-go {
+  width: 100%;
+}
+
+.gate-h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.gate-pending {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--paper);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* 設定の「スタッフ画面」リンク */
+.set-row-link {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.set-open {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: var(--sky);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
