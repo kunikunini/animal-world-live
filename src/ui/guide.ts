@@ -1,5 +1,5 @@
 /**
- * あそび方ナビ。初めての人に、実際にあそびながら順に教える小さなカード（画面の下）。
+ * あそび方ナビ。初めての人に、実際にあそびながら順に教える小さなカード（ワールドでは画面の上、スマホ縦はスティックの上）。
  * スライド式の説明ではなく、本当の操作（歩く → そばに行く → 札を押す → ともだちになる → ともだち帳 → 会いに行く）が
  * 起きた時に次の案内へ進む。「ともだちになる」は押すよう勧めるだけで、押すのは本人。
  *
@@ -73,6 +73,8 @@ export function createGuide(): Guide {
     count.textContent = last ? '' : t('guideCount', { n: index + 1, total: GUIDE_STEPS.length })
     btnText.textContent = last ? t('guideDone') : t('guideSkip')
     root.classList.toggle('is-final', last)
+    // 進み具合の棒（済んだ段の割合。「できた」で満タン）
+    root.style.setProperty('--guide-p', String(Math.min(index, GUIDE_STEPS.length) / GUIDE_STEPS.length))
     root.classList.remove('is-refresh')
     void root.offsetWidth
     root.classList.add('is-refresh')

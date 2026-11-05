@@ -4083,39 +4083,119 @@ button.set-row {
 }
 
 /* ==========================================================================
-   あそび方ナビ（初回の案内）。画面の下の小さなカード。モニターや帳の上にも出す（ともだちになる・帳の段があるため）
+   あそび方ナビ（初回の案内）。ひと目で「案内」と分かるよう、空色の札・金と空色のふち・光の帯・きらきら・進み具合の棒を付けた半透明のカード
+   ワールドでは画面の上（PC は地図と帳のボタンのあいだ、「近くにいるよ」の通知の下。スマホ縦は地図の下の「観察スポットへ」のさらに下）
+   下のまん中とスマホ縦のスティックの上は「スコープをのぞく」の場所なので空ける。帳・モニターの上では下に出す（ともだちになる・帳の段があるため）
    ========================================================================== */
+@keyframes guide-shine { 0%, 55% { translate: -160% 0; } 90%, 100% { translate: 420% 0; } }
+@keyframes guide-twinkle { 0%, 100% { opacity: 0.35; scale: 0.7; rotate: 0deg; } 50% { opacity: 1; scale: 1.15; rotate: 90deg; } }
+@keyframes guide-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(90, 169, 255, 0.6); } 60% { box-shadow: 0 0 0 9px rgba(90, 169, 255, 0); } }
+@keyframes guide-aura {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 10px 30px rgba(47, 102, 186, 0.28), 0 0 16px rgba(244, 194, 66, 0.45); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 10px 30px rgba(47, 102, 186, 0.28), 0 0 34px rgba(255, 214, 90, 0.85); }
+}
+
 .guide {
   position: fixed;
   left: 50%;
-  bottom: calc(24px + var(--safe-bottom));
+  top: calc(80px + var(--safe-top));
+  bottom: auto;
   transform: translateX(-50%);
   z-index: 22;
   display: flex;
   align-items: center;
   gap: 12px;
-  width: min(480px, calc(100% - 32px));
-  padding: 10px 14px 12px 10px;
+  width: min(480px, calc(100% - 2 * 168px));
+  padding: 12px 14px 12px 12px;
   border-radius: var(--r-lg);
-  background: var(--paper);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.74);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
   color: var(--ink);
-  box-shadow: var(--shadow-float);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 10px 30px rgba(47, 102, 186, 0.28),
+    0 0 24px rgba(244, 194, 66, 0.4);
+  animation: guide-aura 2.6s ease-in-out infinite;
+  /* 名前の札などがカードの下に来ても押せるよう、カードはタップを素通りさせる（押せるのはスキップ・おわるだけ） */
+  pointer-events: none;
   transition: opacity var(--t-view) var(--ease-soft), translate var(--t-view) var(--ease-soft);
 }
-.guide.is-out { opacity: 0; translate: 0 12px; }
+/* 金と空色のふち（中は透けたまま） */
+.guide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 3px;
+  border-radius: inherit;
+  background: linear-gradient(120deg, var(--gold) 0%, #fff6b0 28%, #5aa9ff 60%, var(--gold) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* ときどき走る光の帯 */
+.guide::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  width: 34%;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0) 100%);
+  translate: -160% 0;
+  animation: guide-shine 4.2s ease-in-out 0.8s infinite;
+  pointer-events: none;
+}
+.guide > * { position: relative; z-index: 1; }
+.guide.is-out { opacity: 0; translate: 0 -12px; }
 body.is-reduce-motion .guide { translate: none !important; }
+body.is-reduce-motion .guide,
 body.is-reduce-motion .guide.is-refresh { animation: none; }
+body.is-reduce-motion .guide::after { display: none; }
+body.is-reduce-motion .guide-ico,
+body.is-reduce-motion .guide-ico::after,
+body.is-reduce-motion .guide-title::before,
+body.is-reduce-motion .guide-spark { animation: none; }
 
 .guide-ico {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: var(--sun-tint);
+  background: linear-gradient(160deg, #7cc0ff 0%, var(--sky) 100%);
   display: grid;
   place-items: center;
+  animation: guide-glow 2.4s ease-out infinite;
 }
-.guide-ico .ico { width: 26px; height: 26px; color: var(--sun); fill: var(--sun); }
+.guide-ico .ico { width: 28px; height: 28px; color: #fff; fill: #fff; }
+.guide-ico::after {
+  content: '✦';
+  position: absolute;
+  right: -5px;
+  top: -6px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 0 2px #fff, 0 0 6px #fff;
+  animation: guide-twinkle 1.8s ease-in-out infinite;
+}
+/* カードのふちのきらきら（3 つ、ずらして瞬く） */
+.guide-spark {
+  position: absolute !important;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 0 2px #fff, 0 0 8px #fff, 0 0 12px rgba(255, 214, 90, 0.9);
+  animation: guide-twinkle 2.1s ease-in-out 0.7s infinite;
+  pointer-events: none;
+}
+.guide-spark.s1 { right: 10px; bottom: 5px; }
+.guide-spark.s2 { left: 46%; top: 3px; font-size: 11px; animation-duration: 1.7s; animation-delay: 0.2s; }
+.guide-spark.s3 { right: 30%; bottom: 3px; font-size: 12px; color: #7cc0ff; animation-duration: 2.4s; animation-delay: 1.1s; }
 
 .guide-main { flex: 1; min-width: 0; }
 .guide-head {
@@ -4124,49 +4204,116 @@ body.is-reduce-motion .guide.is-refresh { animation: none; }
   justify-content: space-between;
   gap: 8px;
 }
-.guide-title { font-size: 12px; font-weight: 800; color: var(--ink-soft); letter-spacing: 0.04em; }
-.guide-count { color: var(--sun); }
+/* 「あそび方ナビ 3/6」は空色の札にする（案内だと分かる目印） */
+.guide-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 11px 3px 8px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(120deg, var(--sky) 0%, #5aa9ff 100%);
+  box-shadow: 0 2px 0 var(--sky-deep);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+.guide-title::before {
+  content: '✦';
+  color: #fff6b0;
+  font-size: 11px;
+  animation: guide-twinkle 1.6s ease-in-out 0.3s infinite;
+}
+.guide-count { color: #fff6b0; }
 .guide-text {
-  margin: 2px 0 0;
+  margin: 6px 0 0;
   font-size: 15px;
   line-height: 1.45;
   font-weight: 800;
 }
+/* 進み具合（6 段のうちどこまで来たか） */
+.guide-bar {
+  display: block;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: var(--r-pill);
+  background: rgba(61, 123, 216, 0.16);
+  overflow: hidden;
+}
+.guide-bar i {
+  display: block;
+  height: 100%;
+  width: calc(var(--guide-p, 0) * 100%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), #ffe27a);
+  box-shadow: 0 0 6px rgba(244, 194, 66, 0.8);
+  transition: width 0.5s var(--ease-soft);
+}
+body.is-reduce-motion .guide-bar i { transition: none; }
 .guide-btn {
   flex: none;
   min-height: 32px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--r-pill);
-  background: var(--ink-faint);
+  background: rgba(43, 29, 18, 0.1);
   color: var(--ink);
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
+  pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
 }
 .guide.is-final .guide-btn { background: var(--sun); color: #fff; box-shadow: var(--shadow-sun); }
-.guide.is-final .guide-ico { background: var(--gold-tint); }
+.guide.is-final .guide-ico { background: linear-gradient(160deg, #ffe27a 0%, var(--gold) 100%); }
 
-/* ともだち帳が開いている間は、下のタブに重ねない。帳からモニターを開いた時はモニターが上なので元の位置 */
-body.book-open .guide { bottom: calc(96px + var(--safe-bottom)); }
-body.observe-open .guide { bottom: calc(24px + var(--safe-bottom)); }
+/* ともだち帳が開いている間は、下のタブの上。帳からモニターを開いた時はモニターが上なので下に戻す */
+body.book-open .guide { top: auto; bottom: calc(96px + var(--safe-bottom)); }
+body.observe-open .guide { top: auto; bottom: calc(24px + var(--safe-bottom)); }
+body:is(.book-open, .observe-open) .guide.is-out { translate: 0 12px; }
 
-/* スマホ縦: スティック（左下、下から 24px・124px）とジャンプの上に、横いっぱいで出す */
+/* 狭い PC・タブレット: 地図の右に寄せる（上の帳のボタンより下なので右は端まで使える） */
+@media (min-width: 481px) and (max-width: 760px) {
+  .guide {
+    left: calc(16px + 136px + 16px + var(--safe-left));
+    right: calc(16px + var(--safe-right));
+    width: auto;
+    transform: none;
+  }
+}
+
+/* スマホ縦: 横いっぱいで、地図（上から 16px・92px）の下の「観察スポットへ」（14px・56px）のさらに下。通知（地図の下）とも重ならない */
 @media (max-width: 480px) {
   .guide {
     left: calc(12px + var(--safe-left));
     right: calc(12px + var(--safe-right));
-    bottom: calc(24px + 124px + 12px + var(--safe-bottom));
+    top: calc(16px + 92px + 14px + 56px + 8px + var(--safe-top));
     width: auto;
     transform: none;
     gap: 0;
-    padding: 8px 12px 10px;
-    background: rgba(255, 255, 255, 0.96);
+    padding: 10px 12px 10px;
   }
   .guide-ico { display: none; }
   .guide-text { font-size: 14px; line-height: 1.4; }
   body.book-open .guide { bottom: calc(84px + var(--safe-bottom)); }
   /* モニターは全画面でスティックが無いので、いちばん下に寄せる（プロフィールの札の上に少しだけ重なる） */
   body.observe-open .guide { bottom: calc(12px + var(--safe-bottom)); }
+}
+
+/* スマホ横: 地図と「観察スポットへ」の右、通知（上から 10px）の下 */
+@media (max-height: 520px) and (orientation: landscape) {
+  .guide {
+    left: calc(12px + 72px + 12px + var(--safe-left));
+    right: calc(12px + var(--safe-right));
+    top: calc(58px + var(--safe-top));
+    width: auto;
+    max-width: 520px;
+    margin: 0 auto;
+    transform: none;
+    padding: 8px 12px 8px 10px;
+  }
+  .guide-ico { width: 38px; height: 38px; }
+  .guide-ico .ico { width: 22px; height: 22px; }
+  .guide-text { margin-top: 4px; font-size: 14px; line-height: 1.35; }
+  .guide-bar { margin-top: 6px; height: 5px; }
 }
