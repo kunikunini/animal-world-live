@@ -450,21 +450,21 @@ function createMountains(group: THREE.Group): void {
 const OUTER_LOOKS: Record<'north' | 'jungle' | 'south', Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
   // 北: 青い麓に白い雪の峰
   north: [
-    { r: 150, h: 26, spread: 14, foot: '#8ea6c2', peak: '#ffffff' },
-    { r: 188, h: 44, spread: 20, foot: '#9fb4d0', peak: '#f7fbff' },
-    { r: 230, h: 64, spread: 26, foot: '#b6c6de', peak: '#ffffff' },
+    { r: 150, h: 26, spread: 14, foot: '#9bb4d8', peak: '#ffffff' },
+    { r: 188, h: 44, spread: 20, foot: '#aac0dc', peak: '#ffffff' },
+    { r: 230, h: 64, spread: 26, foot: '#bccde6', peak: '#ffffff' },
   ],
   // ジャングル: 濃い緑の丸い山
   jungle: [
-    { r: 150, h: 20, spread: 8, foot: '#22683b', peak: '#4fa456' },
-    { r: 188, h: 32, spread: 12, foot: '#2f7a4a', peak: '#6dbb6a' },
-    { r: 230, h: 46, spread: 16, foot: '#5f9f7a', peak: '#9fd0a0' },
+    { r: 150, h: 20, spread: 8, foot: '#2a8a4a', peak: '#62c05e' },
+    { r: 188, h: 32, spread: 12, foot: '#3a9a58', peak: '#7fcc72' },
+    { r: 230, h: 46, spread: 16, foot: '#6aae84', peak: '#aadcaa' },
   ],
   // 南半球: 赤い台地
   south: [
-    { r: 150, h: 14, spread: 6, foot: '#9c4127', peak: '#de7f4c' },
-    { r: 188, h: 24, spread: 9, foot: '#b45a38', peak: '#eb9a66' },
-    { r: 230, h: 36, spread: 12, foot: '#c9806a', peak: '#f0bfa0' },
+    { r: 150, h: 14, spread: 6, foot: '#b5452a', peak: '#e8804a' },
+    { r: 188, h: 24, spread: 9, foot: '#c45f3a', peak: '#f09c66' },
+    { r: 230, h: 36, spread: 12, foot: '#d08a6e', peak: '#f3c3a4' },
   ],
 }
 

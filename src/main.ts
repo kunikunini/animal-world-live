@@ -358,9 +358,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const FOG_TINT: Record<RegionKey, THREE.Color> = {
     // サバンナはトップの絵に寄せて、地平線の空に近い澄んだ水色へ
     africa: new THREE.Color('#a6cff0'),
-    north: new THREE.Color('#e3ebf3'),
-    jungle: new THREE.Color('#cfe2d4'),
-    south: new THREE.Color('#efdcc9'),
+    // 北は雪明かりの白、ジャングルは湿った淡い緑、南半球はベージュをやめて空に近い薄い色（遠くが茶色くにごらない）
+    north: new THREE.Color('#dfeaf6'),
+    jungle: new THREE.Color('#d6eadb'),
+    south: new THREE.Color('#dcd6d2'),
   }
   // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
@@ -437,12 +438,60 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sunDisc: 4.2,
       sunHalo: 1.3,
     },
-    // 北の世界: 低く白い冬の太陽。輪は弱い
-    north: { ...baseLight(), sunElev: 13, sunGlow: new THREE.Color('#f7f3ec'), sunDisc: 3.2, sunHalo: 0.7 },
-    // ジャングル: 高めで、湿った空気ににじむ広い輪
-    jungle: { ...baseLight(), sunElev: 26, sunGlow: new THREE.Color('#fbf3d6'), sunDisc: 3.4, sunHalo: 1.7 },
-    // 南半球: 少し低く、オレンジがかった大きな太陽
-    south: { ...baseLight(), sunElev: 18, sunGlow: new THREE.Color('#ffdca6'), sunDisc: 4.6, sunHalo: 1.2 },
+    // 北の世界: 深い青空と白い雪明かり。照り返しは雪の青白、影は青く。低く白い冬の太陽（輪は弱い）
+    north: {
+      exposure: 0.95,
+      sky: new THREE.Color('#d2e6ff'),
+      ground: new THREE.Color('#bccfe4'),
+      intensity: 0.72,
+      sun: 2.2,
+      top: new THREE.Color('#1b5fd8'),
+      horizon: new THREE.Color('#8ac4f2'),
+      near: 120,
+      far: 470,
+      gradeSat: 1.08,
+      gradeContrast: 1.06,
+      sunElev: 13,
+      sunGlow: new THREE.Color('#f7f3ec'),
+      sunDisc: 3.2,
+      sunHalo: 0.7,
+    },
+    // ジャングル: 深い青空、照り返しは若葉の緑（紫の影が草をにごらせない）。霧は近いまま淡い緑で湿った空気。高めの太陽ににじむ広い輪
+    jungle: {
+      exposure: 0.96,
+      sky: new THREE.Color('#c6e2ff'),
+      ground: new THREE.Color('#7cab4e'),
+      intensity: 0.7,
+      sun: 2.25,
+      top: new THREE.Color('#1a5bd6'),
+      horizon: new THREE.Color('#8ecaf0'),
+      near: 90,
+      far: 420,
+      gradeSat: 1.1,
+      gradeContrast: 1.06,
+      sunElev: 26,
+      sunGlow: new THREE.Color('#fbf3d6'),
+      sunDisc: 3.4,
+      sunHalo: 1.7,
+    },
+    // 南半球: いちばん深い青空と遠くまで澄んだ空気、照り返しは赤土。少し低く、オレンジがかった大きな太陽
+    south: {
+      exposure: 0.96,
+      sky: new THREE.Color('#c8dcff'),
+      ground: new THREE.Color('#cf8e58'),
+      intensity: 0.66,
+      sun: 2.3,
+      top: new THREE.Color('#0f52d4'),
+      horizon: new THREE.Color('#7cbcf0'),
+      near: 120,
+      far: 500,
+      gradeSat: 1.06,
+      gradeContrast: 1.06,
+      sunElev: 18,
+      sunGlow: new THREE.Color('#ffdca6'),
+      sunDisc: 4.6,
+      sunHalo: 1.2,
+    },
   }
   const lightTarget: Light = { ...baseLight() }
   // 空の太陽の仰角と大きさ（度）。ワールドの重みで目標が変わり、ほかの光と同じ速さで寄せる

@@ -83,9 +83,10 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
   coneGeo.translate(0, 0.5, 0)
   const trunks = instanced(trunkGeo, toonMaterial({ color: '#4d3627' }), spots.length)
   const cones = instanced(coneGeo, toonMaterial(), spots.length * 3)
-  const caps = instanced(coneGeo, toonMaterial({ color: '#f3f7fb' }), spots.length * 3, false)
-  const greenA = new THREE.Color('#2f5d4a')
-  const greenB = new THREE.Color('#3f7258')
+  const caps = instanced(coneGeo, toonMaterial({ color: '#f6fafd' }), spots.length * 3, false)
+  // トップの絵の、雪をかぶった深い緑のトウヒ
+  const greenA = new THREE.Color('#257a44')
+  const greenB = new THREE.Color('#3e9a5a')
   spots.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
     const s = 0.8 + rand() * 0.7
@@ -113,8 +114,8 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
   // 雪の乗った岩
   const rocks = scatter(rand, r, 40, { max: r.walk + 20, clearing: 10, path: 6 })
   const rockGeo = new THREE.IcosahedronGeometry(1, 0)
-  const rockMesh = instanced(rockGeo, toonMaterial({ color: '#8790a0' }), rocks.length)
-  const snowMesh = instanced(rockGeo, toonMaterial({ color: '#f1f6fa' }), rocks.length, false)
+  const rockMesh = instanced(rockGeo, toonMaterial({ color: '#929cab' }), rocks.length)
+  const snowMesh = instanced(rockGeo, toonMaterial({ color: '#f4f8fc' }), rocks.length, false)
   rocks.forEach((p, i) => {
     const s = 0.7 + rand() * 1.8
     const y = terrainHeight(p.x, p.z) - s * 0.3
@@ -140,8 +141,9 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   const BLOBS = 4
   const trunks = instanced(trunkGeo, toonMaterial({ color: '#5b4330' }), trees.length)
   const blobs = instanced(blobGeo, toonMaterial(), trees.length * BLOBS)
-  const leafA = new THREE.Color('#2f6b35')
-  const leafB = new THREE.Color('#4f8f3a')
+  // トップの絵の、鮮やかで濃い緑の葉
+  const leafA = new THREE.Color('#2f8a3e')
+  const leafB = new THREE.Color('#5cb842')
   trees.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
     const s = 0.8 + rand() * 0.6
@@ -173,7 +175,7 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   leafGeo.rotateX(Math.PI / 2)
   const LEAVES = 6
   const palmTrunks = instanced(trunkGeo, toonMaterial({ color: '#7a5d3e' }), palms.length)
-  const palmLeaves = instanced(leafGeo, toonMaterial({ color: '#4c9a45' }), palms.length * LEAVES)
+  const palmLeaves = instanced(leafGeo, toonMaterial({ color: '#5cb84c' }), palms.length * LEAVES)
   palms.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
     const s = 0.8 + rand() * 0.4
@@ -202,8 +204,8 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   fernGeo.rotateX(1.05)
   const FRONDS = 5
   const fernMesh = instanced(fernGeo, toonMaterial(), ferns.length * FRONDS, false)
-  const fernA = new THREE.Color('#3f8a3a')
-  const fernB = new THREE.Color('#7ab04a')
+  const fernA = new THREE.Color('#4aa842')
+  const fernB = new THREE.Color('#93cf4e')
   ferns.forEach((f, i) => {
     const y = terrainHeight(f.x, f.z)
     const s = 0.7 + rand() * 0.8
@@ -230,7 +232,7 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
     const branch = new THREE.Mesh(new THREE.CylinderGeometry(P.radius * 0.7, P.radius, P.length, 8), bark)
     branch.rotation.z = Math.PI / 2
     branch.position.set(px + P.length / 2, py + P.height, pz)
-    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), toonMaterial({ color: '#3b7d3c' }))
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), toonMaterial({ color: '#3f9a44' }))
     crown.scale.set(3.4, 2.4, 3.4)
     crown.position.set(px - 0.5, py + P.height + 4.2, pz)
     for (const m of [trunk, branch, crown]) {
@@ -251,7 +253,7 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   giantTrunk.position.y = 13
   giantTrunk.castShadow = true
   giant.add(giantTrunk)
-  const giantLeaf = toonMaterial({ color: '#2f6f36' })
+  const giantLeaf = toonMaterial({ color: '#338a3f' })
   for (let k = 0; k < 7; k++) {
     const a = (k / 7) * Math.PI * 2
     const blob = new THREE.Mesh(blobGeo, giantLeaf)
@@ -275,8 +277,9 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   const BLOBS = 3
   const trunks = instanced(trunkGeo, toonMaterial({ color: '#e8e0d2' }), trees.length)
   const blobs = instanced(blobGeo, toonMaterial(), trees.length * BLOBS)
-  const gumA = new THREE.Color('#6f8a62')
-  const gumB = new THREE.Color('#93a777')
+  // トップの絵のユーカリ: 灰色がかった緑を少し緑へ
+  const gumA = new THREE.Color('#6f9a52')
+  const gumB = new THREE.Color('#9cbb6c')
   trees.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
     const s = 0.8 + rand() * 0.5
@@ -303,7 +306,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
 
   // 赤い岩
   const rocks = scatter(rand, r, 50, { max: r.walk + 25, clearing: 10, path: 6 })
-  const rockMesh = instanced(blobGeo, toonMaterial({ color: '#a8553a' }), rocks.length)
+  const rockMesh = instanced(blobGeo, toonMaterial({ color: '#c4583a' }), rocks.length)
   rocks.forEach((p, i) => {
     const s = 0.5 + rand() * 1.6
     _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
@@ -318,8 +321,8 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   const tufts = scatter(rand, r, mobile ? 300 : 600, { max: r.walk + 15, clearing: 4, path: 3 })
   const tuftGeo = new THREE.IcosahedronGeometry(1, 0)
   const tuftMesh = instanced(tuftGeo, toonMaterial(), tufts.length, false)
-  const tuftA = new THREE.Color('#b9a052')
-  const tuftB = new THREE.Color('#d2b866')
+  const tuftA = new THREE.Color('#dbb24a')
+  const tuftB = new THREE.Color('#efcf6c')
   tufts.forEach((p, i) => {
     const s = 0.35 + rand() * 0.5
     _q.setFromEuler(_e.set(0, rand() * 3, 0))
@@ -333,7 +336,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   // 目印の赤い一枚岩: 中心の奥（サバンナと反対側）に、横長で角の丸い岩
   const mx = r.x
   const mz = r.z + 62
-  const mono = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), toonMaterial({ color: '#a6614a' }))
+  const mono = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), toonMaterial({ color: '#c9573a' }))
   mono.scale.set(34, 13, 15)
   mono.position.set(mx, terrainHeight(mx, mz) - 3, mz)
   mono.castShadow = true

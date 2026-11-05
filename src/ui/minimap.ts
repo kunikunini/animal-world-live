@@ -163,9 +163,9 @@ const KEYS = REGIONS.map((r) => r.key)
 // 差を少し縮め、地図の明るい絵柄に合わせて白へ少し寄せる（素の色はもう鮮やかなので、彩度はそのまま）。この 2 色は、サバンナの重みが小さい山の向こうだけに使う（描く時間を抑える）
 const GROUND: Record<RegionKey, [[number, number, number], [number, number, number]]> = {
   africa: [hex('#f4da88'), hex('#d9ad44')],
-  north: [hex('#f6f9fc'), hex('#c6d5e5')],
-  jungle: [hex('#92c46c'), hex('#4c8c44')],
-  south: [hex('#eeae7c'), hex('#c46e48')],
+  north: [hex('#f9fbfe'), hex('#cddbea')],
+  jungle: [hex('#9ad66a'), hex('#4fa43e')],
+  south: [hex('#f0a66a'), hex('#c9643a')],
 }
 const SAVANNA_SAT = 1.0
 const SAVANNA_SPREAD = 0.7
@@ -294,9 +294,10 @@ const RANGES: Array<{ cx: number; cz: number; pass: boolean; style: PeakStyle; s
   },
   ...OUTER_REGIONS.map((r) => {
     const looks: Record<string, { style: PeakStyle; snow: boolean; layers: Array<[number, string, string]> }> = {
-      north: { style: 'peak', snow: true, layers: [[150, '#8ea6c2', '#ffffff'], [188, '#9fb4d0', '#f7fbff'], [230, '#b6c6de', '#ffffff']] },
-      jungle: { style: 'hill', snow: false, layers: [[150, '#22683b', '#4fa456'], [188, '#2f7a4a', '#6dbb6a'], [230, '#5f9f7a', '#9fd0a0']] },
-      south: { style: 'mesa', snow: false, layers: [[150, '#9c4127', '#de7f4c'], [188, '#b45a38', '#eb9a66'], [230, '#c9806a', '#f0bfa0']] },
+      // 3D の山脈（props.ts の OUTER_LOOKS）と同じ色
+      north: { style: 'peak', snow: true, layers: [[150, '#9bb4d8', '#ffffff'], [188, '#aac0dc', '#ffffff'], [230, '#bccde6', '#ffffff']] },
+      jungle: { style: 'hill', snow: false, layers: [[150, '#2a8a4a', '#62c05e'], [188, '#3a9a58', '#7fcc72'], [230, '#6aae84', '#aadcaa']] },
+      south: { style: 'mesa', snow: false, layers: [[150, '#b5452a', '#e8804a'], [188, '#c45f3a', '#f09c66'], [230, '#d08a6e', '#f3c3a4']] },
     }
     return { cx: r.x, cz: r.z, pass: false, ...looks[r.key] }
   }),
@@ -558,7 +559,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     const s = Math.max(2 * u, 4.6 * k) * tr.s
     if (tr.key === 'north') {
       // トウヒ: 細い三角
-      b.fillStyle = '#3f6e62'
+      b.fillStyle = '#2f7a48'
       b.beginPath()
       b.moveTo(x, y - s * 2)
       b.lineTo(x + s * 0.8, y)
@@ -574,11 +575,11 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.fill()
       return
     }
-    b.fillStyle = tr.key === 'jungle' ? '#2f7a3e' : '#8a9c55'
+    b.fillStyle = tr.key === 'jungle' ? '#2f8a3e' : '#7a9a52'
     b.beginPath()
     b.arc(x, y - s * 0.6, s, 0, Math.PI * 2)
     b.fill()
-    b.fillStyle = tr.key === 'jungle' ? '#5aa556' : '#b2bf78'
+    b.fillStyle = tr.key === 'jungle' ? '#62bb5a' : '#a9c07a'
     b.beginPath()
     b.arc(x - s * 0.3, y - s * 0.9, s * 0.5, 0, Math.PI * 2)
     b.fill()

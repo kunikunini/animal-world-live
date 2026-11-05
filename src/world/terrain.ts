@@ -229,11 +229,11 @@ export function savannaMapColor(x: number, z: number, out: [number, number, numb
   out[2] = _mapRgb.b * 255
 }
 
-// 北の世界: 雪と、風で雪の飛んだ岩・枯れ草
-const colSnow = new THREE.Color('#ccd9e5')
-const colSnowShade = new THREE.Color('#a3b8cc')
-const colTundra = new THREE.Color('#a9a582')
-const colNorthRock = new THREE.Color('#7d8796')
+// 北の世界: 雪と、風で雪の飛んだ岩・枯れ草。トップの絵に寄せて、雪は白く、影はうすい水色に
+const colSnow = new THREE.Color('#eef4fb')
+const colSnowShade = new THREE.Color('#c3d6ea')
+const colTundra = new THREE.Color('#c2bd9a')
+const colNorthRock = new THREE.Color('#8d98a8')
 function northColor(x: number, z: number, h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.03 + 5, z * 0.03 + 9) * 0.5 + 0.5
   out.copy(colSnow).lerp(colSnowShade, n * 0.8)
@@ -243,11 +243,11 @@ function northColor(x: number, z: number, h: number, slope: number, out: THREE.C
   if (slope < 0.93) out.lerp(colNorthRock, Math.min(1, (0.93 - slope) * 5))
 }
 
-// ジャングル: 濃い緑の下草と、湿った土の道
-const colJungle = new THREE.Color('#7f9a55')
-const colJungleDeep = new THREE.Color('#5f8049')
-const colMoss = new THREE.Color('#aab45c')
-const colJungleEarth = new THREE.Color('#8f6a42')
+// ジャングル: 鮮やかな若草色の下草と、湿った土の道（トップの絵の明るい黄緑に寄せる）
+const colJungle = new THREE.Color('#8cc63f')
+const colJungleDeep = new THREE.Color('#5aa33a')
+const colMoss = new THREE.Color('#bfd84a')
+const colJungleEarth = new THREE.Color('#9c6f44')
 function jungleColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.04 - 3, z * 0.04 + 7) * 0.5 + 0.5
   out.copy(colJungle).lerp(colJungleDeep, n)
@@ -259,11 +259,11 @@ function jungleColor(x: number, z: number, _h: number, slope: number, out: THREE
   if (slope < 0.9) out.lerp(colJungleEarth, Math.min(1, (0.9 - slope) * 4))
 }
 
-// 南半球: 赤い土、乾いた草のまだら、白っぽい砂
-const colRed = new THREE.Color('#bf8a62')
-const colRedDeep = new THREE.Color('#a46a4c')
-const colSpinifex = new THREE.Color('#c4a356')
-const colSand = new THREE.Color('#ddb27e')
+// 南半球: 赤い土、乾いた草のまだら、白っぽい砂（トップの絵のオレンジの土と黄金色の草に寄せる）
+const colRed = new THREE.Color('#d8773f')
+const colRedDeep = new THREE.Color('#b8562c')
+const colSpinifex = new THREE.Color('#e3b64a')
+const colSand = new THREE.Color('#ebc58c')
 function southColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.035 + 1, z * 0.035 - 4) * 0.5 + 0.5
   out.copy(colRed).lerp(colRedDeep, n * 0.8)
