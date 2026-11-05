@@ -218,8 +218,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   scene.add(player.object)
 
   // 実験（exp/hero）: プレイヤーの姿を Meshy の主人公に差し替える（操作はそのまま）。?hero=off でいままでの姿。
-  // いままでの姿（入れ物の最初の子）と同じ高さにそろえる。読めなければいままでの姿のまま続ける。
-  // 比べる用: &heroSep=off で接地影と輪郭なし、&heroScale=0.59 で高さを掛ける（子どもの実寸の比べ）
+  // 高さはいままでの姿（入れ物の最初の子、2.03m）の 0.59 倍（1.20m）を既定にする。読めなければいままでの姿のまま続ける。
+  // 比べる用: &heroSep=off で接地影と輪郭なし、&heroScale=1 でいままでの姿と同じ高さ（ほかの数でも掛けられる）
+  const HERO_SCALE = 0.59
   let hero: HeroModel | null = null
   const heroPrev = new THREE.Vector3()
   let heroSpeed = 0
@@ -227,7 +228,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   if (heroQuery.get('hero') !== 'off') {
     const figure = player.object.children[0]
     const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
-    const heroScale = Number(heroQuery.get('heroScale') ?? 1) || 1
+    const heroScale = Number(heroQuery.get('heroScale') ?? HERO_SCALE) || HERO_SCALE
     loadHero('/models/hero-boy.glb', { height: figureHeight * heroScale, separation: heroQuery.get('heroSep') !== 'off', ground: terrainHeight })
       .then((loaded) => {
         figure.visible = false
