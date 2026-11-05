@@ -35,7 +35,7 @@ import { createJoystick } from './ui/joystick'
 import { createHome } from './ui/home'
 import { createStory } from './ui/story'
 import { createIris } from './ui/iris'
-import { REGION_SOUND, sound } from './audio/sound'
+import { REGION_AMB, REGION_BGM, sound } from './audio/sound'
 import { createSettings } from './ui/settings'
 import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
@@ -987,8 +987,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const pz = player.object.position.z
     const regionKey = regionAt(px, pz)
     // そのワールドの BGM と環境音（変わった時だけクロスフェード）
-    sound.setBgm(REGION_SOUND[regionKey] ?? 'savanna')
-    sound.setAmb(REGION_SOUND[regionKey] ?? 'savanna')
+    sound.setBgm(REGION_BGM[regionKey] ?? 'savanna')
+    sound.setAmb(REGION_AMB[regionKey] ?? null)
     if (regionKey !== here.key) {
       here = worldSpots.find((w) => w.key === regionKey) ?? worldSpots[0]
       spot = here.spot

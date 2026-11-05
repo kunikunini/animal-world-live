@@ -495,8 +495,18 @@ export const sound = {
   },
 }
 
-/** ワールドの判定（regionAt）から BGM と環境音へ */
-export const REGION_SOUND: Record<string, BgmKey & AmbKey> = {
+/** ワールドの判定（regionAt）から BGM へ */
+export const REGION_BGM: Record<string, BgmKey> = {
+  africa: 'savanna',
+  jungle: 'jungle',
+  north: 'north',
+  south: 'south',
+  water: 'water',
+  partner: 'partner',
+}
+
+/** ワールドの判定から環境音へ（ふれあいワールドの環境音はまだ無い） */
+export const REGION_AMB: Record<string, AmbKey> = {
   africa: 'savanna',
   jungle: 'jungle',
   north: 'north',
