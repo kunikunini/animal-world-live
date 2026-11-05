@@ -4,6 +4,19 @@
     "model": "/models/hero-boy.glb",
     "thumb": "/heroes/yellow.webp",
     "scale": 0.59,
-    "label": { "ja": "黄色いジャケットの子", "en": "Yellow jacket" }
+    "label": {
+      "ja": "黄色いジャケットの子",
+      "en": "Yellow jacket"
+    }
+  },
+  {
+    "id": "teal",
+    "model": "/models/hero-teal.glb",
+    "thumb": "/heroes/teal.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "青緑のジャケットの子",
+      "en": "Teal jacket"
+    }
   }
 ]

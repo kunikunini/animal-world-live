@@ -21,6 +21,7 @@ public/media/*
 public/models/*
 !public/models/lion-*.glb
 !public/models/hero-boy.glb
+!public/models/hero-teal.glb
 !public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
