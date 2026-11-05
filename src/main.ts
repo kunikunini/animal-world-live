@@ -18,6 +18,8 @@ import { getClay, setClay, vividToon } from './render/toon'
 import { LIONS, SPOT } from './world/layout'
 import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
+import { loadAiLion, POSTURE_DEFAULT, type AiLion, type PostureFix } from './world/aiLionModel'
+import { createLionWander, type LionWander } from './world/lionWander'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
@@ -201,6 +203,38 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         .catch((err) => console.warn('lion v2 model not loaded; keeping primitive', err))
     }
   }
+  // 群れの 5 頭は、期間中に用意したクレイ版の絵から Meshy で生成したモデル（四足リグ＋歩行）が既定。
+  // ?model=primitive でプリミティブ版（伏せ）に戻せる。読めない時もプリミティブ版のまま続く
+  const aiLions: Record<string, AiLion> = {}
+  const wanderers: LionWander[] = []
+  let reduceMotionNow = shell.settings.reduceMotion
+  if (new URLSearchParams(location.search).get('model') !== 'primitive') {
+    // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め
+    const posture: Record<string, PostureFix> = { alex: { hind: 0.9, spine: 1.0, tail: 0.5, front: 0.7, ground: true } }
+    // 歩き方: 成獣はゆったり、仔はせわしなく。たてがみの雄はいちばんゆっくり
+    const walk: Record<string, { speed: number; radius: number; idle: [number, number] }> = {
+      alex: { speed: 0.7, radius: 3.0, idle: [9, 18] },
+      angie: { speed: 0.8, radius: 3.0, idle: [7, 15] },
+      riley: { speed: 0.8, radius: 3.2, idle: [7, 15] },
+      claire: { speed: 0.75, radius: 3.5, idle: [4, 10] },
+      carla: { speed: 0.75, radius: 3.5, idle: [4, 10] },
+    }
+    for (const id of Object.keys(walk)) {
+      const lion = lions.find((l) => l.id === id)
+      if (!lion) continue
+      // 大きさはプリミティブ版に合わせる: 群れの中での体の長さ（頭から尾の先、群れの座標）をそろえる
+      loadAiLion(`/models/lion-${id}.glb`, { length: primitiveLength(lion.group), posture: posture[id] ?? POSTURE_DEFAULT })
+        .then((ai) => {
+          lion.swapModel(ai.model, ai.parts)
+          lion.headHeight = ai.headHeight
+          aiLions[id] = ai
+          const w = createLionWander(lion, ai, props.colliders, walk[id])
+          w.setReduceMotion(reduceMotionNow)
+          wanderers.push(w)
+        })
+        .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
+    }
+  }
 
   // カラーグレーディング（1パス）。スマホでは最初から切る
   const postfx = createPostFx(renderer, scene, camera)
@@ -321,6 +355,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     props.setSway(on ? 0 : 1)
     atmosphere.setReduceMotion(on)
     lions.forEach((l) => l.setReduceMotion(on))
+    reduceMotionNow = on
+    wanderers.forEach((w) => w.setReduceMotion(on))
     encounterIcon.setReduceMotion(on)
     fauna.setReduceMotion(on)
     clouds.setReduceMotion(on)
@@ -548,6 +584,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     weather.update(time, dt, camera.position, weights)
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
+    // 生成モデルの群れ: 少し歩いては立ち止まる → 歩行の再生・姿勢の補正・生活感レイヤーを骨に写す
+    for (const w of wanderers) w.update(dt, time, player.object.position)
+    for (const ai of Object.values(aiLions)) ai.tick(dt)
 
     // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
     const px = player.object.position.x
@@ -807,6 +846,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       weights,
       views: viewNames(),
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
+      // 生成モデルの群れ（歩行の計測用: action を止めてコマ送り、posture を書き換え）
+      aiLions: () => aiLions,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
       capture: (quality = 0.92) => {
         postfx.render()
@@ -942,3 +983,18 @@ function main(): void {
 }
 
 main()
+
+/** プリミティブ版の体の長さ（群れの座標系の z 方向、頭から尾の先まで）。生成モデルの大きさをこれにそろえる */
+function primitiveLength(group: THREE.Object3D): number {
+  group.updateMatrixWorld(true)
+  const inv = group.matrixWorld.clone().invert()
+  const box = new THREE.Box3()
+  const m = new THREE.Matrix4()
+  group.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
+    box.union(mesh.geometry.boundingBox!.clone().applyMatrix4(m.multiplyMatrices(inv, mesh.matrixWorld)))
+  })
+  return box.getSize(new THREE.Vector3()).z
+}
