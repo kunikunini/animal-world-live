@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { createScene, sunDiscDir } from './world/scene'
-import { createTerrain } from './world/terrain'
+import { createTerrain, terrainHeight } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
 import { createResidents } from './world/residents'
@@ -8,6 +8,8 @@ import { OUTER_REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
+import { loadHero } from './player/heroModel'
+import type { HeroModel } from './player/heroModel'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
 import { createAtmosphere } from './world/atmosphere'
@@ -214,6 +216,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   scene.add(player.object)
+
+  // 実験（exp/hero）: プレイヤーの姿を Meshy の主人公に差し替える（操作はそのまま）。?hero=off でいままでの姿。
+  // いままでの姿（入れ物の最初の子）と同じ高さにそろえる。読めなければいままでの姿のまま続ける
+  let hero: HeroModel | null = null
+  const heroPrev = new THREE.Vector3()
+  let heroSpeed = 0
+  if (new URLSearchParams(location.search).get('hero') !== 'off') {
+    const figure = player.object.children[0]
+    const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
+    loadHero('/models/hero-boy.glb', figureHeight)
+      .then((loaded) => {
+        figure.visible = false
+        player.object.add(loaded.root)
+        heroPrev.copy(player.object.position)
+        hero = loaded
+      })
+      .catch((err) => console.warn('hero model not loaded; keeping primitive', err))
+  }
 
   hud.onJump(() => player.jump())
 
@@ -542,6 +562,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (frames % 60 === 0) measureSafe()
 
     player.update(dt)
+    if (hero) {
+      // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
+      const p = player.object.position
+      const moved = Math.hypot(p.x - heroPrev.x, p.z - heroPrev.z)
+      const speed = dt > 0 && moved < 2 ? moved / dt : 0
+      heroSpeed += (speed - heroSpeed) * Math.min(1, dt * 12)
+      heroPrev.copy(p)
+      hero.update(dt, heroSpeed, p.y - terrainHeight(p.x, p.z) > 0.05)
+    }
     props.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
@@ -802,6 +831,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       props,
       shell,
       lions,
+      hero: () => hero,
       clouds,
       weather,
       weights,
