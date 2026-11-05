@@ -9,6 +9,7 @@ import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
 import { loadHero } from './player/heroModel'
+import { DEFAULT_HERO, getHeroId, heroById, setHeroId } from './data/heroes'
 import type { HeroModel } from './player/heroModel'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
@@ -155,6 +156,8 @@ interface WorldHandle {
   prepareIntro: () => void
   /** 入る演出を始める（幕が開いたら呼ぶ）。終わったら解決する */
   playIntro: () => Promise<void>
+  /** ホームで選んだ主人公に替える（読み込めたら差し替え、だめなら既定の子 → いままでの姿） */
+  setHero: (id: string) => void
 }
 
 /**
@@ -276,28 +279,56 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
 
-  // プレイヤーの姿は Meshy で生成した主人公が既定（操作はそのまま）。?hero=off でいままでの姿。
-  // 高さはいままでの姿（入れ物の最初の子、2.03m）の 0.59 倍（1.20m）を既定にする。読めなければいままでの姿のまま続ける。
+  // プレイヤーの姿は名簿（src/data/heroes.json）の主人公のうち、選んでいる 1 人だけを読み込む（操作はそのまま）。
+  // 高さは名簿の倍率 × いままでの姿（入れ物の最初の子、2.03m）。0.59 で 1.20m。
+  // 読めなければ既定の黄色い子、それも読めなければいままでの姿のまま続ける。?hero=off でいままでの姿。
   // 比べる用: &heroSep=off で接地影と輪郭なし、&heroScale=1 でいままでの姿と同じ高さ（ほかの数でも掛けられる）
-  const HERO_SCALE = 0.59
   let hero: HeroModel | null = null
+  let heroId: string | null = null
+  let heroWant: string | null = null
   const heroPrev = new THREE.Vector3()
   let heroSpeed = 0
   const heroQuery = new URLSearchParams(location.search)
-  if (heroQuery.get('hero') !== 'off') {
-    const figure = player.object.children[0]
-    const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
-    const heroScale = Number(heroQuery.get('heroScale') ?? HERO_SCALE) || HERO_SCALE
-    loadHero('/models/hero-boy.glb', { height: figureHeight * heroScale, separation: heroQuery.get('heroSep') !== 'off', ground: terrainHeight })
-      .then((loaded) => {
-        figure.visible = false
-        player.object.add(loaded.root)
-        if (loaded.shadow) scene.add(loaded.shadow)
-        heroPrev.copy(player.object.position)
-        hero = loaded
-      })
-      .catch((err) => console.warn('hero model not loaded; keeping primitive', err))
+  const heroOff = heroQuery.get('hero') === 'off'
+  const figure = player.object.children[0]
+  const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
+  const heroScaleOverride = Number(heroQuery.get('heroScale')) || 0
+  const putHero = (next: HeroModel | null, id: string | null) => {
+    if (hero) {
+      player.object.remove(hero.root)
+      if (hero.shadow) scene.remove(hero.shadow)
+      hero.dispose()
+    }
+    hero = next
+    heroId = id
+    figure.visible = !next
+    if (next) {
+      player.object.add(next.root)
+      if (next.shadow) scene.add(next.shadow)
+      heroPrev.copy(player.object.position)
+    }
   }
+  const chooseHero = async (id: string): Promise<void> => {
+    if (heroOff || id === heroId) return
+    heroWant = id
+    const entry = heroById(id)
+    try {
+      const loaded = await loadHero(entry.model, {
+        height: figureHeight * (heroScaleOverride || entry.scale),
+        separation: heroQuery.get('heroSep') !== 'off',
+        ground: terrainHeight,
+      })
+      // 読み込み中に別の子が選ばれていたら、こちらは捨てる
+      if (heroWant !== id) return loaded.dispose()
+      putHero(loaded, entry.id)
+    } catch (err) {
+      console.warn('hero model not loaded', entry.id, err)
+      if (heroWant !== id) return
+      if (entry.id !== DEFAULT_HERO) return chooseHero(DEFAULT_HERO)
+      putHero(null, null)
+    }
+  }
+  void chooseHero(getHeroId())
 
   hud.onJump(() => player.jump())
 
@@ -1168,6 +1199,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       shell,
       lions,
       hero: () => hero,
+      heroId: () => heroId,
       clouds,
       weather,
       weights,
@@ -1242,6 +1274,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         return ''
       }
     },
+    setHero: (id) => {
+      void chooseHero(id)
+    },
   }
 }
 
@@ -1314,6 +1349,11 @@ function main(): void {
 
   shell.home.onEnter(() => {
     void enterWorld()
+  })
+  // だれで冒険する？: 保存して、組み立て済みのワールドなら主人公を替える（まだなら組み立てる時に読む）
+  shell.home.onHero((id) => {
+    setHeroId(id)
+    world?.setHero(id)
   })
 
   // ホームが表示されて落ち着いたら、裏でワールドを組み立てておく（ホームの絵が不透明で隠している）。

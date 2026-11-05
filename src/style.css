@@ -632,6 +632,135 @@ button {
   transform: scaleX(-1);
 }
 
+/* だれで冒険する？: 「のぞいてみる」の上に、子どもたちの顔を同じ大きさで 1 列に。クリームの地に白いふち（ホームのボタンと同じ粘土の質感）。
+   選んだ子は太陽のオレンジの輪と、右下の印。押せる大きさは 44px 以上 */
+.home-pick {
+  --pick: clamp(44px, min(7.2cqh, 12.4cqw), 72px);
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + clamp(14px, 5.5cqh, 64px) + 2.65 * clamp(20px, min(4.3cqh, 6.6cqw), 40px) + clamp(12px, 2.4cqh, 26px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 0.8cqh, 8px);
+  padding: clamp(6px, 1cqh, 10px) clamp(8px, 1.6cqw, 14px) clamp(8px, 1.2cqh, 12px);
+  border: 2px solid #fff;
+  border-radius: var(--r-xl);
+  background: rgba(255, 246, 230, 0.92);
+  box-shadow: 0 2px 0 rgba(31, 42, 68, 0.1), 0 8px 20px rgba(31, 42, 68, 0.22);
+  font-family: var(--font-home);
+  animation: home-pop 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s backwards;
+}
+
+.home-pick-title {
+  font-size: clamp(13px, min(2.1cqh, 3.6cqw), 19px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--h-navy);
+}
+
+.home-pick-row {
+  display: flex;
+  gap: clamp(5px, 1.4cqw, 12px);
+}
+
+.home-pick-btn {
+  position: relative;
+  width: var(--pick);
+  height: var(--pick);
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 0 rgba(31, 42, 68, 0.12), 0 3px 8px rgba(31, 42, 68, 0.18);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-pick-btn img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.home-pick-btn:hover {
+  transform: translateY(-2px);
+}
+
+.home-pick-btn[aria-checked='true'] {
+  border-color: var(--h-orange);
+  box-shadow: 0 0 0 3px #fff, 0 2px 0 rgba(150, 60, 0, 0.25), 0 6px 14px rgba(150, 60, 0, 0.3);
+  transform: translateY(-3px) scale(1.06);
+}
+
+/* 選んだ子の印（白い丸にオレンジのチェック） */
+.home-pick-btn[aria-checked='true']::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 38%;
+  height: 38%;
+  border-radius: 50%;
+  background: var(--h-orange) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 72% no-repeat;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.home-pick-btn:focus-visible {
+  outline: 3px solid #2f6bff;
+  outline-offset: 3px;
+}
+
+/* タブレットの縦と横長の画面: 見出しを顔の左に置いて低くし、「のぞいてみる」も少し下げて、
+   絵の双眼鏡や子どもの顔にかからないようにする */
+@media (min-aspect-ratio: 3/4) {
+  .home-cta {
+    bottom: calc(var(--safe-bottom) + clamp(12px, 2.6cqh, 30px));
+  }
+
+  .home-pick {
+    --pick: clamp(44px, 5.4cqh, 60px);
+    bottom: calc(var(--safe-bottom) + clamp(12px, 2.6cqh, 30px) + 2.65 * clamp(20px, min(4.3cqh, 6.6cqw), 40px) + clamp(8px, 1.2cqh, 14px));
+    flex-direction: row;
+    gap: clamp(8px, 1.2cqw, 14px);
+    padding: clamp(6px, 0.9cqh, 9px) clamp(10px, 1.2cqw, 14px) clamp(6px, 0.9cqh, 9px) clamp(14px, 1.6cqw, 20px);
+    border-radius: var(--r-pill);
+  }
+
+  .home-pick-title {
+    font-size: clamp(13px, 2.2cqh, 20px);
+    white-space: nowrap;
+  }
+}
+
+/* 横にしたスマホ（低い横長）: 双眼鏡の下に余白が無いので、左下のすみに 3 人ずつ 2 段で */
+@media (min-aspect-ratio: 3/2) and (max-height: 540px) {
+  .home-pick {
+    --pick: 44px;
+    left: calc(var(--safe-left) + 10px);
+    bottom: calc(var(--safe-bottom) + 10px);
+    transform: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 10px 10px;
+    border-radius: var(--r-lg);
+  }
+
+  .home-pick-title {
+    font-size: 13px;
+  }
+
+  .home-pick-row {
+    display: grid;
+    grid-template-columns: repeat(3, var(--pick));
+    gap: 6px 8px;
+  }
+}
+
 /* ボタンの動き: 出てくる時にぽんと出る。「のぞいてみる」はふわふわ浮き、光が走り、まわりに輪が広がり、角がきらめく。
    「ともだち帳」は上から降りてきて、本がときどきぱらっとめくれる。動きをへらす時は止める */
 .home .home-enter {
@@ -758,7 +887,7 @@ button {
 }
 
 /* 動きをへらす: 双眼鏡・ボタンの動きを止める（レンズの入れ替わりは、ゆっくり色が変わるだけなので残す） */
-.home.is-still :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico),
+.home.is-still :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
 .home.is-still .home-cta::before,
 .home.is-still .home-enter::after,
 .home.is-still .badge-dot::after {
@@ -770,7 +899,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico),
+  .home :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
   .home .home-cta::before,
   .home .home-enter::after,
   .home .badge-dot::after {

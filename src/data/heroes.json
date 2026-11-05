@@ -1,0 +1,62 @@
+[
+  {
+    "id": "yellow",
+    "model": "/models/hero-boy.glb",
+    "thumb": "/heroes/yellow.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "黄色いジャケットの子",
+      "en": "Yellow jacket"
+    }
+  },
+  {
+    "id": "teal",
+    "model": "/models/hero-teal.glb",
+    "thumb": "/heroes/teal.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "青緑のジャケットの子",
+      "en": "Teal jacket"
+    }
+  },
+  {
+    "id": "pink",
+    "model": "/models/hero-pink.glb",
+    "thumb": "/heroes/pink.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "ピンクの服の子",
+      "en": "Pink hoodie"
+    }
+  },
+  {
+    "id": "bluecap",
+    "model": "/models/hero-bluecap.glb",
+    "thumb": "/heroes/bluecap.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "青い帽子の子",
+      "en": "Blue cap"
+    }
+  },
+  {
+    "id": "purple",
+    "model": "/models/hero-purple.glb",
+    "thumb": "/heroes/purple.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "紫の服の子",
+      "en": "Purple hoodie"
+    }
+  },
+  {
+    "id": "braids",
+    "model": "/models/hero-braids.glb",
+    "thumb": "/heroes/braids.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "三つ編みの子",
+      "en": "Braids"
+    }
+  }
+]

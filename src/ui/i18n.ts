@@ -20,6 +20,7 @@ const DICT = {
   tagline: { ja: '世界中の動物たちと、友達になろう。', en: 'Make friends with animals from around the world.' },
   homeStory: { ja: 'ふしぎな双眼鏡をのぞくと、どうぶつたちの世界へ。', en: 'Look through the magic binoculars into the world of animals.' },
   peek: { ja: 'のぞいてみる', en: 'Take a look' },
+  pickHero: { ja: 'だれで冒険する？', en: 'Who will explore?' },
   book: { ja: 'ともだち帳', en: 'Friend Book' },
   bookNew: { ja: 'ともだち帳（あたらしいともだちがいます）', en: 'Friend Book (new friends)' },
   settings: { ja: '設定', en: 'Settings' },
