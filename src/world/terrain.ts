@@ -155,6 +155,32 @@ function waterHeight(x: number, z: number): number {
   return SEA_LEVEL + h
 }
 
+/**
+ * ふれあいワールド: なだらかな牧草地。観察スポットのまわりは平らな広場で、そこから牧場の小道が輪になって回り、
+ * 峠（北東）へもつながる。小道の位置は置き物（柵・納屋）と地図でも使う
+ */
+const PARTNER = OUTER_REGIONS.find((r) => r.key === 'partner') ?? { x: -254.6, z: 254.6, walk: 100 }
+/** 広場のまわりを回る小道の半径（m） */
+export const FARM_LOOP = 34
+/** 中心から峠への向き（原点の方向） */
+const PARTNER_TO_ORIGIN = Math.atan2(-PARTNER.z, -PARTNER.x)
+/** 牧場の小道までの距離（中心からのずれで測る）。広場の輪と、輪から峠への道 */
+export function farmPathDist(lx: number, lz: number): number {
+  const ring = Math.abs(Math.hypot(lx, lz) - FARM_LOOP)
+  // 峠への道: 中心から原点の向きへ（輪の内側は広場なので輪から外だけ）
+  const ux = Math.cos(PARTNER_TO_ORIGIN)
+  const uz = Math.sin(PARTNER_TO_ORIGIN)
+  const t = lx * ux + lz * uz
+  const toPass = t > FARM_LOOP - 2 ? Math.abs(lx * uz - lz * ux) : Infinity
+  return Math.min(ring, toPass)
+}
+/** ふれあいワールドの高さ: ゆるい丘の牧草地。中心の広場は平ら */
+function partnerHeight(x: number, z: number): number {
+  const r = Math.hypot(x - PARTNER.x, z - PARTNER.z)
+  const hills = simplex.fbm(x * 0.009 - 5, z * 0.009 + 2, 3, 2.0, 0.5) * 3.2 + outerNoise.fbm(x * 0.04, z * 0.04, 2, 2, 0.5) * 0.2
+  return lerp(hills * 0.15 + 0.4, hills, smoothstep(14, 45, r))
+}
+
 const _w: BiomeWeights = emptyWeights()
 
 /**
@@ -170,6 +196,7 @@ export function terrainHeight(x: number, z: number): number {
   if (w.jungle > 0) h += w.jungle * jungleHeight(x, z)
   if (w.south > 0) h += w.south * southHeight(x, z)
   if (w.water > 0) h += w.water * waterHeight(x, z)
+  if (w.partner > 0) h += w.partner * partnerHeight(x, z)
   return h
 }
 
@@ -374,6 +401,25 @@ function waterColor(x: number, z: number, h: number, slope: number, out: THREE.C
   if (slope < 0.9) out.lerp(colShoreRock, Math.min(1, (0.9 - slope) * 4))
 }
 
+// ふれあいワールド: 刈りそろえた牧草の明るい緑、クローバーの淡いまだら、小道と広場の土、斜面の濃い緑
+const colPasture = new THREE.Color('#8fd052')
+const colPastureDeep = new THREE.Color('#6cba42')
+const colClover = new THREE.Color('#b8e070')
+const colFarmPath = new THREE.Color('#d6b47c')
+const colFarmYard = new THREE.Color('#cfb07a')
+function partnerColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
+  const n = detail.noise(x * 0.045 + 8, z * 0.045 - 2) * 0.5 + 0.5
+  out.copy(colPasture).lerp(colPastureDeep, n * 0.7)
+  const big = patch.noise(x * 0.024 + 4, z * 0.024 + 9) * 0.5 + 0.5
+  out.lerp(colClover, Math.max(0, big - 0.6) * 1.6)
+  const lx = x - PARTNER.x
+  const lz = z - PARTNER.z
+  // 中心の広場（土をならした所）と、牧場の小道
+  out.lerp(colFarmYard, (1 - smoothstep(7, 12, Math.hypot(lx, lz))) * 0.85)
+  out.lerp(colFarmPath, (1 - smoothstep(1.6, 3.2, farmPathDist(lx, lz))) * 0.9)
+  if (slope < 0.9) out.lerp(colPastureDeep, Math.min(1, (0.9 - slope) * 4))
+}
+
 const _cTmp = new THREE.Color()
 function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   const w = biomeAt(x, z, _w)
@@ -402,6 +448,10 @@ function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   if (w.water > 0) {
     waterColor(x, z, h, slope, _cTmp)
     out.add(_cTmp.multiplyScalar(w.water))
+  }
+  if (w.partner > 0) {
+    partnerColor(x, z, h, slope, _cTmp)
+    out.add(_cTmp.multiplyScalar(w.partner))
   }
 }
 
@@ -487,7 +537,7 @@ function addSkirt(geo: THREE.BufferGeometry, segX: number, segZ: number): void {
 }
 
 /**
- * 地形。サバンナ（中央 400m 四方）はいままでの細かさ、まわりの 4 枚（北・南・西・東）は 2 倍の粗さ。
+ * 地形。サバンナ（中央 400m 四方）はいままでの細かさ、まわりの 5 枚（北・南・西・東・南西の角）は 2 倍の粗さ。
  * タイルごとに画面の外なら描かない。継ぎ目の頂点はサバンナの 1 つおきに重なる
  */
 export function createTerrain(): THREE.Group {
@@ -508,5 +558,7 @@ export function createTerrain(): THREE.Group {
   group.add(createTile(-half - outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
   // 東（+x）: 水の世界
   group.add(createTile(half + outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
+  // 南西の角（-x, +z）: ふれあいワールド
+  group.add(createTile(-half - outerDepth / 2, half + outerDepth / 2, outerDepth, outerDepth, outerSegs, outerSegs, mat))
   return group
 }

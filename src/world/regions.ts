@@ -2,13 +2,14 @@ import { smoothstep } from './noise'
 import { KOPJE, SPOT, WALK_RADIUS } from './layout'
 
 /**
- * 地続きの 5 つのワールド（D-30 の 7 つのうち、3D にするもの）。
+ * 地続きの 6 つのワールド（D-30 の 7 つのうち、3D にするもの）。
  * サバンナは原点のまま（コピエ・水場・ライオンは動かさない）。
- * 北の世界はコピエの奥（-z）、ジャングルは西（-x）、南半球はスタート地点の後ろ（+z）、水の世界は東（+x）。
+ * 北の世界はコピエの奥（-z）、ジャングルは西（-x）、南半球はスタート地点の後ろ（+z）、水の世界は東（+x）、
+ * ふれあいワールドは南西（ジャングルと南半球のあいだ。北東・南東は水の世界の海なので空いていた南西へ）。
  * サバンナを囲む山脈には、各ワールドへの道の幅だけ峠を切る。
  * 地図は北が上なので、名前と向きが一致する。
  */
-export type RegionKey = 'africa' | 'north' | 'jungle' | 'south' | 'water'
+export type RegionKey = 'africa' | 'north' | 'jungle' | 'south' | 'water' | 'partner'
 
 export interface Region {
   key: RegionKey
@@ -21,6 +22,8 @@ export interface Region {
 /** 原点からほかのワールドの中心までの距離 */
 const OUTER_DIST = 300
 const OUTER_WALK = 100
+/** ふれあいワールド（南西のななめ）の中心までの距離。地面の溶け込み（サバンナは 205m まで、ほかは中心から 175m まで）が峠の途中で途切れない長さ */
+const PARTNER_DIST = 360
 
 export const SAVANNA: Region = { key: 'africa', x: 0, z: 0, walk: WALK_RADIUS }
 
@@ -30,6 +33,8 @@ export const OUTER_REGIONS: readonly Region[] = [
   { key: 'south', x: 0, z: OUTER_DIST, walk: OUTER_WALK },
   // 後から足したワールドは最後に（雲・天気は OUTER_REGIONS[0..2] を並びで引いている）
   { key: 'water', x: OUTER_DIST, z: 0, walk: OUTER_WALK },
+  // ななめの向きは、となりのワールド（ジャングル・南半球）と歩ける円が重ならないよう少し遠く（中心どうし約 259m）
+  { key: 'partner', x: -PARTNER_DIST / Math.SQRT2, z: PARTNER_DIST / Math.SQRT2, walk: OUTER_WALK },
 ]
 
 export const REGIONS: readonly Region[] = [SAVANNA, ...OUTER_REGIONS]
@@ -61,15 +66,16 @@ function passSegment(r: Region): { ax: number; az: number; bx: number; bz: numbe
   return { ax: ux * a, az: uz * a, bx: ux * b, bz: uz * b }
 }
 
+/** そのワールドへの峠の軸までの距離（xz）。山脈の切れ目は原点から中心までの全長でとる（峠の外側の山並みも割る） */
+export function distToPassAxisOf(r: Region, x: number, z: number): number {
+  const len = Math.hypot(r.x, r.z)
+  return closestOnSegment(x, z, 0, 0, (r.x / len) * (len - r.walk * 0.5), (r.z / len) * (len - r.walk * 0.5)).d
+}
+
 /** いちばん近い峠の軸までの距離（xz）。山脈を削る・木を避けるのに使う */
 export function distToPassAxis(x: number, z: number): number {
   let best = Infinity
-  for (const r of OUTER_REGIONS) {
-    const len = Math.hypot(r.x, r.z)
-    // 山脈の切れ目は原点から中心までの全長でとる（峠の外側の山並みも割る）
-    const s = closestOnSegment(x, z, 0, 0, (r.x / len) * (len - r.walk * 0.5), (r.z / len) * (len - r.walk * 0.5))
-    best = Math.min(best, s.d)
-  }
+  for (const r of OUTER_REGIONS) best = Math.min(best, distToPassAxisOf(r, x, z))
   return best
 }
 
@@ -238,11 +244,12 @@ export interface BiomeWeights {
   jungle: number
   south: number
   water: number
+  partner: number
 }
 
 /** 重みを入れる空の入れ物 */
 export function emptyWeights(): BiomeWeights {
-  return { africa: 1, north: 0, jungle: 0, south: 0, water: 0 }
+  return { africa: 1, north: 0, jungle: 0, south: 0, water: 0, partner: 0 }
 }
 
 /**
@@ -281,7 +288,7 @@ export function biomeAt(x: number, z: number, out: BiomeWeights): BiomeWeights {
 
 type OuterKey = Exclude<RegionKey, 'africa'>
 /** サバンナ以外のワールドの名前（重みの欄の並び） */
-export const OUTER_KEYS: readonly OuterKey[] = ['north', 'jungle', 'south', 'water']
+export const OUTER_KEYS: readonly OuterKey[] = ['north', 'jungle', 'south', 'water', 'partner']
 /** すべてのワールドの名前（重みの欄の並び） */
 export const REGION_KEYS: readonly RegionKey[] = ['africa', ...OUTER_KEYS]
 

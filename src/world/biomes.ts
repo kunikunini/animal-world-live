@@ -4,14 +4,15 @@ import { WORLD_SEED } from './layout'
 import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import type { Collider } from './props'
-import { CREEK, LAGOON, SEA_LEVEL, creekDist, lagoonDist, terrainHeight } from './terrain'
+import { CREEK, LAGOON, SEA_LEVEL, creekDist, farmPathDist, lagoonDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 
 /**
- * サバンナ以外の 4 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
+ * サバンナ以外の 5 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
  * 北の世界: 雪をかぶったトウヒの森と雪の岩。ジャングル: 背の高い木、ヤシ、シダ、大木の目印。
  * 南半球: 白い幹のユーカリ、赤い岩、とげとげの草むら、赤い一枚岩の目印。
  * 水の世界: 砂丘の浜の草、ヤシ、潟と小川のふちの葦、浜の岩と流木、貝殻とヒトデ、沖の岩のアーチの目印。
+ * ふれあいワールド: 木の柵で囲った放牧場 3 つ、丸い木、花、干し草、目印に赤い納屋。
  * 形は様式化した目印で、特定の場所の再現ではない。
  */
 export interface BiomeProps {
@@ -584,6 +585,202 @@ function createWater(rand: () => number, group: THREE.Group, colliders: Collider
   group.add(arch)
 }
 
+/** ふれあいワールドの中心から峠（原点）への向き */
+function partnerToOrigin(r: Region): number {
+  return Math.atan2(-r.z, -r.x)
+}
+
+/**
+ * ふれあいワールドの放牧場（中心からのずれ。木の柵の輪で、広場の側に入り口を 1 つ開ける）。
+ * 動物はこのあと、それぞれの放牧場に置く予定（residents.ts）
+ */
+export function farmPens(): Array<{ x: number; z: number; r: number; gate: number }> {
+  const r = region('partner')
+  const a0 = partnerToOrigin(r)
+  return [a0 + Math.PI * 0.55, a0 + Math.PI, a0 - Math.PI * 0.55].map((a, i) => {
+    const d = 60 + i * 2
+    const x = Math.cos(a) * d
+    const z = Math.sin(a) * d
+    return { x, z, r: 15 + (i === 1 ? 3 : 0), gate: Math.atan2(-z, -x) }
+  })
+}
+
+/** ふれあいワールド: 放牧場の木の柵、赤い納屋、干し草、丸い木、花。乱数は別の列 */
+function createPartner(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
+  const r = region('partner')
+  const a0 = partnerToOrigin(r)
+  const pens = farmPens()
+  const inPen = (x: number, z: number, margin: number) => pens.some((p) => Math.hypot(x - r.x - p.x, z - r.z - p.z) < p.r + margin)
+  const onPath = (x: number, z: number, margin: number) => farmPathDist(x - r.x, z - r.z) < 3 + margin
+
+  // 柵: 柱と横木 2 本。入り口の 1 区間だけ開ける。柱と区間の中ほどに当たり判定（すき間から入れない）
+  const wood = toonMaterial({ color: '#b07a48' })
+  const postGeo = new THREE.CylinderGeometry(0.09, 0.11, 1.2, 6)
+  postGeo.translate(0, 0.6, 0)
+  const railGeo = new THREE.BoxGeometry(1, 0.1, 0.06)
+  const posts: Array<{ x: number; z: number }> = []
+  const rails: Array<{ x: number; z: number; len: number; yaw: number }> = []
+  for (const p of pens) {
+    const n = Math.round((Math.PI * 2 * p.r) / 2.6)
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2
+      const b = ((i + 1) / n) * Math.PI * 2
+      const ax = r.x + p.x + Math.cos(a) * p.r
+      const az = r.z + p.z + Math.sin(a) * p.r
+      const bx = r.x + p.x + Math.cos(b) * p.r
+      const bz = r.z + p.z + Math.sin(b) * p.r
+      posts.push({ x: ax, z: az })
+      colliders.push({ x: ax, z: az, r: 0.35 })
+      const mid = (a + b) / 2
+      const gateGap = Math.abs(Math.atan2(Math.sin(mid - p.gate), Math.cos(mid - p.gate))) < Math.PI / n
+      if (gateGap) continue
+      rails.push({ x: (ax + bx) / 2, z: (az + bz) / 2, len: Math.hypot(bx - ax, bz - az), yaw: Math.atan2(-(bz - az), bx - ax) })
+      colliders.push({ x: (ax + bx) / 2, z: (az + bz) / 2, r: 0.75 })
+    }
+  }
+  const postMesh = instanced(postGeo, wood, posts.length)
+  posts.forEach((p, i) => {
+    _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) - 0.05, p.z), _q.identity(), _s.set(1, 1, 1))
+    postMesh.setMatrixAt(i, _m)
+  })
+  const railMesh = instanced(railGeo, wood, rails.length * 2)
+  rails.forEach((rl, i) => {
+    const y = (terrainHeight(rl.x, rl.z) + terrainHeight(rl.x, rl.z)) / 2
+    _q.setFromEuler(_e.set(0, rl.yaw, 0))
+    for (let k = 0; k < 2; k++) {
+      _m.compose(_p.set(rl.x, y + 0.5 + k * 0.42, rl.z), _q, _s.set(rl.len + 0.1, 1, 1))
+      railMesh.setMatrixAt(i * 2 + k, _m)
+    }
+  })
+  finish(postMesh, railMesh)
+  group.add(postMesh, railMesh)
+
+  // 目印の赤い納屋: 広場の向こう（峠と反対の側）。白い縁どりと大きな戸
+  const barnA = a0 + Math.PI * 0.78
+  const bx = r.x + Math.cos(barnA) * 82
+  const bz = r.z + Math.sin(barnA) * 82
+  const by = terrainHeight(bx, bz)
+  const barn = new THREE.Group()
+  barn.position.set(bx, by - 0.2, bz)
+  // 戸が広場の方を向く
+  barn.rotation.y = Math.atan2(r.x - bx, r.z - bz)
+  const red = toonMaterial({ color: '#c8402f' })
+  const white = toonMaterial({ color: '#f6f1e6' })
+  const roofMat = toonMaterial({ color: '#6a4a3a' })
+  const body = new THREE.Mesh(new THREE.BoxGeometry(12, 7, 9), red)
+  body.position.y = 3.5
+  // 切妻の屋根: 三角柱（棟は戸のある面から奥へ）
+  const roofGeo = new THREE.CylinderGeometry(7.2, 7.2, 9.8, 3, 1)
+  roofGeo.rotateZ(Math.PI / 2)
+  roofGeo.rotateX(-Math.PI / 2)
+  const roof = new THREE.Mesh(roofGeo, roofMat)
+  roof.rotation.y = Math.PI / 2
+  roof.scale.set(1, 0.42, 1)
+  roof.position.y = 7 + 0.5 * 7.2 * 0.42
+  const door = new THREE.Mesh(new THREE.BoxGeometry(4.4, 4.6, 0.2), white)
+  door.position.set(0, 2.3, 4.55)
+  const doorIn = new THREE.Mesh(new THREE.BoxGeometry(3.8, 4.0, 0.22), red)
+  doorIn.position.set(0, 2.25, 4.57)
+  const cross1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 5.4, 0.24), white)
+  cross1.position.set(0, 2.25, 4.6)
+  cross1.rotation.z = Math.atan2(3.8, 4.0)
+  const cross2 = cross1.clone()
+  cross2.rotation.z = -cross1.rotation.z
+  const loft = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.6, 0.2), white)
+  loft.position.set(0, 8.1, 4.95)
+  for (const m of [body, roof, door, doorIn, cross1, cross2, loft]) {
+    m.castShadow = true
+    m.receiveShadow = true
+    barn.add(m)
+  }
+  group.add(barn)
+  colliders.push({ x: bx, z: bz, r: 6.5 })
+
+  // 干し草のロール: 納屋のまわりと放牧場の外に
+  const bales: Array<{ x: number; z: number }> = []
+  for (let i = 0; i < 7; i++) {
+    const a = barnA + (rand() - 0.5) * 0.5
+    const d = 66 + rand() * 10
+    bales.push({ x: r.x + Math.cos(a) * d, z: r.z + Math.sin(a) * d })
+  }
+  const baleGeo = new THREE.CylinderGeometry(0.75, 0.75, 1.2, 14)
+  baleGeo.rotateZ(Math.PI / 2)
+  const baleMesh = instanced(baleGeo, toonMaterial({ color: '#e9c862' }), bales.length)
+  bales.forEach((b, i) => {
+    _q.setFromEuler(_e.set(0, rand() * Math.PI, 0))
+    _m.compose(_p.set(b.x, terrainHeight(b.x, b.z) + 0.68, b.z), _q, _s.set(1, 1, 1))
+    baleMesh.setMatrixAt(i, _m)
+    colliders.push({ x: b.x, z: b.z, r: 0.9 })
+  })
+  finish(baleMesh)
+  group.add(baleMesh)
+
+  // 丸い木: 細い幹にふっくらした明るい緑の玉 2〜3 個。放牧場・小道・広場はあける
+  const trees = scatter(rand, r, mobile ? 70 : 100, { min: 44, max: r.walk + 40, clearing: 40, path: 10 }).filter(
+    (p) => !inPen(p.x, p.z, 3) && !onPath(p.x, p.z, 2) && Math.hypot(p.x - bx, p.z - bz) > 12,
+  )
+  const trunkGeo = new THREE.CylinderGeometry(0.2, 0.32, 1, 6)
+  trunkGeo.translate(0, 0.5, 0)
+  const blobGeo = new THREE.IcosahedronGeometry(1, 1)
+  const BLOBS = 3
+  const trunks = instanced(trunkGeo, toonMaterial({ color: '#7a5636' }), trees.length)
+  const blobs = instanced(blobGeo, toonMaterial(), trees.length * BLOBS)
+  const leafA = new THREE.Color('#5cb84a')
+  const leafB = new THREE.Color('#94d45c')
+  trees.forEach((t, i) => {
+    const y = terrainHeight(t.x, t.z)
+    const s = 0.8 + rand() * 0.5
+    const h = (3.2 + rand() * 1.6) * s
+    _q.setFromEuler(_e.set(0, rand() * Math.PI * 2, 0))
+    _m.compose(_p.set(t.x, y - 0.2, t.z), _q, _s.set(s, h, s))
+    trunks.setMatrixAt(i, _m)
+    for (let b = 0; b < BLOBS; b++) {
+      const a = (b / BLOBS) * Math.PI * 2 + rand()
+      const rr = b === 0 ? 0 : 1.2 * s
+      const bs = (b === 0 ? 2.5 : 1.8) * s * (0.85 + rand() * 0.3)
+      _m.compose(_p.set(t.x + Math.cos(a) * rr, y + h + (b === 0 ? 1 : 0.2) * s, t.z + Math.sin(a) * rr), _q, _s.set(bs, bs * 0.85, bs))
+      blobs.setMatrixAt(i * BLOBS + b, _m)
+      blobs.setColorAt(i * BLOBS + b, _c.copy(leafA).lerp(leafB, rand()))
+    }
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
+  })
+  finish(trunks, blobs)
+  group.add(trunks, blobs)
+
+  // 花: 牧草地のところどころに小さな花の群れ（白・黄・桃・水色）。当たり判定なし
+  const flowerSpots: Array<{ x: number; z: number }> = []
+  const clumps = scatter(rand, r, mobile ? 50 : 80, { min: 10, max: r.walk + 10, clearing: 9, path: 4 })
+  for (const c of clumps) {
+    if (onPath(c.x, c.z, 1)) continue
+    for (let k = 0; k < 9; k++) flowerSpots.push({ x: c.x + (rand() - 0.5) * 3.2, z: c.z + (rand() - 0.5) * 3.2 })
+  }
+  const flowerGeo = new THREE.IcosahedronGeometry(0.13, 0)
+  const flowerMesh = instanced(flowerGeo, toonMaterial(), flowerSpots.length, false)
+  const flowerColors = ['#ffffff', '#ffe066', '#ff9ec4', '#9fd8ff'].map((c) => new THREE.Color(c))
+  flowerSpots.forEach((f, i) => {
+    _m.compose(_p.set(f.x, terrainHeight(f.x, f.z) + 0.16, f.z), _q.identity(), _s.set(1, 0.7, 1))
+    flowerMesh.setMatrixAt(i, _m)
+    flowerMesh.setColorAt(i, flowerColors[Math.floor(rand() * flowerColors.length)])
+  })
+  finish(flowerMesh)
+  group.add(flowerMesh)
+
+  // 広場の水飲みおけ（木の箱に水色の水面）
+  const tx = r.x + Math.cos(a0 + Math.PI / 2) * 9
+  const tz = r.z + Math.sin(a0 + Math.PI / 2) * 9
+  const trough = new THREE.Group()
+  trough.position.set(tx, terrainHeight(tx, tz), tz)
+  trough.rotation.y = -a0
+  const box = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.9), wood)
+  box.position.y = 0.3
+  const waterTop = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.05, 0.65), toonMaterial({ color: '#8fd0ee' }))
+  waterTop.position.y = 0.6
+  box.castShadow = true
+  trough.add(box, waterTop)
+  group.add(trough)
+  colliders.push({ x: tx, z: tz, r: 1.2 })
+}
+
 export function createBiomeProps(options: { mobile: boolean; colliders: Collider[] }): BiomeProps {
   const group = new THREE.Group()
   group.name = 'biome-props'
@@ -593,5 +790,6 @@ export function createBiomeProps(options: { mobile: boolean; colliders: Collider
   createSouth(rand, group, options.colliders, options.mobile)
   // 水の世界は後から足したので別の乱数の列（ほかのワールドの並びを変えない）
   createWater(mulberry32(WORLD_SEED + 509), group, options.colliders, options.mobile)
+  createPartner(mulberry32(WORLD_SEED + 521), group, options.colliders, options.mobile)
   return { group }
 }

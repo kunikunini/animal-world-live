@@ -40,7 +40,7 @@ const DICT = {
   expandMap: { ja: '地図を広げる', en: 'Open the map' },
   map: { ja: '地図', en: 'Map' },
   close: { ja: '閉じる', en: 'Close' },
-  mapCanvas: { ja: '5 つのワールドがある大陸の地図。北が上。タップした場所へ歩く', en: 'Map of the continent and its five worlds. North is up. Tap a place to walk there' },
+  mapCanvas: { ja: '6 つのワールドがある大陸の地図。北が上。タップした場所へ歩く', en: 'Map of the continent and its six worlds. North is up. Tap a place to walk there' },
   legend: { ja: '凡例', en: 'Legend' },
   you: { ja: 'あなた', en: 'You' },
   metAnimals: { ja: '出会った動物', en: 'Animals you met' },
@@ -263,6 +263,7 @@ const SUB_AREAS: Record<string, string> = {
   南米: 'South America',
   'オーストラリア・南米': 'Australia & South America',
   '極北・北方林・日本の森・北米': 'Far north, boreal forest, Japanese woods & North America',
+  犬と家畜: 'Dogs & farm animals',
 }
 
 export function subAreaName(sub: string): string {

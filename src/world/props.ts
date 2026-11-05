@@ -3,7 +3,8 @@ import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { WATER_LEVEL, savannaTrail, terrainHeight } from './terrain'
-import { OUTER_REGIONS, PASS_HALF_WIDTH, distToPassAxis } from './regions'
+import { OUTER_REGIONS, PASS_HALF_WIDTH, distToPassAxis, distToPassAxisOf } from './regions'
+import type { Region } from './regions'
 import { toonMaterial } from '../render/toon'
 
 /** 円柱の当たり判定（xz 平面の円）。キャラとカメラがめり込まないために使う */
@@ -342,6 +343,11 @@ interface RangeOptions {
   cutPasses?: boolean
   /** 水の世界: 稜線の低いところを海の下へ沈めて、つながった山並みではなく島々に見せる */
   islands?: boolean
+  /**
+   * ほかのワールドの山並み: となりのワールドの歩ける円と、そこへの峠にかかる所は地面の下まで下げる
+   * （ななめに置いたふれあいワールドは、ジャングル・南半球の山並みと重なるため）
+   */
+  avoid?: Region[]
   name: string
 }
 
@@ -386,6 +392,18 @@ function createRange(group: THREE.Group, o: RangeOptions): void {
         for (const r of OUTER_REGIONS) {
           const d = distToSegment(r.x, r.z, o.cx + ca * (L.r - 3), o.cz + sa * (L.r - 3), o.cx + ca * (L.r + 14), o.cz + sa * (L.r + 14))
           keep = Math.min(keep, smoothstep(r.walk + 8, r.walk + 36, d))
+        }
+      }
+      if (o.avoid) {
+        const ca = Math.cos(a)
+        const sa = Math.sin(a)
+        for (const r of o.avoid) {
+          const d = distToSegment(r.x, r.z, o.cx + ca * (L.r - 3), o.cz + sa * (L.r - 3), o.cx + ca * (L.r + 14), o.cz + sa * (L.r + 14))
+          // サバンナの輪より広めにあける（となりのワールドの山が歩ける円のすぐ外に壁のように立たないように）
+          keep = Math.min(keep, smoothstep(r.walk + 20, r.walk + 62, d))
+          const mx = o.cx + ca * L.r
+          const mz = o.cz + sa * L.r
+          keep = Math.min(keep, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxisOf(r, mx, mz)))
         }
       }
       // 行0: 麓（外側・低い）、行1: 肩、行2: 峰
@@ -445,13 +463,14 @@ function createMountains(group: THREE.Group): void {
       cz: r.z,
       gap: { angle: toOrigin, half: 0.95 },
       islands: r.key === 'water',
+      avoid: OUTER_REGIONS.filter((g) => g !== r),
       name: `mountains-${r.key}`,
       layers: look.map((l, i) => ({ ...l, segs: 150, seed: 11 + i * 4.1 + r.x * 0.01 })),
     })
   }
 }
 
-type OuterLookKey = 'north' | 'jungle' | 'south' | 'water'
+type OuterLookKey = 'north' | 'jungle' | 'south' | 'water' | 'partner'
 /** ほかのワールドの山並みの色と高さ */
 const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
   // 北: 青い麓に白い雪の峰
@@ -477,6 +496,12 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
     { r: 150, h: 11, spread: 6, foot: '#8d9a90', peak: '#6cc06a' },
     { r: 188, h: 19, spread: 9, foot: '#94aaa2', peak: '#86cc7e' },
     { r: 230, h: 30, spread: 13, foot: '#a8c0c6', peak: '#b4dcb0' },
+  ],
+  // ふれあいワールド: 牧場を囲むなだらかな明るい緑の丘。遠いほど淡い
+  partner: [
+    { r: 150, h: 14, spread: 5, foot: '#5fae4a', peak: '#9ad86a' },
+    { r: 188, h: 22, spread: 8, foot: '#72b85e', peak: '#b2e282' },
+    { r: 230, h: 32, spread: 11, foot: '#94c890', peak: '#cdeab4' },
   ],
 }
 
