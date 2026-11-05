@@ -28,5 +28,15 @@
       "ja": "ピンクの服の子",
       "en": "Pink hoodie"
     }
+  },
+  {
+    "id": "bluecap",
+    "model": "/models/hero-bluecap.glb",
+    "thumb": "/heroes/bluecap.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "青い帽子の子",
+      "en": "Blue cap"
+    }
   }
 ]

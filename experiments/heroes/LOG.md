@@ -103,3 +103,51 @@
 
 - `world-front.jpg`・`world-diag.jpg`・`world-back.jpg`: 接地影と細い輪郭あり。後ろ姿は生成りの帽子と、紫と黄色のリュック（上の色違いのまま）
 - `world-walk-follow-phone.jpg`・`world-run-follow-phone.jpg`: 追従画角。帽子とリュックの黄色は草の金色に近いが、ピンクの袖・紫・接地影で見分けられる
+
+## 青い帽子の子（`bluecap`）
+
+### Meshy
+
+**生成**（条件は上のとおり。`shots/bluecap/meshy-settings.jpg`）
+
+- 生成後: 面 10,537 / 頂点 8,133（Meshy 表示、テクスチャ後）
+- 見た目（`shots/bluecap/meshy-generated-front.jpg`・`-back.jpg`）: 正面はシートに近い（後ろ向きにかぶった青いキャップ、金髪、青いパーカー、双眼鏡、紺のカーゴパンツ、青と黄色の靴）。**後ろ姿**: 青いキャップの後ろ、黄色のリュック（シートも黄色）で、大きな色違いはない
+
+**リグ**（ヒューマノイド、身長 1.2 m。`shots/bluecap/meshy-markers-after.jpg`）
+
+- 目印はほかの子と同じように直した（足首は初めから靴の上端にあったので動かしていない）
+- 1 回目で成功。「歩く」「走る」が自動で付いた（`shots/bluecap/meshy-rigged-anims.jpg`）
+
+**ダウンロード**: 同じ設定で `Meshy_AI_Adventure_Buddy_20261105_animated_mixamo_All_animation.glb`（3,708,452 B、Walking と Running の 2 本入り）
+
+### クレジット
+
+| 時刻 | 残高 | その直前にしたこと |
+|---|---|---|
+| 19:13 | 2,125 | 開始 |
+| 19:14 | 2,110 | 生成とテクスチャ完了（生成 15） |
+| 19:16 | 2,110 | リグ、ダウンロードのあとも変わらず |
+
+### 骨格
+
+- **黄色い子と違う**: 70 本。Mixamo の名前 66 本はすべてそろっているが、両脚のすねと足のあいだに名前の付いていない骨が 2 本ずつ入っている（`mixamorig:LeftLeg` → `Bone_008` → `Bone_007` → `mixamorig:LeftFoot`、右も `Bone_013` → `Bone_012`）。アニメはこの骨組みに合わせて Meshy が付けたもの（Walking・Running とも 192 チャンネル）で、この子の中では使える。ほかの子のクリップを当てる時は、足の親が違うので合わない
+
+### 最適化
+
+| | 最適化前 | 最適化後 |
+|---|---|---|
+| ファイル | 3.71 MB | **382.3 KB**（382,320 B） |
+| 三角形 / 頂点 | 10,537 / 8,133 | 10,009 / 7,852 |
+| テクスチャ | PNG 2048×2048（2.93 MB） | WebP 1024×1024（148.7 KB） |
+| アニメのキー | Running 3,840・Walking 6,144 | Running 1,135・Walking 1,780 |
+
+### ワールドに置く
+
+- `public/models/hero-bluecap.glb`、倍率 0.59 → 外形の高さ 1.198 m（GLB の拡大率 0.998）
+- 立ち姿の骨の高さ: 首 0.711 m・頭 0.802 m・頭のてっぺんの骨 1.193 m・肩 0.666 m
+
+### スクショ（`shots/bluecap/`）
+
+- `world-front.jpg`・`world-diag.jpg`・`world-back.jpg`: 接地影と細い輪郭あり。後ろ姿は青いキャップと黄色のリュック
+- `world-walk-follow-phone.jpg`・`world-run-follow-phone.jpg`: 追従画角。青い帽子と上着がサバンナの金色からはっきり分かれる
+- `world-walk-side.jpg`・`world-run-side.jpg`（横から）: すねと足のあいだに骨が多い子なので横からも見た。歩きは膝が曲がって足の裏が地面に着き、走りは体を前に倒して後ろ足をけり上げる形で、脚の折れや足先のねじれは見えない
