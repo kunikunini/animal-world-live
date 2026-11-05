@@ -27,7 +27,7 @@
 - **生成**: [ElevenLabs](https://elevenlabs.io) の Sound Effects（API `POST /v1/sound-generation`、モデル `eleven_text_to_sound_v2`、2026-11-06）。くにの ElevenLabs アカウントで生成した。1 つにつき 1 回生成し、撮り直しはしていない（計 20 回。水の世界の環境音は、水の世界が入った後に足した）
 - **環境音**は `loop: true`（ループ用）で 30 秒を生成し、BGM と同じやり方（27.5 秒の区間＋直後の 2.5 秒をクロスフェード、前後に 0.25 秒の余白）でループにした。人の声と音楽は入れないよう指示した
 - **編集**（ffmpeg 8）: 効果音は前後の無音を切り、最大音量をそろえ（足音 -4 dB、タップ -6 dB、ほか -3 dB）、末尾 40 ms をフェードアウトして、モノラル 96 kbps にした。環境音は平均音量を -30 dB にそろえて、ステレオ 96 kbps にした。草の足音と「スコープを閉じる」は元の音がとても小さく、+26〜30 dB 上げている
-- **ライセンス**: 生成したアカウントのプランと、それに伴う利用条件はまだ確認していない（API キーに契約情報を読む権限が無いため、こちらから確かめられなかった）。README のクレジットには「効果音・環境音: ElevenLabs で生成」と書く
+- **ライセンス**: くにの ElevenLabs の有料プランのアカウントで生成した。README のクレジットには「効果音・環境音: ElevenLabs で生成」と書く
 - 個人情報は含まない
 
 | ファイル | 用途（鳴る所） | 長さ | サイズ |
@@ -51,4 +51,4 @@
 
 ## Source of `public/audio` (English)
 
-Background music (`bgm-*.mp3`) was generated with [Suno](https://suno.com) (Pro plan, which includes commercial-use rights; 2026-11-06) as instrumentals, one generation (two takes) per track, then cut into 40-55 s seamless loops with ffmpeg. The other take of each track is kept outside the repository for comparison. `loops.json` holds the exact loop lengths; each file has 0.25 s of padding on both sides. Sound effects and ambience (`se-*.mp3`, `amb-*.mp3`) were generated with [ElevenLabs](https://elevenlabs.io) Sound Effects (API, model `eleven_text_to_sound_v2`, 2026-11-06), one generation each, then trimmed and level-matched with ffmpeg. The license terms of the generating account's plan have not been confirmed yet. The default "become friends" chime is synthesized in code (`src/ui/chime.ts`). No personal information is included.
+Background music (`bgm-*.mp3`) was generated with [Suno](https://suno.com) (Pro plan, which includes commercial-use rights; 2026-11-06) as instrumentals, one generation (two takes) per track, then cut into 40-55 s seamless loops with ffmpeg. The other take of each track is kept outside the repository for comparison. `loops.json` holds the exact loop lengths; each file has 0.25 s of padding on both sides. Sound effects and ambience (`se-*.mp3`, `amb-*.mp3`) were generated with [ElevenLabs](https://elevenlabs.io) Sound Effects (API, model `eleven_text_to_sound_v2`, 2026-11-06), one generation each, then trimmed and level-matched with ffmpeg. They were generated on a paid ElevenLabs plan. The default "become friends" chime is synthesized in code (`src/ui/chime.ts`). No personal information is included.
