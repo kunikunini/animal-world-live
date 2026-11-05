@@ -38,6 +38,9 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
   const group = lion.group
   const home = { x: group.position.x, z: group.position.z, h: terrainHeight(group.position.x, group.position.z) }
   const own = lion.collider
+  // 観察スポットと登り道からの距離。もともとそれより近くにいる子（アンジー）は、いまの距離より近づかなければよい
+  const spotKeep = Math.min(SPOT_CLEARANCE + own.r, Math.hypot(SPOT.x - home.x, SPOT.z - home.z) - 0.3)
+  const pathKeep = Math.min(SPOT_CLEARANCE + own.r, distanceToSegment(home.x, home.z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) - 0.3)
   // クリップの速さを体の速さに合わせる（model は群れの倍率の中にあるので、倍率で割る）
   ai.setWalkSpeed(opts.speed / group.scale.y)
   let target: { x: number; z: number } | null = null
@@ -58,8 +61,8 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
       if (c === own) continue
       if (Math.hypot(c.x - x, c.z - z) < c.r + own.r + 0.25) return false
     }
-    if (Math.hypot(SPOT.x - x, SPOT.z - z) < SPOT_CLEARANCE + own.r) return false
-    if (distanceToSegment(x, z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) < SPOT_CLEARANCE + own.r) return false
+    if (Math.hypot(SPOT.x - x, SPOT.z - z) < spotKeep) return false
+    if (distanceToSegment(x, z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) < pathKeep) return false
     if (Math.hypot(player.x - x, player.z - z) < PLAYER_CLEARANCE) return false
     return true
   }
