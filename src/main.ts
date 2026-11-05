@@ -184,7 +184,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   camera.layers.enable(NO_REFLECT_LAYER)
   const props = createProps({ mobile, camera })
   scene.add(props.group)
-  // サバンナから峠を抜けた先の 4 つのワールドの木や岩
+  // サバンナから峠を抜けた先の 5 つのワールドの木や岩
   scene.add(createBiomeProps({ mobile, colliders: props.colliders }).group)
   // 水の世界の海（潟と小川も）
   const sea = createSea()
@@ -514,6 +514,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     south: new THREE.Color('#dcd6d2'),
     // 水の世界: 海の上の明るい水色（遠くの水平線が空に溶ける）
     water: new THREE.Color('#c4e6f4'),
+    // ふれあいワールド: 春の牧場のやわらかい明るい霞（少し黄緑がかった白）
+    partner: new THREE.Color('#e2efd8'),
   }
   // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
@@ -661,6 +663,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sunGlow: new THREE.Color('#fff8e2'),
       sunDisc: 3.8,
       sunHalo: 1.6,
+    },
+    // ふれあいワールド: やさしい青空、照り返しは牧草の明るい緑。影はやわらかく、暖かい午後の太陽
+    partner: {
+      exposure: 0.97,
+      sky: new THREE.Color('#d4e8ff'),
+      ground: new THREE.Color('#9cc870'),
+      intensity: 0.72,
+      sun: 2.2,
+      top: new THREE.Color('#2a6ee0'),
+      horizon: new THREE.Color('#9ad0f4'),
+      near: 120,
+      far: 480,
+      gradeSat: 1.07,
+      gradeContrast: 1.04,
+      sunElev: 22,
+      sunGlow: new THREE.Color('#fff0cc'),
+      sunDisc: 4.0,
+      sunHalo: 1.3,
     },
   }
   const lightTarget: Light = { ...baseLight() }

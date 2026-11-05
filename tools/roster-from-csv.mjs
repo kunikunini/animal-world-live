@@ -22,6 +22,14 @@ const WORLD_KEYS = {
 }
 /** ライオンは animals.json 側 */
 const SKIP_SPECIES = new Set(['アフリカライオン'])
+/**
+ * CSV のワールド区分を、このアプリでは別のワールドに置く種（くにの決定 2026-11-06）。
+ * 生成し直しても戻らないよう、ここで割り当てる。区分（sub_area）は CSV のまま
+ */
+const WORLD_OVERRIDE = {
+  // そり犬は「ふれあい・パートナー」ではなく北の世界へ
+  シベリアンハスキー: 'north',
+}
 
 /** 引用符つきの欄にだけ対応する小さな CSV の読み取り */
 function parseCsv(text) {
@@ -82,9 +90,10 @@ const iRep = col('representative')
 const animals = []
 const seen = new Set()
 for (const r of body) {
-  const world = WORLD_KEYS[r[iWorld]]
-  if (!world) throw new Error(`知らないワールド: ${r[iWorld]}`)
+  const csvWorld = WORLD_KEYS[r[iWorld]]
+  if (!csvWorld) throw new Error(`知らないワールド: ${r[iWorld]}`)
   const species = r[iSpecies].trim()
+  const world = WORLD_OVERRIDE[species] ?? csvWorld
   if (SKIP_SPECIES.has(species)) continue
   const names = r[iNames].split('、').map((n) => n.trim()).filter(Boolean)
   if (names.length !== Number(r[iCount])) throw new Error(`${species}: count と名前の数が合わない`)

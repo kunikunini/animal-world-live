@@ -1243,7 +1243,7 @@
   },
   {
    "id": "r-13xwtgn",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "銀牙",
@@ -1251,7 +1251,7 @@
   },
   {
    "id": "r-1swc4st",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "ロック",
@@ -1259,7 +1259,7 @@
   },
   {
    "id": "r-17snyj3",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "風牙",
@@ -1267,7 +1267,7 @@
   },
   {
    "id": "r-1fja9y0",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "アーニャ",
@@ -1275,7 +1275,7 @@
   },
   {
    "id": "r-ic0n02",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "オセロ",
@@ -1283,7 +1283,7 @@
   },
   {
    "id": "r-25xxux",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "ユキ",
@@ -1291,7 +1291,7 @@
   },
   {
    "id": "r-4gn843",
-   "world": "partner",
+   "world": "north",
    "subArea": "犬と家畜",
    "species": "シベリアンハスキー",
    "name": "ノエル",
