@@ -992,9 +992,36 @@ button {
   image-rendering: pixelated;
   pointer-events: none;
 }
+/* 空撮を飛ばすボタン（右下）。空撮の間だけ見える */
+.intro-skip {
+  position: fixed;
+  right: calc(16px + var(--safe-right));
+  bottom: calc(20px + var(--safe-bottom));
+  z-index: 8;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 12px 0 18px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: rgba(20, 14, 8, 0.42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.intro-skip .ico { width: 18px; height: 18px; transform: scaleX(-1); }
+body.world-fly .intro-skip { display: inline-flex; animation: refresh-fade 0.6s ease 0.8s both; }
+
 /* 演出の間は HUD を隠し、終わったらふわっと出す */
 body.in-world :is(.hud, .minimap, .minimap-expand, .stick) { transition: opacity 0.7s var(--ease-soft); }
-body.world-intro :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin) {
+body.world-intro :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin, .guide) {
   opacity: 0;
   pointer-events: none;
 }

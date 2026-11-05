@@ -44,6 +44,7 @@ const DICT = {
   you: { ja: 'あなた', en: 'You' },
   metAnimals: { ja: '出会った動物', en: 'Animals you met' },
   mapNames: { ja: '動物の名前', en: 'Animal names' },
+  introSkip: { ja: 'スキップ', en: 'Skip' },
   friends: { ja: 'ともだち', en: 'Friends' },
   spot: { ja: '観察スポット', en: 'Viewing spot' },
   waterhole: { ja: '水場', en: 'Waterhole' },

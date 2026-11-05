@@ -34,6 +34,8 @@ export interface PlayerController {
    * 演出の間はカメラを遅れなく置く（寄りから引きがなめらかに見えるように）
    */
   setIntro: (t: number | null) => void
+  /** いつもの追従カメラの位置と注視点（演出の終わりに、空からここへ降りてくる）。カメラは動かさない */
+  followPose: (position: THREE.Vector3, lookAt: THREE.Vector3) => void
   dispose: () => void
 }
 
@@ -179,9 +181,8 @@ export function createPlayer(
   const ndc = new THREE.Vector2()
 
   /** 追従カメラの位置と注視点。向き・仰角・距離から求め、岩と地面にめり込ませない */
-  const placeCamera = (immediate: boolean, dt = 0) => {
-    // 入る演出の間は、寄り（t=0）からいつもの距離（t=1）へ距離・仰角・注視点の高さを混ぜる
-    const k = intro ?? 1
+  /** 追従カメラの位置（_camPos）と注視点（_look）を求める。k は入る演出の寄り（0）〜いつもの距離（1） */
+  const computePose = (k: number) => {
     const dist = INTRO_DIST + (camDist - INTRO_DIST) * k
     const pitch = INTRO_PITCH + (camPitch - INTRO_PITCH) * k
     const cp = Math.cos(pitch)
@@ -194,11 +195,16 @@ export function createPlayer(
     const groundAtCam = terrainHeight(_camPos.x, _camPos.z)
     const lift = 0.7 + 0.3 * k
     _camPos.y = Math.max(object.position.y + lift + Math.sin(pitch) * dist, groundAtCam + 0.6)
-    if (immediate || intro !== null) camera.position.copy(_camPos)
-    else camera.position.lerp(_camPos, reduceMotion ? 1 : Math.min(1, 6 * dt))
     // 見上げるときは注視点を上げて、空が画面に入るようにする
     const lookY = INTRO_LOOK_Y + (2.0 - INTRO_LOOK_Y) * k
     _look.set(object.position.x, object.position.y + lookY + Math.max(0, -camPitch) * 6 * k, object.position.z)
+  }
+
+  const placeCamera = (immediate: boolean, dt = 0) => {
+    // 入る演出の間は、寄り（t=0）からいつもの距離（t=1）へ距離・仰角・注視点の高さを混ぜる
+    computePose(intro ?? 1)
+    if (immediate || intro !== null) camera.position.copy(_camPos)
+    else camera.position.lerp(_camPos, reduceMotion ? 1 : Math.min(1, 6 * dt))
     camera.lookAt(_look)
   }
   placeCamera(true)
@@ -535,6 +541,11 @@ export function createPlayer(
     setIntro: (t) => {
       intro = t
       placeCamera(true)
+    },
+    followPose: (position, lookAt) => {
+      computePose(1)
+      position.copy(_camPos)
+      lookAt.copy(_look)
     },
     dispose,
   }

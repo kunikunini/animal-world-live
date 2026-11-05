@@ -4,7 +4,7 @@ import { createTerrain, terrainHeight } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
 import { createResidents } from './world/residents'
-import { OUTER_REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
+import { OUTER_REGIONS, REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
@@ -617,27 +617,103 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   // ホームから入る演出: 幕が開くとモザイクがかかった世界がだんだん見えてきて、主人公のすぐそばからゆっくり引き、
   // 途中でいまいるワールドの名前がふわっと出る。モザイクは描いた絵を小さく縮めた 2D の canvas を、
-  // 画素をにじませずに全面へ引き伸ばして重ねる（後処理の有無に関係なく、どの端末でも同じに見える）
+  // 画素をにじませずに全面へ引き伸ばして重ねる（後処理の有無に関係なく、どの端末でも同じに見える）。
+  // そのワールドに初めて来た時は、寄り・引きの代わりにドローンの空撮（空から回って全体を見渡し、主人公の後ろへ降りてくる）。
+  // 歩いてほかのワールドに初めて入った時も同じ空撮を流す（名前はワールドが変わった時に出ている）
   const INTRO_MS = 3200
+  /** モザイクがほどけるまで（ms） */
+  const MOSAIC_MS = 1760
   /** モザイクの最初のマス目の大きさ（CSS px） */
   const MOSAIC_MAX = 46
+  /** 空撮の長さ（ms）と、そのうち空から回って見渡す割合（残りで主人公の後ろへ降りる） */
+  const FLY_MS = 7000
+  const FLY_ORBIT = 0.64
+  /** 空撮で回る角度（ラジアン） */
+  const FLY_SWEEP = 1.9
+  const FLY_KEY = 'awl.flyover.v1'
+  const flyForced = new URLSearchParams(location.search).get('flyover') === '1'
+  const flySeen = new Set<string>()
+  try {
+    const raw = localStorage.getItem(FLY_KEY)
+    if (raw) for (const k of JSON.parse(raw) as string[]) flySeen.add(k)
+  } catch {
+    // 読めなければ、どのワールドも初めて扱い
+  }
+  const shouldFly = (key: RegionKey) => flyForced || !flySeen.has(key)
+  const markFlown = (key: RegionKey) => {
+    flySeen.add(key)
+    try {
+      localStorage.setItem(FLY_KEY, JSON.stringify([...flySeen]))
+    } catch {
+      // 保存できなくても続ける（次もまた流れるだけ）
+    }
+  }
   const mosaic = document.getElementById('world-mosaic') as HTMLCanvasElement
   const mosaicCtx = mosaic.getContext('2d')
+  const introSkip = document.getElementById('intro-skip') as HTMLButtonElement
   let introStart: number | null = null
   let introTitled = false
+  let introMosaic = false
   let introDone: (() => void) | null = null
+  /** 空撮の中身。null なら寄り・引きの演出 */
+  let fly: { key: RegionKey; cx: number; cy: number; cz: number; radius: number; endAngle: number } | null = null
+  const flyPos = new THREE.Vector3()
+  const flyLook = new THREE.Vector3()
+  const followPos = new THREE.Vector3()
+  const followLook = new THREE.Vector3()
+  const flyOverride = { position: flyPos, lookAt: flyLook }
   const easeInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
-  const introProgress = () => (introStart === null ? 0 : Math.min(1, (performance.now() - introStart) / INTRO_MS))
-  /** 描く前に: カメラを寄りから引きへ */
+  const introElapsed = () => (introStart === null ? 0 : performance.now() - introStart)
+  const introLength = () => (fly ? FLY_MS : INTRO_MS)
+  const setupFly = (key: RegionKey) => {
+    const r = REGIONS.find((it) => it.key === key) ?? REGIONS[0]
+    player.followPose(followPos, followLook)
+    fly = {
+      key,
+      cx: r.x,
+      cy: terrainHeight(r.x, r.z),
+      cz: r.z,
+      radius: r.walk,
+      // 回り終わりが、いつものカメラの方角（主人公の後ろ）になるように
+      endAngle: Math.atan2(followPos.x - r.x, followPos.z - r.z),
+    }
+    document.body.classList.add('world-fly')
+  }
+  /** 空撮のカメラ。p は 0〜1 */
+  const flyCamera = (p: number) => {
+    if (!fly) return
+    const orbitAt = (u: number, out: THREE.Vector3) => {
+      const a = fly!.endAngle - FLY_SWEEP * (1 - easeInOut(u))
+      const dist = fly!.radius * (1.15 - 0.3 * u)
+      const h = fly!.radius * (0.85 - 0.25 * u)
+      out.set(fly!.cx + Math.sin(a) * dist, fly!.cy + h, fly!.cz + Math.cos(a) * dist)
+    }
+    player.followPose(followPos, followLook)
+    if (p <= FLY_ORBIT) {
+      orbitAt(p / FLY_ORBIT, flyPos)
+      flyLook.set(fly.cx, fly.cy, fly.cz)
+    } else {
+      // 空から主人公の後ろへ降りる。注視点もワールドのまん中から主人公へ移す
+      const e = easeInOut((p - FLY_ORBIT) / (1 - FLY_ORBIT))
+      orbitAt(1, flyPos)
+      flyPos.lerp(followPos, e)
+      flyLook.set(fly.cx, fly.cy, fly.cz).lerp(followLook, e)
+    }
+    camera.position.copy(flyPos)
+    camera.lookAt(flyLook)
+    player.setCameraOverride(flyOverride)
+  }
+  /** 描く前に: カメラ（空撮、または寄りから引き） */
   const introCamera = () => {
-    const p = introProgress()
-    player.setIntro(easeInOut(clamp((p - 0.04) / 0.96, 0, 1)))
+    const p = Math.min(1, introElapsed() / introLength())
+    if (fly) flyCamera(p)
+    else player.setIntro(easeInOut(clamp((p - 0.04) / 0.96, 0, 1)))
   }
   /** 描いた後に: モザイク・名前・終わり */
   const introAfterRender = () => {
-    const p = introProgress()
-    // モザイクは前半（55%）でほどけ、最後の 2 割で透けて消える
-    const m = Math.min(1, p / 0.55)
+    const t = introElapsed()
+    // モザイクは最初の 1.76 秒でほどけ、終わりぎわは透けて消える
+    const m = introMosaic ? Math.min(1, t / MOSAIC_MS) : 1
     const block = 1 + (MOSAIC_MAX - 1) * Math.pow(1 - m, 2.2)
     if (mosaicCtx && block > 1.5) {
       const w = Math.max(2, Math.round(window.innerWidth / block))
@@ -651,19 +727,43 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     } else {
       mosaic.hidden = true
     }
-    if (!introTitled && p >= 0.4) {
+    if (!introTitled && t >= (fly ? 1500 : INTRO_MS * 0.4)) {
       introTitled = true
       showRegionTitle(here.key)
     }
-    if (p >= 1) endIntro()
+    if (t >= introLength()) endIntro()
   }
+  /** 歩いてほかのワールドに初めて入った時の空撮（操作を止め、HUD を隠す） */
+  const startRegionFly = (key: RegionKey) => {
+    if (introOn || reduceMotionNow || !shouldFly(key)) return
+    introOn = true
+    introMosaic = false
+    // 名前はワールドが変わった時に出しているので、空撮の途中では出さない
+    introTitled = true
+    setupFly(key)
+    document.body.classList.add('world-intro')
+    syncInput()
+    introStart = performance.now()
+  }
+  introSkip.addEventListener('click', () => endIntro())
   const endIntro = () => {
     if (!introOn) return
     introOn = false
     introStart = null
+    if (fly) {
+      markFlown(fly.key)
+      fly = null
+      player.setCameraOverride(null)
+      document.body.classList.remove('world-fly')
+    }
     player.setIntro(null)
     mosaic.hidden = true
     document.body.classList.remove('world-intro')
+    // 飛ばした時も名前は出す
+    if (!introTitled) {
+      introTitled = true
+      showRegionTitle(here.key)
+    }
     syncInput()
     const done = introDone
     introDone = null
@@ -743,6 +843,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       spotHead.copy(spot.position).add(new THREE.Vector3(0, 2.2, 0))
       arrived = false
       showRegionTitle(regionKey)
+      // 初めてのワールドなら、ドローンの空撮でまず全体を見せる
+      startRegionFly(regionKey)
     }
     if (frames % 8 === 0 || !lightReady) {
       if (!lightReady) lightSnap = true
@@ -1043,11 +1145,18 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     prepareIntro: () => {
       introTitled = false
       introStart = null
-      // 「動きをへらす」では寄り・引きとモザイクをせず、名前だけ出す（playIntro で）
+      // 「動きをへらす」では空撮・寄り・引きとモザイクをせず、名前だけ出す（playIntro で）
       if (reduceMotionNow) return
       introOn = true
+      introMosaic = true
       document.body.classList.add('world-intro')
-      player.setIntro(0)
+      // 初めてのワールドなら空撮から、そうでなければ主人公の寄りから
+      if (shouldFly(here.key)) {
+        setupFly(here.key)
+        flyCamera(0)
+      } else {
+        player.setIntro(0)
+      }
       syncInput()
     },
     playIntro: () => {
