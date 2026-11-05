@@ -6,29 +6,29 @@
 
 - **生成**: [Suno](https://suno.com)（くにのアカウント、Pro プラン、2026-11-06）。カスタムモードで Instrumental（歌なし）にし、1 曲につき 1 回だけ生成した（1 回で 2 案。8 曲で 16 案）。スタイルの指定は共通の「instrumental, no vocals, warm acoustic, cozy claymation adventure game soundtrack, marimba, wooden flute, gentle hand percussion, seamless loop, light and friendly」に、曲ごとの楽器とテンポを足したもの。歌詞は入れていない
 - **ライセンス**: Suno の Pro プランは商用利用の権利つき（Suno の料金ページで確認、2026-11-06）。README のクレジットには「BGM: Suno で生成」と書く
-- **編集**（ffmpeg 8、numpy で区間を選ぶ）: 元の曲（95〜205 秒）からテンポを推定し、4 拍 × 小節の数で 40〜55 秒の区間を選んだ。区間の頭と、区間の終わりの直後の音の中身がいちばん似ている所を選び、曲の頭のイントロと終わりは避けた。区間の頭の 2.5 秒に、区間の直後の 2.5 秒をクロスフェードで重ねて、終わりから頭へ戻る所が元の曲の続きになるようにした。平均音量は -18 dB（ピークは -1 dB まで）にそろえ、ステレオ 128 kbps
+- **編集**（ffmpeg 8、numpy で区間を選ぶ）: 元の曲（95〜205 秒）からテンポを推定し、4 拍 × 小節の数で 70〜88 秒の区間を選んだ（11/6 に、くにの「30 秒くらいで次の曲になる」を受けて 40〜55 秒から延ばした。ジャングルの B 案は元の曲が 94.7 秒なので 65 秒）。区間の頭と、区間の終わりの直後の音の中身がいちばん似ている所を選び、曲の頭のイントロと終わりは避けた。区間の頭の 2.5 秒に、区間の直後の 2.5 秒をクロスフェードで重ねて、終わりから頭へ戻る所が元の曲の続きになるようにした。平均音量は -18 dB（ピークは -1 dB まで）にそろえ、ステレオ 128 kbps（1 曲 1.05〜1.38 MB）
 - **ループの余白**: mp3 の両端の数ミリ秒はデコードでぶれるので、ファイルにはループの前後に「ループの続き」を 0.25 秒ずつ足してある。再生側（`src/audio/sound.ts`）は `loops.json` に書いたループの長さを使って、内側だけをくり返す（環境音も同じ）
-- **2 案は両方使う**（くにの指示、2026-11-06）: `bgm-<場所>.mp3` が 1 曲目、`bgm-<場所>-2.mp3` が 2 曲目。それぞれループ 1 回分ずつ交互に流し、曲の切り替わりは 3 秒のクロスフェード（`src/audio/sound.ts`）。どちらを 1 曲目にするかは、継ぎ目の前後が似ている方にした
+- **2 案は両方使う**（くにの指示、2026-11-06）: `bgm-<場所>.mp3` が 1 曲目、`bgm-<場所>-2.mp3` が 2 曲目。それぞれループ 1 回分（62〜83 秒）ずつ交互に流し、曲の切り替わりは 3 秒のクロスフェード（`src/audio/sound.ts`）。どちらを 1 曲目にするかは、継ぎ目の前後が似ている方にした
 - 空の世界はまだ入れないワールドなので、`bgm-sky.mp3` はファイルだけ置いて、鳴らす所はまだ無い（水の世界は 11/6 に歩いて行けるようになったので、そこで鳴らす）
 
 | ファイル | 用途（鳴る所） | 使った案 | ループの長さ | 推定テンポ | サイズ |
 |---|---|---|---|---|---|
-| `bgm-home.mp3` | ホーム | A（元 123.5 s の 24.8 s から） | 48.3 s | 99 BPM | 782,190 B |
-| `bgm-savanna.mp3` | サバンナ | A（元 204.7 s の 77.5 s から） | 44.1 s | 103 BPM | 715,320 B |
-| `bgm-jungle.mp3` | ジャングル | A（元 127.6 s の 47.3 s から） | 40.1 s | 96 BPM | 651,371 B |
-| `bgm-north.mp3` | 北の世界 | A（元 163.2 s の 25.0 s から） | 55.0 s | 70 BPM | 889,189 B |
-| `bgm-south.mp3` | 南半球 | A（元 180.0 s の 27.0 s から） | 52.0 s | 92 BPM | 841,541 B |
-| `bgm-water.mp3` | 水の世界 | B（元 199.9 s の 20.5 s から） | 43.5 s | 66 BPM | 704,869 B |
-| `bgm-sky.mp3` | 空の世界（まだ鳴らさない） | B（元 184.9 s の 72.0 s から） | 40.1 s | 108 BPM（指定は 80。推定のずれの可能性あり） | 651,368 B |
-| `bgm-partner.mp3` | ふれあいワールドと、ともだち帳を開いている間 | B（元 148.2 s の 49.0 s から） | 52.9 s | 86 BPM | 856,172 B |
-| `bgm-home-2.mp3` | ホームの 2 曲目 | B（元 139.6 s の 74.5 s から） | 50.7 s | 99 BPM | 820,642 B |
-| `bgm-savanna-2.mp3` | サバンナの 2 曲目 | B（元 203.5 s の 107.3 s から） | 41.8 s | 103 BPM | 678,121 B |
-| `bgm-jungle-2.mp3` | ジャングルの 2 曲目 | B（元 94.7 s の 25.3 s から） | 52.7 s | 96 BPM | 851,991 B |
-| `bgm-north-2.mp3` | 北の世界の 2 曲目 | B（元 165.1 s の 56.0 s から） | 48.1 s | 70 BPM | 778,848 B |
-| `bgm-south-2.mp3` | 南半球の 2 曲目 | B（元 170.0 s の 106.3 s から） | 41.6 s | 92 BPM | 675,194 B |
-| `bgm-water-2.mp3` | 水の世界の 2 曲目 | A（元 194.0 s の 70.0 s から） | 43.5 s | 66 BPM | 704,869 B |
-| `bgm-sky-2.mp3` | 空の世界の 2 曲目（まだ鳴らさない） | A（元 177.2 s の 70.3 s から） | 52.1 s | 78 BPM | 842,793 B |
-| `bgm-partner-2.mp3` | ふれあい・パートナーの 2 曲目 | A（元 164.8 s の 32.0 s から） | 52.9 s | 86 BPM | 856,172 B |
+| `bgm-home.mp3` | ホーム | A（元 123.5 s の 35.8 s から） | 70.0 s | 99 BPM | 1,129,932 B |
+| `bgm-savanna.mp3` | サバンナ | A（元 204.7 s の 40.8 s から） | 83.6 s | 103 BPM | 1,346,856 B |
+| `bgm-jungle.mp3` | ジャングル | A（元 127.6 s の 16.8 s から） | 85.3 s | 96 BPM | 1,373,604 B |
+| `bgm-north.mp3` | 北の世界 | A（元 163.2 s の 21.5 s から） | 72.2 s | 70 BPM | 1,163,788 B |
+| `bgm-south.mp3` | 南半球 | A（元 180.0 s の 23.5 s から） | 70.2 s | 92 BPM | 1,132,859 B |
+| `bgm-water.mp3` | 水の世界 | B（元 199.9 s の 93.0 s から） | 79.7 s | 66 BPM | 1,284,160 B |
+| `bgm-sky.mp3` | 空の世界（まだ鳴らさない） | B（元 184.9 s の 60.8 s から） | 80.2 s | 108（指定は 80。推定のずれの可能性あり） BPM | 1,293,353 B |
+| `bgm-partner.mp3` | ふれあいワールドと、ともだち帳を開いている間 | B（元 148.2 s の 29.0 s から） | 80.8 s | 86 BPM | 1,302,134 B |
+| `bgm-home-2.mp3` | ホームの 2 曲目 | B（元 139.6 s の 13.8 s から） | 82.1 s | 99 BPM | 1,323,029 B |
+| `bgm-savanna-2.mp3` | サバンナの 2 曲目 | B（元 203.5 s の 56.5 s から） | 76.6 s | 103 BPM | 1,235,261 B |
+| `bgm-jungle-2.mp3` | ジャングルの 2 曲目（元の曲が短いので 65 秒） | B（元 94.7 s の 13.0 s から） | 65.2 s | 96 BPM | 1,052,612 B |
+| `bgm-north-2.mp3` | 北の世界の 2 曲目 | B（元 165.1 s の 49.0 s から） | 85.9 s | 70 BPM | 1,384,052 B |
+| `bgm-south-2.mp3` | 南半球の 2 曲目 | B（元 170.0 s の 65.5 s から） | 78.0 s | 92 BPM | 1,257,411 B |
+| `bgm-water-2.mp3` | 水の世界の 2 曲目 | A（元 194.0 s の 75.3 s から） | 76.1 s | 66 BPM | 1,226,482 B |
+| `bgm-sky-2.mp3` | 空の世界の 2 曲目（まだ鳴らさない） | A（元 177.2 s の 48.5 s から） | 82.8 s | 78 BPM | 1,333,477 B |
+| `bgm-partner-2.mp3` | ふれあいの 2 曲目 | A（元 164.8 s の 64.0 s から） | 83.6 s | 86 BPM | 1,346,856 B |
 
 ## 効果音・環境音（`se-*.mp3`、`amb-*.mp3`）
 
@@ -59,4 +59,4 @@
 
 ## Source of `public/audio` (English)
 
-Background music (`bgm-*.mp3`) was generated with [Suno](https://suno.com) (Pro plan, which includes commercial-use rights; 2026-11-06) as instrumentals, one generation (two takes) per track, then cut into 40-55 s seamless loops with ffmpeg. Both takes of each track are used: `bgm-<place>.mp3` and `bgm-<place>-2.mp3` alternate, one loop each, with a 3 s crossfade. `loops.json` holds the exact loop lengths; each file has 0.25 s of padding on both sides. Sound effects and ambience (`se-*.mp3`, `amb-*.mp3`) were generated with [ElevenLabs](https://elevenlabs.io) Sound Effects (API, model `eleven_text_to_sound_v2`, 2026-11-06), one generation each, then trimmed and level-matched with ffmpeg. They were generated on a paid ElevenLabs plan. The default "become friends" chime is synthesized in code (`src/ui/chime.ts`). No personal information is included.
+Background music (`bgm-*.mp3`) was generated with [Suno](https://suno.com) (Pro plan, which includes commercial-use rights; 2026-11-06) as instrumentals, one generation (two takes) per track, then cut into 65-86 s seamless loops with ffmpeg. Both takes of each track are used: `bgm-<place>.mp3` and `bgm-<place>-2.mp3` alternate, one loop each, with a 3 s crossfade. `loops.json` holds the exact loop lengths; each file has 0.25 s of padding on both sides. Sound effects and ambience (`se-*.mp3`, `amb-*.mp3`) were generated with [ElevenLabs](https://elevenlabs.io) Sound Effects (API, model `eleven_text_to_sound_v2`, 2026-11-06), one generation each, then trimmed and level-matched with ffmpeg. They were generated on a paid ElevenLabs plan. The default "become friends" chime is synthesized in code (`src/ui/chime.ts`). No personal information is included.
