@@ -11,13 +11,24 @@ import { clayCompile, toonMaterial } from '../render/toon'
  */
 export type HeroMove = 'idle' | 'walk' | 'run' | 'jump'
 
+export interface HeroOptions {
+  /** 全身の高さ（m） */
+  height: number
+  /** 地面と見分けやすくする（接地影と細い輪郭）。比べる時は false */
+  separation: boolean
+  /** 地面の高さ（接地影を地面に沿わせる） */
+  ground: (x: number, z: number) => number
+}
+
 export interface HeroModel {
   root: THREE.Group
+  /** 接地影。呼び出し側がシーンに足す（主人公が向きを変えても回らないよう、入れ物の外に置く）。分離なしなら null */
+  shadow: THREE.Mesh | null
   clipNames: string[]
   /** 骨の名前と親（報告用） */
   bones: Array<{ name: string; parent: string | null }>
-  /** speed: 水平の速さ（m/s）、airborne: 空中か */
-  update: (dt: number, speed: number, airborne: boolean) => void
+  /** speed: 水平の速さ（m/s）、air: 足元の地面からの高さ（m、地面にいれば 0） */
+  update: (dt: number, speed: number, air: number) => void
   move: () => HeroMove
   /** 歩行・走行のクリップの、そのまま再生した時の地面の速さ（m/s、大きさをそろえた後） */
   natural: { walk: number; run: number }
@@ -34,7 +45,87 @@ const STOP_BELOW = 0.2
 const CYCLE_MIN = 0.6
 const CYCLE_MAX = 1.7
 
-export async function loadHero(url: string, height: number): Promise<HeroModel> {
+/**
+ * 地面と見分けやすくする工夫（追従カメラの遠景で、黄色の服がサバンナの金の草原に溶けるため。服の色は変えない）
+ * - 接地影: 足元に濃いめのぼかした円。太陽の影とは別に、いつも真下に置く（体の高さに対する半径、濃さ）
+ * - 輪郭: 体を法線の方向に少し広げた裏面を暗い色で描く。太さは画面の上で一定（CSS の px）。霧で遠くは薄まる
+ */
+const SHADOW_RADIUS = 0.36
+const SHADOW_OPACITY = 0.62
+const SHADOW_COLOR = '#22160e'
+const OUTLINE_PX = 1.25
+const OUTLINE_COLOR = '#2a1b12'
+
+function createContactShadow(radius: number): THREE.Mesh | null {
+  const size = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  // alphaMap は明るさ（緑）を濃さに使うので、不透明の白→黒で描く
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  g.addColorStop(0, '#ffffff')
+  g.addColorStop(0.45, '#d9d9d9')
+  g.addColorStop(1, '#000000')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, size, size)
+  const tex = new THREE.CanvasTexture(canvas)
+  const geo = new THREE.PlaneGeometry(radius * 2, radius * 2)
+  geo.rotateX(-Math.PI / 2)
+  const mat = new THREE.MeshBasicMaterial({
+    color: SHADOW_COLOR,
+    alphaMap: tex,
+    transparent: true,
+    opacity: SHADOW_OPACITY,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -2,
+  })
+  const mesh = new THREE.Mesh(geo, mat)
+  mesh.name = 'hero-contact-shadow'
+  mesh.renderOrder = 2
+  return mesh
+}
+
+/** スキンの体に合わせて動く輪郭（同じ形・同じ骨で、法線の方向へ画面の上で OUTLINE_PX だけ広げた裏面） */
+function createOutline(mesh: THREE.SkinnedMesh): THREE.SkinnedMesh {
+  const uniforms = { uOutlinePx: { value: OUTLINE_PX }, uResolution: { value: new THREE.Vector2(1, 1) } }
+  const mat = new THREE.MeshBasicMaterial({ color: OUTLINE_COLOR, side: THREE.BackSide })
+  mat.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniforms)
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uOutlinePx;\nuniform vec2 uResolution;')
+      .replace(
+        '#include <project_vertex>',
+        `#include <project_vertex>
+        // 法線を画面の向きにして、その方向へ一定の画素ぶん外へずらす
+        vec3 outlineN = normalize( normalMatrix * objectNormal );
+        vec2 outlineDir = ( projectionMatrix * vec4( outlineN, 0.0 ) ).xy;
+        float outlineLen = length( outlineDir );
+        if ( outlineLen > 1e-5 ) gl_Position.xy += ( outlineDir / outlineLen ) * uOutlinePx * 2.0 / uResolution * gl_Position.w;`,
+      )
+  }
+  const outline = new THREE.SkinnedMesh(mesh.geometry, mat)
+  outline.name = 'hero-outline'
+  outline.bind(mesh.skeleton, mesh.bindMatrix)
+  outline.frustumCulled = false
+  outline.castShadow = false
+  const size = new THREE.Vector2()
+  outline.onBeforeRender = (renderer) => {
+    // 描く先（色補正のパスの画面、または画面そのもの）の画素数と、画面の倍率
+    const rt = renderer.getRenderTarget()
+    if (rt) size.set(rt.width, rt.height)
+    else renderer.getDrawingBufferSize(size)
+    uniforms.uResolution.value.copy(size)
+    uniforms.uOutlinePx.value = OUTLINE_PX * renderer.getPixelRatio()
+  }
+  return outline
+}
+
+export async function loadHero(url: string, opts: HeroOptions): Promise<HeroModel> {
+  const { height } = opts
   const loader = new GLTFLoader()
   loader.setMeshoptDecoder(MeshoptDecoder)
   const gltf = await loader.loadAsync(url)
@@ -57,6 +148,14 @@ export async function loadHero(url: string, height: number): Promise<HeroModel> 
     mesh.material = mat
     src.dispose()
   })
+  // 輪郭は体と同じ親に置く（スキンは骨の位置で決まるので、置き場所によらず体と重なる）
+  if (opts.separation) {
+    const skinned: THREE.SkinnedMesh[] = []
+    inner.traverse((o) => {
+      if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned.push(o as THREE.SkinnedMesh)
+    })
+    for (const m of skinned) m.parent?.add(createOutline(m))
+  }
 
   const find = (name: string) => inner.getObjectByName(name)
   const head = find('mixamorigHead') ?? find('mixamorig:Head')
@@ -179,7 +278,25 @@ export async function loadHero(url: string, height: number): Promise<HeroModel> 
   let wasAir = false
   let phase = 0 // 歩きと走りで足の運びをそろえる（0..1）
 
-  const update = (dt: number, speed: number, airborne: boolean) => {
+  const shadow = opts.separation ? createContactShadow(height * SHADOW_RADIUS) : null
+  const _w = new THREE.Vector3()
+  const _n = new THREE.Vector3()
+  const _up = new THREE.Vector3(0, 1, 0)
+
+  const update = (dt: number, speed: number, air: number) => {
+    const airborne = air > 0.05
+    if (shadow) {
+      // 足元の地面に沿わせる（斜面では傾ける）。跳ぶと小さく薄く
+      wrap.getWorldPosition(_w)
+      const gy = opts.ground(_w.x, _w.z)
+      const e = 0.4
+      _n.set(opts.ground(_w.x - e, _w.z) - opts.ground(_w.x + e, _w.z), 2 * e, opts.ground(_w.x, _w.z - e) - opts.ground(_w.x, _w.z + e)).normalize()
+      shadow.position.set(_w.x, gy + 0.03, _w.z)
+      shadow.quaternion.setFromUnitVectors(_up, _n)
+      const k = Math.min(air / 3, 1)
+      shadow.scale.setScalar(1 - k * 0.35)
+      ;(shadow.material as THREE.MeshBasicMaterial).opacity = SHADOW_OPACITY * (1 - k * 0.6)
+    }
     // 地面にいる時の歩き・走りの割合（速さで連続的に）
     const runK = THREE.MathUtils.smoothstep(speed, RUN_FROM, RUN_FULL)
     if (airborne) move = 'jump'
@@ -232,5 +349,5 @@ export async function loadHero(url: string, height: number): Promise<HeroModel> 
     mixer.update(dt)
   }
 
-  return { root: wrap, clipNames, bones, update, move: () => move, natural }
+  return { root: wrap, shadow, clipNames, bones, update, move: () => move, natural }
 }
