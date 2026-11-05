@@ -14,7 +14,7 @@ const MOTE_RANGE = 26
 const BIRD_COUNT = 9
 
 /** 丸くぼやけた粒のテクスチャを、その場で描く（画像ファイルは使わない） */
-function createMoteTexture(): THREE.Texture | null {
+export function createMoteTexture(): THREE.Texture | null {
   const size = 64
   const canvas = document.createElement('canvas')
   canvas.width = size

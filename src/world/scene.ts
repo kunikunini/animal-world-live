@@ -19,7 +19,21 @@ const SKY_BELOW = new THREE.Color('#c9c2a6')
 const SUN_GLOW = new THREE.Color('#fff2cc')
 const FOG_COLOR = new THREE.Color('#d9e9f3')
 
-function createSky(sunDir: THREE.Vector3): THREE.Mesh {
+/** 光の向き。昼下がりの斜光。仰角 約38度、西寄り（南西）。影は長すぎず、面の向きで色の段差が出る */
+export const SUN_LIGHT_DIR = new THREE.Vector3(-0.62, 0.62, 0.48)
+/** 空に描く太陽の円盤の方角（xz）。光と同じ南西。仰角はワールドごとに main.ts で決める */
+export const SUN_AZIMUTH = { x: SUN_LIGHT_DIR.x, z: SUN_LIGHT_DIR.z }
+const azLen = Math.hypot(SUN_AZIMUTH.x, SUN_AZIMUTH.z)
+SUN_AZIMUTH.x /= azLen
+SUN_AZIMUTH.z /= azLen
+
+/** 仰角（度）から、空に描く太陽の向きを出す。方角は光と同じ */
+export function sunDiscDir(elevDeg: number, out: THREE.Vector3): THREE.Vector3 {
+  const e = (elevDeg * Math.PI) / 180
+  return out.set(Math.cos(e) * SUN_AZIMUTH.x, Math.sin(e), Math.cos(e) * SUN_AZIMUTH.z)
+}
+
+function createSky(): THREE.Mesh {
   const geo = new THREE.SphereGeometry(420, 32, 16)
   const mat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
@@ -29,8 +43,12 @@ function createSky(sunDir: THREE.Vector3): THREE.Mesh {
       uTop: { value: SKY_TOP },
       uHorizon: { value: SKY_HORIZON },
       uBelow: { value: SKY_BELOW },
-      uGlow: { value: SUN_GLOW },
-      uSunDir: { value: sunDir.clone().normalize() },
+      uGlow: { value: SUN_GLOW.clone() },
+      // 空に描く太陽。光の向きとは別に、見上げた時・振り返った時に画面へ入る高さに置く（main.ts がワールドごとに動かす）
+      uSunDir: { value: sunDiscDir(20, new THREE.Vector3()) },
+      // 円盤の大きさ（見込み角の cos）と、まわりの光の輪の強さ
+      uDisc: { value: Math.cos((4 * Math.PI) / 180) },
+      uHalo: { value: 1 },
     },
     vertexShader: /* glsl */ `
       varying vec3 vDir;
@@ -46,6 +64,8 @@ function createSky(sunDir: THREE.Vector3): THREE.Mesh {
       uniform vec3 uBelow;
       uniform vec3 uGlow;
       uniform vec3 uSunDir;
+      uniform float uDisc;
+      uniform float uHalo;
       varying vec3 vDir;
       void main() {
         vec3 d = normalize(vDir);
@@ -59,9 +79,10 @@ function createSky(sunDir: THREE.Vector3): THREE.Mesh {
           col = mix(uHorizon, uBelow, t);
         }
         float s = max(dot(d, uSunDir), 0.0);
-        float glow = pow(s, 8.0) * 0.25 + pow(s, 64.0) * 0.6;
-        // 太陽の円盤。縁はやわらかく
-        float disc = smoothstep(0.9988, 0.9996, s) * 1.4;
+        // 太陽のまわりの光の輪。広い照り返しと、円盤のすぐ外の明るい輪
+        float glow = (pow(s, 6.0) * 0.22 + pow(s, 48.0) * 0.55) * uHalo;
+        // 太陽の円盤。縁はやわらかく。大きさはワールドごと（uDisc）
+        float disc = smoothstep(uDisc - 0.0012, uDisc + 0.0004, s) * 1.4;
         col += uGlow * (glow + disc);
         // 地平線ぎわの霞
         float haze = exp(-abs(y) * 7.0) * 0.22;
@@ -98,11 +119,9 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
 
   const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 900)
 
-  // 低い太陽。西（-x）からの暖かい逆光で、影を長くする
-  // 昼下がりの斜光。仰角 約38度、西寄り。影は長すぎず、面の向きで色の段差が出る
-  const sunDir = new THREE.Vector3(-0.62, 0.62, 0.48)
+  // 光の向きは SUN_LIGHT_DIR（南西の上）。動物の顔に日が当たる向きなので、ここは変えない
   const sun = new THREE.DirectionalLight('#fff0d2', 2.1)
-  sun.position.copy(sunDir).multiplyScalar(120)
+  sun.position.copy(SUN_LIGHT_DIR).multiplyScalar(120)
   sun.castShadow = true
   sun.shadow.mapSize.set(2048, 2048)
   sun.shadow.camera.near = 10
@@ -121,7 +140,7 @@ export function createScene(canvas: HTMLCanvasElement, maxDpr: number): SceneSet
   const hemi = new THREE.HemisphereLight('#bcd8ff', '#8c7aa6', 0.65)
   scene.add(hemi)
 
-  const sky = createSky(sunDir)
+  const sky = createSky()
   scene.add(sky)
 
   let dpr = Math.min(window.devicePixelRatio || 1, maxDpr)

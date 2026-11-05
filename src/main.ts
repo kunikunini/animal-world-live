@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { createScene } from './world/scene'
+import { createScene, sunDiscDir } from './world/scene'
 import { createTerrain } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
@@ -12,6 +12,7 @@ import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
 import { createAtmosphere } from './world/atmosphere'
 import { createClouds } from './world/clouds'
+import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { vividToon } from './render/toon'
 import { LIONS, SPOT } from './world/layout'
@@ -172,6 +173,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const clouds = createClouds()
   scene.add(clouds.group)
 
+  // 北の雪とジャングルのもや。濃さはいるワールドの重みで決める
+  const weather = createWeather({ mobile })
+  scene.add(weather.group)
+
   // 風景の生き物（鳥の群れ、遠くで草を食む生き物）。名前も出会いも無い
   const fauna = createFauna({ mobile, colliders: props.colliders })
   scene.add(fauna.group)
@@ -319,6 +324,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     lions.forEach((l) => l.setReduceMotion(on))
     encounterIcon.setReduceMotion(on)
     fauna.setReduceMotion(on)
+    clouds.setReduceMotion(on)
+    weather.setReduceMotion(on)
   }
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
@@ -359,7 +366,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
   // ほかのワールドはいままでの値のまま
   const baseExposure = renderer.toneMappingExposure
-  const skyU = (sky.material as THREE.ShaderMaterial).uniforms as { uTop: { value: THREE.Color }; uHorizon: { value: THREE.Color } }
+  const skyU = (sky.material as THREE.ShaderMaterial).uniforms as {
+    uTop: { value: THREE.Color }
+    uHorizon: { value: THREE.Color }
+    uGlow: { value: THREE.Color }
+    uSunDir: { value: THREE.Vector3 }
+    uDisc: { value: number }
+    uHalo: { value: number }
+  }
   const fog = scene.fog as THREE.Fog
   interface Light {
     exposure: number
@@ -374,6 +388,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     /** PC の色補正（スマホは色補正なし）。サバンナは素の色を鮮やかにしたので、重ねすぎないよう弱める */
     gradeSat: number
     gradeContrast: number
+    /**
+     * 空に描く太陽。方角は光（南西）と同じで、仰角だけ低く置く。
+     * 光の仰角（38度）のままだと、ふつうのカメラ（画面の上端は水平から約17度）では振り返っても見えないため。
+     * 影の向きは光のままなので、太陽と反対側に伸びる関係は保たれる
+     */
+    sunElev: number
+    sunGlow: THREE.Color
+    /** 円盤の見込み半径（度） */
+    sunDisc: number
+    /** まわりの光の輪の強さ */
+    sunHalo: number
   }
   const baseLight = (): Light => ({
     exposure: baseExposure,
@@ -387,6 +412,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     far: fog.far,
     gradeSat: postfx.grade.saturation,
     gradeContrast: postfx.grade.contrast,
+    sunElev: 20,
+    sunGlow: skyU.uGlow.value.clone(),
+    sunDisc: 4,
+    sunHalo: 1,
   })
   const LIGHT: Record<RegionKey, Light> = {
     africa: {
@@ -401,12 +430,23 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       far: 520,
       gradeSat: 1.04,
       gradeContrast: 1.06,
+      // サバンナ: 大きく暖かい太陽
+      sunElev: 20,
+      sunGlow: new THREE.Color('#fff4d0'),
+      sunDisc: 4.2,
+      sunHalo: 1.3,
     },
-    north: baseLight(),
-    jungle: baseLight(),
-    south: baseLight(),
+    // 北の世界: 低く白い冬の太陽。輪は弱い
+    north: { ...baseLight(), sunElev: 13, sunGlow: new THREE.Color('#f7f3ec'), sunDisc: 3.2, sunHalo: 0.7 },
+    // ジャングル: 高めで、湿った空気ににじむ広い輪
+    jungle: { ...baseLight(), sunElev: 26, sunGlow: new THREE.Color('#fbf3d6'), sunDisc: 3.4, sunHalo: 1.7 },
+    // 南半球: 少し低く、オレンジがかった大きな太陽
+    south: { ...baseLight(), sunElev: 18, sunGlow: new THREE.Color('#ffdca6'), sunDisc: 4.6, sunHalo: 1.2 },
   }
   const lightTarget: Light = { ...baseLight() }
+  // 空の太陽の仰角と大きさ（度）。ワールドの重みで目標が変わり、ほかの光と同じ速さで寄せる
+  let sunElev = lightTarget.sunElev
+  let sunDisc = lightTarget.sunDisc
   const weights: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
   const fogTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
@@ -456,6 +496,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     props.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
+    weather.update(time, dt, camera.position, weights)
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
 
@@ -482,6 +523,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       lightTarget.far = 0
       lightTarget.gradeSat = 0
       lightTarget.gradeContrast = 0
+      lightTarget.sunElev = 0
+      lightTarget.sunDisc = 0
+      lightTarget.sunHalo = 0
+      lightTarget.sunGlow.setRGB(0, 0, 0)
       lightTarget.sky.setRGB(0, 0, 0)
       lightTarget.ground.setRGB(0, 0, 0)
       lightTarget.top.setRGB(0, 0, 0)
@@ -505,6 +550,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         lightTarget.far += L.far * wk
         lightTarget.gradeSat += L.gradeSat * wk
         lightTarget.gradeContrast += L.gradeContrast * wk
+        lightTarget.sunElev += L.sunElev * wk
+        lightTarget.sunDisc += L.sunDisc * wk
+        lightTarget.sunHalo += L.sunHalo * wk
+        lightTarget.sunGlow.r += L.sunGlow.r * wk
+        lightTarget.sunGlow.g += L.sunGlow.g * wk
+        lightTarget.sunGlow.b += L.sunGlow.b * wk
         lightTarget.top.r += L.top.r * wk
         lightTarget.top.g += L.top.g * wk
         lightTarget.top.b += L.top.b * wk
@@ -527,6 +578,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     postfx.grade.contrast += (lightTarget.gradeContrast - postfx.grade.contrast) * lk
     skyU.uTop.value.lerp(lightTarget.top, lk)
     skyU.uHorizon.value.lerp(lightTarget.horizon, lk)
+    skyU.uGlow.value.lerp(lightTarget.sunGlow, lk)
+    sunElev += (lightTarget.sunElev - sunElev) * lk
+    sunDisc += (lightTarget.sunDisc - sunDisc) * lk
+    sunDiscDir(sunElev, skyU.uSunDir.value)
+    skyU.uDisc.value = Math.cos((sunDisc * Math.PI) / 180)
+    skyU.uHalo.value += (lightTarget.sunHalo - skyU.uHalo.value) * lk
     for (const w of worldSpots) if (w !== here) w.spot.update(time, 999)
 
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
@@ -694,6 +751,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       props,
       shell,
       lions,
+      clouds,
+      weather,
+      weights,
       views: viewNames(),
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
