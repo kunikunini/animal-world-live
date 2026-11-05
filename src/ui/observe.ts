@@ -306,6 +306,10 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   }
 
   closeBtn.addEventListener('click', () => setOpen(false))
+  // パネルの外（暗い地の部分）を押しても戻れる。PC では浮いたカードの周り
+  root.addEventListener('click', (e) => {
+    if (open && e.target === root) setOpen(false)
+  })
   window.addEventListener('keydown', (e) => {
     if (open && e.key === 'Escape') {
       // 下に開いているともだち帳まで閉じないように、ここで止める

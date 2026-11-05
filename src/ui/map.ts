@@ -47,6 +47,10 @@ export function createMapView(): MapView {
   }
 
   closeBtn.addEventListener('click', () => setOpen(false))
+  // シートの外（暗い地の部分）を押しても閉じる
+  root.addEventListener('click', (e) => {
+    if (open && e.target === root) setOpen(false)
+  })
   window.addEventListener('keydown', (e) => {
     if (open && e.key === 'Escape') setOpen(false)
   })
