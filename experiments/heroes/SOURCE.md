@@ -10,3 +10,4 @@
 - `public/models/hero-<id>.glb`: 上の入力から Meshy（Pro）の Image to 3D で生成し、ヒューマノイドのリグ（身長 1.2 m）と、リグの時に自動で付いた「歩く」「走る」を付けてダウンロードし（スケルトンのテンプレートは Mixamo）、gltf-transform で最適化したもの。**生成時のライセンス設定は「プライベート」**（黄色い子・ライオンと同じ）
 - `raw/`: Meshy から落としたままの GLB（コミットしない）
 - `shots/<id>/meshy-*.jpg`: Meshy の画面を撮ったもの。`shots/<id>/world-*.jpg`: このプロジェクトのゲーム画面
+- `tools/optimize.sh`・`tools/move-weights-to-head.py`: 最適化の手順と、三つ編みの子の重みの書き換え（このリポジトリで書いたもの）
