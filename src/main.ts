@@ -204,9 +204,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const fix = new URLSearchParams(location.search).get('fix') !== 'off'
     // &mat=raw で Meshy の素材のまま（比較用）。既定はトゥーン素材に差し替える
     const toon = new URLSearchParams(location.search).get('mat') !== 'raw'
+    // アレックスは 11/5 に Pro で作り直した版（alex-ai-v2 = meshy-alex-clay-v2-walk-opt.glb、四足リグ＋歩行）が既定。
+    // &alex=<file> で別のファイルに差し替えられる（例: &alex=alex-ai で旧クレイ版の静止モデル）
+    const alexFile = new URLSearchParams(location.search).get('alex') || 'alex-ai-v2'
     const files: Record<string, string> =
       aiModel === 'ai'
-        ? { alex: 'alex-ai', angie: 'angie-ai', riley: 'riley-ai', claire: 'claire-ai', carla: 'kara-ai' }
+        ? { alex: alexFile, angie: 'angie-ai', riley: 'riley-ai', claire: 'claire-ai', carla: 'kara-ai' }
         : { alex: 'alex-ai-real' }
     for (const [id, file] of Object.entries(files)) {
       const lion = lions.find((l) => l.id === id)
