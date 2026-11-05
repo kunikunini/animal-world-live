@@ -46,7 +46,7 @@ import { createRegionTitle } from './ui/regionTitle'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
-import { getAnimal, type Animal } from './data/animals'
+import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
@@ -273,6 +273,64 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           wanderers.push(w)
         })
         .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
+    }
+  }
+  // ほかのワールドの子の生成モデル（ライオンと同じ作り方: 写真を参照したクレイ版の絵 → Meshy → 四足リグ＋歩行）。
+  // 既定は生成モデル。?model=primitive（全部）か、種ごとの ?tiger=primitive・?capybara=primitive でプリミティブ版（伏せ）に戻して見比べられる。
+  // プリミティブ版の無い子（グラン）は place の場所に、モデルが読めた時だけ新しく置く（読めなければ居ないまま。?zebra=off でも置かない）
+  {
+    const q = new URLSearchParams(location.search)
+    const AI_RESIDENTS: {
+      key: string
+      species: string
+      name: string
+      file: string
+      posture: PostureFix
+      walk: { speed: number; radius: number; idle: [number, number] }
+      /** 尾の無い子: 止まっている間の尾の揺れ（生活感レイヤー）も骨に写さない */
+      noTail?: boolean
+      /** プリミティブ版が無い子の置き場所（体の長さ m は群れの座標。ライオンの成獣は 2.9） */
+      place?: { x: number; z: number; yaw: number; length: number }
+    }[] = [
+      // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
+      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [8, 16] } },
+      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
+      // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
+      // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
+      // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
+      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] } },
+      // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
+      // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
+      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.5, idle: [6, 14] }, place: { x: -22, z: 14, yaw: 0.9, length: 3.3 } },
+    ]
+    for (const r of AI_RESIDENTS) {
+      if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
+      const animal = ANIMALS.find((a) => a.species === r.species && a.name === r.name)
+      if (!animal) continue
+      let host = lions.find((l) => l.id === animal.id)
+      if (!host && !r.place) continue
+      const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
+      loadAiLion(`/models/${r.file}.glb`, { length: host ? primitiveLength(host.group) : r.place!.length, posture })
+        .then((ai) => {
+          if (!host) {
+            // 新しく置く子: 入れ物だけ作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる
+            host = createLion({ id: animal.id, x: r.place!.x, z: r.place!.z, yaw: r.place!.yaw })
+            vividToon(host.group)
+            scene.add(host.group)
+            props.colliders.push(host.collider)
+            host.setReduceMotion(reduceMotionNow)
+            lions.push(host)
+            labels.add(host.id, nameOf(host.id))
+          }
+          // 尾の無い子は、Lion.update が書く尾の揺れを使わない入れ物に向ける（ai.parts.tail は 0 のまま）
+          host.swapModel(ai.model, r.noTail ? { ...ai.parts, tail: new THREE.Object3D() } : ai.parts)
+          host.headHeight = ai.headHeight
+          aiLions[r.key] = ai
+          const w = createLionWander(host, ai, props.colliders, r.walk)
+          w.setReduceMotion(reduceMotionNow)
+          wanderers.push(w)
+        })
+        .catch((err) => console.warn(r.place ? '[animals-ai] model not loaded; not placed' : '[animals-ai] model not loaded; keeping primitive', r.key, err))
     }
   }
 
