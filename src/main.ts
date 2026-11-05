@@ -41,7 +41,7 @@ import { animalName, applyStatic, getLang, onLangChange, t } from './ui/i18n'
 import { createFauna } from './world/fauna'
 import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
-import { getAnimal, type Animal } from './data/animals'
+import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
@@ -252,6 +252,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           wanderers.push(w)
         })
         .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
+    }
+  }
+  // ほかのワールドの子の生成モデル（exp/animals-1。ライオンと同じ作り方: クレイ版の絵 → Meshy → 四足リグ＋歩行）。
+  // 既定は生成モデル。?model=primitive（全部）か、種ごとの ?tiger=primitive でプリミティブ版（伏せ）に戻して見比べられる
+  {
+    const q = new URLSearchParams(location.search)
+    const AI_RESIDENTS: { key: string; species: string; name: string; file: string; posture: PostureFix; walk: { speed: number; radius: number; idle: [number, number] } }[] = [
+      // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
+      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [8, 16] } },
+    ]
+    for (const r of AI_RESIDENTS) {
+      if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive') continue
+      const animal = ANIMALS.find((a) => a.species === r.species && a.name === r.name)
+      const host = animal && lions.find((l) => l.id === animal.id)
+      if (!host) continue
+      const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
+      loadAiLion(`/models/${r.file}.glb`, { length: primitiveLength(host.group), posture })
+        .then((ai) => {
+          host.swapModel(ai.model, ai.parts)
+          host.headHeight = ai.headHeight
+          aiLions[r.key] = ai
+          const w = createLionWander(host, ai, props.colliders, r.walk)
+          w.setReduceMotion(reduceMotionNow)
+          wanderers.push(w)
+        })
+        .catch((err) => console.warn('[animals-ai] model not loaded; keeping primitive', r.key, err))
     }
   }
 
