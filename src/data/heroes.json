@@ -1,0 +1,9 @@
+[
+  {
+    "id": "yellow",
+    "model": "/models/hero-boy.glb",
+    "thumb": "/heroes/yellow.webp",
+    "scale": 0.59,
+    "label": { "ja": "黄色いジャケットの子", "en": "Yellow jacket" }
+  }
+]

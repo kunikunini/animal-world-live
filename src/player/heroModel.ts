@@ -32,6 +32,10 @@ export interface HeroModel {
   move: () => HeroMove
   /** 歩行・走行のクリップの、そのまま再生した時の地面の速さ（m/s、大きさをそろえた後） */
   natural: { walk: number; run: number }
+  /** GLB にかけた拡大率（高さを height にそろえるため。記録用） */
+  fit: number
+  /** 別の子に替える時: 外してから呼ぶ。形・素材・画像・アニメを手放す */
+  dispose: () => void
 }
 
 /**
@@ -349,5 +353,29 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
     mixer.update(dt)
   }
 
-  return { root: wrap, shadow, clipNames, bones, update, move: () => move, natural }
+  const dispose = () => {
+    mixer.stopAllAction()
+    mixer.uncacheRoot(inner)
+    const done = new Set<object>()
+    const free = (o: { dispose: () => void } | null | undefined) => {
+      if (!o || done.has(o)) return
+      done.add(o)
+      o.dispose()
+    }
+    const freeMesh = (m: THREE.Mesh) => {
+      free(m.geometry)
+      for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
+        const tm = mat as THREE.MeshBasicMaterial
+        free(tm.map)
+        free(tm.alphaMap)
+        free(mat)
+      }
+    }
+    wrap.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) freeMesh(o as THREE.Mesh)
+    })
+    if (shadow) freeMesh(shadow)
+  }
+
+  return { root: wrap, shadow, clipNames, bones, update, move: () => move, natural, fit: s, dispose }
 }

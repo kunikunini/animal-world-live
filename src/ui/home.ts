@@ -1,9 +1,12 @@
 import type { FriendBookStore } from '../data/friends'
+import { HEROES, getHeroId } from '../data/heroes'
+import { getLang, onLangChange } from './i18n'
 
 /**
  * ホーム: キービジュアル 1 枚と、入口（「のぞいてみる」と絵の中の双眼鏡）、ともだち帳の居場所。
  * 絵は画面の縦横比で CSS が選ぶ。
  * まだ帳で見ていない新しいともだちがいれば、帳のボタンに印が付く（印は帳を閉じた時に消える）。
+ * 「だれで冒険する？」: 名簿の子どもたちを同じ大きさで並べ、押した子を選ぶ（選んだ子に輪と印）。矢印キーでも動かせる。
  */
 export interface HomeView {
   show: () => void
@@ -16,6 +19,8 @@ export interface HomeView {
   setReduceMotion: (on: boolean) => void
   /** WebGL が無い時: 入口を無効にして案内を出す */
   showFallback: () => void
+  /** 「だれで冒険する？」で子を選んだ時（名簿の id） */
+  onHero: (fn: (id: string) => void) => void
 }
 
 export function createHome(store: FriendBookStore): HomeView {
@@ -51,6 +56,55 @@ export function createHome(store: FriendBookStore): HomeView {
   bookBtn.addEventListener('click', openBook)
   fallbackBook.addEventListener('click', openBook)
 
+  // だれで冒険する？
+  const pickRow = document.getElementById('home-pick-row') as HTMLElement
+  const heroListeners: Array<(id: string) => void> = []
+  let picked = getHeroId()
+  const picks = HEROES.map((h) => {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'home-pick-btn'
+    b.setAttribute('role', 'radio')
+    b.dataset.hero = h.id
+    const img = document.createElement('img')
+    img.src = h.thumb
+    img.alt = ''
+    img.decoding = 'async'
+    img.draggable = false
+    b.appendChild(img)
+    pickRow.appendChild(b)
+    return b
+  })
+  const syncPick = () => {
+    const lang = getLang()
+    picks.forEach((b, i) => {
+      const on = HEROES[i].id === picked
+      b.setAttribute('aria-checked', String(on))
+      b.setAttribute('aria-label', HEROES[i].label[lang])
+      b.title = HEROES[i].label[lang]
+      b.tabIndex = on ? 0 : -1
+    })
+  }
+  const pick = (i: number, focus = false) => {
+    const id = HEROES[i].id
+    if (focus) picks[i].focus()
+    if (id === picked) return
+    picked = id
+    syncPick()
+    heroListeners.forEach((fn) => fn(id))
+  }
+  picks.forEach((b, i) => {
+    b.addEventListener('click', () => pick(i))
+    b.addEventListener('keydown', (e) => {
+      const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+      if (!step) return
+      e.preventDefault()
+      pick((i + step + picks.length) % picks.length, true)
+    })
+  })
+  syncPick()
+  onLangChange(syncPick)
+
   return {
     show: () => {
       open = true
@@ -80,6 +134,9 @@ export function createHome(store: FriendBookStore): HomeView {
       fallback.hidden = false
       enterBtn.disabled = true
       scope.disabled = true
+    },
+    onHero: (fn) => {
+      heroListeners.push(fn)
     },
   }
 }

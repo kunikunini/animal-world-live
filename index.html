@@ -97,6 +97,12 @@
         <button id="entry-book" class="btn home-book" type="button"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span><span id="home-new-dot" class="badge-dot" hidden></span></button>
       </div>
 
+      <!-- だれで冒険する？: 名簿（src/data/heroes.json）の子どもたちを対等に並べ、押した子を選ぶ（選んだ子は次に開いた時も同じ） -->
+      <div id="home-pick" class="home-pick">
+        <span id="home-pick-title" class="home-pick-title" data-i18n="pickHero">だれで冒険する？</span>
+        <div id="home-pick-row" class="home-pick-row" role="radiogroup" aria-labelledby="home-pick-title"></div>
+      </div>
+
       <div class="home-cta">
         <svg class="home-spark l" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><g stroke="#ffc531" stroke-width="8"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g><g stroke="#fff6cf" stroke-width="3.5"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g></g></svg>
         <svg class="home-spark r" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><g stroke="#ffc531" stroke-width="8"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g><g stroke="#fff6cf" stroke-width="3.5"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g></g></svg>
