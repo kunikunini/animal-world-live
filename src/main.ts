@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { createScene, sunDiscDir } from './world/scene'
-import { createTerrain } from './world/terrain'
+import { createTerrain, terrainHeight } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
 import { createResidents } from './world/residents'
@@ -8,6 +8,8 @@ import { OUTER_REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
+import { loadHero } from './player/heroModel'
+import type { HeroModel } from './player/heroModel'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
 import { createAtmosphere } from './world/atmosphere'
@@ -267,6 +269,29 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   scene.add(player.object)
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
+
+  // プレイヤーの姿は Meshy で生成した主人公が既定（操作はそのまま）。?hero=off でいままでの姿。
+  // 高さはいままでの姿（入れ物の最初の子、2.03m）の 0.59 倍（1.20m）を既定にする。読めなければいままでの姿のまま続ける。
+  // 比べる用: &heroSep=off で接地影と輪郭なし、&heroScale=1 でいままでの姿と同じ高さ（ほかの数でも掛けられる）
+  const HERO_SCALE = 0.59
+  let hero: HeroModel | null = null
+  const heroPrev = new THREE.Vector3()
+  let heroSpeed = 0
+  const heroQuery = new URLSearchParams(location.search)
+  if (heroQuery.get('hero') !== 'off') {
+    const figure = player.object.children[0]
+    const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
+    const heroScale = Number(heroQuery.get('heroScale') ?? HERO_SCALE) || HERO_SCALE
+    loadHero('/models/hero-boy.glb', { height: figureHeight * heroScale, separation: heroQuery.get('heroSep') !== 'off', ground: terrainHeight })
+      .then((loaded) => {
+        figure.visible = false
+        player.object.add(loaded.root)
+        if (loaded.shadow) scene.add(loaded.shadow)
+        heroPrev.copy(player.object.position)
+        hero = loaded
+      })
+      .catch((err) => console.warn('hero model not loaded; keeping primitive', err))
+  }
 
   hud.onJump(() => player.jump())
 
@@ -606,6 +631,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
     walkX = player.object.position.x
     walkZ = player.object.position.z
+    if (hero) {
+      // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
+      const p = player.object.position
+      const moved = Math.hypot(p.x - heroPrev.x, p.z - heroPrev.z)
+      const speed = dt > 0 && moved < 2 ? moved / dt : 0
+      heroSpeed += (speed - heroSpeed) * Math.min(1, dt * 12)
+      heroPrev.copy(p)
+      hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z)))
+    }
     props.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
@@ -870,6 +904,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       props,
       shell,
       lions,
+      hero: () => hero,
       clouds,
       weather,
       weights,
