@@ -48,5 +48,15 @@
       "ja": "紫の服の子",
       "en": "Purple hoodie"
     }
+  },
+  {
+    "id": "braids",
+    "model": "/models/hero-braids.glb",
+    "thumb": "/heroes/braids.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "三つ編みの子",
+      "en": "Braids"
+    }
   }
 ]
