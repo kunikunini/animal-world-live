@@ -24,3 +24,6 @@ public/models/*
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
+
+# 画像生成の原本（参照画像・キャラクターシート）。DEVLOG で参照するが、原本はリポジトリの外で保管する
+artwork/
