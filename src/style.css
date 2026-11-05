@@ -186,7 +186,6 @@ button {
 
 .btn:focus-visible,
 .icon-btn:focus-visible,
-.fcard:focus-visible,
 .chip:focus-visible,
 .toggle:focus-within {
   outline: 3px solid var(--sky);
@@ -1619,127 +1618,279 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
 }
 
 /* ==========================================================================
-   ともだち帳: 顔のカードグリッド。カード全体がボタン
+   ともだち帳: LINE のトーク一覧に似た形。スマホは全画面、PC はスマホ大の縦長パネル。
+   上は水色の帯（見出し・しぼりこみ）、中は白い行、下は紺のタブ。トーク画面は同じパネルの中で切り替える
    ========================================================================== */
-.fgrid {
-  list-style: none;
-  margin: 0;
-  padding: 4px 2px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+:root {
+  --bk-top: #74c6ff;
+  --bk-top-deep: #4fb3fb;
+  --bk-bar: #1f2a44;
+  --bk-mine: #ffd233;
+  --bk-floor: #fbf4e4;
 }
 
-.fcard {
-  width: 100%;
-  padding: 8px 8px 14px;
-  border: 0;
-  border-radius: var(--r-lg);
+.book .book-panel {
+  top: 0;
+  bottom: 0;
+  max-height: none;
+  padding: 0;
+  border-radius: 0;
   background: var(--paper);
-  box-shadow: var(--shadow-card);
-  text-align: center;
-  cursor: pointer;
+  overflow: hidden;
+}
+
+.bk-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.bk-page.is-refresh {
+  animation: refresh-in 0.3s var(--ease-soft);
+}
+
+.bk-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: calc(8px + var(--safe-top)) 12px 8px;
+  background: var(--bk-top);
   color: var(--ink);
+}
+
+.bk-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.bk-title .ico {
+  width: 26px;
+  height: 26px;
+  color: var(--ink);
+}
+
+.bk-head-spacer {
+  flex: none;
+  width: 44px;
+}
+
+/* 帯の上の丸いボタン（閉じる・戻る） */
+.bk-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.fcard:active {
-  transform: scale(0.97);
+.bk-icon:hover {
+  background: rgba(255, 255, 255, 0.8);
 }
 
-/* 登録してからまだ帳で見ていない子: 金の輪と「あたらしい」の札（数は出さない） */
-.fcard.is-new {
-  position: relative;
-  box-shadow: 0 0 0 3px var(--gold), var(--shadow-card);
-  animation: card-glow 1.4s ease-in-out 3;
+.bk-icon:active {
+  transform: scale(0.94);
 }
 
-.is-still .fcard.is-new {
-  animation: none;
+.bk-icon .ico {
+  width: 24px;
+  height: 24px;
 }
 
-@keyframes card-glow {
-  0%, 100% { box-shadow: 0 0 0 3px var(--gold), var(--shadow-card); }
-  50% { box-shadow: 0 0 0 3px var(--gold), 0 0 22px 6px rgba(244, 194, 66, 0.75), var(--shadow-card); }
+/* しぼりこみの丸い札（すべて／あたらしい／ワールド名） */
+.bk-chips {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 2px 12px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--bk-top);
 }
 
-.tag-new {
-  position: absolute;
-  left: 14px;
-  top: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px 3px 8px;
+.bk-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.bk-chip {
+  flex: none;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
   border-radius: var(--r-pill);
-  background: var(--gold);
+  background: rgba(255, 255, 255, 0.85);
   color: var(--ink);
-  font-size: var(--fs-caption);
+  font: inherit;
+  font-size: 15px;
   font-weight: 800;
-  white-space: nowrap;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.tag-new svg {
-  width: 14px;
-  height: 14px;
-  fill: currentColor;
+.bk-chip.is-on {
+  background: var(--ink);
+  color: #fff;
 }
 
-.fface {
-  display: block;
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--r-md);
+.bk-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 0 12px;
+  background: var(--paper);
+}
+
+.bk-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 1 行 = 1 頭。行全体がボタン */
+.bk-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--ink-faint);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bk-rows li:last-child .bk-row {
+  border-bottom: 0;
+}
+
+.bk-row:hover {
+  background: var(--cream);
+}
+
+.bk-row:active {
+  background: var(--gold-tint);
+}
+
+.bk-ava {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
   overflow: hidden;
   background: var(--sun-tint);
+  box-shadow: inset 0 0 0 1px rgba(43, 29, 18, 0.06);
 }
 
-.fface img,
-.fface .face-svg {
+.bk-ava img,
+.bk-ava .face-svg {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.badge-see {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--sky);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.badge-see svg {
-  width: 24px;
-  height: 24px;
-  fill: currentColor;
-}
-
-.fname {
+.bk-ava .face-svg svg {
   display: block;
-  margin: 10px 0 2px;
-  font-size: 20px;
+  width: 100%;
+  height: 100%;
+}
+
+.bk-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bk-name {
+  font-size: 18px;
   font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.fsub {
-  display: block;
-  margin: 0;
-  font-size: var(--fs-caption);
+.bk-prev {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-row-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 48px;
+}
+
+.bk-time {
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink-soft);
 }
 
-.fempty {
-  margin: 8px 2px;
+/* 登録してからまだ帳で見ていない子: 金の札（数は出さない） */
+.bk-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 9px 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.bk-new svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.bk-row.is-new .bk-ava {
+  box-shadow: 0 0 0 3px var(--gold);
+  animation: row-glow 1.4s ease-in-out 3;
+}
+
+.is-still .bk-row.is-new .bk-ava {
+  animation: none;
+}
+
+@keyframes row-glow {
+  0%, 100% { box-shadow: 0 0 0 3px var(--gold); }
+  50% { box-shadow: 0 0 0 3px var(--gold), 0 0 18px 4px rgba(244, 194, 66, 0.7); }
+}
+
+.bk-empty {
+  margin: 20px 16px;
   padding: 40px 16px;
   border: 3px dashed var(--ink-faint);
   border-radius: var(--r-lg);
@@ -1747,30 +1898,473 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   color: var(--ink-soft);
 }
 
-.fempty svg {
+.bk-empty svg {
   width: 72px;
   height: 72px;
   fill: var(--ink-faint);
 }
 
-.fempty p {
+.bk-empty p {
   margin: 10px 0 0;
   font-size: 18px;
   font-weight: 800;
 }
 
+.bk-note {
+  margin: 12px 16px 0;
+}
+
+/* 下のタブ。LINE の下段と同じ置き場。左は今いる「ともだち帳」、右は出口 */
+.bk-tabs {
+  flex: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  padding: 6px 12px calc(8px + var(--safe-bottom));
+  background: var(--bk-bar);
+}
+
+.bk-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bk-tab .ico {
+  width: 26px;
+  height: 26px;
+}
+
+.bk-tab.is-on {
+  color: var(--bk-mine);
+  cursor: default;
+}
+
+button.bk-tab:hover {
+  color: #fff;
+}
+
+.bk-tab:focus-visible,
+.bk-icon:focus-visible,
+.bk-chip:focus-visible,
+.bk-row:focus-visible,
+.ch-visit:focus-visible,
+.ch-quick:focus-visible,
+.ch-send:focus-visible,
+.ch-poster:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: 2px;
+}
+
+.bk-row:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ---- トーク画面 ---- */
+.bk-chat {
+  background: var(--bk-floor);
+}
+
+.ch-head {
+  gap: 10px;
+}
+
+.ch-face {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--sun-tint);
+}
+
+.ch-face img,
+.ch-face .face-svg,
+.ch-face .face-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ch-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ch-name {
+  font-size: 18px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ch-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 右上の「会いに行く」。LINE の通話ボタンの場所。ともだちだけの入口なので主役の色 */
+.ch-visit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sun);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: var(--shadow-sun);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ch-visit:hover {
+  background: var(--sun-deep);
+}
+
+.ch-visit:active {
+  transform: scale(0.96);
+}
+
+.ch-visit .ico {
+  width: 22px;
+  height: 22px;
+}
+
+.ch-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 14px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overscroll-behavior: contain;
+}
+
+.ch-item {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+.ch-item.is-refresh {
+  animation: refresh-in 0.3s var(--ease-soft);
+}
+
+.ch-sys {
+  align-items: center;
+  margin: 2px 0;
+}
+
+.ch-sys span {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: rgba(43, 29, 18, 0.1);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ch-left {
+  align-items: flex-start;
+}
+
+.ch-right {
+  align-items: flex-end;
+}
+
+.ch-sender {
+  margin: 0 0 3px 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.ch-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.ch-bubble {
+  max-width: min(78vw, 300px);
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  box-shadow: 0 1px 2px rgba(43, 29, 18, 0.08);
+}
+
+.ch-left .ch-bubble {
+  border-top-left-radius: 6px;
+}
+
+.ch-right .ch-bubble {
+  background: var(--bk-mine);
+  border-top-right-radius: 6px;
+}
+
+.ch-meta {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding-bottom: 2px;
+}
+
+/* お知らせの「みほん」。本物のお知らせではないことを吹き出しの中で明記 */
+.ch-sample-tag {
+  display: inline-block;
+  margin: 0 6px 2px 0;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  vertical-align: 1px;
+}
+
+/* 収録映像のカード（左の吹き出しの中） */
+.ch-card {
+  width: min(78vw, 260px);
+  margin: -4px -8px;
+}
+
+.ch-poster {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--sun-tint);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ch-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ch-badge {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: rgba(43, 29, 18, 0.75);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ch-badge .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.ch-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--sun);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sun);
+}
+
+.ch-play svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+}
+
+.ch-card-title {
+  margin: 8px 6px 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.ch-card-sub {
+  margin: 4px 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+/* 書くところ。ひとことの札 → 入力 → 試作の注意 */
+.ch-compose {
+  flex: none;
+  padding: 8px 12px calc(10px + var(--safe-bottom));
+  background: var(--paper);
+  border-top: 1px solid var(--ink-faint);
+}
+
+.ch-quicks {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 8px;
+}
+
+.ch-quicks::-webkit-scrollbar {
+  display: none;
+}
+
+.ch-quick {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 2px solid var(--bk-mine);
+  border-radius: var(--r-pill);
+  background: var(--gold-tint);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ch-quick:active {
+  transform: scale(0.96);
+}
+
+.ch-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ch-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 2px solid var(--ink-faint);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ch-input:focus {
+  outline: none;
+  border-color: var(--sky);
+}
+
+.ch-send {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bk-mine);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ch-send:active {
+  transform: scale(0.94);
+}
+
+.ch-send .ico {
+  width: 22px;
+  height: 22px;
+}
+
+.ch-note {
+  margin: 8px 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
 @media (min-width: 768px) {
-  .fgrid { grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 4px; }
-  .fcard { padding: 10px 10px 16px; }
-  .fname { font-size: var(--fs-name); }
+  /* PC: スマホ大の縦長パネル。中央に浮かべる */
+  .book .book-panel {
+    top: 50%;
+    bottom: auto;
+    width: 440px;
+    height: min(860px, calc(100% - 48px));
+    border-radius: var(--r-xl);
+  }
+  .bk-head { padding-top: 12px; min-height: 64px; }
+  .bk-tabs { padding-bottom: 10px; }
+  .ch-compose { padding-bottom: 12px; }
+  .ch-bubble { max-width: 300px; }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
-  .fgrid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .fcard { padding: 6px 6px 10px; }
-  .fname { font-size: 17px; margin-top: 6px; }
-  .fempty { padding: 20px 16px; }
-  .fempty svg { width: 48px; height: 48px; }
+  .bk-head { min-height: 48px; padding-top: calc(4px + var(--safe-top)); padding-bottom: 4px; }
+  .bk-chips { padding-bottom: 8px; }
+  .bk-row { padding: 6px 16px; }
+  .bk-ava { width: 44px; height: 44px; }
+  .bk-empty { margin: 12px 16px; padding: 16px; }
+  .bk-empty svg { width: 44px; height: 44px; }
+  .bk-tabs { padding: 2px 12px calc(4px + var(--safe-bottom)); }
+  .bk-tab { min-height: 40px; flex-direction: row; gap: 8px; }
+  .ch-quicks { display: none; }
+  .ch-note { display: none; }
+  .ch-compose { padding-top: 6px; }
 }
 
 /* 顔（写真が無い個体は自作 SVG の顔） */

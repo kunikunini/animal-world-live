@@ -21,7 +21,7 @@ An entry for **Built with Claude: Japan 2026**, built from scratch during the ha
 - A family of five lions lives in the world as stylized figures (Angie and the twins on the plateau, Alex a little apart, Riley by the waterhole). Approach and their names appear; stand close and "Look through binoculars" opens that animal's observation monitor. The 3D figures are a "sign" of the encounter, not a reproduction of real behavior.
 - Observation monitor with **recorded footage** of the real animals. Angie, Claire and Carla play footage recorded during the hackathon (2026-11-03). A "Recorded" badge is always shown; nothing is presented as live.
 - Each animal's profile (family, identifying marks, keeper's comment). Fields without final text show "Coming soon" instead of placeholder prose.
-- Press "Become friends" by your own choice → saved to the Friends Book (localStorage) → "Go see them" reopens the footage without walking the 3D world again.
+- Press "Become friends" by your own choice → saved to the Friend Book (localStorage). The Friend Book is laid out like a messaging app's chat list: one row per friend, and tapping a row opens that animal's "chat". The chat shows only what the data can say (the day you became friends, the recorded video with a play card) plus one staff notice clearly marked **Sample** — real notices are not delivered yet. You can write a short letter to the animal (or tap a quick phrase); letters are saved only on this device and nothing pretends they were delivered or read. The "Go see" button at the top right reopens the footage without walking the 3D world again — and only friends have a chat, so this shortcut is for friends only.
 - Keeps working without WebGL, without video, and without localStorage (no blank screens).
 
 ## What's next (during the hackathon)
@@ -34,6 +34,8 @@ An entry for **Built with Claude: Japan 2026**, built from scratch during the ha
 ## Future vision (not implemented in this entry)
 
 Work with zoos and sanctuaries so that, through live streaming, you can visit animals around the world as they are right now.
+
+The Friend Book's chat is designed as a letterbox, not a live conversation: facility staff would post notices (recording days, care schedules) to many visitors at once, letters from children would be collected and passed on in batches so keepers aren't burdened, and adults could support the animals with tips. None of this is implemented in this entry; the UI marks the notice as a sample and says that letters stay on the device.
 
 ## About the footage
 
@@ -110,7 +112,7 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 - ライオンの家族5頭が様式化した姿でワールドにいる（台地にアンジーと双子、少し離れてアレックス、水場のそばにライリー）。近づくと名前が出て、そばに来ると「双眼鏡で見る」からその個体の観察モニターへ。3Dの姿は本物の行動を写したものではなく、出会いの「しるし」
 - 観察モニターで実在するライオンの**収録映像**を見る。アンジー・クレア・カーラはハッカソン期間中（2026-11-03）に収録した映像を再生。「収録映像」バッジを常時表示し、ライブ配信に見える表示はしない
 - 個体のプロフィール（家族・見分けポイント・飼育員コメント。原稿が入るまでは「準備中」と表示）
-- 自分の意思で「ともだちになる」→ ともだち帳に記録（localStorage）→「会いに行く」で3Dを歩かずに映像へ再訪
+- 自分の意思で「ともだちになる」→ ともだち帳に記録（localStorage）。ともだち帳はメッセージアプリのトーク一覧の形で、ともだち1頭が1行。行を押すとその子の「トーク」が開き、データから言えること（ともだちになった日、収録映像のカード）と、**みほん**と明記したスタッフのお知らせ1通が並ぶ（本物のお知らせはまだ届かない）。その子へ短いお手紙を書ける（ひとことの札もある）が、保存はこの端末だけで、届いた・読まれたという演出はしない。右上の「会いに行く」で3Dを歩かずに映像へ再訪できる。トークがあるのはともだちだけなので、この近道もともだち専用
 - WebGL・映像・localStorage が使えなくても操作を続けられる（白画面にしない）
 
 ## これから作るもの（期間中の予定）
@@ -123,6 +125,8 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 ## 将来構想（今回は実装しません）
 
 動物園や保護施設と連携し、ライブ配信で「今の姿」に会いに行ける世界へ。
+
+ともだち帳のトークは、会話ではなく「手紙箱」として設計している。施設のスタッフが収録日や飼育のスケジュールなどのお知らせを大勢へ一斉に出し、子どもたちのお手紙はまとめて飼育員へ渡して負担にならないようにし、大人は投げ銭で動物を応援できる。これらは今回は実装していない（UI ではお知らせを「みほん」と明記し、お手紙は端末に残るだけと書いている）。
 
 ## 映像について
 

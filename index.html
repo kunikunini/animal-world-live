@@ -46,6 +46,7 @@
       <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16A2.5 2.5 0 0 1 4 13.5v-7z" /></symbol>
       <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" /><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5" /><circle cx="12" cy="12" r="6.6" /></symbol>
       <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5S9.6 5.9 12 3.5z" /></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12l15.5-7.5L15 12l4.5 7.5z" /><path d="M4 12h11" /></symbol>
       <symbol id="i-sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9l5 6M21 9l-5 6" /></symbol>
     </svg>
 
@@ -202,20 +203,43 @@
     </section>
 
     <!-- ともだち帳: 顔のカードグリッド -->
-    <section id="book" class="sheet-wrap" hidden aria-label="ともだち帳" data-i18n-aria="book">
-      <div class="sheet">
-        <div class="grabber"></div>
-        <header class="sheet-head">
-          <h2 class="sheet-title"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span></h2>
-          <button id="book-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
-        </header>
-        <div class="sheet-body">
-          <div id="book-empty" class="fempty"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#i-bino" /></svg><p><span data-i18n="bookEmpty">まだ誰もいません</span></p></div>
-          <ul id="book-list" class="fgrid"></ul>
-          <p id="book-note" class="note-small" hidden><span data-i18n="memoryNote">この環境では保存できないため、ページを閉じるとともだち帳は消えます。</span></p>
+    <section id="book" class="sheet-wrap book" hidden aria-label="ともだち帳" data-i18n-aria="book">
+      <div class="sheet book-panel">
+        <!-- 一覧（LINE のトーク一覧の形。ともだちだけが並ぶ） -->
+        <div id="book-list-page" class="bk-page">
+          <header class="bk-head">
+            <button id="book-close" class="bk-icon" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
+            <h2 class="bk-title"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span></h2>
+            <span class="bk-head-spacer" aria-hidden="true"></span>
+          </header>
+          <div id="book-chips" class="bk-chips" hidden></div>
+          <div class="bk-body">
+            <div id="book-empty" class="bk-empty"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#i-bino" /></svg><p><span data-i18n="bookEmpty">まだ誰もいません</span></p></div>
+            <ul id="book-list" class="bk-rows" hidden></ul>
+            <p id="book-note" class="note-small bk-note" hidden><span data-i18n="memoryNote">この環境では保存できないため、ページを閉じるとともだち帳は消えます。</span></p>
+          </div>
+          <nav class="bk-tabs" aria-label="ともだち帳のタブ" data-i18n-aria="book">
+            <span class="bk-tab is-on" aria-current="page"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span></span>
+            <button id="book-world" class="bk-tab" type="button"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span id="book-world-label">ワールド</span></button>
+          </nav>
         </div>
-        <div class="sheet-foot">
-          <button id="book-world" class="btn btn-nav" type="button"><svg class="ico"><use href="#i-bino" /></svg><span id="book-world-label">ワールドに戻る</span></button>
+        <!-- トーク画面（1 頭分。中身は chat.ts が描く） -->
+        <div id="book-chat" class="bk-page bk-chat" hidden>
+          <header class="bk-head ch-head">
+            <button id="chat-back" class="bk-icon" type="button" aria-label="ともだち帳に戻る" data-i18n-aria="backBook" title="ともだち帳に戻る" data-i18n-title="backBook"><svg class="ico"><use href="#i-back" /></svg></button>
+            <span id="chat-face" class="ch-face" aria-hidden="true"></span>
+            <div class="ch-who"><span id="chat-name" class="ch-name"></span><span id="chat-sub" class="ch-sub"></span></div>
+            <button id="chat-visit" class="ch-visit" type="button"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span data-i18n="chatVisit">会いに行く</span></button>
+          </header>
+          <ul id="chat-log" class="ch-log" aria-live="polite"></ul>
+          <div class="ch-compose">
+            <div id="chat-quick" class="ch-quicks" role="group" aria-label="ひとことで送る" data-i18n-aria="quickPhrases"></div>
+            <form id="chat-form" class="ch-form" autocomplete="off">
+              <input id="chat-input" class="ch-input" type="text" name="letter" maxlength="200" enterkeyhint="send" aria-label="お手紙" data-i18n-aria="letterInput" />
+              <button class="ch-send" type="submit" aria-label="おくる" data-i18n-aria="send" title="おくる" data-i18n-title="send"><svg class="ico"><use href="#i-send" /></svg></button>
+            </form>
+            <p id="chat-note" class="ch-note"></p>
+          </div>
         </div>
       </div>
     </section>
