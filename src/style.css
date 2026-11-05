@@ -4065,3 +4065,10 @@ button.ch-mine[aria-expanded='true'] {
   font-size: 14px;
   font-weight: 800;
 }
+
+/* 狭いスマホ: トークの見出しで名前がつぶれないよう、「会いに行く」は双眼鏡だけにする（aria-label と title に文字は残る） */
+@media (max-width: 420px) {
+  .ch-visit span { display: none; }
+  .ch-visit { width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 50%; }
+  .ch-visit .ico { width: 24px; height: 24px; }
+}
