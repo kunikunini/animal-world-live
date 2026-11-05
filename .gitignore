@@ -17,8 +17,10 @@ public/media/*
 
 # ローカルの開発ツール設定
 .claude/
-# Blender 実験で生成するモデル（コミットしない）
-public/models/
+# 3D モデル: 群れの 5 頭（Meshy で生成・最適化した lion-*.glb）と出所のメモだけ追跡する。Blender 実験の出力などは入れない
+public/models/*
+!public/models/lion-*.glb
+!public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
