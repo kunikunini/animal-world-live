@@ -103,6 +103,12 @@
         <button id="entry-book" class="btn home-book" type="button"><svg class="ico"><use href="#i-book" /></svg><span data-i18n="book">ともだち帳</span><span id="home-new-dot" class="badge-dot" hidden></span></button>
       </div>
 
+      <!-- だれで冒険する？: 名簿（src/data/heroes.json）の子どもたちを対等に並べ、押した子を選ぶ（選んだ子は次に開いた時も同じ） -->
+      <div id="home-pick" class="home-pick">
+        <span id="home-pick-title" class="home-pick-title" data-i18n="pickHero">だれで冒険する？</span>
+        <div id="home-pick-row" class="home-pick-row" role="radiogroup" aria-labelledby="home-pick-title"></div>
+      </div>
+
       <div class="home-cta">
         <svg class="home-spark l" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><g stroke="#ffc531" stroke-width="8"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g><g stroke="#fff6cf" stroke-width="3.5"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g></g></svg>
         <svg class="home-spark r" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><g stroke="#ffc531" stroke-width="8"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g><g stroke="#fff6cf" stroke-width="3.5"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g></g></svg>
@@ -146,7 +152,7 @@
           <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
         <div class="sheet-body">
-          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="4 つのワールドがある大陸の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
+          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="5 つのワールドがある大陸の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
           <ul class="map-legend" aria-label="凡例" data-i18n-aria="legend">
             <li><span class="map-dot dot-you"></span><span data-i18n="you">あなた</span></li>
             <li><span class="map-dot dot-met"></span><span data-i18n="metAnimals">出会った動物</span></li>

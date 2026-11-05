@@ -38,16 +38,19 @@ interface CloudWorld {
 /**
  * ワールドごとの雲。サバンナは今までと同じ（乱数の順番も同じなので、見た目は変わらない）。
  * 北の世界: 灰白の重い雲がゆっくり。ジャングル: 高くそびえる白い雲。南半球: 小さな雲が速く流れる。
+ * 水の世界: 海の上の高い空に、ふくらんだ白い雲が海風で流れる（空撮の高さより上）（いちばん後ろに足したので、ほかの雲の並びは変わらない）。
  */
 function cloudWorlds(): CloudWorld[] {
   const north = OUTER_REGIONS[0]
   const jungle = OUTER_REGIONS[1]
   const south = OUTER_REGIONS[2]
+  const water = OUTER_REGIONS.find((r) => r.key === 'water') ?? OUTER_REGIONS[3]
   return [
     { key: 'africa', cx: 0, cz: 0, count: 11, rMin: 170, rMax: 320, yMin: 52, yMax: 92, sMin: 14, sMax: 30, vMin: 0.6, vMax: 1.2, wrap: 320, top: '#ffffff', bottom: '#dfe6f5' },
     { key: 'north', cx: north.x, cz: north.z, count: 9, rMin: 30, rMax: 150, yMin: 58, yMax: 82, sMin: 14, sMax: 24, vMin: 0.25, vMax: 0.45, wrap: 170, top: '#f3f5f9', bottom: '#b7c1cf' },
     { key: 'jungle', cx: jungle.x, cz: jungle.z, count: 7, rMin: 20, rMax: 140, yMin: 75, yMax: 105, sMin: 22, sMax: 36, vMin: 0.35, vMax: 0.55, wrap: 170, top: '#ffffff', bottom: '#d9e3ec' },
     { key: 'south', cx: south.x, cz: south.z, count: 10, rMin: 0, rMax: 150, yMin: 50, yMax: 80, sMin: 10, sMax: 20, vMin: 1.6, vMax: 2.4, wrap: 170, top: '#ffffff', bottom: '#e6ebf4' },
+    { key: 'water', cx: water.x + 60, cz: water.z, count: 10, rMin: 30, rMax: 190, yMin: 96, yMax: 124, sMin: 16, sMax: 28, vMin: 0.9, vMax: 1.4, wrap: 200, top: '#ffffff', bottom: '#dbe9f5' },
   ]
 }
 

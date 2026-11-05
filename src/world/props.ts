@@ -340,6 +340,8 @@ interface RangeOptions {
   gap?: { angle: number; half: number }
   /** サバンナの輪: 各ワールドへの峠を切る */
   cutPasses?: boolean
+  /** 水の世界: 稜線の低いところを海の下へ沈めて、つながった山並みではなく島々に見せる */
+  islands?: boolean
   name: string
 }
 
@@ -364,7 +366,9 @@ function createRange(group: THREE.Group, o: RangeOptions): void {
       const broad = ridge(a, 2.2, L.seed) * 0.5 + 0.5
       const sharp = 1 - Math.abs(ridge(a, 7, L.seed + 11))
       const fine = ridge(a, 19, L.seed + 23) * 0.5
-      const height = L.h * (0.45 + 0.55 * broad) + L.spread * (sharp * 0.8 + fine * 0.4)
+      const height = o.islands
+        ? L.h * (broad * 1.7 - 0.62) + L.spread * (sharp * 0.8 + fine * 0.4 - 0.5)
+        : L.h * (0.45 + 0.55 * broad) + L.spread * (sharp * 0.8 + fine * 0.4)
       // 切れ目: 開けておく向きと峠では、山を地面の下まで下げる
       let keep = 1
       if (o.gap) {
@@ -435,19 +439,21 @@ function createMountains(group: THREE.Group): void {
   })
   for (const r of OUTER_REGIONS) {
     const toOrigin = Math.atan2(-r.z, -r.x)
-    const look = OUTER_LOOKS[r.key as 'north' | 'jungle' | 'south']
+    const look = OUTER_LOOKS[r.key as OuterLookKey]
     createRange(group, {
       cx: r.x,
       cz: r.z,
       gap: { angle: toOrigin, half: 0.95 },
+      islands: r.key === 'water',
       name: `mountains-${r.key}`,
       layers: look.map((l, i) => ({ ...l, segs: 150, seed: 11 + i * 4.1 + r.x * 0.01 })),
     })
   }
 }
 
+type OuterLookKey = 'north' | 'jungle' | 'south' | 'water'
 /** ほかのワールドの山並みの色と高さ */
-const OUTER_LOOKS: Record<'north' | 'jungle' | 'south', Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
+const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
   // 北: 青い麓に白い雪の峰
   north: [
     { r: 150, h: 26, spread: 14, foot: '#9bb4d8', peak: '#ffffff' },
@@ -465,6 +471,12 @@ const OUTER_LOOKS: Record<'north' | 'jungle' | 'south', Array<Omit<RangeLayer, '
     { r: 150, h: 14, spread: 6, foot: '#b5452a', peak: '#e8804a' },
     { r: 188, h: 24, spread: 9, foot: '#c45f3a', peak: '#f09c66' },
     { r: 230, h: 36, spread: 12, foot: '#d08a6e', peak: '#f3c3a4' },
+  ],
+  // 水の世界: 沖に浮かぶ緑の島々（麓は岩の灰色、頂は明るい緑）。遠い島ほど淡く
+  water: [
+    { r: 150, h: 11, spread: 6, foot: '#8d9a90', peak: '#6cc06a' },
+    { r: 188, h: 19, spread: 9, foot: '#94aaa2', peak: '#86cc7e' },
+    { r: 230, h: 30, spread: 13, foot: '#a8c0c6', peak: '#b4dcb0' },
   ],
 }
 

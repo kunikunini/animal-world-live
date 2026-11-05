@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Simplex2D, lerp, smoothstep } from './noise'
 import { KOPJE, TERRAIN_SEGMENTS, TERRAIN_SIZE, WATERHOLE, WORLD_SEED } from './layout'
-import { biomeAt } from './regions'
+import { OUTER_REGIONS, biomeAt, emptyWeights } from './regions'
 import type { BiomeWeights } from './regions'
 import { toonMaterial } from '../render/toon'
 
@@ -86,7 +86,76 @@ function southHeight(x: number, z: number): number {
   return simplex.fbm(x * 0.008, z * 0.008, 3, 2.0, 0.5) * 2.4 + dunes
 }
 
-const _w: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
+/**
+ * 水の世界: 海に突き出た岬。西（峠の側）は砂丘と浜の草地、北・東・南は歩ける範囲の縁で浜が海へ下りる。
+ * 観察スポットの北東に浅い入り江（潟）があり、細い流れが東の海へつながる。
+ * 潟と流れはくるぶし〜ひざほどの浅さ（サバンナの水場と同じく、入って歩ける）
+ */
+const WATER = OUTER_REGIONS.find((r) => r.key === 'water') ?? { x: 300, z: 0, walk: 100 }
+/** 水の世界の海面の高さ（サバンナの水場の WATER_LEVEL とは別） */
+export const SEA_LEVEL = -0.6
+/** スポットの北東の潟（中心はワールドの中心からのずれ、半径は楕円の 2 軸） */
+export const LAGOON = { dx: 15, dz: -13, rx: 11, rz: 8 }
+/** 潟から東の海へ流れる小川の折れ線（ワールドの中心からのずれ） */
+export const CREEK: ReadonlyArray<[number, number]> = [
+  [24, -15],
+  [42, -22],
+  [62, -20],
+  [82, -28],
+  [110, -34],
+]
+const shoreNoise = new Simplex2D(WORLD_SEED + 223)
+/**
+ * 中心からその向きの海岸までの距離。北・東・南は歩ける範囲の縁（約 97m）。
+ * 北西・南西は 165m（地形のタイルの中に収める）、真西（峠の側）は遠くまで陸
+ */
+function shoreRadius(lx: number, lz: number): number {
+  const a = Math.atan2(lz, lx)
+  const c = Math.cos(a)
+  const wobble = shoreNoise.noise(c * 1.6 + 3, Math.sin(a) * 1.6 - 2) * 7 + shoreNoise.noise(c * 4.5, Math.sin(a) * 4.5) * 3
+  const west = lerp(165, 280, smoothstep(0.75, 0.97, -c))
+  return lerp(west, 97 + wobble, smoothstep(-0.5, 0.05, c))
+}
+function segDist(x: number, z: number, ax: number, az: number, bx: number, bz: number): number {
+  const vx = bx - ax
+  const vz = bz - az
+  const t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz)))
+  return Math.hypot(x - ax - vx * t, z - az - vz * t)
+}
+/** 小川の軸までの距離（ワールドの中心からのずれで測る） */
+export function creekDist(lx: number, lz: number): number {
+  let d = Infinity
+  for (let i = 0; i < CREEK.length - 1; i++) d = Math.min(d, segDist(lx, lz, CREEK[i][0], CREEK[i][1], CREEK[i + 1][0], CREEK[i + 1][1]))
+  return d
+}
+/** 潟の楕円の正規化した距離（1 が縁） */
+export function lagoonDist(lx: number, lz: number): number {
+  return Math.hypot((lx - LAGOON.dx) / LAGOON.rx, (lz - LAGOON.dz) / LAGOON.rz)
+}
+/** 水の世界の高さ（海面からの高さ + SEA_LEVEL） */
+function waterHeight(x: number, z: number): number {
+  const lx = x - WATER.x
+  const lz = z - WATER.z
+  const r = Math.hypot(lx, lz)
+  // 砂丘のゆるい起伏。スポットのまわりは平らに
+  const dunes = simplex.fbm(x * 0.014 + 3, z * 0.014, 3, 2.0, 0.5) * 1.3 + outerNoise.fbm(x * 0.05, z * 0.05, 2, 2, 0.5) * 0.18
+  let h = lerp(1.1 + dunes * 0.25, 1.7 + dunes, smoothstep(12, 40, r))
+  // 浜: 海岸の 30m 手前から波打ちぎわへ下がり、その先は沖へ深くなる
+  const shore = shoreRadius(lx, lz)
+  h = lerp(h, -0.15, smoothstep(shore - 30, shore + 2, r))
+  h -= 7 * smoothstep(shore + 2, shore + 50, r)
+  // 潟: 楕円のくぼみ
+  const dl = lagoonDist(lx, lz)
+  if (dl < 1.4) h = lerp(h, -0.5, 1 - smoothstep(0.55, 1.12, dl))
+  // 小川: 潟の縁から東の海へ
+  if (lx > 18) {
+    const dc = creekDist(lx, lz)
+    if (dc < 5) h = Math.min(h, lerp(h, -0.3, 1 - smoothstep(1.4, 3.6, dc)))
+  }
+  return SEA_LEVEL + h
+}
+
+const _w: BiomeWeights = emptyWeights()
 
 /**
  * 地形の高さ関数。地形メッシュ、置き物の足元、プレイヤーの高さがすべてこれを使う。
@@ -100,6 +169,7 @@ export function terrainHeight(x: number, z: number): number {
   if (w.north > 0) h += w.north * northHeight(x, z)
   if (w.jungle > 0) h += w.jungle * jungleHeight(x, z)
   if (w.south > 0) h += w.south * southHeight(x, z)
+  if (w.water > 0) h += w.water * waterHeight(x, z)
   return h
 }
 
@@ -273,6 +343,37 @@ function southColor(x: number, z: number, _h: number, slope: number, out: THREE.
   if (slope < 0.9) out.lerp(colRedDeep, Math.min(1, (0.9 - slope) * 4))
 }
 
+// 水の世界: 白い砂浜、ぬれた砂、砂丘の浜の草（明るい黄緑）、潟と小川のふちの湿った草、岩
+const colSandDry = new THREE.Color('#f3da9c')
+const colSandWarm = new THREE.Color('#e9c47e')
+const colSandWet = new THREE.Color('#d6b77a')
+const colSandUnder = new THREE.Color('#e6cf96')
+const colDuneGrass = new THREE.Color('#a8d25a')
+const colDuneGrassDeep = new THREE.Color('#7fbb48')
+const colMarsh = new THREE.Color('#6fb85a')
+const colShoreRock = new THREE.Color('#98a2a8')
+function waterColor(x: number, z: number, h: number, slope: number, out: THREE.Color): void {
+  const rel = h - SEA_LEVEL
+  const n = detail.noise(x * 0.04 + 2, z * 0.04 - 6) * 0.5 + 0.5
+  out.copy(colSandDry).lerp(colSandWarm, n * 0.7)
+  // 砂丘の上の浜の草（まだら）。波打ちぎわには生えない
+  const big = patch.noise(x * 0.021 - 3, z * 0.021 + 8) * 0.5 + 0.5
+  const grass = smoothstep(0.42, 0.62, big) * smoothstep(0.9, 1.6, rel)
+  out.lerp(colDuneGrass, grass * 0.85)
+  out.lerp(colDuneGrassDeep, grass * Math.max(0, big - 0.7) * 2)
+  // 潟と小川のふちは湿った草
+  const lx = x - WATER.x
+  const lz = z - WATER.z
+  const dl = lagoonDist(lx, lz)
+  const dc = lx > 18 ? creekDist(lx, lz) : 99
+  const marsh = Math.max(1 - smoothstep(1.05, 1.5, dl), 1 - smoothstep(3.4, 6.5, dc)) * smoothstep(0.1, 0.4, rel)
+  out.lerp(colMarsh, marsh * 0.7)
+  // 波打ちぎわはぬれた砂、水の下は明るい砂（海が透けて見える）
+  out.lerp(colSandWet, 1 - smoothstep(0.1, 0.5, rel))
+  if (rel < 0.05) out.copy(colSandUnder).lerp(colSandWet, n * 0.5)
+  if (slope < 0.9) out.lerp(colShoreRock, Math.min(1, (0.9 - slope) * 4))
+}
+
 const _cTmp = new THREE.Color()
 function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   const w = biomeAt(x, z, _w)
@@ -297,6 +398,10 @@ function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   if (w.south > 0) {
     southColor(x, z, h, slope, _cTmp)
     out.add(_cTmp.multiplyScalar(w.south))
+  }
+  if (w.water > 0) {
+    waterColor(x, z, h, slope, _cTmp)
+    out.add(_cTmp.multiplyScalar(w.water))
   }
 }
 
@@ -382,7 +487,7 @@ function addSkirt(geo: THREE.BufferGeometry, segX: number, segZ: number): void {
 }
 
 /**
- * 地形。サバンナ（中央 400m 四方）はいままでの細かさ、まわりの 3 枚（北・南・西）は 2 倍の粗さ。
+ * 地形。サバンナ（中央 400m 四方）はいままでの細かさ、まわりの 4 枚（北・南・西・東）は 2 倍の粗さ。
  * タイルごとに画面の外なら描かない。継ぎ目の頂点はサバンナの 1 つおきに重なる
  */
 export function createTerrain(): THREE.Group {
@@ -401,5 +506,7 @@ export function createTerrain(): THREE.Group {
   group.add(createTile(0, half + outerDepth / 2, TERRAIN_SIZE, outerDepth, fullSegs, outerSegs, mat))
   // 西（-x）
   group.add(createTile(-half - outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
+  // 東（+x）: 水の世界
+  group.add(createTile(half + outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
   return group
 }

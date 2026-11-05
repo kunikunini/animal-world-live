@@ -4,13 +4,14 @@ import { WORLD_SEED } from './layout'
 import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import type { Collider } from './props'
-import { terrainHeight } from './terrain'
+import { CREEK, LAGOON, SEA_LEVEL, creekDist, lagoonDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 
 /**
- * サバンナ以外の 3 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
+ * サバンナ以外の 4 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
  * 北の世界: 雪をかぶったトウヒの森と雪の岩。ジャングル: 背の高い木、ヤシ、シダ、大木の目印。
  * 南半球: 白い幹のユーカリ、赤い岩、とげとげの草むら、赤い一枚岩の目印。
+ * 水の世界: 砂丘の浜の草、ヤシ、潟と小川のふちの葦、浜の岩と流木、貝殻とヒトデ、沖の岩のアーチの目印。
  * 形は様式化した目印で、特定の場所の再現ではない。
  */
 export interface BiomeProps {
@@ -345,6 +346,244 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   colliders.push({ x: mx - 20, z: mz, r: 12 }, { x: mx, z: mz, r: 15 }, { x: mx + 20, z: mz, r: 12 })
 }
 
+/**
+ * 水の世界の置き物。ペンギン・ペリカン・カワウソのまわり（residents.ts）と、潟・小川の中はあける。
+ * 乱数はほかのワールドと別の列（いままでの木や岩の並びを変えない）
+ */
+function createWater(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
+  const r = region('water')
+  /** 海面からの高さ */
+  const rel = (x: number, z: number) => terrainHeight(x, z) - SEA_LEVEL
+  /** 潟・小川の中か、そのすぐそば */
+  const wet = (x: number, z: number, margin: number) => {
+    const lx = x - r.x
+    const lz = z - r.z
+    return lagoonDist(lx, lz) < 1.05 + margin / LAGOON.rx || (lx > 18 && creekDist(lx, lz) < 3.5 + margin)
+  }
+  /** 動物のいるあたり（スポットの東の潟の南西と、南東の浜） */
+  const nearResidents = (x: number, z: number) => {
+    const lx = x - r.x
+    const lz = z - r.z
+    return lx > -6 && lx < 16 && lz > -18 && lz < 16
+  }
+
+  // 砂丘の浜の草: 細い葉 3 枚の株。波打ちぎわと潟の中には生やさない
+  const tuftSpots = scatter(rand, r, mobile ? 520 : 1000, { max: r.walk + 30, clearing: 6, path: 3 }).filter(
+    (p) => rel(p.x, p.z) > 0.8 && !wet(p.x, p.z, 0.5) && !nearResidents(p.x, p.z),
+  )
+  const bladeGeo = new THREE.ConeGeometry(0.06, 1, 3)
+  bladeGeo.translate(0, 0.5, 0)
+  const BLADES = 3
+  const blades = instanced(bladeGeo, toonMaterial(), tuftSpots.length * BLADES, false)
+  const grassA = new THREE.Color('#8cc24a')
+  const grassB = new THREE.Color('#d2d977')
+  tuftSpots.forEach((p, i) => {
+    const y = terrainHeight(p.x, p.z)
+    const s = 0.6 + rand() * 0.7
+    _c.copy(grassA).lerp(grassB, rand())
+    for (let k = 0; k < BLADES; k++) {
+      _q.setFromEuler(_e.set((rand() - 0.5) * 0.9, (k / BLADES) * Math.PI * 2 + rand(), (rand() - 0.5) * 0.9))
+      _m.compose(_p.set(p.x, y - 0.05, p.z), _q, _s.set(s, s * (0.7 + rand() * 0.5), s))
+      blades.setMatrixAt(i * BLADES + k, _m)
+      blades.setColorAt(i * BLADES + k, _c)
+    }
+  })
+  finish(blades)
+  group.add(blades)
+
+  // ヤシ: 西の砂丘に少し。曲がった幹に垂れた葉 7 枚
+  const palms = scatter(rand, r, 40, { min: 26, max: r.walk + 20, clearing: 26, path: 9 })
+    .filter((p) => p.x - r.x < -8 && rel(p.x, p.z) > 1 && !wet(p.x, p.z, 3))
+    .slice(0, mobile ? 12 : 18)
+  const trunkGeo = new THREE.CylinderGeometry(0.16, 0.26, 1, 6)
+  trunkGeo.translate(0, 0.5, 0)
+  const leafGeo = new THREE.ConeGeometry(0.55, 4.0, 4)
+  leafGeo.translate(0, 2.0, 0)
+  leafGeo.rotateX(Math.PI / 2)
+  const LEAVES = 7
+  const palmTrunks = instanced(trunkGeo, toonMaterial({ color: '#9a7650' }), palms.length)
+  const palmLeaves = instanced(leafGeo, toonMaterial(), palms.length * LEAVES)
+  const leafA = new THREE.Color('#4fae46')
+  const leafB = new THREE.Color('#86c84e')
+  palms.forEach((t, i) => {
+    const y = terrainHeight(t.x, t.z)
+    const s = 0.85 + rand() * 0.4
+    const h = (6.5 + rand() * 3) * s
+    _q.setFromEuler(_e.set(0.14 + rand() * 0.16, rand() * Math.PI * 2, 0, 'YXZ'))
+    _m.compose(_p.set(t.x, y - 0.2, t.z), _q, _s.set(s, h, s))
+    palmTrunks.setMatrixAt(i, _m)
+    const top = new THREE.Vector3(0, h, 0).applyQuaternion(_q).add(_p)
+    _c.copy(leafA).lerp(leafB, rand())
+    for (let k = 0; k < LEAVES; k++) {
+      _q.setFromEuler(_e.set(0.3 + rand() * 0.3, (k / LEAVES) * Math.PI * 2 + rand() * 0.4, 0, 'YXZ'))
+      _m.compose(top, _q, _s.set(s, s, s))
+      palmLeaves.setMatrixAt(i * LEAVES + k, _m)
+      palmLeaves.setColorAt(i * LEAVES + k, _c)
+    }
+    colliders.push({ x: t.x, z: t.z, r: 0.4 * s })
+  })
+  finish(palmTrunks, palmLeaves)
+  group.add(palmTrunks, palmLeaves)
+
+  // 葦: 潟と小川のふちに束で。茶色い穂をつける（ペリカン・カワウソのいる南西と北西のふちはあける）
+  const reedSpots: Array<{ x: number; z: number }> = []
+  for (let i = 0; i < 34; i++) {
+    const a = rand() * Math.PI * 2
+    const lx = LAGOON.dx + Math.cos(a) * LAGOON.rx * (1.0 + rand() * 0.15)
+    const lz = LAGOON.dz + Math.sin(a) * LAGOON.rz * (1.0 + rand() * 0.15)
+    if (lx < 12 && lz > -16) continue
+    if (lx < 4) continue
+    reedSpots.push({ x: r.x + lx, z: r.z + lz })
+  }
+  for (let i = 0; i < CREEK.length - 1; i++) {
+    for (let k = 0; k < 6; k++) {
+      const t = rand()
+      const [ax, az] = CREEK[i]
+      const [bx, bz] = CREEK[i + 1]
+      const side = rand() < 0.5 ? -1 : 1
+      const vx = bx - ax
+      const vz = bz - az
+      const len = Math.hypot(vx, vz)
+      const off = side * (3.2 + rand() * 1.2)
+      const lx = ax + vx * t + (-vz / len) * off
+      const lz = az + vz * t + (vx / len) * off
+      if (Math.hypot(lx, lz) > r.walk - 8) continue
+      reedSpots.push({ x: r.x + lx, z: r.z + lz })
+    }
+  }
+  const STEMS = 5
+  const stemGeo = new THREE.CylinderGeometry(0.025, 0.035, 1, 4)
+  stemGeo.translate(0, 0.5, 0)
+  const headGeo = new THREE.CapsuleGeometry(0.05, 0.22, 2, 6)
+  const stems = instanced(stemGeo, toonMaterial({ color: '#7fa850' }), reedSpots.length * STEMS, false)
+  const heads = instanced(headGeo, toonMaterial({ color: '#8a5a36' }), reedSpots.length * STEMS, false)
+  reedSpots.forEach((p, i) => {
+    const y = terrainHeight(p.x, p.z)
+    for (let k = 0; k < STEMS; k++) {
+      const h = 1.2 + rand() * 0.8
+      const x = p.x + (rand() - 0.5) * 0.7
+      const z = p.z + (rand() - 0.5) * 0.7
+      _q.setFromEuler(_e.set((rand() - 0.5) * 0.25, 0, (rand() - 0.5) * 0.25))
+      _m.compose(_p.set(x, y - 0.1, z), _q, _s.set(1, h, 1))
+      stems.setMatrixAt(i * STEMS + k, _m)
+      const top = new THREE.Vector3(0, h - 0.15, 0).applyQuaternion(_q).add(_p)
+      _m.compose(top, _q, _s.set(1, 1, 1))
+      heads.setMatrixAt(i * STEMS + k, _m)
+    }
+  })
+  finish(stems, heads)
+  group.add(stems, heads)
+
+  // 浜の岩: ペンギンのいる浜の奥にひとかたまり＋波打ちぎわにぽつぽつ
+  const rockGeo = new THREE.IcosahedronGeometry(1, 1)
+  const rockPlaces: Array<{ x: number; z: number; s: number }> = [
+    { x: r.x + 13.5, z: r.z + 12, s: 1.7 },
+    { x: r.x + 14.5, z: r.z + 8.2, s: 1.2 },
+    { x: r.x + 11.8, z: r.z + 15.2, s: 1.3 },
+    { x: r.x + 3.8, z: r.z + 14.6, s: 0.9 },
+    { x: r.x + 16.2, z: r.z + 14.4, s: 0.9 },
+  ]
+  for (let i = 0; i < 46; i++) {
+    const a = rand() * Math.PI * 2
+    const d = 82 + rand() * 30
+    const x = r.x + Math.cos(a) * d
+    const z = r.z + Math.sin(a) * d
+    const h = rel(x, z)
+    if (h > 1.2 || h < -1.5 || x - r.x < -40) continue
+    rockPlaces.push({ x, z, s: 0.5 + rand() * 1.4 })
+  }
+  const rocks = instanced(rockGeo, toonMaterial(), rockPlaces.length)
+  const rockA = new THREE.Color('#8f9aa2')
+  const rockB = new THREE.Color('#b6bcc0')
+  rockPlaces.forEach((p, i) => {
+    _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
+    _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) - p.s * 0.3, p.z), _q, _s.set(p.s * 1.3, p.s * 0.75, p.s))
+    rocks.setMatrixAt(i, _m)
+    rocks.setColorAt(i, _c.copy(rockA).lerp(rockB, rand()))
+    if (p.s > 0.8 && Math.hypot(p.x - r.x, p.z - r.z) < r.walk + 2) colliders.push({ x: p.x, z: p.z, r: p.s * 1.1 })
+  })
+  finish(rocks)
+  group.add(rocks)
+
+  // 流木: 浜に横たわる白っぽい丸太
+  const logs = scatter(rand, r, 14, { min: 55, max: r.walk - 4, clearing: 30, path: 8 }).filter((p) => {
+    const h = rel(p.x, p.z)
+    return h > 0.15 && h < 1.4 && !wet(p.x, p.z, 2)
+  })
+  const logGeo = new THREE.CylinderGeometry(0.18, 0.24, 1, 7)
+  logGeo.rotateZ(Math.PI / 2)
+  const logMesh = instanced(logGeo, toonMaterial({ color: '#c9b59a' }), logs.length)
+  logs.forEach((p, i) => {
+    const len = 2.4 + rand() * 2.4
+    _q.setFromEuler(_e.set(0, rand() * Math.PI, (rand() - 0.5) * 0.08))
+    _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) + 0.1, p.z), _q, _s.set(len, 1, 1))
+    logMesh.setMatrixAt(i, _m)
+    colliders.push({ x: p.x, z: p.z, r: 0.5 })
+  })
+  finish(logMesh)
+  group.add(logMesh)
+
+  // 貝殻とヒトデ: 波打ちぎわの近くに小さく（当たり判定なし）
+  const shells = scatter(rand, r, mobile ? 120 : 220, { min: 40, max: r.walk + 4, clearing: 12, path: 2 }).filter((p) => {
+    const h = rel(p.x, p.z)
+    return h > 0.05 && h < 0.9
+  })
+  const starGeo = new THREE.ConeGeometry(0.16, 0.05, 5)
+  const shellMesh = instanced(starGeo, toonMaterial(), shells.length, false)
+  const shellColors = ['#f38a6a', '#f6b26b', '#f7d9c4', '#e98aa6'].map((c) => new THREE.Color(c))
+  shells.forEach((p, i) => {
+    const s = 0.7 + rand() * 0.7
+    _q.setFromEuler(_e.set(0, rand() * Math.PI * 2, 0))
+    _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) + 0.02, p.z), _q, _s.set(s, s, s))
+    shellMesh.setMatrixAt(i, _m)
+    shellMesh.setColorAt(i, shellColors[Math.floor(rand() * shellColors.length)])
+  })
+  finish(shellMesh)
+  group.add(shellMesh)
+
+  // 目印: 沖の岩のアーチと、まわりの岩の柱（東の海。上に草をのせる）
+  const stone = toonMaterial({ color: '#a39f98' })
+  const grassTop = toonMaterial({ color: '#7cc25a' })
+  const ax = r.x + 132
+  const az = r.z + 16
+  const arch = new THREE.Group()
+  arch.position.set(ax, SEA_LEVEL - 2, az)
+  arch.rotation.y = 0.35
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(11, 3.6, 8, 22, Math.PI), stone)
+  ring.scale.set(1, 1.5, 1)
+  arch.add(ring)
+  for (const side of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 4.6, 8, 9), stone)
+    leg.position.set(side * 11, -1, 0)
+    arch.add(leg)
+  }
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), grassTop)
+  cap.scale.set(6.5, 1.6, 3.6)
+  cap.position.set(0, (11 + 3.6) * 1.5 - 0.6, 0)
+  arch.add(cap)
+  const stacks: Array<[number, number, number, number]> = [
+    [ax + 22, az - 14, 3.2, 15],
+    [ax - 12, az + 26, 2.4, 9],
+    [ax + 8, az + 30, 1.8, 6],
+  ]
+  for (const [sx, sz, sr, sh] of stacks) {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(sr * 0.75, sr, sh + 2, 8), stone)
+    col.position.set(sx - ax, sh / 2 - 1, sz - az)
+    col.rotation.y = rand()
+    const top = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 6), grassTop)
+    top.scale.set(sr * 0.85, sr * 0.35, sr * 0.85)
+    top.position.set(sx - ax, sh, sz - az)
+    arch.add(col, top)
+  }
+  arch.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) {
+      o.castShadow = true
+      o.receiveShadow = true
+    }
+  })
+  group.add(arch)
+}
+
 export function createBiomeProps(options: { mobile: boolean; colliders: Collider[] }): BiomeProps {
   const group = new THREE.Group()
   group.name = 'biome-props'
@@ -352,5 +591,7 @@ export function createBiomeProps(options: { mobile: boolean; colliders: Collider
   createNorth(rand, group, options.colliders, options.mobile)
   createJungle(rand, group, options.colliders, options.mobile)
   createSouth(rand, group, options.colliders, options.mobile)
+  // 水の世界は後から足したので別の乱数の列（ほかのワールドの並びを変えない）
+  createWater(mulberry32(WORLD_SEED + 509), group, options.colliders, options.mobile)
   return { group }
 }

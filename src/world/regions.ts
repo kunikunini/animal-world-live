@@ -2,13 +2,13 @@ import { smoothstep } from './noise'
 import { KOPJE, SPOT, WALK_RADIUS } from './layout'
 
 /**
- * 地続きの 4 つのワールド（D-30 の 7 つのうち、3D にするもの）。
+ * 地続きの 5 つのワールド（D-30 の 7 つのうち、3D にするもの）。
  * サバンナは原点のまま（コピエ・水場・ライオンは動かさない）。
- * 北の世界はコピエの奥（-z）、ジャングルは西（-x）、南半球はスタート地点の後ろ（+z）。
- * サバンナを囲む山脈には、各ワールドへの道の幅だけ峠を切る。東は閉じたまま。
+ * 北の世界はコピエの奥（-z）、ジャングルは西（-x）、南半球はスタート地点の後ろ（+z）、水の世界は東（+x）。
+ * サバンナを囲む山脈には、各ワールドへの道の幅だけ峠を切る。
  * 地図は北が上なので、名前と向きが一致する。
  */
-export type RegionKey = 'africa' | 'north' | 'jungle' | 'south'
+export type RegionKey = 'africa' | 'north' | 'jungle' | 'south' | 'water'
 
 export interface Region {
   key: RegionKey
@@ -28,6 +28,8 @@ export const OUTER_REGIONS: readonly Region[] = [
   { key: 'north', x: 0, z: -OUTER_DIST, walk: OUTER_WALK },
   { key: 'jungle', x: -OUTER_DIST, z: 0, walk: OUTER_WALK },
   { key: 'south', x: 0, z: OUTER_DIST, walk: OUTER_WALK },
+  // 後から足したワールドは最後に（雲・天気は OUTER_REGIONS[0..2] を並びで引いている）
+  { key: 'water', x: OUTER_DIST, z: 0, walk: OUTER_WALK },
 ]
 
 export const REGIONS: readonly Region[] = [SAVANNA, ...OUTER_REGIONS]
@@ -36,7 +38,7 @@ export const REGIONS: readonly Region[] = [SAVANNA, ...OUTER_REGIONS]
 export const PASS_HALF_WIDTH = 16
 
 /** 地形を作る範囲（xz の矩形）。山の麓まで地面を敷く */
-export const MAP_BOUNDS = { minX: -1400 / 3, maxX: 200, minZ: -1400 / 3, maxZ: 1400 / 3 }
+export const MAP_BOUNDS = { minX: -1400 / 3, maxX: 1400 / 3, minZ: -1400 / 3, maxZ: 1400 / 3 }
 
 /** 点と線分の距離と、線分上のいちばん近い点（xz） */
 function closestOnSegment(x: number, z: number, ax: number, az: number, bx: number, bz: number): { d: number; x: number; z: number } {
@@ -235,6 +237,12 @@ export interface BiomeWeights {
   north: number
   jungle: number
   south: number
+  water: number
+}
+
+/** 重みを入れる空の入れ物 */
+export function emptyWeights(): BiomeWeights {
+  return { africa: 1, north: 0, jungle: 0, south: 0, water: 0 }
 }
 
 /**
@@ -244,33 +252,46 @@ export interface BiomeWeights {
  */
 export function biomeAt(x: number, z: number, out: BiomeWeights): BiomeWeights {
   const a = 1 - smoothstep(150, 205, Math.hypot(x, z))
-  let n = 1 - smoothstep(110, 175, Math.hypot(x - OUTER_REGIONS[0].x, z - OUTER_REGIONS[0].z))
-  let j = 1 - smoothstep(110, 175, Math.hypot(x - OUTER_REGIONS[1].x, z - OUTER_REGIONS[1].z))
-  let s = 1 - smoothstep(110, 175, Math.hypot(x - OUTER_REGIONS[2].x, z - OUTER_REGIONS[2].z))
-  let sum = a + n + j + s
+  let sum = a
+  out.africa = a
+  for (const r of OUTER_REGIONS) {
+    const w = 1 - smoothstep(110, 175, Math.hypot(x - r.x, z - r.z))
+    out[r.key as OuterKey] = w
+    sum += w
+  }
   if (sum < 1e-4) {
     // どのワールドからも遠い隅（山の外）: いちばん近いワールドの地面にする
-    const dn = Math.hypot(x - OUTER_REGIONS[0].x, z - OUTER_REGIONS[0].z)
-    const dj = Math.hypot(x - OUTER_REGIONS[1].x, z - OUTER_REGIONS[1].z)
-    const ds = Math.hypot(x - OUTER_REGIONS[2].x, z - OUTER_REGIONS[2].z)
-    n = dn <= dj && dn <= ds ? 1 : 0
-    j = !n && dj <= ds ? 1 : 0
-    s = !n && !j ? 1 : 0
-    sum = 1
+    let best: OuterKey = 'north'
+    let bd = Infinity
+    for (const r of OUTER_REGIONS) {
+      const d = Math.hypot(x - r.x, z - r.z)
+      if (d < bd) {
+        bd = d
+        best = r.key as OuterKey
+      }
+    }
+    for (const k of OUTER_KEYS) out[k] = k === best ? 1 : 0
+    out.africa = 0
+    return out
   }
   out.africa = a / sum
-  out.north = n / sum
-  out.jungle = j / sum
-  out.south = s / sum
+  for (const k of OUTER_KEYS) out[k] /= sum
   return out
 }
 
+type OuterKey = Exclude<RegionKey, 'africa'>
+/** サバンナ以外のワールドの名前（重みの欄の並び） */
+export const OUTER_KEYS: readonly OuterKey[] = ['north', 'jungle', 'south', 'water']
+/** すべてのワールドの名前（重みの欄の並び） */
+export const REGION_KEYS: readonly RegionKey[] = ['africa', ...OUTER_KEYS]
+
+const _rw = emptyWeights()
 /** いちばん重みの大きいワールド（プレイヤーがいる場所の判定用） */
 export function regionAt(x: number, z: number): RegionKey {
-  const w = biomeAt(x, z, { africa: 0, north: 0, jungle: 0, south: 0 })
+  const w = biomeAt(x, z, _rw)
   let best: RegionKey = 'africa'
   let bw = w.africa
-  for (const k of ['north', 'jungle', 'south'] as const) {
+  for (const k of OUTER_KEYS) {
     if (w[k] > bw) {
       bw = w[k]
       best = k

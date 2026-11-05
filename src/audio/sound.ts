@@ -9,7 +9,7 @@
 import { playFriendChime } from '../ui/chime'
 
 export type BgmKey = 'home' | 'savanna' | 'jungle' | 'north' | 'south' | 'water' | 'sky' | 'partner'
-export type AmbKey = 'savanna' | 'jungle' | 'north' | 'south'
+export type AmbKey = 'savanna' | 'jungle' | 'north' | 'south' | 'water'
 export type SeName =
   | 'step-grass'
   | 'step-snow'
@@ -449,4 +449,5 @@ export const REGION_SOUND: Record<string, BgmKey & AmbKey> = {
   jungle: 'jungle',
   north: 'north',
   south: 'south',
+  water: 'water',
 }

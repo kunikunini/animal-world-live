@@ -3,7 +3,7 @@ import { mulberry32 } from './noise'
 import { WORLD_SEED } from './layout'
 import { OUTER_REGIONS } from './regions'
 import type { BiomeWeights } from './regions'
-import { terrainHeight } from './terrain'
+import { SEA_LEVEL, terrainHeight } from './terrain'
 import { NO_REFLECT_LAYER } from './props'
 import { createMoteTexture } from './atmosphere'
 
@@ -19,6 +19,7 @@ const MIST_COUNT = 8
 
 /**
  * ワールドごとの空気の動き。北の世界は雪が舞い、ジャングルは地面近くに白いもやが流れる。
+ * 水の世界は沖の海面に低い白い海霧がゆっくり流れ、波打ちぎわには白い光の粒（しぶき）がきらめく。
  * 濃さはいる場所の重み（biomeAt）に合わせるので、峠を越えるとなめらかに現れて消える。
  */
 export function createWeather(options: { mobile: boolean }): Weather {
@@ -91,6 +92,52 @@ export function createWeather(options: { mobile: boolean }): Weather {
   }
   placeMist(0)
 
+  // 水の世界: 沖の海霧（海面の少し上の横長の白い板）と、波打ちぎわのしぶき（白い光の粒）。乱数は別の列（雪・もやの並びを変えない）
+  const water = OUTER_REGIONS.find((r) => r.key === 'water') ?? OUTER_REGIONS[0]
+  const wrand = mulberry32(WORLD_SEED + 1213)
+  const seaMistMat = new THREE.SpriteMaterial({ map: texture, color: '#f2f8fc', transparent: true, opacity: 0, depthWrite: false, fog: true })
+  const SEA_MIST_COUNT = options.mobile ? 6 : 9
+  const seaMists = Array.from({ length: SEA_MIST_COUNT }, (_, i) => {
+    const a = -1.4 + (i / SEA_MIST_COUNT) * 2.8 + wrand() * 0.2
+    const r = 120 + wrand() * 70
+    const sprite = new THREE.Sprite(seaMistMat)
+    const w = 40 + wrand() * 30
+    sprite.scale.set(w, w * 0.18, 1)
+    sprite.layers.set(NO_REFLECT_LAYER)
+    group.add(sprite)
+    return { sprite, a, r, speed: 0.004 + wrand() * 0.004, phase: wrand() * Math.PI * 2 }
+  })
+  const placeSeaMist = (time: number) => {
+    for (const m of seaMists) m.sprite.position.set(water.x + Math.cos(m.a) * m.r, SEA_LEVEL + 2.2 + Math.sin(time * 0.25 + m.phase) * 0.4, water.z + Math.sin(m.a) * m.r)
+  }
+  placeSeaMist(0)
+  // しぶき: 浜の縁（中心から 95〜100m）の上で、ふわっと浮いて消える粒
+  const sprayCount = options.mobile ? 90 : 160
+  const sprayPos = new Float32Array(sprayCount * 3)
+  const sprayBase = Array.from({ length: sprayCount }, () => {
+    const a = -1.6 + wrand() * 3.2
+    const r = 94 + wrand() * 8
+    return { x: water.x + Math.cos(a) * r, z: water.z + Math.sin(a) * r, phase: wrand() * Math.PI * 2, rate: 0.5 + wrand() * 0.6 }
+  })
+  const sprayGeo = new THREE.BufferGeometry()
+  sprayGeo.setAttribute('position', new THREE.BufferAttribute(sprayPos, 3))
+  const sprayMat = new THREE.PointsMaterial({ color: '#ffffff', map: texture, size: 0.5, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false })
+  const spray = new THREE.Points(sprayGeo, sprayMat)
+  spray.frustumCulled = false
+  spray.visible = false
+  spray.layers.set(NO_REFLECT_LAYER)
+  group.add(spray)
+  const placeSpray = (time: number) => {
+    sprayBase.forEach((p, i) => {
+      const t = (time * p.rate + p.phase) % (Math.PI * 2)
+      sprayPos[i * 3] = p.x
+      sprayPos[i * 3 + 1] = SEA_LEVEL + 0.1 + Math.max(0, Math.sin(t)) * 0.9
+      sprayPos[i * 3 + 2] = p.z
+    })
+    ;(sprayGeo.attributes.position as THREE.BufferAttribute).needsUpdate = true
+  }
+  placeSpray(0)
+
   let reduceMotion = false
   const update = (time: number, dt: number, cam: THREE.Vector3, weights: BiomeWeights) => {
     // 雪
@@ -133,13 +180,34 @@ export function createWeather(options: { mobile: boolean }): Weather {
         placeMist(time)
       }
     }
+
+    // 海霧としぶき
+    const wv = weights.water
+    const showSea = wv > 0.01
+    for (const m of seaMists) m.sprite.visible = showSea
+    spray.visible = showSea && !reduceMotion
+    if (showSea) {
+      seaMistMat.opacity = 0.22 * wv
+      sprayMat.opacity = 0.8 * wv
+      if (!reduceMotion) {
+        for (const m of seaMists) {
+          m.a += m.speed * dt
+          if (m.a > 1.5) m.a = -1.5
+        }
+        placeSeaMist(time)
+        placeSpray(time)
+      }
+    }
   }
 
   return {
     group,
     setReduceMotion: (on) => {
       reduceMotion = on
-      if (on) snow.visible = false
+      if (on) {
+        snow.visible = false
+        spray.visible = false
+      }
     },
     update,
   }

@@ -5,6 +5,8 @@ import type { Lion, LionOptions } from './lions'
 import { createKangaroo } from './kangaroo'
 import type { UprightVariant } from './kangaroo'
 import { createSloth } from './sloth'
+import { createWaterfolk } from './waterfolk'
+import type { WaterfolkKind } from './waterfolk'
 import { JUNGLE_PERCH } from './biomes'
 import { terrainHeight } from './terrain'
 import { OUTER_REGIONS } from './regions'
@@ -19,10 +21,10 @@ interface Resident {
   /** 個体名。省略時は、その種のうち pick 番目（データの並び）の子 */
   name?: string
   pick?: number
-  kind: NonNullable<LionOptions['species']> | UprightVariant | 'sloth'
+  kind: NonNullable<LionOptions['species']> | UprightVariant | 'sloth' | WaterfolkKind
   /** ジャングルの止まり木の横枝の上（dx は幹からの距離。dz は使わない） */
   perch?: boolean
-  region: 'north' | 'jungle' | 'south'
+  region: 'north' | 'jungle' | 'south' | 'water'
   /** ワールドの中心からのずれ（m） */
   dx: number
   dz: number
@@ -62,6 +64,21 @@ const RESIDENTS: Resident[] = [
   { species: 'キンカジュー', pick: 0, kind: 'kinkajou', region: 'jungle', perch: true, dx: 1.4, dz: 0, yaw: Math.PI / 2, size: 0.36 },
   { species: 'ビントロング', pick: 0, kind: 'binturong', region: 'jungle', perch: true, dx: 3.2, dz: 0, yaw: -Math.PI / 2, size: 0.48 },
   { species: 'フタユビナマケモノ', pick: 0, kind: 'sloth', region: 'jungle', perch: true, dx: 5.2, dz: 0, yaw: Math.PI / 2, size: 0.85 },
+  // 水の世界: スポットの南東の浜の岩のそばにケープペンギン 6 羽。西（サバンナから来た人の側）を向く（yaw -π/2 が -x）
+  { species: 'ケープペンギン', pick: 0, kind: 'penguin', region: 'water', dx: 6, dz: 7.5, yaw: -Math.PI / 2 - 0.3, size: 1.47 },
+  { species: 'ケープペンギン', pick: 1, kind: 'penguin', region: 'water', dx: 7.6, dz: 9.4, yaw: -Math.PI / 2 + 0.2, size: 1.4 },
+  { species: 'ケープペンギン', pick: 2, kind: 'penguin', region: 'water', dx: 5.2, dz: 10.6, yaw: -Math.PI / 2 - 0.6, size: 1.37 },
+  { species: 'ケープペンギン', pick: 3, kind: 'penguin', region: 'water', dx: 9.2, dz: 7.2, yaw: -Math.PI / 2 + 0.5, size: 1.43 },
+  { species: 'ケープペンギン', pick: 4, kind: 'penguin', region: 'water', dx: 8.4, dz: 11.8, yaw: -Math.PI + 0.4, size: 1.33 },
+  { species: 'ケープペンギン', pick: 5, kind: 'penguin', region: 'water', dx: 10.6, dz: 10.0, yaw: -Math.PI / 2, size: 1.36 },
+  // 潟の南西のふちにモモイロペリカン 3 羽（1 羽はくるぶしほどの浅瀬に立つ）
+  { species: 'モモイロペリカン', pick: 0, kind: 'pelican', region: 'water', dx: 6.2, dz: -4.2, yaw: -Math.PI / 2 + 0.4, size: 1.15 },
+  { species: 'モモイロペリカン', pick: 1, kind: 'pelican', region: 'water', dx: 11.2, dz: -4.6, yaw: -Math.PI / 2 - 0.2, size: 1.1 },
+  { species: 'モモイロペリカン', pick: 2, kind: 'pelican', region: 'water', dx: 9.4, dz: -8.6, yaw: -2.4, size: 1.08 },
+  // 潟の北西の岸にコツメカワウソ 3 頭が寄り添って伏せる
+  { species: 'コツメカワウソ', name: 'ハルト', kind: 'otter', region: 'water', dx: -1.2, dz: -11.4, yaw: -Math.PI / 2 + 0.7, size: 1.56 },
+  { species: 'コツメカワウソ', name: 'ケント', kind: 'otter', region: 'water', dx: 0.4, dz: -13.2, yaw: -Math.PI / 2 + 0.2, size: 1.49 },
+  { species: 'コツメカワウソ', name: 'ミナト', kind: 'otter', region: 'water', dx: -2.6, dz: -13.6, yaw: -Math.PI / 2 + 1.1, size: 1.46 },
 ]
 
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
@@ -88,6 +105,10 @@ export function createResidents(): Lion[] {
       continue
     }
     const at = { id: animal.id, x: region.x + r.dx, z: region.z + r.dz, yaw: r.yaw, size: r.size }
+    if (r.kind === 'penguin' || r.kind === 'pelican' || r.kind === 'otter') {
+      out.push(createWaterfolk({ ...at, kind: r.kind }))
+      continue
+    }
     const upright: string[] = ['kangaroo', 'wallaby', 'prairie', 'lemur']
     out.push(
       upright.includes(r.kind)

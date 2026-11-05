@@ -3,12 +3,14 @@ import { createScene, sunDiscDir } from './world/scene'
 import { createTerrain, terrainHeight } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
+import { createSea } from './world/sea'
 import { createResidents } from './world/residents'
-import { OUTER_REGIONS, REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
+import { OUTER_REGIONS, REGIONS, REGION_KEYS, biomeAt, emptyWeights, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
 import { loadHero } from './player/heroModel'
+import { DEFAULT_HERO, getHeroId, heroById, setHeroId } from './data/heroes'
 import type { HeroModel } from './player/heroModel'
 import { createHud } from './ui/hud'
 import { createObservationSpot } from './world/spots'
@@ -161,6 +163,8 @@ interface WorldHandle {
   prepareIntro: () => void
   /** 入る演出を始める（幕が開いたら呼ぶ）。終わったら解決する */
   playIntro: () => Promise<void>
+  /** ホームで選んだ主人公に替える（読み込めたら差し替え、だめなら既定の子 → いままでの姿） */
+  setHero: (id: string) => void
 }
 
 /**
@@ -180,8 +184,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   camera.layers.enable(NO_REFLECT_LAYER)
   const props = createProps({ mobile, camera })
   scene.add(props.group)
-  // サバンナから峠を抜けた先の 3 つのワールドの木や岩
+  // サバンナから峠を抜けた先の 4 つのワールドの木や岩
   scene.add(createBiomeProps({ mobile, colliders: props.colliders }).group)
+  // 水の世界の海（潟と小川も）
+  const sea = createSea()
+  scene.add(sea.mesh)
 
   // 観察スポット: サバンナはコピエの頂上、ほかのワールドは中心。いるワールドのスポットが「いまのスポット」
   const savannaSpot = createObservationSpot()
@@ -279,7 +286,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
-  const stepBiome = { africa: 0, north: 0, jungle: 0, south: 0 }
+  const stepBiome = emptyWeights()
   player.onStep((x, z) => sound.play(biomeAt(x, z, stepBiome).north > 0.5 ? 'step-snow' : 'step-grass'))
   player.onJump(() => sound.play('jump'))
   player.onLand(() => sound.play('land'))
@@ -287,28 +294,56 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
 
-  // プレイヤーの姿は Meshy で生成した主人公が既定（操作はそのまま）。?hero=off でいままでの姿。
-  // 高さはいままでの姿（入れ物の最初の子、2.03m）の 0.59 倍（1.20m）を既定にする。読めなければいままでの姿のまま続ける。
+  // プレイヤーの姿は名簿（src/data/heroes.json）の主人公のうち、選んでいる 1 人だけを読み込む（操作はそのまま）。
+  // 高さは名簿の倍率 × いままでの姿（入れ物の最初の子、2.03m）。0.59 で 1.20m。
+  // 読めなければ既定の黄色い子、それも読めなければいままでの姿のまま続ける。?hero=off でいままでの姿。
   // 比べる用: &heroSep=off で接地影と輪郭なし、&heroScale=1 でいままでの姿と同じ高さ（ほかの数でも掛けられる）
-  const HERO_SCALE = 0.59
   let hero: HeroModel | null = null
+  let heroId: string | null = null
+  let heroWant: string | null = null
   const heroPrev = new THREE.Vector3()
   let heroSpeed = 0
   const heroQuery = new URLSearchParams(location.search)
-  if (heroQuery.get('hero') !== 'off') {
-    const figure = player.object.children[0]
-    const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
-    const heroScale = Number(heroQuery.get('heroScale') ?? HERO_SCALE) || HERO_SCALE
-    loadHero('/models/hero-boy.glb', { height: figureHeight * heroScale, separation: heroQuery.get('heroSep') !== 'off', ground: terrainHeight })
-      .then((loaded) => {
-        figure.visible = false
-        player.object.add(loaded.root)
-        if (loaded.shadow) scene.add(loaded.shadow)
-        heroPrev.copy(player.object.position)
-        hero = loaded
-      })
-      .catch((err) => console.warn('hero model not loaded; keeping primitive', err))
+  const heroOff = heroQuery.get('hero') === 'off'
+  const figure = player.object.children[0]
+  const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
+  const heroScaleOverride = Number(heroQuery.get('heroScale')) || 0
+  const putHero = (next: HeroModel | null, id: string | null) => {
+    if (hero) {
+      player.object.remove(hero.root)
+      if (hero.shadow) scene.remove(hero.shadow)
+      hero.dispose()
+    }
+    hero = next
+    heroId = id
+    figure.visible = !next
+    if (next) {
+      player.object.add(next.root)
+      if (next.shadow) scene.add(next.shadow)
+      heroPrev.copy(player.object.position)
+    }
   }
+  const chooseHero = async (id: string): Promise<void> => {
+    if (heroOff || id === heroId) return
+    heroWant = id
+    const entry = heroById(id)
+    try {
+      const loaded = await loadHero(entry.model, {
+        height: figureHeight * (heroScaleOverride || entry.scale),
+        separation: heroQuery.get('heroSep') !== 'off',
+        ground: terrainHeight,
+      })
+      // 読み込み中に別の子が選ばれていたら、こちらは捨てる
+      if (heroWant !== id) return loaded.dispose()
+      putHero(loaded, entry.id)
+    } catch (err) {
+      console.warn('hero model not loaded', entry.id, err)
+      if (heroWant !== id) return
+      if (entry.id !== DEFAULT_HERO) return chooseHero(DEFAULT_HERO)
+      putHero(null, null)
+    }
+  }
+  void chooseHero(getHeroId())
 
   hud.onJump(() => player.jump())
 
@@ -440,6 +475,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     fauna.setReduceMotion(on)
     clouds.setReduceMotion(on)
     weather.setReduceMotion(on)
+    sea.setReduceMotion(on)
   }
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
@@ -476,6 +512,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     north: new THREE.Color('#dfeaf6'),
     jungle: new THREE.Color('#d6eadb'),
     south: new THREE.Color('#dcd6d2'),
+    // 水の世界: 海の上の明るい水色（遠くの水平線が空に溶ける）
+    water: new THREE.Color('#c4e6f4'),
   }
   // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
@@ -606,12 +644,30 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sunDisc: 4.6,
       sunHalo: 1.2,
     },
+    // 水の世界: 澄んだ明るい青空、照り返しは海と砂の明るい水色（影が青く澄む）。霞は遠く、高めの白い太陽に広い輪（海の照り返し）
+    water: {
+      exposure: 0.97,
+      sky: new THREE.Color('#cfe6ff'),
+      ground: new THREE.Color('#a9d4dc'),
+      intensity: 0.7,
+      sun: 2.25,
+      top: new THREE.Color('#1462d8'),
+      horizon: new THREE.Color('#86cdf2'),
+      near: 130,
+      far: 520,
+      gradeSat: 1.08,
+      gradeContrast: 1.05,
+      sunElev: 24,
+      sunGlow: new THREE.Color('#fff8e2'),
+      sunDisc: 3.8,
+      sunHalo: 1.6,
+    },
   }
   const lightTarget: Light = { ...baseLight() }
   // 空の太陽の仰角と大きさ（度）。ワールドの重みで目標が変わり、ほかの光と同じ速さで寄せる
   let sunElev = lightTarget.sunElev
   let sunDisc = lightTarget.sunDisc
-  const weights: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
+  const weights: BiomeWeights = emptyWeights()
   const fogTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
   let lightReady = false
@@ -896,6 +952,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z)))
     }
     props.update(time)
+    sea.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
     weather.update(time, dt, camera.position, weights)
@@ -941,7 +998,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       lightTarget.ground.setRGB(0, 0, 0)
       lightTarget.top.setRGB(0, 0, 0)
       lightTarget.horizon.setRGB(0, 0, 0)
-      for (const k of ['africa', 'north', 'jungle', 'south'] as const) {
+      for (const k of REGION_KEYS) {
         const wk = weights[k]
         fogTarget.r += FOG_TINT[k].r * wk
         fogTarget.g += FOG_TINT[k].g * wk
@@ -1187,6 +1244,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       shell,
       lions,
       hero: () => hero,
+      heroId: () => heroId,
       clouds,
       weather,
       weights,
@@ -1260,6 +1318,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       } catch {
         return ''
       }
+    },
+    setHero: (id) => {
+      void chooseHero(id)
     },
   }
 }
@@ -1337,6 +1398,11 @@ function main(): void {
 
   shell.home.onEnter(() => {
     void enterWorld()
+  })
+  // だれで冒険する？: 保存して、組み立て済みのワールドなら主人公を替える（まだなら組み立てる時に読む）
+  shell.home.onHero((id) => {
+    setHeroId(id)
+    world?.setHero(id)
   })
 
   // ホームが表示されて落ち着いたら、裏でワールドを組み立てておく（ホームの絵が不透明で隠している）。
