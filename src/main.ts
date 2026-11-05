@@ -3,8 +3,9 @@ import { createScene, sunDiscDir } from './world/scene'
 import { createTerrain, terrainHeight } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
+import { createSea } from './world/sea'
 import { createResidents } from './world/residents'
-import { OUTER_REGIONS, REGIONS, biomeAt, regionAt, routeTo } from './world/regions'
+import { OUTER_REGIONS, REGIONS, REGION_KEYS, biomeAt, emptyWeights, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
 import { createPlayer } from './player/controller'
@@ -177,8 +178,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   camera.layers.enable(NO_REFLECT_LAYER)
   const props = createProps({ mobile, camera })
   scene.add(props.group)
-  // サバンナから峠を抜けた先の 3 つのワールドの木や岩
+  // サバンナから峠を抜けた先の 4 つのワールドの木や岩
   scene.add(createBiomeProps({ mobile, colliders: props.colliders }).group)
+  // 水の世界の海（潟と小川も）
+  const sea = createSea()
+  scene.add(sea.mesh)
 
   // 観察スポット: サバンナはコピエの頂上、ほかのワールドは中心。いるワールドのスポットが「いまのスポット」
   const savannaSpot = createObservationSpot()
@@ -455,6 +459,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     fauna.setReduceMotion(on)
     clouds.setReduceMotion(on)
     weather.setReduceMotion(on)
+    sea.setReduceMotion(on)
   }
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
@@ -491,6 +496,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     north: new THREE.Color('#dfeaf6'),
     jungle: new THREE.Color('#d6eadb'),
     south: new THREE.Color('#dcd6d2'),
+    // 水の世界: 海の上の明るい水色（遠くの水平線が空に溶ける）
+    water: new THREE.Color('#c4e6f4'),
   }
   // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
@@ -621,12 +628,30 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sunDisc: 4.6,
       sunHalo: 1.2,
     },
+    // 水の世界: 澄んだ明るい青空、照り返しは海と砂の明るい水色（影が青く澄む）。霞は遠く、高めの白い太陽に広い輪（海の照り返し）
+    water: {
+      exposure: 0.97,
+      sky: new THREE.Color('#cfe6ff'),
+      ground: new THREE.Color('#a9d4dc'),
+      intensity: 0.7,
+      sun: 2.25,
+      top: new THREE.Color('#1462d8'),
+      horizon: new THREE.Color('#86cdf2'),
+      near: 130,
+      far: 520,
+      gradeSat: 1.08,
+      gradeContrast: 1.05,
+      sunElev: 24,
+      sunGlow: new THREE.Color('#fff8e2'),
+      sunDisc: 3.8,
+      sunHalo: 1.6,
+    },
   }
   const lightTarget: Light = { ...baseLight() }
   // 空の太陽の仰角と大きさ（度）。ワールドの重みで目標が変わり、ほかの光と同じ速さで寄せる
   let sunElev = lightTarget.sunElev
   let sunDisc = lightTarget.sunDisc
-  const weights: BiomeWeights = { africa: 1, north: 0, jungle: 0, south: 0 }
+  const weights: BiomeWeights = emptyWeights()
   const fogTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
   let lightReady = false
@@ -911,6 +936,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z)))
     }
     props.update(time)
+    sea.update(time)
     atmosphere.update(time, dt, camera.position)
     clouds.update(dt)
     weather.update(time, dt, camera.position, weights)
@@ -953,7 +979,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       lightTarget.ground.setRGB(0, 0, 0)
       lightTarget.top.setRGB(0, 0, 0)
       lightTarget.horizon.setRGB(0, 0, 0)
-      for (const k of ['africa', 'north', 'jungle', 'south'] as const) {
+      for (const k of REGION_KEYS) {
         const wk = weights[k]
         fogTarget.r += FOG_TINT[k].r * wk
         fogTarget.g += FOG_TINT[k].g * wk

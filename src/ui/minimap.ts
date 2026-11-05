@@ -2,7 +2,7 @@ import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
 import { Simplex2D, smoothstep } from '../world/noise'
-import { savannaMapColor } from '../world/terrain'
+import { CREEK, LAGOON, savannaMapColor } from '../world/terrain'
 import { getWorld } from '../data/worlds'
 import { getLang, t } from './i18n'
 
@@ -73,7 +73,7 @@ function speciesGroups(markers: MinimapMarker[]): Array<{ name: string; x: numbe
 export const MINIMAP_RADIUS = WALK_RADIUS + 8
 
 /** 広げた地図が映す範囲（大陸の全体と、まわりの海）。縦横 3:4 */
-export const CONTINENT_VIEW: MapBox = { minX: -510, maxX: 270, minZ: -520, maxZ: 520 }
+export const CONTINENT_VIEW: MapBox = { minX: -510, maxX: 450, minZ: -640, maxZ: 640 }
 
 const C = {
   sea: '#86c4e4',
@@ -107,12 +107,14 @@ const FONT = "'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', syst
 const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]
 
 // ---------------------------------------------------------------------------
-// 大陸の形: 中心 LAND_C からの向きごとの海岸までの距離。4 つのワールドを包む円と、あいだを埋める円の外形をならし、でこぼこを足す
+// 大陸の形: 中心 LAND_C からの向きごとの海岸までの距離。5 つのワールドを包む円と、あいだを埋める円の外形をならし、でこぼこを足す
 // ---------------------------------------------------------------------------
-const LAND_C = { x: -75, z: 0 }
+const LAND_C = { x: -40, z: 0 }
 const LAND_DISCS = [
   { x: 0, z: 0, r: 215 },
-  ...OUTER_REGIONS.map((r) => ({ x: r.x, z: r.z, r: r.walk + 55 })),
+  // 水の世界は 3D と同じく、歩ける範囲の縁（中心から約 97m）が北・東・南の海岸。西の付け根は太く
+  ...OUTER_REGIONS.map((r) => (r.key === 'water' ? { x: r.x - 12, z: r.z, r: r.walk + 8 } : { x: r.x, z: r.z, r: r.walk + 55 })),
+  { x: 205, z: 0, r: 140 },
   // ワールドのあいだ（山脈のあるところ）も陸にして、ひとつの大きな大地にする
   { x: -200, z: -200, r: 150 },
   { x: -200, z: 200, r: 150 },
@@ -188,6 +190,7 @@ const GROUND: Record<RegionKey, [[number, number, number], [number, number, numb
   north: [hex('#f9fbfe'), hex('#cddbea')],
   jungle: [hex('#9ad66a'), hex('#4fa43e')],
   south: [hex('#f0a66a'), hex('#c9643a')],
+  water: [hex('#fbefc6'), hex('#b9dc7a')],
 }
 const SAVANNA_SAT = 1.0
 const SAVANNA_SPREAD = 0.7
@@ -236,7 +239,7 @@ function groundWeights(x: number, z: number, out: Float32Array): void {
 }
 
 const GROUND_STEP = 5
-const GROUND_BOX: MapBox = { minX: -660, maxX: 420, minZ: -660, maxZ: 660 }
+const GROUND_BOX: MapBox = { minX: -660, maxX: 600, minZ: -660, maxZ: 660 }
 let groundCanvas: HTMLCanvasElement | null = null
 
 function groundTexture(): HTMLCanvasElement {
@@ -290,7 +293,7 @@ function groundTexture(): HTMLCanvasElement {
 // ---------------------------------------------------------------------------
 // 山脈: props.ts の createMountains と同じ輪（半径・色）。サバンナの輪は峠のところ、ほかのワールドの輪はサバンナに面した側が開いている
 // ---------------------------------------------------------------------------
-type PeakStyle = 'peak' | 'hill' | 'mesa'
+type PeakStyle = 'peak' | 'hill' | 'mesa' | 'island'
 interface Peak {
   x: number
   z: number
@@ -320,6 +323,8 @@ const RANGES: Array<{ cx: number; cz: number; pass: boolean; style: PeakStyle; s
       north: { style: 'peak', snow: true, layers: [[150, '#9bb4d8', '#ffffff'], [188, '#aac0dc', '#ffffff'], [230, '#bccde6', '#ffffff']] },
       jungle: { style: 'hill', snow: false, layers: [[150, '#2a8a4a', '#62c05e'], [188, '#3a9a58', '#7fcc72'], [230, '#6aae84', '#aadcaa']] },
       south: { style: 'mesa', snow: false, layers: [[150, '#b5452a', '#e8804a'], [188, '#c45f3a', '#f09c66'], [230, '#d08a6e', '#f3c3a4']] },
+      // 水の世界: 沖の島々（海の上に置く）
+      water: { style: 'island', snow: false, layers: [[150, '#7f8e86', '#6cc06a'], [188, '#8aa29a', '#86cc7e'], [230, '#a2bcc2', '#b4dcb0']] },
     }
     return { cx: r.x, cz: r.z, pass: false, ...looks[r.key] }
   }),
@@ -347,7 +352,9 @@ const PEAKS: Peak[] = (() => {
         const rr = radius + 6 + jit.noise(a * 3 + li, R.cx * 0.01) * 10
         const x = R.cx + Math.cos(a) * rr
         const z = R.cz + Math.sin(a) * rr
-        if (coastDist(x, z) < 10 || isWalkable(x, z)) continue
+        // 島は海の上、ほかの山は陸の上だけ
+        if (R.style === 'island' ? coastDist(x, z) > -14 || jit.noise(x * 0.02, z * 0.02) < -0.1 : coastDist(x, z) < 10) continue
+        if (isWalkable(x, z)) continue
         const h = (17 + li * 6) * (1 + jit.noise(x * 0.04, z * 0.04) * 0.3) * (0.6 + 0.4 * keep)
         list.push({ x, z, h, lit: peak, shade: foot, style: R.style, snow: R.snow })
       }
@@ -399,6 +406,7 @@ const REGION_LABEL_AT: Record<RegionKey, [number, number]> = {
   north: [0, -366],
   jungle: [-300, -64],
   south: [0, 366],
+  water: [300, -98],
 }
 
 // ---------------------------------------------------------------------------
@@ -520,6 +528,25 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.fillStyle = p.lit
       b.beginPath()
       b.ellipse(x - w * 0.22, y - h * 0.05, w * 0.6, h * 0.62, 0, Math.PI, 0)
+      b.closePath()
+      b.fill()
+      return
+    }
+    if (p.style === 'island') {
+      // 水の世界: 海に浮かぶ丸い島（砂の縁に緑の丘）
+      b.fillStyle = C.beach
+      b.beginPath()
+      b.ellipse(x, y, w * 1.12, h * 0.3, 0, 0, Math.PI * 2)
+      b.fill()
+      b.fillStyle = p.shade
+      b.beginPath()
+      b.ellipse(x, y, w * 0.9, h * 0.7, 0, Math.PI, 0)
+      b.closePath()
+      b.fill()
+      b.stroke()
+      b.fillStyle = p.lit
+      b.beginPath()
+      b.ellipse(x - w * 0.18, y - h * 0.08, w * 0.55, h * 0.52, 0, Math.PI, 0)
       b.closePath()
       b.fill()
       return
@@ -750,6 +777,22 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     b.arc(px(WATERHOLE.x), py(WATERHOLE.z), WATERHOLE.radius * k, 0, Math.PI * 2)
     b.fill()
 
+    // 水の世界の潟と、東の海へ流れる小川（3D と同じ形）
+    const water = OUTER_REGIONS.find((r) => r.key === 'water')
+    if (water) {
+      b.fillStyle = C.water
+      b.beginPath()
+      b.ellipse(px(water.x + LAGOON.dx), py(water.z + LAGOON.dz), LAGOON.rx * k, LAGOON.rz * k, 0, 0, Math.PI * 2)
+      b.fill()
+      b.strokeStyle = C.water
+      b.lineWidth = Math.max(1.5 * u, 5 * k)
+      b.lineCap = 'round'
+      b.lineJoin = 'round'
+      b.beginPath()
+      CREEK.forEach(([cx, cz], i) => (i === 0 ? b.moveTo(px(water.x + cx), py(water.z + cz)) : b.lineTo(px(water.x + cx), py(water.z + cz))))
+      b.stroke()
+    }
+
     // コピエ: 岩肌の円、南の坂、頂上の台地
     b.fillStyle = C.rock
     b.beginPath()
@@ -779,7 +822,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.fill()
     }
 
-    // 観察スポット: 金の輪に白い縁（4 つのワールドそれぞれ）
+    // 観察スポット: 金の輪に白い縁（5 つのワールドそれぞれ）
     spotRing(SPOT.x, SPOT.z)
     for (const r of OUTER_REGIONS) spotRing(r.x, r.z)
     b.restore()
@@ -917,16 +960,25 @@ export function createMapRenderer(options: { width: number; height?: number; lab
           { l: x - w / 2, t: y + 8 * u, r: x + w / 2, b: y + 8 * u + h },
           { l: x - w / 2, t: y - 8 * u - h, r: x + w / 2, b: y - 8 * u },
         ]
+        // 4 方向が埋まっていたら、少し離れた 8 方向も試す（ワールドが 5 つになり、地図の縮尺が小さくなったので）
+        for (const d of [20, 34]) {
+          for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2
+            const cx = x + Math.cos(a) * d * u
+            const cy = y + Math.sin(a) * d * u * 0.7
+            candidates.push({ l: cx - w / 2, t: cy - h / 2, r: cx + w / 2, b: cy + h / 2 })
+          }
+        }
         let found = candidates.find((cand) => !placed.some((p) => overlaps(cand, p)) && cand.l > 2 * u && cand.r < width - 2 * u)
         if (!found) {
-          found = { ...(candidates.find((cand) => cand.l > 2 * u && cand.r < width - 2 * u) ?? candidates[0]) }
+          // どこも重なる時は、重なりがいちばん小さい候補に置く（下へ何段もずらすと、印から遠く離れて別のワールドに出てしまう）
+          const area = (a: Box) =>
+            placed.reduce((sum, p) => sum + Math.max(0, Math.min(a.r, p.r) - Math.max(a.l, p.l)) * Math.max(0, Math.min(a.b, p.b) - Math.max(a.t, p.t)), 0)
+          const inside = candidates.filter((cand) => cand.l > 2 * u && cand.r < width - 2 * u)
+          found = { ...(inside.length ? inside.reduce((best, cand) => (area(cand) < area(best) ? cand : best)) : candidates[0]) }
           if (found.r > width - 2 * u) {
             found.l -= found.r - (width - 2 * u)
             found.r = width - 2 * u
-          }
-          for (let guard = 0; guard < 12 && placed.some((p) => overlaps(found as Box, p)); guard++) {
-            found.t += h + 2 * u
-            found.b += h + 2 * u
           }
         }
         placed.push(found)

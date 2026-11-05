@@ -69,6 +69,8 @@ const WORLD_ART: Partial<Record<WorldKey, string>> = {
     '<path d="M0 132V96q30-18 58-4t62-6 62 2 50-6V132z" fill="#0f5a37"/><path d="M28 104c-4-26 6-48 22-60-10 18-12 38-8 60z" fill="#1f8a4f"/><path d="M40 52c14-10 34-10 46 0-16-2-30 0-46 0zM40 52c-14-8-30-6-40 4 14-4 26-4 40-4zM40 52c4-14 18-22 32-22-14 6-24 14-32 22z" fill="#7ad17f"/><path d="M182 108c-2-30 8-52 24-64-12 20-14 42-10 64z" fill="#1f8a4f"/><path d="M196 46c12-12 30-14 36-8-12 0-24 4-36 8zM196 46c-12-10-30-8-36 0 12-2 24-2 36 0z" fill="#7ad17f"/>',
   south:
     '<circle cx="178" cy="40" r="20" fill="#ffe08a"/><path d="M0 132v-30q60-10 116-6t116 2V132z" fill="#8f3720"/><path d="M58 98q6-26 40-28t52 8q10 10 16 20z" fill="#c95d36"/><path d="M70 92q14-14 34-14" stroke="#e98a5a" stroke-width="3" fill="none" stroke-linecap="round"/>',
+  water:
+    '<circle cx="182" cy="34" r="16" fill="#fff4c2"/><path d="M118 92q14-26 34-26t30 26z" fill="#3f9a5a"/><path d="M128 92q10-16 24-16" stroke="#7ccf7a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M0 132V92q29-8 58 0t58 0 58 0 58 0V132z" fill="#1d6fa6"/><path d="M0 106q29-8 58 0t58 0 58 0 58 0" stroke="#bfefff" stroke-width="3" fill="none"/><path d="M0 132v-12q40-10 80-2t72-6 80 4V132z" fill="#f4dc9c"/><path d="M40 112c0-10 4-16 9-16s9 6 9 16z" fill="#23252b"/><path d="M45 112c0-7 2-11 4-11s4 4 4 11z" fill="#f7f6f2"/><circle cx="49" cy="93" r="5" fill="#23252b"/>',
   north:
     '<path d="M0 132V92l40-44 30 30 46-58 50 62 30-26 36 36V132z" fill="#2f5f96"/><path d="M116 20l-18 24 10-4 8 8 8-8 10 4zM40 48l-12 14 7-3 5 5 5-5 7 3z" fill="#fff"/><path d="M0 132v-22q58-12 116-6t116-4V132z" fill="#e9f4fb"/><path d="M180 112l10-28 10 28zM196 116l8-22 8 22z" fill="#1f4f3a"/>',
 }
