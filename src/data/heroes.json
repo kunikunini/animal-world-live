@@ -18,5 +18,15 @@
       "ja": "青緑のジャケットの子",
       "en": "Teal jacket"
     }
+  },
+  {
+    "id": "pink",
+    "model": "/models/hero-pink.glb",
+    "thumb": "/heroes/pink.webp",
+    "scale": 0.59,
+    "label": {
+      "ja": "ピンクの服の子",
+      "en": "Pink hoodie"
+    }
   }
 ]
