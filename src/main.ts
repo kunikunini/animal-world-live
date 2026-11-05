@@ -274,9 +274,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [8, 16] } },
       // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
-      // 接地だけだと腰 90〜95%。標準の強さだと腰が上がり過ぎる（最大 113%）ので、前脚を強く・後ろ脚を弱めに寄せる。
+      // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
+      // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
       // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
-      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.6, spine: 0.9, tail: 1, front: 0.9, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] } },
+      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] } },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
       { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.5, idle: [6, 14] }, place: { x: -22, z: 14, yaw: 0.9, length: 3.3 } },
