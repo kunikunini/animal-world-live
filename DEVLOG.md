@@ -669,3 +669,11 @@
   - 本番（https://animal-world-live.pages.dev、18:15 の push が 18:16 に反映、バンドル `main-Bq4fQBCP.js` はローカルのビルドと同じ）: `/models/hero-boy.glb` が 200・349,948 B・`model/gltf-binary` で届く。アプリ内ブラウザで入ると新しい主人公（接地影あり）が出て、ページからの `hero-boy.glb` の取得も 200、コンソールのエラーなし。`?hero=off` で前の姿になる
 - 未確認: iPhone 実機の FPS（ライオン＋主人公＋クレイ。くにが push 後に測る）
 - 残り（統合したまま）: 待機・ジャンプのクリップは無い（止まっている時は生成時の立ち姿、空中は走りの浮いたコマ）。背中のリュックがオレンジ（シートは茶色）。6.5 m/s では足が地面を滑って見える。動きをへらす設定でも主人公の歩き・走りのアニメは止めていない
+
+## 2026-11-05 アプリのアイコン（双眼鏡）と SNS シェアのカード
+- 指示: ファビコンとアイコン画像を双眼鏡にして生成する。SNS でシェアした時に出る画像と説明も設定する
+- 生成: `generate-images`（Codex 経由の GPT Image 2、サブスク枠）で 1024×1024 のアイコンを 2 案。参照はホームのキービジュアルの青いクレイの双眼鏡（`kv-tablet-landscape-bino.webp`）。a＝レンズに金色の草原と空、b＝空色のガラスだけ。背景は `#3ba7ff` の単色、文字・人物・動物なし、角丸なし（OS 側で丸めるため）。原本は `artwork/icon/app-icon-{a,b}.png`
+- 選定: 16/32/64px に縮めて並べ、青い背景に青い本体でも、レンズの黄色で 32px でも双眼鏡と分かる a を採用
+- 書き出し（PIL）: `public/favicon.ico`（余白を少し詰めて 16/32/48）、`favicon-32.png`、`apple-touch-icon.png`（180）、`icon-192.png`・`icon-512.png` と `site.webmanifest`。SNS のカード `public/og.jpg` は新しく生成せず、ホームのキービジュアル（`artwork/hero-key-visuals/smartphone-landscape-16x9.png`）を 1200 幅に縮めて上下を切り 1200×630 の JPEG に（クローラーが WebP を読めない所があるため）。ロゴと「世界中の動物たちと、友達になろう。」が切れないことを目視
+- `index.html` に description、OGP（type・site_name・title・description・url・image と幅高さ・alt・locale）、Twitter（summary_large_image）。画像と URL は本番 `https://animal-world-live.pages.dev` の絶対 URL。説明文は README の冒頭の言い方に合わせ、ライブ配信に読めないよう「収録映像」と書く。`staff.html` にも favicon だけ
+- 検証: `npm run build` 通過、`dist/` にアイコン 5 点・`og.jpg`・`site.webmanifest` があり、`dist/index.html` の参照先と一致。dev サーバーは他のチャットが上限まで使っていて起動できず、ブラウザのタブでの見え方は push 後の本番で確認
