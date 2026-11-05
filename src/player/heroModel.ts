@@ -373,6 +373,8 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
     }
     wrap.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) freeMesh(o as THREE.Mesh)
+      // 骨の動きを入れる画像（skeleton.boneTexture）も手放す。体と輪郭は同じ骨組みを使う
+      if ((o as THREE.SkinnedMesh).isSkinnedMesh) free((o as THREE.SkinnedMesh).skeleton)
     })
     if (shadow) freeMesh(shadow)
   }
