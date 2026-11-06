@@ -1,6 +1,7 @@
 import type { FriendBookStore } from '../data/friends'
 import { HEROES, getHeroId } from '../data/heroes'
 import { getLang, onLangChange } from './i18n'
+import { sound } from '../audio/sound'
 
 /**
  * ホーム: キービジュアル 1 枚と、入口（「のぞいてみる」と絵の中の双眼鏡）、ともだち帳の居場所。
@@ -116,6 +117,9 @@ export function createHome(store: FriendBookStore): HomeView {
   picks.forEach((b, i) => {
     b.addEventListener('click', () => {
       select(i)
+      // 選んだ子の声で「冒険に出発だ！」（同じ子をもう一度押した時も）
+      sound.setVoiceHero(HEROES[i].id)
+      sound.say('start', 150)
       closePick(false)
       enter()
     })

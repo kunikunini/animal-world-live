@@ -22,6 +22,25 @@ export type SeName =
   | 'tap'
   | 'book'
   | 'notice'
+/** 主人公の声のセリフ（ファイルは vo-<主人公>-<セリフ>.mp3） */
+export type VoiceLine = 'start' | 'jump' | 'land' | 'breath' | 'find' | 'friend'
+/** セリフごとのファイルの種類（数があるものは順番に回す） */
+const VOICE_VARIANTS: Record<VoiceLine, string[]> = {
+  start: ['start'],
+  jump: ['jump-1', 'jump-2'],
+  land: ['land'],
+  breath: ['breath-1', 'breath-2'],
+  find: ['find'],
+  friend: ['friend-1', 'friend-2'],
+}
+/** セリフごとの大きさ（息づかいは小さく） */
+const VOICE_GAIN: Record<VoiceLine, number> = { start: 1, jump: 0.8, land: 0.8, breath: 0.4, find: 0.9, friend: 1 }
+/** ふつうのジャンプの滞空（約 0.95 秒）より長く落ちた時だけ、着地の声 */
+const LAND_VOICE_AIR_S = 1.3
+/** 歩き続けて息づかいが出るまでと、その間隔（秒） */
+const BREATH_AFTER_S = 5
+const BREATH_EVERY_S = 6
+
 /** ともだちになる時の音: いまの合成チャイム（既定）か、ElevenLabs で作った候補 */
 export type FriendSound = 'chime' | 'new'
 
@@ -356,6 +375,53 @@ function playShot(file: string, rate = 1, gain = 1): void {
 let lastStep = 0
 let stepIndex = 0
 
+// 声: 選んだ主人公、いま鳴っている声（同時に 2 つは鳴らさない）、セリフごとの順番、ジャンプ・歩きの時刻
+let voiceHero = 'yellow'
+let voiceSrc: AudioBufferSourceNode | null = null
+const voiceTurn: Partial<Record<VoiceLine, number>> = {}
+let lastJumpVoice = 0
+let jumpAt = 0
+let walkStart = 0
+let lastWalkStep = 0
+let lastBreath = 0
+
+function sayNow(line: VoiceLine): void {
+  if (!unlocked || !ctx || !seBus || state.seMute) return
+  const variants = VOICE_VARIANTS[line]
+  const turn = voiceTurn[line] ?? 0
+  voiceTurn[line] = turn + 1
+  const file = `vo-${voiceHero}-${variants[turn % variants.length]}.mp3`
+  let p = shots.get(file)
+  if (!p) {
+    p = fetchBuffer(file)
+    shots.set(file, p)
+  }
+  void p.then((buf) => {
+    if (!buf || !ctx || !seBus) return
+    // 前の声が残っていたら止める（息づかいは、ほかの声が鳴っている間は出さない）
+    if (voiceSrc) {
+      if (line === 'breath') return
+      try {
+        voiceSrc.stop()
+      } catch {
+        // すでに止まっている
+      }
+    }
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    const g = ctx.createGain()
+    g.gain.value = VOICE_GAIN[line]
+    src.connect(g)
+    g.connect(seBus)
+    src.onended = () => {
+      if (voiceSrc === src) voiceSrc = null
+    }
+    voiceSrc = src
+    src.start()
+    logPlayed(file)
+  })
+}
+
 export const sound = {
   /** 起動時に 1 回。最初の操作を待ち、タブが裏に回ったら止める */
   init(): void {
@@ -410,6 +476,37 @@ export const sound = {
     applyVolumes()
   },
 
+  /** 声の主（選んだ主人公の id） */
+  setVoiceHero(id: string): void {
+    voiceHero = id
+  },
+  /** 主人公の声。delayMs だけ遅らせて鳴らせる（効果音のすぐあとに重ねる時） */
+  say(line: VoiceLine, delayMs = 0): void {
+    if (line === 'jump') {
+      // ジャンプの声は続けて跳んでも 1.2 秒に 1 回まで
+      const now = performance.now()
+      jumpAt = now
+      if (now - lastJumpVoice < 1200) return
+      lastJumpVoice = now
+    }
+    if (delayMs > 0) window.setTimeout(() => sayNow(line), delayMs)
+    else sayNow(line)
+  },
+  /** 着地: 高い所から落ちた時だけ声を出す */
+  landed(): void {
+    if (jumpAt && performance.now() - jumpAt > LAND_VOICE_AIR_S * 1000) sayNow('land')
+    jumpAt = 0
+  },
+  /** 歩いた 1 歩ごとに呼ぶ。歩き続けている時だけ、ときどき息づかい */
+  walkStep(): void {
+    const now = performance.now()
+    if (now - lastWalkStep > 700 || walkStart === 0) walkStart = now
+    lastWalkStep = now
+    if (now - walkStart > BREATH_AFTER_S * 1000 && now - lastBreath > BREATH_EVERY_S * 1000) {
+      lastBreath = now
+      sayNow('breath')
+    }
+  },
   /** 同じ操作で少し遅れて別の効果音を鳴らす時、先にタップ音だけ取り消す */
   cancelTap(): void {
     window.clearTimeout(pendingTap)

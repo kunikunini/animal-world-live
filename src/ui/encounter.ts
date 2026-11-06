@@ -49,7 +49,10 @@ export function createEncounterIcon(): EncounterIcon {
         if (next) {
           const key = name ?? currentName
           const now = performance.now()
-          if (now - (heardAt.get(key) ?? -Infinity) > ENCOUNTER_COOLDOWN_MS) sound.play('encounter')
+          if (now - (heardAt.get(key) ?? -Infinity) > ENCOUNTER_COOLDOWN_MS) {
+            sound.play('encounter')
+            sound.say('find', 450)
+          }
           heardAt.set(key, now)
         }
         if (next) showView(el)

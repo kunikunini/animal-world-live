@@ -347,9 +347,19 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
   const stepBiome = emptyWeights()
-  player.onStep((x, z) => sound.play(biomeAt(x, z, stepBiome).north > 0.5 ? 'step-snow' : 'step-grass'))
-  player.onJump(() => sound.play('jump'))
-  player.onLand(() => sound.play('land'))
+  player.onStep((x, z) => {
+    sound.play(biomeAt(x, z, stepBiome).north > 0.5 ? 'step-snow' : 'step-grass')
+    // 歩き続けている時だけ、ときどき主人公の息づかい
+    sound.walkStep()
+  })
+  player.onJump(() => {
+    sound.play('jump')
+    sound.say('jump')
+  })
+  player.onLand(() => {
+    sound.play('land')
+    sound.landed()
+  })
   scene.add(player.object)
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
@@ -1427,6 +1437,7 @@ function main(): void {
   applyStatic()
   sound.init()
   sound.setBgm('home')
+  sound.setVoiceHero(getHeroId())
   const canvas = document.getElementById('world') as HTMLCanvasElement
   const shell = createShell()
   const webgl = hasWebGL(canvas)
@@ -1495,6 +1506,7 @@ function main(): void {
   // だれで冒険する？: 保存して、組み立て済みのワールドなら主人公を替える（まだなら組み立てる時に読む）
   shell.home.onHero((id) => {
     setHeroId(id)
+    sound.setVoiceHero(id)
     world?.setHero(id)
   })
 

@@ -341,6 +341,8 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     }
     celebrate()
     sound.play('friend')
+    // ユーザーが押した喜び（「よしっ」「やったー！」）。動物が承諾したという言い方はしない
+    sound.say('friend', 650)
     status.textContent = t('addedStatus', { name: animalName(current) })
     // 押したボタンは消えるので、次の行き先へフォーカスを移す（キーボード・読み上げの人が迷わない）
     if (!seeBookBtn.hidden) seeBookBtn.focus()
