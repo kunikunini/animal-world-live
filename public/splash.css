@@ -3,11 +3,13 @@
    #005 マスクリビール・#003 バースト・#008 キネティックタイポグラフィを移したもの。くわしくは道具の頭の説明 */
 .splash {
   --bw: clamp(170px, min(56vw, 38vh), 320px);
-  --fs: clamp(26px, min(8.6vw, 7vh), 58px);
+  --fs0: clamp(32px, min(10.5vw, 7.6vh), 76px);
+  --fs: var(--fs0);
   --sp-bg: #fbcd03;
   --sp-coral: #ff6b5c;
   --sp-blue: #2f6bff;
   --sp-navy: #1f2a44;
+  --sp-red: #ec2a22;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -15,7 +17,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--bw) * 0.2 + var(--fs) * 0.35);
+  gap: calc(var(--bw) * 0.16 + var(--fs) * 0.3);
   overflow: hidden;
   background: var(--sp-bg);
   transition: opacity 0.6s ease, visibility 0s linear 0.6s;
@@ -59,18 +61,16 @@
 .sp-pop { animation: sp-pop 1.6s linear 0.85s both; }
 .sp-pop img { display: block; width: 100%; height: auto; filter: drop-shadow(0 calc(var(--bw) * 0.02) calc(var(--bw) * 0.0333) rgba(120, 70, 0, 0.28)); }
 .sp-line { left: 50%; top: calc(100% + calc(var(--bw) * 0.0133)); width: calc(var(--bw) * 2.5333); height: calc(var(--bw) * 0.04); margin-left: calc(var(--bw) * -1.2667); border-radius: calc(var(--bw) * 0.02); background: var(--sp-coral); transform: scaleX(0); animation: sp-line 2.3s linear 0s both; }
-/* ロゴ: 3 語を 1 行に（狭い画面では 2 行） */
+/* ロゴ: 「ANIMAL WORLD」の下に、大きな「LIVE」（中央揃え） */
 .splash-logo {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  column-gap: 0.32em;
-  row-gap: 0.1em;
-  max-width: 94vw;
+  flex-direction: column;
+  align-items: center;
+  max-width: 96vw;
   font-family: 'Baloo 2', 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', system-ui, sans-serif;
   font-weight: 800;
   font-size: var(--fs);
-  line-height: 1.1;
+  line-height: 1;
   letter-spacing: 0.01em;
   white-space: nowrap;
   color: #fff;
@@ -78,6 +78,7 @@
   paint-order: stroke fill;
   text-shadow: 0 0.1em 0 var(--sp-navy);
 }
+.sp-row { display: flex; column-gap: 0.32em; }
 .sp-word { position: relative; display: inline-flex; }
 .sp-word > i { display: inline-block; font-style: normal; }
 .sp-w1 > i { transform-origin: 50% 100%; animation: sp-hop 1.7s linear both; }
@@ -93,9 +94,23 @@
 .sp-w2 > i:nth-child(3) { animation-delay: 2.01s; }
 .sp-w2 > i:nth-child(4) { animation-delay: 2.13s; }
 .sp-w2 > i:nth-child(5) { animation-delay: 2.25s; }
-.sp-w3 { transform-origin: 50% 100%; animation: sp-slam 0.8s linear 2.05s both; }
-.sp-w3 .sp-sray { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-.sp-w3 .sp-sray i { position: absolute; left: 0; top: calc(var(--fs) * -0.0398); width: calc(var(--fs) * 0.2955); height: calc(var(--fs) * 0.0795); border-radius: calc(var(--fs) * 0.0398); background: var(--sp-blue); opacity: 0; animation: sp-slam-ray 0.4s linear 2.25s both; }
+.sp-live {
+  /* LIVE は上の行の 2.6 倍。放射の線などの長さもこの大きさに合わせる（--fs）。線は叩きつける動きと別に（見本も文字とは別に描く） */
+  --fs: calc(var(--fs0) * 2.6);
+  position: relative;
+  font-size: var(--fs);
+  margin-top: -0.04em;
+}
+.sp-w3 {
+  /* 赤に黒いふち */
+  color: var(--sp-red);
+  -webkit-text-stroke: 0.15em #000;
+  text-shadow: 0 0.07em 0 #000;
+  transform-origin: 50% 100%;
+  animation: sp-slam 0.8s linear 2.15s both;
+}
+.sp-live .sp-sray { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.sp-live .sp-sray i { position: absolute; left: 0; top: calc(var(--fs) * -0.0398); width: calc(var(--fs) * 0.2955); height: calc(var(--fs) * 0.0795); border-radius: calc(var(--fs) * 0.0398); background: var(--sp-red); opacity: 0; animation: sp-slam-ray 0.4s linear 2.35s both; }
 .sp-sray:nth-of-type(1) { transform: rotate(4.2936deg) scaleX(1.3268); }
 .sp-sray:nth-of-type(2) { transform: rotate(29.1922deg) scaleX(0.8544); }
 .sp-sray:nth-of-type(3) { transform: rotate(118.6926deg) scaleX(0.5586); }
@@ -643,7 +658,7 @@
   100% { opacity: 1; transform: translateX(calc(var(--fs) * -0.0004)) scale(1.0003, 0.9997) skewX(-7.9696deg); }
 }
 @keyframes sp-slam-ray {
-  0% { opacity: 1; transform: translateX(calc(var(--fs) * 1.3636)) scaleY(1); }
+  0% { opacity: 0; }
   4.1667% { opacity: 1; transform: translateX(calc(var(--fs) * 1.4317)) scaleY(0.8801); }
   8.3333% { opacity: 1; transform: translateX(calc(var(--fs) * 1.4942)) scaleY(0.7703); }
   12.5% { opacity: 1; transform: translateX(calc(var(--fs) * 1.5512)) scaleY(0.6699); }

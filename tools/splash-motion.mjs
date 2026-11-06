@@ -3,7 +3,7 @@
 // 動きは Motion Prompt（https://showheyohtaki.github.io/motion-prompt/、MIT）の 3 つの見本のコードを、数字ごと移したもの:
 //   #005 マスクリビール … 双眼鏡のスコップが、線の向こうからせり上がる
 //   #003 バースト       … スコップが一度縮んで溜め、ばねで戻る瞬間に、輪・線・粒が弾ける
-//   #008 キネティックタイポグラフィ … ロゴの 3 語を、ANIMAL は「はねる」、WORLD は「まわる」、LIVE は「ドン!」で出す
+//   #008 キネティックタイポグラフィ … ロゴの 3 語を、ANIMAL は「はねる」、WORLD は「まわる」、2 行目の大きな LIVE は「ドン!」で出す
 // 見本は Canvas に時刻 u から 1 コマずつ描く関数。ここではその関数を 1/60 秒ごとに計算して CSS の keyframes にする。
 // 立ち上げ中は本体の JS がワールドの組み立てで約 2 秒止まるので、Canvas や JS の動きだと止まってしまう。
 // transform と opacity だけの CSS の動きは別のスレッドで動くので、止まらない。
@@ -50,7 +50,7 @@ const REV = 0 // #005 マスクリビール
 const BUR = 0.85 // #003 バースト（溜め 0.3〜0.5、0.5 で弾ける）
 const ANI = 1.45 // #008 ANIMAL（はねる）
 const WOR = 1.72 // #008 WORLD（まわる）
-const LIV = 2.05 // #008 LIVE（ドン!）
+const LIV = 2.15 // #008 LIVE（ドン!）
 const FLOAT = 2.7 // そのあと、ふわふわ浮く
 export const SHOW_MS = 3300 // ここまで見せてから消す（src/ui/splash.ts）
 
@@ -136,7 +136,7 @@ kf.push(keyframes('sp-slam', 0.8, (lu) => {
 // 放射の線 8 本を 0.4 秒: 半径 120→170（easeOut 3 乗）、長さ 26、太さ 7→0。横 1.35 倍・縦 0.5 倍の楕円状
 kf.push(keyframes('sp-slam-ray', 0.4, (tt) => {
   const q = eOut(tt / 0.4)
-  if (q >= 0.97) return 'opacity: 0;'
+  if (tt <= 0 || q >= 0.97) return 'opacity: 0;'
   return `opacity: 1; transform: translateX(${T(120 + 50 * q)}) scaleY(${n4(1 - q)});`
 }))
 
@@ -167,11 +167,13 @@ css += `/* 立ち上げの画面（スプラッシュ）。tools/splash-motion.m
    #005 マスクリビール・#003 バースト・#008 キネティックタイポグラフィを移したもの。くわしくは道具の頭の説明 */
 .splash {
   --bw: clamp(170px, min(56vw, 38vh), 320px);
-  --fs: clamp(26px, min(8.6vw, 7vh), 58px);
+  --fs0: clamp(32px, min(10.5vw, 7.6vh), 76px);
+  --fs: var(--fs0);
   --sp-bg: #fbcd03;
   --sp-coral: #ff6b5c;
   --sp-blue: #2f6bff;
   --sp-navy: #1f2a44;
+  --sp-red: #ec2a22;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -179,7 +181,7 @@ css += `/* 立ち上げの画面（スプラッシュ）。tools/splash-motion.m
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--bw) * 0.2 + var(--fs) * 0.35);
+  gap: calc(var(--bw) * 0.16 + var(--fs) * 0.3);
   overflow: hidden;
   background: var(--sp-bg);
   transition: opacity 0.6s ease, visibility 0s linear 0.6s;
@@ -205,18 +207,16 @@ ${DOTS.map((d, i) => `.sp-dot:nth-of-type(${i + 1}) { transform: rotate(${n4(d.d
 .sp-pop { animation: sp-pop 1.6s linear ${BUR}s both; }
 .sp-pop img { display: block; width: 100%; height: auto; filter: drop-shadow(0 ${B(3)} ${B(5)} rgba(120, 70, 0, 0.28)); }
 .sp-line { left: 50%; top: calc(100% + ${B(14 - 3 - 9)}); width: ${B(380)}; height: ${B(6)}; margin-left: ${B(-190)}; border-radius: ${B(3)}; background: var(--sp-coral); transform: scaleX(0); animation: sp-line 2.3s linear ${REV}s both; }
-/* ロゴ: 3 語を 1 行に（狭い画面では 2 行） */
+/* ロゴ: 「ANIMAL WORLD」の下に、大きな「LIVE」（中央揃え） */
 .splash-logo {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  column-gap: 0.32em;
-  row-gap: 0.1em;
-  max-width: 94vw;
+  flex-direction: column;
+  align-items: center;
+  max-width: 96vw;
   font-family: 'Baloo 2', 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', system-ui, sans-serif;
   font-weight: 800;
   font-size: var(--fs);
-  line-height: 1.1;
+  line-height: 1;
   letter-spacing: 0.01em;
   white-space: nowrap;
   color: #fff;
@@ -224,14 +224,29 @@ ${DOTS.map((d, i) => `.sp-dot:nth-of-type(${i + 1}) { transform: rotate(${n4(d.d
   paint-order: stroke fill;
   text-shadow: 0 0.1em 0 var(--sp-navy);
 }
+.sp-row { display: flex; column-gap: 0.32em; }
 .sp-word { position: relative; display: inline-flex; }
 .sp-word > i { display: inline-block; font-style: normal; }
 .sp-w1 > i { transform-origin: 50% 100%; animation: sp-hop 1.7s linear both; }
 .sp-w2 > i { transform-origin: 50% 55%; animation: sp-spin 0.62s linear both; }
 ${WORDS.filter((w) => w.anim).map((w, wi) => [...w.w].map((_, i) => `.sp-w${wi + 1} > i:nth-child(${i + 1}) { animation-delay: ${n4(w.start + i * w.step)}s; }`).join('\n')).join('\n')}
-.sp-w3 { transform-origin: 50% 100%; animation: sp-slam 0.8s linear ${LIV}s both; }
-.sp-w3 .sp-sray { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-.sp-w3 .sp-sray i { position: absolute; left: 0; top: ${T(-3.5)}; width: ${T(26)}; height: ${T(7)}; border-radius: ${T(3.5)}; background: var(--sp-blue); opacity: 0; animation: sp-slam-ray 0.4s linear ${n4(LIV + HIT)}s both; }
+.sp-live {
+  /* LIVE は上の行の 2.6 倍。放射の線などの長さもこの大きさに合わせる（--fs）。線は叩きつける動きと別に（見本も文字とは別に描く） */
+  --fs: calc(var(--fs0) * 2.6);
+  position: relative;
+  font-size: var(--fs);
+  margin-top: -0.04em;
+}
+.sp-w3 {
+  /* 赤に黒いふち */
+  color: var(--sp-red);
+  -webkit-text-stroke: 0.15em #000;
+  text-shadow: 0 0.07em 0 #000;
+  transform-origin: 50% 100%;
+  animation: sp-slam 0.8s linear ${LIV}s both;
+}
+.sp-live .sp-sray { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.sp-live .sp-sray i { position: absolute; left: 0; top: ${T(-3.5)}; width: ${T(26)}; height: ${T(7)}; border-radius: ${T(3.5)}; background: var(--sp-red); opacity: 0; animation: sp-slam-ray 0.4s linear ${n4(LIV + HIT)}s both; }
 ${SLAM_RAYS.map((r, i) => `.sp-sray:nth-of-type(${i + 1}) { transform: rotate(${n4(r.deg)}deg) scaleX(${n4(r.k)}); }`).join('\n')}
 /* 消える時: 少し大きくなりながら、ふわっと */
 .splash.is-out { opacity: 0; visibility: hidden; }
@@ -254,7 +269,10 @@ export const HTML = `<div class="sp-stage">
         <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-bino.webp" alt="" width="400" height="310" decoding="async" /></div></div></div></div>
         <i class="sp-line"></i>
       </div>
-      <div class="splash-logo">${WORDS.map((w, wi) => `<span class="sp-word sp-w${wi + 1}">${[...w.w].map((c) => `<i>${c}</i>`).join('')}${wi === 2 ? SLAM_RAYS.map(() => '<b class="sp-sray"><i></i></b>').join('') : ''}</span>`).join('')}</div>`
+      <div class="splash-logo">${(() => {
+        const word = (w, wi) => `<span class="sp-word sp-w${wi + 1}">${[...w.w].map((c) => `<i>${c}</i>`).join('')}</span>`
+        return `<span class="sp-row">${word(WORDS[0], 0)}${word(WORDS[1], 1)}</span><span class="sp-live">${SLAM_RAYS.map(() => '<b class="sp-sray"><i></i></b>').join('')}${word(WORDS[2], 2)}</span>`
+      })()}</div>`
 
 fs.writeFileSync('public/splash.css', css)
 const page = fs.readFileSync('index.html', 'utf8')
