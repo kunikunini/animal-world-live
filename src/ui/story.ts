@@ -11,7 +11,8 @@ import { hideView, showView } from './transition'
  * 6 人の子どもたちに ふしぎな箱が届く → 青い双眼鏡 → のぞくとサバンナ → 歩く・跳ぶ → ライリーと出会う（名前の札）
  * → 収録映像で本当の姿も見られる → ともだちになるかは きみが決める → ともだち帳 → 7 つのワールド → みんなで。
  * 絵は期間中に画像生成で作ったもの（出所は README）。言葉は全部 HTML で重ね、漢字は小学校までで全部ルビ。
- * コマは自動で進み（1 コマ 5〜7 秒）、絵を押すか「つぎへ」で先へ、「とばす」・Esc でいつでも終われる。
+ * ナレーションは黄色いパーカーの子の声（ElevenLabs）、最後の一言は 6 人全員。間はサバンナの曲（ループしない 1 本）。
+ * コマは自動で進み（1 コマ 5〜8 秒、ナレーションが終わるまで）、絵を押すか「つぎへ」で先へ、「とばす」・Esc でいつでも終われる。
  * 絵が読めなくても色の地と言葉だけで続く（白画面にしない）。「動きをへらす」ではカメラの寄りと引き抜きをやめてフェードだけ。
  * 主人公はホームで選んだ子（声はその子）。絵はキービジュアルと同じ 6 人の子どもたち。
  * 記録は awl.story.v2（前の 3 コマを見た人にも 1 回出す）。?story=1 で毎回出す（確認用）。
@@ -29,6 +30,9 @@ type Move = 'in' | 'out' | 'left' | 'right'
 interface Panel {
   /** 絵（public/story/<img>-1280.webp と -768.webp）。home: は public/home/ の絵をそのまま */
   img: string
+  /** ナレーション（public/audio/vo-story-<voice>.mp3）。言葉が変わるコマで鳴らす。長さ（秒）は hold を決めるのに使う */
+  voice?: string
+  voiceSec?: number
   /** 絵が読めない時の地の色 */
   tint: [string, string]
   /** 見せる時間（ms）。たっぷり読める長さ */
@@ -38,8 +42,8 @@ interface Panel {
   overlay?: Overlay
   /** 7 つのワールドのコマ: ワールドの名前を出す */
   world?: WorldKey
-  /** 次のコマへの移り方。pull＝紙芝居の引き抜き（既定）、quick＝速い引き抜き */
-  leave?: 'pull' | 'quick'
+  /** 次のコマへの移り方。dissolve＝ゆっくり溶けて替わる（既定）、quick＝速く替わる */
+  leave?: 'dissolve' | 'quick'
 }
 
 const T = {
@@ -52,25 +56,25 @@ const T = {
   decide: { ja: 'ともだちになるかどうかは、きみが きめる。', en: 'Whether to become friends is up to you.' },
   book: { ja: 'ともだち{帳|ちょう}に ともだちが ふえた。お{知|し}らせや {写真|しゃしん}も とどくよ。', en: 'A new friend in your Friend Book. News and photos will arrive there too.' },
   worlds: { ja: 'ワールドは {七|なな}つ。いろんな{国|くに}の どうぶつたちが {待|ま}っている。', en: 'There are seven worlds, full of animals waiting for you.' },
-  finale: { ja: '{世界中|せかいじゅう}の どうぶつたちと、ともだちになろう。', en: 'Make friends with animals from all over the world.' },
+  finale: { ja: '{世界中|せかいじゅう}の どうぶつたちと、ともだちになろう！', en: 'Make friends with animals from all over the world!' },
 } satisfies Record<string, Lines>
 
 const PANELS: Panel[] = [
-  { img: 's1-box', tint: ['#ffd98a', '#f2a65a'], hold: 5600, text: T.box, move: 'in' },
-  { img: 's2-bino', tint: ['#9fdcff', '#2f6bff'], hold: 5200, text: T.bino, move: 'in', overlay: 'sparkle' },
-  { img: 's3-lens', tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.lens, move: 'out', overlay: 'iris' },
-  { img: 's4-run', tint: ['#9fdcff', '#f6b73c'], hold: 6000, text: T.run, move: 'right' },
-  { img: 's5-meet', tint: ['#f6b73c', '#c9762a'], hold: 6600, text: T.meet, move: 'in', overlay: 'pin' },
-  { img: 's5-meet', tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.monitor, move: 'left', overlay: 'monitor' },
-  { img: 's7-decide', tint: ['#ffb27a', '#e8640a'], hold: 6600, text: T.decide, move: 'in', overlay: 'decide' },
-  { img: 's8-night', tint: ['#2b3a6b', '#13192b'], hold: 6600, text: T.book, move: 'out', overlay: 'book' },
-  { img: 'home:lens-jungle', tint: ['#43b968', '#16764a'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'jungle', leave: 'quick' },
+  { img: 's1-box', voice: 'box', voiceSec: 4.3, tint: ['#ffd98a', '#f2a65a'], hold: 5800, text: T.box, move: 'in' },
+  { img: 's2-bino', voice: 'bino', voiceSec: 2.8, tint: ['#9fdcff', '#2f6bff'], hold: 5000, text: T.bino, move: 'in', overlay: 'sparkle' },
+  { img: 's3-lens', voice: 'lens', voiceSec: 4.8, tint: ['#f6b73c', '#c9762a'], hold: 6600, text: T.lens, move: 'out', overlay: 'iris' },
+  { img: 's4-run', voice: 'run', voiceSec: 5.7, tint: ['#9fdcff', '#f6b73c'], hold: 7600, text: T.run, move: 'right' },
+  { img: 's5-meet', voice: 'meet', voiceSec: 6.9, tint: ['#f6b73c', '#c9762a'], hold: 8400, text: T.meet, move: 'in', overlay: 'pin' },
+  { img: 's5-meet', voice: 'monitor', voiceSec: 4.2, tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.monitor, move: 'left', overlay: 'monitor' },
+  { img: 's7-decide', voice: 'decide', voiceSec: 3.2, tint: ['#ffb27a', '#e8640a'], hold: 6800, text: T.decide, move: 'in', overlay: 'decide' },
+  { img: 's8-night', voice: 'book', voiceSec: 5.4, tint: ['#2b3a6b', '#13192b'], hold: 7200, text: T.book, move: 'out', overlay: 'book' },
+  { img: 'home:lens-jungle', voice: 'worlds', voiceSec: 5.0, tint: ['#43b968', '#16764a'], hold: 1800, text: T.worlds, move: 'in', overlay: 'world', world: 'jungle', leave: 'quick' },
   { img: 'home:lens-north', tint: ['#8cc7ee', '#3f78b5'], hold: 1700, text: T.worlds, move: 'left', overlay: 'world', world: 'north', leave: 'quick' },
   { img: 'home:lens-south', tint: ['#f08a4b', '#b8492c'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'south', leave: 'quick' },
   { img: 's9-water', tint: ['#4fc3d9', '#1f7fa6'], hold: 1700, text: T.worlds, move: 'right', overlay: 'world', world: 'water', leave: 'quick' },
   { img: 's9-sky', tint: ['#9fb4f2', '#5a6fd0'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'sky', leave: 'quick' },
   { img: 's9-farm', tint: ['#f7a6b8', '#d0607e'], hold: 2000, text: T.worlds, move: 'left', overlay: 'world', world: 'partner', leave: 'quick' },
-  { img: 's10-all', tint: ['#ffb27a', '#ff7bac'], hold: 7000, text: T.finale, move: 'out', overlay: 'finale' },
+  { img: 's10-all', voice: 'finale', voiceSec: 3.5, tint: ['#ffb27a', '#ff7bac'], hold: 7600, text: T.finale, move: 'out', overlay: 'finale' },
 ]
 
 /** 絵の URL（1280 幅と 768 幅） */
@@ -262,10 +266,10 @@ export function createStory(): StoryView {
         break
       }
       case 'pin':
+        // ナレーションが「あっ、見つけた！」と言うので、主人公の同じセリフは重ねない
         cue(900, () => {
           card.classList.add('pin-on')
           sound.play('encounter')
-          sound.say('find', 250)
         })
         break
       case 'monitor':
@@ -273,8 +277,8 @@ export function createStory(): StoryView {
         break
       case 'decide':
         cue(600, () => card.classList.add('cta-on'))
-        // 絵の中の子が決めて押す。音とともに輝く
-        cue(3400, () => {
+        // 絵の中の子が決めて押す。音とともに輝く（ナレーションが終わってから）
+        cue(3600, () => {
           card.classList.add('cta-press')
           sound.play('friend')
           sound.say('friend', 350)
@@ -291,12 +295,20 @@ export function createStory(): StoryView {
         })
         break
       case 'finale':
-        cue(1200, () => card.classList.add('logo-on'))
+        cue(900, () => card.classList.add('logo-on'))
         break
       default:
         break
     }
-    if (p.img === 's4-run') cue(700, () => sound.say('jump'))
+    // ジャンプの声はナレーションが終わってから
+    if (p.img === 's4-run') cue(Math.round((p.voiceSec ?? 0) * 1000) + 300, () => sound.say('jump'))
+  }
+
+  /** ナレーション: 日本語の時だけ（声は日本語で作ってある）。言葉が変わるコマで 1 回。最後の 1 枚はロゴが出てから */
+  const narrate = (p: Panel) => {
+    if (!p.voice || getLang() !== 'ja') return
+    const delay = p.overlay === 'finale' ? 1100 : 350
+    cue(delay, () => sound.narrate(p.voice as string))
   }
 
   const show = (i: number) => {
@@ -305,22 +317,20 @@ export function createStory(): StoryView {
     const p = PANELS[i]
     const prev = current
     const card = buildCard(p)
-    // 新しいコマは前のコマの下に置き、前のコマを横へ引き抜く（紙芝居）
-    if (prev) frame.insertBefore(card, prev)
-    else frame.appendChild(card)
+    // 新しいコマを前のコマの上に重ね、ゆっくり溶けて替わる（7 つのワールドは速く）
+    const quick = PANELS[i - 1]?.leave === 'quick'
+    if (prev) card.classList.add(quick ? 'is-enter-quick' : 'is-enter')
+    frame.appendChild(card)
     current = card
-    if (prev) {
-      const quick = PANELS[i - 1]?.leave === 'quick'
-      prev.classList.add(quick ? 'is-pulled-quick' : 'is-pulled')
-      window.setTimeout(() => prev.remove(), reduceMotion ? 320 : quick ? 420 : 620)
-    }
-    // 言葉は変わる時だけ入れ直す
+    if (prev) window.setTimeout(() => prev.remove(), quick ? 460 : 860)
+    // 言葉とナレーションは変わる時だけ
     if (p.text !== lastText) {
       lastText = p.text
       caption.innerHTML = lines(p.text)
       caption.classList.remove('is-refresh')
       void caption.offsetWidth
       caption.classList.add('is-refresh')
+      narrate(p)
     }
     segs.forEach((s, k) => {
       s.classList.toggle('is-done', k < i)
@@ -340,6 +350,8 @@ export function createStory(): StoryView {
 
   const finish = (how: StoryEnd) => {
     clearCues()
+    sound.stopNarration()
+    sound.setStoryBgm(false)
     writeSeen()
     root.classList.remove('is-last')
     hideView(root, () => {
@@ -376,8 +388,10 @@ export function createStory(): StoryView {
   // 裏に回ったら自動で進むのを止め、戻ったら今のコマから続ける
   document.addEventListener('visibilitychange', () => {
     if (!resolveDone || index < 0) return
-    if (document.hidden) clearCues()
-    else if (index < PANELS.length - 1 && !timer) timer = window.setTimeout(() => advance(), 1500)
+    if (document.hidden) {
+      clearCues()
+      sound.stopNarration()
+    } else if (index < PANELS.length - 1 && !timer) timer = window.setTimeout(() => advance(), 1500)
   })
 
   return {
@@ -395,6 +409,7 @@ export function createStory(): StoryView {
         lastText = null
         frame.innerHTML = ''
         showView(root)
+        sound.setStoryBgm(true)
         show(0)
         nextBtn.focus({ preventScroll: true })
       }),
