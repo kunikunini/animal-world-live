@@ -265,6 +265,7 @@ const SUB_AREAS: Record<string, string> = {
   'オーストラリア・南米': 'Australia & South America',
   '極北・北方林・日本の森・北米': 'Far north, boreal forest, Japanese woods & North America',
   犬と家畜: 'Dogs & farm animals',
+  '猛禽・鳥': 'Birds of prey & other birds',
 }
 
 export function subAreaName(sub: string): string {
