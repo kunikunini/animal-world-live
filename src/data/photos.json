@@ -53,7 +53,14 @@
     "r-o7h1ff": "/faces/r-o7h1ff.webp",
     "r-pk1orh": "/faces/r-pk1orh.webp",
     "r-tfcb9w": "/faces/r-tfcb9w.webp",
-    "r-v7v5nl": "/faces/r-v7v5nl.webp"
+    "r-v7v5nl": "/faces/r-v7v5nl.webp",
+    "r-18eo2hu": "/faces/r-18eo2hu.webp",
+    "r-1hdd551": "/faces/r-1hdd551.webp",
+    "r-1iywx6s": "/faces/r-1iywx6s.webp",
+    "r-1k82p5k": "/faces/r-1k82p5k.webp",
+    "r-1y24uhx": "/faces/r-1y24uhx.webp",
+    "r-agcxtp": "/faces/r-agcxtp.webp",
+    "r-x7famq": "/faces/r-x7famq.webp"
   },
   "edited": {
     "r-1cb853": "ゆめこ（アメリカバク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
@@ -74,6 +81,9 @@
     "r-1dxjmk7": "あずき（キタキツネ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
     "r-1pz6900": "まっ君（ツキノワグマ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
     "r-zuotzx": "アンバー（ブチハイエナ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
-    "r-6jyoop": "ハナ（ニホンザル）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）"
+    "r-6jyoop": "ハナ（ニホンザル）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-1hdd551": "マック（ベンガル×ワシミミズク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-agcxtp": "ムック（ユーラシアワシミミズク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-1k82p5k": "レラ（ワシミミズク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）"
   }
 }
