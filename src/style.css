@@ -983,7 +983,7 @@ button {
 }
 
 /* ==========================================================================
-   物語: 初回だけ 3 コマ
+   おはなし: 紙芝居ふうのオープニング（クレイアニメの絵・木の枠・引き抜き）
    ========================================================================== */
 .story {
   position: fixed;
@@ -991,61 +991,154 @@ button {
   z-index: 12;
   display: grid;
   place-items: center;
-  padding: 16px;
-  padding-bottom: calc(16px + var(--safe-bottom));
-  background: rgba(31, 42, 68, 0.55);
+  padding: 14px;
+  padding-bottom: calc(14px + var(--safe-bottom));
+  background: radial-gradient(120% 90% at 50% 28%, #2b3a6b, #13192b 72%);
   font-family: var(--font-home);
-  color: var(--h-navy);
-}
-
-.story-panel {
-  width: min(100%, 560px);
-  max-height: 100%;
-  overflow-y: auto;
-  background: #fff;
-  border-radius: var(--r-xl);
-  padding: 18px;
-  box-shadow: 0 12px 0 rgba(31, 42, 68, 0.18), var(--shadow-float);
-  display: grid;
-  gap: 14px;
-  text-align: center;
-}
-
-.story-art {
-  aspect-ratio: 16 / 10;
-  border-radius: var(--r-lg);
-  background: var(--h-sky-light);
+  color: #fff;
   overflow: hidden;
 }
 
-.story-art svg {
+.story-stage {
+  width: min(100%, 920px);
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  /* 枠の幅: 横いっぱいか、言葉とボタンの分を引いた高さから */
+  --frame-w: min(100%, calc((100dvh - 236px - var(--safe-bottom)) * 1.5));
+}
+
+.story-theater {
+  width: var(--frame-w);
+  min-width: 200px;
+  display: grid;
+  gap: 10px;
+}
+
+/* 木の枠。中で絵を横に引き抜く */
+.story-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #13192b;
+  box-shadow:
+    0 0 0 9px #b57b3f,
+    0 0 0 13px #6e4423,
+    0 10px 0 13px #4e2f17,
+    0 28px 60px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  isolation: isolate;
+}
+
+.story-card {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(80% 60% at 50% 40%, rgba(255, 255, 255, 0.22), transparent),
+    linear-gradient(160deg, var(--tint1), var(--tint2));
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* 前のコマは上にあって、右へ引き抜かれる */
+.story-card.is-pulled {
+  z-index: 2;
+  animation: st-pull 0.62s cubic-bezier(0.55, 0, 0.85, 0.45) forwards;
+}
+
+.story-card.is-pulled-quick {
+  z-index: 2;
+  animation: st-pull 0.42s cubic-bezier(0.55, 0, 0.85, 0.45) forwards;
+}
+
+@keyframes st-pull {
+  to { transform: translateX(110%) rotate(1.5deg); }
+}
+
+.story-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transform-origin: 50% 50%;
+}
+
+.story-card.has-img .story-img { opacity: 1; }
+.story-card.no-img .story-img { display: none; }
+
+/* ゆっくりしたカメラ: 寄る・引く・流す（hold の時間をかけて） */
+.story-card.move-in .story-img { animation: st-move-in var(--hold) linear forwards; }
+.story-card.move-out .story-img { animation: st-move-out var(--hold) linear forwards; }
+.story-card.move-left .story-img { animation: st-move-left var(--hold) linear forwards; }
+.story-card.move-right .story-img { animation: st-move-right var(--hold) linear forwards; }
+
+@keyframes st-move-in { from { transform: scale(1); } to { transform: scale(1.12); } }
+@keyframes st-move-out { from { transform: scale(1.12); } to { transform: scale(1); } }
+@keyframes st-move-left { from { transform: scale(1.1) translateX(3%); } to { transform: scale(1.1) translateX(-3%); } }
+@keyframes st-move-right { from { transform: scale(1.1) translateX(-3%); } to { transform: scale(1.1) translateX(3%); } }
+
+/* 進み具合: コマごとの帯 */
+.story-prog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 0 2px;
+}
+
+.story-seg {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.story-seg i {
   display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: #ffd233;
+}
+
+.story-seg.is-done i { width: 100%; }
+.story-seg.is-on i { animation: st-fill var(--hold) linear forwards; }
+
+@keyframes st-fill { from { width: 0; } to { width: 100%; } }
+
+.story-side {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
 }
 
 .story-text {
   margin: 0;
-  font-size: 20px;
+  max-width: 760px;
+  min-height: 2.4em;
+  font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 900;
-  line-height: 1.4;
+  line-height: 1.75;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
-.story-dots {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
+.story-text ruby { ruby-position: over; }
 
-.story-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--ink-faint);
-}
-
-.story-dot.is-on {
-  background: var(--h-orange);
+.story-text rt {
+  font-size: 0.45em;
+  font-weight: 700;
+  color: #ffe08a;
+  letter-spacing: 0.02em;
 }
 
 .story-actions {
@@ -1062,23 +1155,386 @@ button {
   box-shadow: 0 6px 0 var(--h-orange-deep);
 }
 
+.story.is-last .btn-hero {
+  animation: st-pulse 1.4s ease-in-out infinite;
+}
+
 .story .btn-quiet {
   font-family: var(--font-home);
   font-weight: 900;
-  color: var(--h-navy);
-  background: var(--h-cream);
-  box-shadow: 0 4px 0 rgba(31, 42, 68, 0.14);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
 }
 
+/* ---- 絵の上の部品 ---- */
+.story-ov {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  container-type: size;
+}
+
+.st-star {
+  position: absolute;
+  translate: -50% -50%;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 51, 0.8));
+  animation: st-twinkle 1.6s ease-in-out infinite;
+}
+
+@keyframes st-twinkle {
+  0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.4; }
+  50% { transform: scale(1.1) rotate(20deg); opacity: 1; }
+}
+
+/* 双眼鏡の 2 つの丸が開く幕 */
+.st-iris {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.3s;
+}
+
+.iris-done .st-iris { opacity: 0; }
+
+/* 名前の札（ワールドのピンと同じ形） */
+.st-pin {
+  position: absolute;
+  left: 71%;
+  top: 14%;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6cqw;
+  padding: 2.4cqw 4cqw 2.4cqw 3cqw;
+  gap: 1.6cqw;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--h-navy);
+  font-size: clamp(14px, 5.2cqw, 30px);
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 1.2cqw 0 rgba(31, 42, 68, 0.22), 0 2cqw 4cqw rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  scale: 0.6;
+  transition: opacity 0.35s, scale 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.st-pin .ico { width: 1.3em; height: 1.3em; color: var(--h-blue); }
+
+.st-pin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -1.6cqw;
+  translate: -50% 0;
+  border: 1.6cqw solid transparent;
+  border-top-color: #fff;
+  border-bottom: 0;
+}
+
+.pin-on .st-pin { opacity: 1; scale: 1; }
+
+/* 観察モニター: 収録映像のポスターと「収録映像」の印 */
+.st-monitor {
+  position: absolute;
+  left: 27%;
+  top: 4%;
+  width: 36%;
+  padding: 1.6cqw;
+  border-radius: 3cqw;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1.4cqw 0 rgba(31, 42, 68, 0.22), 0 3cqw 6cqw rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  translate: 0 12px;
+  transition: opacity 0.4s, translate 0.5s cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+
+.mon-on .st-monitor { opacity: 1; translate: 0 0; }
+
+.st-monitor-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 2cqw;
+  overflow: hidden;
+  background: #2b2520 center / cover no-repeat;
+}
+
+.st-monitor-badge {
+  position: absolute;
+  left: 1.2cqw;
+  top: 1.2cqw;
+  padding: 0.6cqw 1.6cqw;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-size: clamp(9px, 2.6cqw, 16px);
+  font-weight: 900;
+}
+
+.st-monitor-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0.6cqw 2cqw rgba(0, 0, 0, 0.3);
+}
+
+.st-monitor-play::after {
+  content: '';
+  position: absolute;
+  left: 56%;
+  top: 50%;
+  translate: -50% -50%;
+  border-style: solid;
+  border-width: 0.9em 0 0.9em 1.5em;
+  border-color: transparent transparent transparent var(--h-navy);
+  font-size: clamp(5px, 1.6cqw, 12px);
+}
+
+.st-monitor-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1cqw;
+  margin-top: 1.4cqw;
+}
+
+.st-chip {
+  display: inline-block;
+  padding: 0.7cqw 1.8cqw;
+  border-radius: 999px;
+  background: var(--h-cream);
+  color: var(--h-navy);
+  font-size: clamp(9px, 2.6cqw, 16px);
+  font-weight: 900;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.st-chip rt { font-size: 0.5em; }
+
+/* ともだちになる: 絵の中の子が決めて押す */
+.st-decide {
+  position: absolute;
+  left: 50%;
+  top: 76%;
+  translate: -50% -50%;
+}
+
+.st-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.6cqw;
+  padding: 2.6cqw 5cqw;
+  border-radius: 999px;
+  background: var(--h-pink);
+  color: #fff;
+  font-size: clamp(15px, 5.4cqw, 32px);
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 1.2cqw 0 #d84f86, 0 2.4cqw 5cqw rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  scale: 0.7;
+  transition: opacity 0.35s, scale 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.st-cta .ico { width: 1.1em; height: 1.1em; }
+
+.cta-on .st-cta {
+  opacity: 1;
+  scale: 1;
+  animation: st-pulse 1.2s ease-in-out 0.5s infinite;
+}
+
+.cta-press .st-cta {
+  animation: st-press 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+
+@keyframes st-pulse {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.06; }
+}
+
+@keyframes st-press {
+  0% { scale: 1; }
+  35% { scale: 0.9; box-shadow: 0 0.3cqw 0 #d84f86, 0 1cqw 2cqw rgba(0, 0, 0, 0.3); }
+  100% { scale: 1; }
+}
+
+.st-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.st-burst i {
+  position: absolute;
+  left: -0.5em;
+  top: -0.5em;
+  width: 1em;
+  height: 1em;
+  font-size: clamp(10px, 3.6cqw, 22px);
+  rotate: var(--a);
+  opacity: 0;
+}
+
+.st-burst i::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #ffd233;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.st-burst i:nth-child(odd)::before { background: var(--h-pink); }
+
+.cta-press .st-burst i {
+  animation: st-burst 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) var(--d) forwards;
+}
+
+@keyframes st-burst {
+  0% { opacity: 1; translate: 0 0; scale: 0.4; }
+  70% { opacity: 1; }
+  100% { opacity: 0; translate: 0 -14cqw; scale: 1; }
+}
+
+/* ともだち帳のカード */
+.st-book {
+  position: absolute;
+  right: 4%;
+  top: 6%;
+  width: 46%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6cqw 2cqw;
+  padding: 2cqw 2.4cqw;
+  border-radius: 3cqw;
+  background: #fff;
+  color: var(--h-navy);
+  box-shadow: 0 1.4cqw 0 rgba(31, 42, 68, 0.22), 0 3cqw 6cqw rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  translate: 0 12px;
+  scale: 0.9;
+  transition: opacity 0.4s, translate 0.5s cubic-bezier(0.2, 1.2, 0.4, 1), scale 0.5s cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+
+.book-on .st-book { opacity: 1; translate: 0 0; scale: 1; }
+
+.st-book-face {
+  width: 12cqw;
+  height: 12cqw;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--h-cream);
+}
+
+.st-book-face :is(svg, img) { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+.st-book-body { display: grid; line-height: 1.2; }
+.st-book-body b { font-size: clamp(14px, 5cqw, 30px); font-weight: 900; }
+.st-book-sub { font-size: clamp(9px, 2.8cqw, 16px); font-weight: 700; opacity: 0.6; }
+
+.st-book-heart {
+  width: 6cqw;
+  height: 6cqw;
+  color: var(--h-pink);
+  animation: st-pulse 1.2s ease-in-out infinite;
+}
+
+.st-book-tags {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1cqw;
+  margin-top: 0.6cqw;
+}
+
+.st-book-tags .st-chip {
+  opacity: 0;
+  translate: 0 8px;
+  transition: opacity 0.35s, translate 0.4s cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+
+.tags-on .st-book-tags .st-chip { opacity: 1; translate: 0 0; }
+.tags-on .st-book-tags .st-chip:nth-child(2) { transition-delay: 0.25s; }
+.tags-on .st-book-tags .st-chip:nth-child(3) { transition-delay: 0.5s; }
+
+/* ワールドの名前 */
+.st-world {
+  position: absolute;
+  left: 4%;
+  bottom: 6%;
+  padding: 2cqw 4.4cqw;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  color: #fff;
+  font-size: clamp(15px, 5.6cqw, 34px);
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 0.6cqw rgba(255, 255, 255, 0.85), 0 1.2cqw 0 rgba(0, 0, 0, 0.22), 0 2cqw 4cqw rgba(0, 0, 0, 0.3);
+  animation: st-pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes st-pop {
+  from { opacity: 0; scale: 0.6; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* おしまい: ロゴ */
+.st-finale {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding-top: 3.5%;
+}
+
+.st-logo {
+  font-family: 'Zen Maru Gothic', var(--font-home);
+  font-weight: 900;
+  font-size: clamp(20px, 7.4cqw, 54px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #ffd233;
+  text-align: center;
+  -webkit-text-stroke: 0.1em #1f2a44;
+  paint-order: stroke fill;
+  text-shadow: 0 0.12em 0 #1f2a44, 0 0.25em 0.3em rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  scale: 0.6;
+  transition: opacity 0.4s, scale 0.6s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.logo-on .st-logo { opacity: 1; scale: 1; }
+
+/* 動きをへらす: カメラの寄りと引き抜きをやめて、フェードだけ */
+.story.is-still .story-img { animation: none; }
+.story.is-still .story-card.is-pulled,
+.story.is-still .story-card.is-pulled-quick { animation: st-fade 0.3s ease forwards; }
+.story.is-still :is(.st-star, .st-cta, .st-book-heart, .btn-hero, .st-burst i) { animation: none; }
+.story.is-still .st-world { animation: none; }
+
+@keyframes st-fade { to { opacity: 0; } }
+
+/* スマホ横: 枠を左、言葉とボタンを右に */
 @media (max-height: 520px) and (orientation: landscape) {
-  .story-panel {
-    grid-template-columns: 1fr 1fr;
+  .story { padding: 10px 16px; }
+  .story-stage {
+    grid-template-columns: auto 1fr;
     align-items: center;
-    width: min(100%, 720px);
-    padding: 14px;
+    gap: 18px;
+    width: 100%;
+    --frame-w: min(58vw, calc((100dvh - 52px - var(--safe-bottom)) * 1.5));
   }
-  .story-art { grid-row: 1 / 4; }
-  .story-text { font-size: 17px; }
+  .story-text { font-size: 16px; line-height: 1.6; min-height: 0; }
+  .story-actions { flex-direction: column-reverse; align-items: stretch; width: 100%; max-width: 240px; }
 }
 
 /* ==========================================================================
@@ -3458,7 +3914,7 @@ button.bk-tab:hover {
 
 .sheet,
 .observe-panel,
-.story-panel {
+.story-stage {
   transition:
     translate var(--t-view) var(--ease-soft),
     scale var(--t-view) var(--ease-soft),
@@ -3482,7 +3938,7 @@ button.bk-tab:hover {
   translate: 0 28px;
 }
 
-.story.is-out .story-panel {
+.story.is-out .story-stage {
   translate: 0 20px;
   scale: 0.96;
 }
@@ -3513,7 +3969,7 @@ button.bk-tab:hover {
   to { opacity: 1; translate: 0 0; }
 }
 
-body.is-reduce-motion :is(.sheet, .observe-panel, .story-panel, .toast, .encounter-pin) {
+body.is-reduce-motion :is(.sheet, .observe-panel, .story-stage, .toast, .encounter-pin) {
   translate: none !important;
   scale: none !important;
 }

@@ -1,90 +1,156 @@
+import { sound } from '../audio/sound'
 import { ANIMALS } from '../data/animals'
-import { faceBackground, faceParts } from './faces'
+import { WORLDS, type WorldKey } from '../data/worlds'
+import { faceMarkup } from './faces'
 import { esc } from './html'
-import { t, type I18nKey } from './i18n'
-import { hideView, refreshIn, showView } from './transition'
+import { getLang, t } from './i18n'
+import { hideView, showView } from './transition'
 
 /**
- * 物語: 初回だけ 3 コマ。絵と一言だけで、説明文にしない。
- * ①ふしぎな双眼鏡が届く ②のぞくと動物たちの世界につながっている ③ともだちになると、ともだち帳に書かれる。
- * 会社名や事実には触れないフィクション。2 回目からは出ない（localStorage）。?story=1 で毎回出す（確認用）。
+ * おはなし: ワールドに入る前に 1 回だけ見る、紙芝居ふうのオープニング（クレイアニメの絵 11 枚）。
+ * 6 人の子どもたちに ふしぎな箱が届く → 青い双眼鏡 → のぞくとサバンナ → 歩く・跳ぶ → ライリーと出会う（名前の札）
+ * → 収録映像で本当の姿も見られる → ともだちになるかは きみが決める → ともだち帳 → 7 つのワールド → みんなで。
+ * 絵は期間中に画像生成で作ったもの（出所は README）。言葉は全部 HTML で重ね、漢字は小学校までで全部ルビ。
+ * コマは自動で進み（1 コマ 5〜7 秒）、絵を押すか「つぎへ」で先へ、「とばす」・Esc でいつでも終われる。
+ * 絵が読めなくても色の地と言葉だけで続く（白画面にしない）。「動きをへらす」ではカメラの寄りと引き抜きをやめてフェードだけ。
+ * 主人公はホームで選んだ子（声はその子）。絵はキービジュアルと同じ 6 人の子どもたち。
+ * 記録は awl.story.v2（前の 3 コマを見た人にも 1 回出す）。?story=1 で毎回出す（確認用）。
  */
-const STORAGE_KEY = 'awl.story.v1'
+const STORAGE_KEY = 'awl.story.v2'
+const BASE = `${import.meta.env.BASE_URL}story/`
+const HOME = `${import.meta.env.BASE_URL}home/`
 
-export interface StoryView {
-  /** まだ見ていない（または ?story=1）なら true */
-  shouldShow: () => boolean
-  /** 最後まで送るかスキップで解決する */
-  play: () => Promise<void>
+type Lines = { ja: string; en: string }
+/** 絵の上に重ねる部品 */
+type Overlay = 'sparkle' | 'iris' | 'pin' | 'monitor' | 'decide' | 'book' | 'world' | 'finale'
+/** カメラの動き（ゆっくり寄る・引く・横に流す） */
+type Move = 'in' | 'out' | 'left' | 'right'
+
+interface Panel {
+  /** 絵（public/story/<img>-1280.webp と -768.webp）。home: は public/home/ の絵をそのまま */
+  img: string
+  /** 絵が読めない時の地の色 */
+  tint: [string, string]
+  /** 見せる時間（ms）。たっぷり読める長さ */
+  hold: number
+  text: Lines
+  move: Move
+  overlay?: Overlay
+  /** 7 つのワールドのコマ: ワールドの名前を出す */
+  world?: WorldKey
+  /** 次のコマへの移り方。pull＝紙芝居の引き抜き（既定）、quick＝速い引き抜き */
+  leave?: 'pull' | 'quick'
 }
 
-const BINO = `
-  <rect x="74" y="118" width="252" height="104" rx="52" fill="#2f6bff" />
-  <circle cx="200" cy="108" r="22" fill="#ffd233" /><circle cx="200" cy="108" r="11" fill="#fff" />
-  <circle cx="140" cy="170" r="64" fill="#1f2a44" /><circle cx="260" cy="170" r="64" fill="#1f2a44" />`
+const T = {
+  box: { ja: 'ある{日|ひ}、きみたちのところに ふしぎな はこが とどいた。', en: 'One day, a mysterious box arrived for you and your friends.' },
+  bino: { ja: '{中|なか}には、{青|あお}い そうがんきょう。', en: 'Inside: a pair of blue binoculars.' },
+  lens: { ja: 'のぞいてみると…… {遠|とお}い{国|くに}の どうぶつたちが {見|み}えた！', en: 'Look through them… and there are animals from a faraway land!' },
+  run: { ja: '{気|き}がつくと、どうぶつたちの{世界|せかい}に！ {歩|ある}いて、{走|はし}って、ジャンプ！', en: 'Suddenly you are in the animals’ world! Walk, run, jump!' },
+  meet: { ja: 'あっ、{見|み}つけた！ ライオンの{子|こ}、ライリー。どうぶつには みんな {名前|なまえ}がある。', en: 'Look! A lion cub named Riley. Every animal here has a name.' },
+  monitor: { ja: 'ほんものの ようすも {見|み}られる。{飼育員|しいくいん}さんの おはなしも。', en: 'You can watch the real animal too, with words from the keepers.' },
+  decide: { ja: 'ともだちになるかどうかは、きみが きめる。', en: 'Whether to become friends is up to you.' },
+  book: { ja: 'ともだち{帳|ちょう}に ともだちが ふえた。お{知|し}らせや {写真|しゃしん}も とどくよ。', en: 'A new friend in your Friend Book. News and photos will arrive there too.' },
+  worlds: { ja: 'ワールドは {七|なな}つ。いろんな{国|くに}の どうぶつたちが {待|ま}っている。', en: 'There are seven worlds, full of animals waiting for you.' },
+  finale: { ja: '{世界中|せかいじゅう}の どうぶつたちと、ともだちになろう。', en: 'Make friends with animals from all over the world.' },
+} satisfies Record<string, Lines>
 
-const LENS_RINGS = `
-  <circle cx="140" cy="170" r="54" fill="none" stroke="#fff" stroke-width="6" opacity=".9" /><circle cx="260" cy="170" r="54" fill="none" stroke="#fff" stroke-width="6" opacity=".9" />
-  <path d="M104 150 a40 40 0 0 1 28 -30" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".85" /><path d="M224 150 a40 40 0 0 1 28 -30" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".85" />`
-
-function star(x: number, y: number, s: number, color = '#ffd233'): string {
-  return `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -10l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L0 4l-5.4 2.8 1.1-6.1L-8.8 -3.6l6.1-.8z" fill="${color}" />`
-}
-
-function scene1(): string {
-  // 届いた箱の上に双眼鏡。星がきらきら
-  return `<svg viewBox="0 0 400 250" aria-hidden="true">
-    <rect width="400" height="250" fill="#9fdcff" />
-    <ellipse cx="200" cy="232" rx="150" ry="14" fill="rgba(31,42,68,.12)" />
-    <rect x="110" y="150" width="180" height="80" rx="14" fill="#f2c27a" />
-    <rect x="110" y="150" width="180" height="22" rx="10" fill="#e4a95a" />
-    <rect x="192" y="150" width="16" height="80" fill="#ff7bac" /><rect x="110" y="184" width="180" height="14" fill="#ff7bac" />
-    <g transform="translate(70 -10) scale(.65)">${BINO}<circle cx="140" cy="170" r="54" fill="#9fdcff" /><circle cx="260" cy="170" r="54" fill="#9fdcff" />${LENS_RINGS}</g>
-    ${star(60, 70, 1.4)}${star(340, 60, 1.1)}${star(330, 150, 0.8, '#fff')}${star(50, 160, 0.9, '#fff')}
-  </svg>`
-}
-
-function scene2(): string {
-  // レンズの向こうに、どうぶつたち（アンジーと仔）
-  const angie = ANIMALS.find((a) => a.id === 'angie')
-  const cub = ANIMALS.find((a) => a.id === 'claire')
-  const face = (id: string, x: number, y: number, s: number) => {
-    const a = ANIMALS.find((v) => v.id === id)
-    if (!a) return ''
-    return `<g transform="translate(${x} ${y}) scale(${s})"><circle cx="50" cy="52" r="50" fill="${faceBackground(a)}" />${faceParts(a)}</g>`
-  }
-  return `<svg viewBox="0 0 400 250" aria-hidden="true">
-    <rect width="400" height="250" fill="#1f2a44" />
-    <circle cx="140" cy="125" r="78" fill="#e0bf5c" /><circle cx="260" cy="125" r="78" fill="#e0bf5c" />
-    <path d="M62 125 a78 78 0 0 1 156 0z" fill="#9fdcff" /><path d="M182 125 a78 78 0 0 1 156 0z" fill="#9fdcff" />
-    <rect x="62" y="125" width="276" height="78" fill="#cfa42f" clip-path="inset(0)" />
-    <circle cx="140" cy="125" r="78" fill="none" stroke="#1f2a44" stroke-width="18" /><circle cx="260" cy="125" r="78" fill="none" stroke="#1f2a44" stroke-width="18" />
-    ${angie ? face('angie', 95, 80, 0.9) : ''}${cub ? face('claire', 222, 92, 0.76) : ''}
-    <circle cx="140" cy="125" r="70" fill="none" stroke="#fff" stroke-width="6" opacity=".9" /><circle cx="260" cy="125" r="70" fill="none" stroke="#fff" stroke-width="6" opacity=".9" />
-  </svg>`
-}
-
-function scene3(): string {
-  // 開いたともだち帳に顔とハート
-  const angie = ANIMALS.find((a) => a.id === 'angie')
-  const faceInner = angie ? `<circle cx="50" cy="52" r="50" fill="${faceBackground(angie)}" />${faceParts(angie)}` : ''
-  return `<svg viewBox="0 0 400 250" aria-hidden="true">
-    <rect width="400" height="250" fill="#fff1c9" />
-    <path d="M60 60 q70 -16 140 0 v150 q-70 -16 -140 0z" fill="#fff" stroke="#e8d6b0" stroke-width="3" />
-    <path d="M200 60 q70 -16 140 0 v150 q-70 -16 -140 0z" fill="#fff" stroke="#e8d6b0" stroke-width="3" />
-    <g transform="translate(92 86) scale(.76)">${faceInner}</g>
-    <rect x="96" y="172" width="68" height="10" rx="5" fill="#2b1d12" opacity=".7" />
-    <path transform="translate(270 118) scale(3.2)" d="M0 8.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 0-4a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z" fill="#ff7bac" />
-    <rect x="236" y="172" width="68" height="10" rx="5" fill="#2b1d12" opacity=".4" /><rect x="236" y="190" width="48" height="10" rx="5" fill="#2b1d12" opacity=".25" />
-    ${star(330, 70, 1.1)}${star(60, 40, 0.9)}${star(350, 200, 0.8, '#ff7bac')}
-  </svg>`
-}
-
-const PANELS: Array<{ art: () => string; text: I18nKey }> = [
-  { art: scene1, text: 'story1' },
-  { art: scene2, text: 'story2' },
-  { art: scene3, text: 'story3' },
+const PANELS: Panel[] = [
+  { img: 's1-box', tint: ['#ffd98a', '#f2a65a'], hold: 5600, text: T.box, move: 'in' },
+  { img: 's2-bino', tint: ['#9fdcff', '#2f6bff'], hold: 5200, text: T.bino, move: 'in', overlay: 'sparkle' },
+  { img: 's3-lens', tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.lens, move: 'out', overlay: 'iris' },
+  { img: 's4-run', tint: ['#9fdcff', '#f6b73c'], hold: 6000, text: T.run, move: 'right' },
+  { img: 's5-meet', tint: ['#f6b73c', '#c9762a'], hold: 6600, text: T.meet, move: 'in', overlay: 'pin' },
+  { img: 's5-meet', tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.monitor, move: 'left', overlay: 'monitor' },
+  { img: 's7-decide', tint: ['#ffb27a', '#e8640a'], hold: 6600, text: T.decide, move: 'in', overlay: 'decide' },
+  { img: 's8-night', tint: ['#2b3a6b', '#13192b'], hold: 6600, text: T.book, move: 'out', overlay: 'book' },
+  { img: 'home:lens-jungle', tint: ['#43b968', '#16764a'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'jungle', leave: 'quick' },
+  { img: 'home:lens-north', tint: ['#8cc7ee', '#3f78b5'], hold: 1700, text: T.worlds, move: 'left', overlay: 'world', world: 'north', leave: 'quick' },
+  { img: 'home:lens-south', tint: ['#f08a4b', '#b8492c'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'south', leave: 'quick' },
+  { img: 's9-water', tint: ['#4fc3d9', '#1f7fa6'], hold: 1700, text: T.worlds, move: 'right', overlay: 'world', world: 'water', leave: 'quick' },
+  { img: 's9-sky', tint: ['#9fb4f2', '#5a6fd0'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'sky', leave: 'quick' },
+  { img: 's9-farm', tint: ['#f7a6b8', '#d0607e'], hold: 2000, text: T.worlds, move: 'left', overlay: 'world', world: 'partner', leave: 'quick' },
+  { img: 's10-all', tint: ['#ffb27a', '#ff7bac'], hold: 7000, text: T.finale, move: 'out', overlay: 'finale' },
 ]
+
+/** 絵の URL（1280 幅と 768 幅） */
+function sources(img: string): { src: string; srcset: string } {
+  if (img.startsWith('home:')) {
+    const src = `${HOME}${img.slice(5)}.webp`
+    return { src, srcset: src }
+  }
+  return { src: `${BASE}${img}-1280.webp`, srcset: `${BASE}${img}-768.webp 768w, ${BASE}${img}-1280.webp 1280w` }
+}
+
+/** `{漢字|よみ}` をふりがなつきの HTML に */
+function rubyHtml(s: string): string {
+  return esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>')
+}
+
+function lines(l: Lines): string {
+  return getLang() === 'ja' ? rubyHtml(l.ja) : esc(l.en)
+}
+
+/** 日本語ならルビつき、英語ならそのまま */
+function ja(s: string, en: string): string {
+  return getLang() === 'ja' ? rubyHtml(s) : esc(en)
+}
+
+function star(x: number, y: number, s: number, delay: number, color = '#ffd233'): string {
+  return `<svg class="st-star" style="left:${x}%;top:${y}%;width:${s}px;animation-delay:${delay}s" viewBox="-10 -10 20 20" aria-hidden="true"><path d="M0 -10l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L0 4l-5.4 2.8 1.1-6.1L-8.8 -3.6l6.1-.8z" fill="${color}" /></svg>`
+}
+
+const RILEY = ANIMALS.find((a) => a.id === 'riley')
+
+function rileyName(): string {
+  if (!RILEY) return 'ライリー'
+  return getLang() === 'en' && RILEY.nameEn ? RILEY.nameEn : RILEY.name
+}
+
+/** 絵の上に重ねる部品の HTML */
+function overlayHtml(p: Panel): string {
+  switch (p.overlay) {
+    case 'sparkle':
+      return star(30, 38, 26, 0) + star(66, 30, 20, 0.5) + star(56, 60, 16, 1.1, '#fff') + star(26, 62, 14, 0.8, '#fff') + star(72, 56, 22, 1.5)
+    case 'iris':
+      // 双眼鏡の 2 つの丸が開いていく幕（SMIL。入れた時に beginElement で始める）
+      return `<svg class="st-iris" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs><mask id="st-iris-m"><rect width="600" height="400" fill="#fff" />
+          <circle cx="220" cy="200" r="0"><animate attributeName="r" begin="indefinite" dur="1.4s" from="0" to="520" fill="freeze" calcMode="spline" keySplines=".4 0 .2 1" /></circle>
+          <circle cx="380" cy="200" r="0"><animate attributeName="r" begin="indefinite" dur="1.4s" from="0" to="520" fill="freeze" calcMode="spline" keySplines=".4 0 .2 1" /></circle>
+        </mask></defs>
+        <rect width="600" height="400" fill="#13192b" mask="url(#st-iris-m)" /></svg>`
+    case 'pin':
+      return `<div class="st-pin"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span>${esc(rileyName())}</span></div>`
+    case 'monitor': {
+      const poster = RILEY?.video.poster ?? ''
+      return `<div class="st-monitor">
+        <div class="st-monitor-screen"${poster ? ` style="background-image:url('${esc(poster)}')"` : ''}>
+          <span class="st-monitor-badge">${esc(t('recorded'))}</span>
+          <span class="st-monitor-play" aria-hidden="true"></span>
+        </div>
+        <div class="st-monitor-note"><span class="st-chip">${ja('{飼育員|しいくいん}さんの おはなし', 'Keeper’s notes')}</span><span class="st-chip">${ja('{写真|しゃしん}', 'Photos')}</span></div>
+      </div>`
+    }
+    case 'decide':
+      return `<div class="st-decide"><div class="st-cta"><svg class="ico ico-fill"><use href="#i-heart" /></svg><span>${esc(t('befriend'))}</span></div><div class="st-burst" aria-hidden="true">${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<i style="--a:${i * 45}deg;--d:${(i % 3) * 0.08}s"></i>`).join('')}</div></div>`
+    case 'book':
+      return `<div class="st-book">
+        <div class="st-book-face">${RILEY ? faceMarkup(RILEY) : ''}</div>
+        <div class="st-book-body"><b>${esc(rileyName())}</b><span class="st-book-sub">${esc(getLang() === 'ja' ? 'ライオン' : 'Lion')}</span></div>
+        <svg class="ico ico-fill st-book-heart"><use href="#i-heart" /></svg>
+        <div class="st-book-tags"><span class="st-chip">${ja('お{知|し}らせ', 'News')}</span><span class="st-chip">${ja('きょうの{写真|しゃしん}', 'Photo of the day')}</span><span class="st-chip">${ja('お{手紙|てがみ}を{書|か}く', 'Write a letter')}</span></div>
+      </div>`
+    case 'world': {
+      const w = WORLDS.find((x) => x.key === p.world)
+      return w ? `<div class="st-world" style="--c1:${w.colors[0]};--c2:${w.colors[1]}">${esc(getLang() === 'ja' ? w.name.ja : w.name.en)}</div>` : ''
+    }
+    case 'finale':
+      return `<div class="st-finale"><span class="st-logo">ANIMAL WORLD LIVE</span></div>`
+    default:
+      return ''
+  }
+}
 
 function readSeen(): boolean {
   try {
@@ -102,63 +168,233 @@ function writeSeen(): void {
   }
 }
 
+export interface StoryView {
+  /** まだ見ていない（または ?story=1）なら true */
+  shouldShow: () => boolean
+  /** 最後まで見るか、とばすかで解決する */
+  play: () => Promise<void>
+  setReduceMotion: (on: boolean) => void
+}
+
 export function createStory(): StoryView {
   const root = document.getElementById('story') as HTMLElement
-  const art = document.getElementById('story-art') as HTMLElement
-  const text = document.getElementById('story-text') as HTMLElement
-  const dots = document.getElementById('story-dots') as HTMLElement
+  const frame = document.getElementById('story-frame') as HTMLElement
+  const caption = document.getElementById('story-text') as HTMLElement
+  const prog = document.getElementById('story-prog') as HTMLElement
   const nextBtn = document.getElementById('story-next') as HTMLButtonElement
   const skipBtn = document.getElementById('story-skip') as HTMLButtonElement
   const forced = new URLSearchParams(location.search).get('story') === '1'
 
-  let index = 0
+  let index = -1
   let resolveDone: (() => void) | null = null
+  let reduceMotion = false
+  let timer = 0
+  const cues: number[] = []
+  let current: HTMLElement | null = null
+  let lastText: Lines | null = null
+  let preloaded = false
 
-  const render = () => {
-    const panel = PANELS[index]
-    art.innerHTML = panel.art()
-    text.textContent = t(panel.text)
-    dots.innerHTML = PANELS.map((_, i) => `<span class="story-dot${i === index ? ' is-on' : ''}"></span>`).join('')
-    const last = index === PANELS.length - 1
+  // 進み具合: コマごとの短い帯。見ている帯だけが hold の時間をかけて満ちる
+  prog.innerHTML = PANELS.map(() => '<span class="story-seg"><i></i></span>').join('')
+  const segs = Array.from(prog.children) as HTMLElement[]
+
+  const preload = () => {
+    if (preloaded) return
+    preloaded = true
+    for (const p of PANELS) {
+      const im = new Image()
+      const s = sources(p.img)
+      im.srcset = s.srcset
+      im.src = s.src
+    }
+  }
+
+  const clearCues = () => {
+    window.clearTimeout(timer)
+    timer = 0
+    for (const c of cues) window.clearTimeout(c)
+    cues.length = 0
+  }
+  const cue = (ms: number, fn: () => void) => {
+    cues.push(window.setTimeout(fn, ms))
+  }
+
+  /** コマを組み立てる */
+  const buildCard = (p: Panel): HTMLElement => {
+    const card = document.createElement('div')
+    card.className = `story-card move-${p.move}`
+    card.style.setProperty('--tint1', p.tint[0])
+    card.style.setProperty('--tint2', p.tint[1])
+    card.style.setProperty('--hold', `${p.hold + 900}ms`)
+    const img = document.createElement('img')
+    const s = sources(p.img)
+    img.className = 'story-img'
+    img.alt = ''
+    img.decoding = 'async'
+    img.draggable = false
+    img.sizes = '(min-width: 900px) 900px, 100vw'
+    img.srcset = s.srcset
+    img.src = s.src
+    img.addEventListener('load', () => card.classList.add('has-img'))
+    img.addEventListener('error', () => card.classList.add('no-img'))
+    if (img.complete && img.naturalWidth > 0) card.classList.add('has-img')
+    card.appendChild(img)
+    const ov = document.createElement('div')
+    ov.className = `story-ov ov-${p.overlay ?? 'none'}`
+    ov.innerHTML = overlayHtml(p)
+    card.appendChild(ov)
+    return card
+  }
+
+  /** コマごとの音と仕掛け（絵が出てからの時間で） */
+  const direct = (p: Panel, card: HTMLElement) => {
+    switch (p.overlay) {
+      case 'iris': {
+        sound.play('scope-open')
+        const anims = card.querySelectorAll<SVGAnimateElement>('animate')
+        if (reduceMotion) card.classList.add('iris-done')
+        else {
+          cue(80, () => anims.forEach((a) => a.beginElement()))
+          cue(1500, () => card.classList.add('iris-done'))
+        }
+        break
+      }
+      case 'pin':
+        cue(900, () => {
+          card.classList.add('pin-on')
+          sound.play('encounter')
+          sound.say('find', 250)
+        })
+        break
+      case 'monitor':
+        cue(500, () => card.classList.add('mon-on'))
+        break
+      case 'decide':
+        cue(600, () => card.classList.add('cta-on'))
+        // 絵の中の子が決めて押す。音とともに輝く
+        cue(3400, () => {
+          card.classList.add('cta-press')
+          sound.play('friend')
+          sound.say('friend', 350)
+        })
+        break
+      case 'book':
+        cue(700, () => {
+          card.classList.add('book-on')
+          sound.play('book')
+        })
+        cue(2600, () => {
+          card.classList.add('tags-on')
+          sound.play('notice')
+        })
+        break
+      case 'finale':
+        cue(1200, () => card.classList.add('logo-on'))
+        break
+      default:
+        break
+    }
+    if (p.img === 's4-run') cue(700, () => sound.say('jump'))
+  }
+
+  const show = (i: number) => {
+    clearCues()
+    index = i
+    const p = PANELS[i]
+    const prev = current
+    const card = buildCard(p)
+    // 新しいコマは前のコマの下に置き、前のコマを横へ引き抜く（紙芝居）
+    if (prev) frame.insertBefore(card, prev)
+    else frame.appendChild(card)
+    current = card
+    if (prev) {
+      const quick = PANELS[i - 1]?.leave === 'quick'
+      prev.classList.add(quick ? 'is-pulled-quick' : 'is-pulled')
+      window.setTimeout(() => prev.remove(), reduceMotion ? 320 : quick ? 420 : 620)
+    }
+    // 言葉は変わる時だけ入れ直す
+    if (p.text !== lastText) {
+      lastText = p.text
+      caption.innerHTML = lines(p.text)
+      caption.classList.remove('is-refresh')
+      void caption.offsetWidth
+      caption.classList.add('is-refresh')
+    }
+    segs.forEach((s, k) => {
+      s.classList.toggle('is-done', k < i)
+      s.classList.toggle('is-on', k === i)
+      s.style.setProperty('--hold', `${p.hold}ms`)
+    })
+    const last = i === PANELS.length - 1
     nextBtn.innerHTML = last
       ? `<svg class="ico ico-fill"><use href="#i-bino" /></svg>${esc(t('peek'))}`
       : esc(t('next'))
     if (last) nextBtn.setAttribute('aria-label', t('enterWorld'))
     else nextBtn.removeAttribute('aria-label')
+    root.classList.toggle('is-last', last)
+    direct(p, card)
+    if (!last) timer = window.setTimeout(() => advance(), p.hold)
   }
 
   const finish = () => {
+    clearCues()
     writeSeen()
-    hideView(root)
+    root.classList.remove('is-last')
+    hideView(root, () => {
+      frame.innerHTML = ''
+      current = null
+      lastText = null
+    })
     const done = resolveDone
     resolveDone = null
     if (done) done()
   }
 
-  nextBtn.addEventListener('click', () => {
-    if (index < PANELS.length - 1) {
-      index++
-      render()
-      refreshIn(art, text)
-      nextBtn.focus()
-    } else {
-      finish()
-    }
+  const advance = () => {
+    if (!resolveDone) return
+    if (index < PANELS.length - 1) show(index + 1)
+    else finish()
+  }
+
+  nextBtn.addEventListener('click', advance)
+  frame.addEventListener('click', () => {
+    if (index < PANELS.length - 1) advance()
   })
   skipBtn.addEventListener('click', finish)
   window.addEventListener('keydown', (e) => {
-    if (resolveDone && e.key === 'Escape') finish()
+    if (!resolveDone) return
+    if (e.key === 'Escape') finish()
+    else if (e.key === 'ArrowRight' || e.key === ' ') {
+      // ボタンに焦点がある時の Space はボタン自身の click に任せる（二重に進めない）
+      if (e.key === ' ' && document.activeElement instanceof HTMLButtonElement) return
+      e.preventDefault()
+      advance()
+    }
+  })
+  // 裏に回ったら自動で進むのを止め、戻ったら今のコマから続ける
+  document.addEventListener('visibilitychange', () => {
+    if (!resolveDone || index < 0) return
+    if (document.hidden) clearCues()
+    else if (index < PANELS.length - 1 && !timer) timer = window.setTimeout(() => advance(), 1500)
   })
 
   return {
     shouldShow: () => forced || !readSeen(),
+    setReduceMotion: (on) => {
+      reduceMotion = on
+      root.classList.toggle('is-still', on)
+    },
     play: () =>
       new Promise<void>((resolve) => {
+        preload()
         resolveDone = resolve
-        index = 0
-        render()
+        index = -1
+        current = null
+        lastText = null
+        frame.innerHTML = ''
         showView(root)
-        nextBtn.focus()
+        show(0)
+        nextBtn.focus({ preventScroll: true })
       }),
   }
 }
