@@ -563,16 +563,17 @@ button {
 }
 
 .home .home-settings {
-  width: 2.35em;
-  height: 2.35em;
+  /* くにの「小さすぎる」で一回り大きく（2.35em → 2.85em） */
+  width: 2.85em;
+  height: 2.85em;
   background: #fff;
   color: var(--h-navy);
   box-shadow: 0 0.14em 0 rgba(31, 42, 68, 0.12), 0 0.45em 1.1em rgba(31, 42, 68, 0.2);
 }
 
 .home .home-settings .ico {
-  width: 1.15em;
-  height: 1.15em;
+  width: 1.45em;
+  height: 1.45em;
 }
 
 /* 下のまん中: のぞいてみる（オレンジの大きなボタン。白いふちと、角のきらきら） */

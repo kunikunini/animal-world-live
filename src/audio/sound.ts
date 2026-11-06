@@ -138,6 +138,8 @@ let ctx: AudioContext | null = null
 let unlocked = false
 let failed = false
 let seBus: GainNode | null = null
+let master: GainNode | null = null
+let suspendTimer = 0
 /** 観察モニター（収録映像）を見ている間は BGM を下げる */
 let duck = 1
 let bgmBase: BgmKey | null = null
@@ -189,9 +191,12 @@ function ensureContext(): AudioContext | null {
     bgm.bus = ctx.createGain()
     amb.bus = ctx.createGain()
     seBus = ctx.createGain()
+    // 全体の音量（画面が隠れる時にここを 0 にしてから止める）
+    master = ctx.createGain()
+    master.connect(ctx.destination)
     for (const g of [bgm.bus, amb.bus, seBus]) {
       g.gain.value = 0
-      g.connect(ctx.destination)
+      g.connect(master)
     }
     applyVolumes()
   } catch {
@@ -490,14 +495,41 @@ export const sound = {
     window.addEventListener('pointerdown', unlock, true)
     window.addEventListener('keydown', unlock, true)
     window.addEventListener('touchend', unlock, true)
-    document.addEventListener('visibilitychange', () => {
-      if (!ctx || !unlocked) return
+    // 画面が隠れた時（スマホのロック・アプリの切り替え）: いきなり止めると波形が途中で切れて「ブチッ」と鳴るので、
+    // 全体の音量を 0.12 秒で 0 にしてから止める。戻った時は再開して、0.3 秒で元の音量へ
+    const onHide = () => {
+      if (!ctx || !unlocked || !master) return
+      const now = ctx.currentTime
+      master.gain.cancelScheduledValues(now)
+      master.gain.setValueAtTime(master.gain.value, now)
+      master.gain.linearRampToValueAtTime(0, now + 0.12)
+      window.clearTimeout(suspendTimer)
+      suspendTimer = window.setTimeout(() => {
+        try {
+          if (document.hidden) void ctx?.suspend()
+        } catch {
+          // 続ける
+        }
+      }, 160)
+    }
+    const onShow = () => {
+      if (!ctx || !unlocked || !master) return
+      window.clearTimeout(suspendTimer)
       try {
-        if (document.hidden) void ctx.suspend()
-        else void ctx.resume()
+        void ctx.resume()
       } catch {
         // 続ける
       }
+      const now = ctx.currentTime
+      master.gain.cancelScheduledValues(now)
+      master.gain.setValueAtTime(master.gain.value, now)
+      master.gain.linearRampToValueAtTime(1, now + 0.3)
+    }
+    document.addEventListener('visibilitychange', () => (document.hidden ? onHide() : onShow()))
+    // iPhone の Safari はロックの時に pagehide だけ来ることがある
+    window.addEventListener('pagehide', onHide)
+    window.addEventListener('pageshow', () => {
+      if (!document.hidden) onShow()
     })
     // UI の決定・タップ: ボタンを押した時に小さく鳴らす。同じ操作で別の効果音が鳴る時はそちらだけにする
     document.addEventListener(
@@ -753,7 +785,7 @@ export const sound = {
   },
   /** 開発用: 今の状態（検証で使う） */
   debug() {
-    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmTrack: bgm.track, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, bgmGain: bgm.gain ? +bgm.gain.gain.value.toFixed(2) : null, t: ctx ? +ctx.currentTime.toFixed(2) : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
+    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmTrack: bgm.track, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, bgmGain: bgm.gain ? +bgm.gain.gain.value.toFixed(2) : null, masterGain: master ? +master.gain.value.toFixed(2) : null, t: ctx ? +ctx.currentTime.toFixed(2) : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
   },
 }
 

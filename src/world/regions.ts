@@ -44,6 +44,11 @@ export const REGIONS: readonly Region[] = [SAVANNA, ...OUTER_REGIONS]
 
 /** サバンナからほかのワールドへの道（峠）の半分の幅 */
 export const PASS_HALF_WIDTH = 16
+/**
+ * 峠で歩ける幅（軸から左右の m）。山並みは軸から PASS_HALF_WIDTH + 14 m の内側には置かず、その外も小さくしているので、
+ * 草地は 16 m よりずっと広く見えていた（くにの「サバンナからジャングルの道で通れないところが広い」）。歩ける判定だけ広げる（木や岩の置き方は PASS_HALF_WIDTH のまま）
+ */
+export const PASS_WALK_HALF = 40
 
 /** 地形を作る範囲（xz の矩形）。山の麓まで地面を敷く */
 export const MAP_BOUNDS = { minX: -1400 / 3, maxX: 1400 / 3, minZ: -1400 / 3, maxZ: 1400 / 3 }
@@ -109,7 +114,7 @@ export function isWalkable(x: number, z: number): boolean {
   for (const r of REGIONS) if (Math.hypot(x - r.x, z - r.z) <= reachAt(r, x, z)) return true
   for (const r of OUTER_REGIONS) {
     const s = passSegment(r)
-    if (closestOnSegment(x, z, s.ax, s.az, s.bx, s.bz).d <= PASS_HALF_WIDTH) return true
+    if (closestOnSegment(x, z, s.ax, s.az, s.bx, s.bz).d <= PASS_WALK_HALF) return true
   }
   return false
 }
@@ -138,8 +143,8 @@ export function clampToWalkable(p: { x: number; z: number }): void {
     const s = passSegment(r)
     const c = closestOnSegment(p.x, p.z, s.ax, s.az, s.bx, s.bz)
     const d = c.d || 1
-    const cx = c.x + ((p.x - c.x) / d) * PASS_HALF_WIDTH
-    const cz = c.z + ((p.z - c.z) / d) * PASS_HALF_WIDTH
+    const cx = c.x + ((p.x - c.x) / d) * PASS_WALK_HALF
+    const cz = c.z + ((p.z - c.z) / d) * PASS_WALK_HALF
     const dist = Math.hypot(p.x - cx, p.z - cz)
     if (dist < bd) {
       bd = dist
