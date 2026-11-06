@@ -22,6 +22,8 @@ const WORLD_KEYS = {
 }
 /** ライオンは animals.json 側 */
 const SKIP_SPECIES = new Set(['アフリカライオン'])
+/** 亡くなった子など、名簿に残っていてもアプリに出さない個体（種/名前。くにの決定 2026-11-06） */
+const SKIP_ANIMALS = new Set(['オオカンガルー/ヒマワリ'])
 /**
  * CSV のワールド区分を、このアプリでは別のワールドに置く種（くにの決定 2026-11-06）。
  * 生成し直しても戻らないよう、ここで割り当てる。区分（sub_area）は CSV のまま
@@ -100,6 +102,7 @@ for (const r of body) {
   // 区分の表記は「ジャングル（アジア）」のようにかっこの中だけを使う
   const sub = (r[iSub].match(/（(.+)）/)?.[1] ?? '').trim()
   for (const name of names) {
+    if (SKIP_ANIMALS.has(`${species}/${name}`)) continue
     const id = stableId(species, name)
     if (seen.has(id)) throw new Error(`ID が重なった: ${species} ${name}`)
     seen.add(id)
