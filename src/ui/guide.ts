@@ -70,6 +70,8 @@ interface Step {
   walkTo?: 'riley'
   /** この段の説明に要る画面。開いていない時（前の段を「つぎへ」で飛ばした時など）はこの段を飛ばす */
   needs?: 'observe' | 'book' | 'chat' | 'catalog' | 'map' | 'arrived' | 'friendRow'
+  /** この段で、カードが必ずよける物（照らす所より重く数える）。照らす所が画面いっぱいで、どこに置いても重なる段に使う */
+  clear?: string[]
 }
 
 const STEPS: Step[] = [
@@ -187,6 +189,8 @@ const STEPS: Step[] = [
     targets: ['#map-canvas', '#map-3d'],
     until: ['mapClose'],
     needs: 'map',
+    // 地図は大きいのでカードはどこかで地図に重なる。見出し（2D／3D・動物・閉じる）は隠さない（閉じると次の段へ進む）
+    clear: ['#map .sheet-head'],
   },
   {
     text: {
@@ -501,7 +505,7 @@ export function createGuide(): Guide {
     const H = window.innerHeight
 
     // カードの置き場所: 上・下（スマホ横・横長は左・右も）のうち、照らす所と、隠したくない物（映像・お手紙の入力欄）に重ならない所。
-    // 照らす所との重なりは 10 倍重く数える。どこも重なるなら重なりのいちばん小さい所（それでも隠れる時は「ちいさく する」でたためる）。
+    // 照らす所との重なりは 10 倍、段ごとの必ずよける物（clear）は 100 倍重く数える。どこも重なるなら重なりのいちばん小さい所（それでも隠れる時は「ちいさく する」でたためる）。
     // 下に置く時はスティックが出ていればその上
     const cw = card.offsetWidth || 320
     const ch = card.offsetHeight || 200
@@ -522,11 +526,14 @@ export function createGuide(): Guide {
       else cands.push(...side)
     }
     const keep = KEEP_CLEAR.map((sel) => visibleRect(document.querySelector(sel))).filter((r): r is DOMRect => r !== null)
+    const must = (step.clear ?? []).map((sel) => visibleRect(document.querySelector(sel))).filter((r): r is DOMRect => r !== null)
     const m = 12
     const overlap = (x: number, y: number, w: number, h: number, r: { x: number; y: number; w: number; h: number }) =>
       Math.max(0, Math.min(x + w, r.x + r.w + m) - Math.max(x, r.x - m)) * Math.max(0, Math.min(y + h, r.y + r.h + m) - Math.max(y, r.y - m))
     const cost = (x: number, y: number) =>
-      (rect ? overlap(x, y, cw, ch, rect) * 10 : 0) + keep.reduce((sum, k) => sum + overlap(x, y, cw, ch, { x: k.left, y: k.top, w: k.width, h: k.height }), 0)
+      (rect ? overlap(x, y, cw, ch, rect) * 10 : 0) +
+      keep.reduce((sum, k) => sum + overlap(x, y, cw, ch, { x: k.left, y: k.top, w: k.width, h: k.height }), 0) +
+      must.reduce((sum, k) => sum + overlap(x, y, cw, ch, { x: k.left, y: k.top, w: k.width, h: k.height }) * 100, 0)
     let best = cands[0]
     let bestA = Infinity
     for (const c of cands) {

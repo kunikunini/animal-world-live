@@ -141,6 +141,36 @@ let failed = false
 let seBus: GainNode | null = null
 let master: GainNode | null = null
 let suspendTimer = 0
+/** おはなしの「とまる」で止めている（画面が戻っても勝手に鳴らさない） */
+let pausedByApp = false
+/** 画面が隠れる・一時停止の時に、全体の音量を下げきるまでの秒数 */
+const HIDE_FADE = 0.03
+
+/** 全体の音量を、いまの値から sec 秒で to へ */
+function rampMaster(to: number, sec: number): void {
+  if (!ctx || !master) return
+  const now = ctx.currentTime
+  master.gain.cancelScheduledValues(now)
+  master.gain.setValueAtTime(master.gain.value, now)
+  master.gain.linearRampToValueAtTime(to, now + sec)
+}
+
+/** 全体の音量を HIDE_FADE 秒で 0 にしてから AudioContext を止める（止める時にまだ still() なら） */
+function fadeOutAndSuspend(still: () => boolean): void {
+  if (!ctx || !master) return
+  rampMaster(0, HIDE_FADE)
+  window.clearTimeout(suspendTimer)
+  suspendTimer = window.setTimeout(
+    () => {
+      try {
+        if (still() && ctx?.state === 'running') void ctx.suspend()
+      } catch {
+        // 続ける
+      }
+    },
+    HIDE_FADE * 1000 + 30,
+  )
+}
 /** 観察モニター（収録映像）を見ている間は BGM を下げる */
 let duck = 1
 let bgmBase: BgmKey | null = null
@@ -515,36 +545,33 @@ export const sound = {
     if (ac && ac.state === 'running') queueMicrotask(unlock)
     ac?.addEventListener('statechange', () => {
       if (ac.state === 'running' && !unlocked) unlock()
+      // 止まった時（自分で止めた時も、iPhone がスリープ・電話などで止めた "interrupted" も）は全体の音量を 0 にしておき、
+      // 動き出した時は 0 から上げる（止まる前の音のかけらが再開の瞬間にいきなり鳴らないように）
+      if (!unlocked || !master) return
+      if (ac.state !== 'running') {
+        master.gain.cancelScheduledValues(ac.currentTime)
+        master.gain.setValueAtTime(0, ac.currentTime)
+      } else if (!document.hidden && !pausedByApp) {
+        rampMaster(1, 0.3)
+      }
     })
-    // 画面が隠れた時（スマホのロック・アプリの切り替え）: いきなり止めると波形が途中で切れて「ブチッ」と鳴るので、
-    // 全体の音量を 0.12 秒で 0 にしてから止める。戻った時は再開して、0.3 秒で元の音量へ
+    // 画面が隠れた時（スマホのロック・スリープ・アプリの切り替え）: いきなり止めると波形が途中で切れて「ブチッ」と鳴る。
+    // iPhone はスリープの直後にページを止めるので、フェードが終わる前に止められると、鳴っていた音のかけらが「ブチーン」と残る。
+    // 全体の音量を 0.03 秒で 0 にし（音楽ならこの長さでもプツッとはしない）、すぐ止める。戻った時は再開して、0.3 秒で元の音量へ
     const onHide = () => {
       if (!ctx || !unlocked || !master) return
-      const now = ctx.currentTime
-      master.gain.cancelScheduledValues(now)
-      master.gain.setValueAtTime(master.gain.value, now)
-      master.gain.linearRampToValueAtTime(0, now + 0.12)
-      window.clearTimeout(suspendTimer)
-      suspendTimer = window.setTimeout(() => {
-        try {
-          if (document.hidden) void ctx?.suspend()
-        } catch {
-          // 続ける
-        }
-      }, 160)
+      fadeOutAndSuspend(() => document.hidden)
     }
     const onShow = () => {
       if (!ctx || !unlocked || !master) return
       window.clearTimeout(suspendTimer)
+      if (pausedByApp) return
       try {
         void ctx.resume()
       } catch {
         // 続ける
       }
-      const now = ctx.currentTime
-      master.gain.cancelScheduledValues(now)
-      master.gain.setValueAtTime(master.gain.value, now)
-      master.gain.linearRampToValueAtTime(1, now + 0.3)
+      rampMaster(1, 0.3)
     }
     document.addEventListener('visibilitychange', () => (document.hidden ? onHide() : onShow()))
     // iPhone の Safari はロックの時に pagehide だけ来ることがある
@@ -619,8 +646,13 @@ export const sound = {
   /** 一時停止（おはなし）: 音の全部を止めて、続ける時に同じ所から鳴らす（AudioContext を止める） */
   setPaused(on: boolean): void {
     if (!ctx) return
-    if (on && ctx.state === 'running') void ctx.suspend()
-    else if (!on && ctx.state === 'suspended') void ctx.resume()
+    pausedByApp = on
+    // 止める時も 0.03 秒で音量を下げてから（いきなり止めると「ブチッ」と鳴る）。続ける時は statechange で 0 から上げる
+    if (on) fadeOutAndSuspend(() => pausedByApp || document.hidden)
+    else if (ctx.state !== 'running') {
+      window.clearTimeout(suspendTimer)
+      if (!document.hidden) void ctx.resume()
+    }
   },
   /** 物語の間の曲（ループしない 1 本）。ホームの曲は止め、終わったら戻す */
   setStoryBgm(on: boolean): void {
