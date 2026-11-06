@@ -5528,6 +5528,54 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   font-weight: 800;
   color: #b8741a;
 }
+/* 案内役のスコップ（公式の絵）。見出しの行の中に収め、カードの高さを増やさない（照らす所と重ならない置き場所の計算はそのまま） */
+.coach-scop {
+  position: relative;
+  flex: none;
+  width: 54px;
+  height: 60px;
+  margin: -12px -2px -4px -6px;
+}
+.coach-scop img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+}
+.coach-scop .stars {
+  inset: 0;
+}
+/* 完了の段: 祝いの瞬間としてスコップを大きく出し、まわりに金の星（ともだち登録の祝いと同じ） */
+.coach-card.is-done .coach-scop {
+  width: 66px;
+  height: 74px;
+  margin: -6px 0 -4px -4px;
+}
+.coach-head > :not(.coach-scop) {
+  white-space: nowrap;
+}
+@media (max-width: 380px) {
+  .coach-head {
+    gap: 6px;
+  }
+  .coach-min {
+    padding-left: 6px;
+  }
+}
+.coach-card.is-done.is-refresh .coach-scop img {
+  animation: coach-scop-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes coach-scop-pop {
+  from {
+    scale: 0.6;
+  }
+}
+.coach-card.is-min .coach-scop {
+  width: 32px;
+  height: 36px;
+  margin: -4px 0;
+}
 .coach-text {
   margin: 6px 0 10px;
   font-size: 17px;
@@ -5624,6 +5672,15 @@ body.coach-min .coach-hole.is-none {
     width: min(340px, 42vw);
     padding: 10px 12px 6px;
   }
+  .coach-scop {
+    width: 36px;
+    height: 40px;
+    margin: -8px -2px -6px -4px;
+  }
+  .coach-card.is-done .coach-scop {
+    width: 56px;
+    height: 62px;
+  }
   .coach-text {
     margin: 4px 0 6px;
     font-size: 14px;
@@ -5640,7 +5697,8 @@ body.coach-min .coach-hole.is-none {
   }
 }
 .is-reduce-motion .coach-arrow svg,
-.is-reduce-motion .coach-card.is-refresh {
+.is-reduce-motion .coach-card.is-refresh,
+.is-reduce-motion .coach-card.is-done.is-refresh .coach-scop img {
   animation: none;
 }
 .is-reduce-motion .coach-hole {

@@ -4,6 +4,7 @@
  * 暗い所も押せる（抜いた所を押させるために画面をふさがない）。カードの「つぎへ」でその段を飛ばせて、「おわる」でいつでも終われる。
  * 「ともだちになる」は押すよう勧めるだけで、押すのは本人（押さなくても「つぎへ」で進める）。
  *
+ * 案内役は双眼鏡のキャラクター「スコップ」（カードの見出しに public/splash-scop.webp の静止画、セリフはおしゃべりでダジャレ好きな口調。11/6）。
  * ことばは子どもにも読めるよう、漢字は小学校で習うものだけにして、すべてにふりがなをつける（`{漢字|よみ}` の書き方）。
  * 初めてワールドに入った時に 1 回だけ自動で出る（記録は awl.guide.v2。前のナビを見た人にも 1 回出す）。
  * 設定の「あそび方をもう一度見る」でいつでも最初から。?guide=1 で毎回出す（確認用）。
@@ -74,15 +75,15 @@ interface Step {
 const STEPS: Step[] = [
   {
     text: {
-      ja: 'ようこそ！ これから、あそびかたを {一|ひと}つずつ しょうかいするよ。わからなくなったら「つぎへ」を おしてね。',
-      en: 'Welcome! Let’s learn how to play, one step at a time. If you get stuck, tap “Next”.',
+      ja: 'やあ、ぼくは スコップ！ あそびかたを すこーしずつ しょうかいするよ。わからなくなったら「つぎへ」を おしてね。',
+      en: 'Hi, I’m Scop! Let’s scope out how to play, one step at a time. If you get stuck, tap “Next”.',
     },
     targets: [],
   },
   {
     text: {
-      ja: 'まずは どうぶつに {会|あ}ってみよう！ {矢印|やじるし}の ライリーを おすか「いっしょに {行|い}く」を おすと、ライリーの ところまで {歩|ある}くよ。',
-      en: 'First, let’s meet an animal! Tap Riley (where the arrow points) or “Walk me there” to walk over.',
+      ja: 'ぼくと どうぶつに {会|あ}いに いこう！ {矢印|やじるし}の ライリーを おすか「いっしょに {行|い}く」を おすと、ライリーの ところまで {歩|ある}くよ。',
+      en: 'Let’s go meet an animal! Tap Riley (where the arrow points) or “Walk me there” to walk over.',
     },
     targets: ['riley'],
     // 名前の札（双眼鏡のピン）が出るのはライリーから約 5.4m（当たり判定＋4.2m）なので、その内側に入ったら次へ
@@ -93,16 +94,16 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ライリーの {頭|あたま}の {上|うえ}に、{名前|なまえ}の ふだが {出|で}たよ。ふだを おしてみよう。',
-      en: 'A name tag appeared above Riley’s head. Tap the tag.',
+      ja: 'ライリーの {頭|あたま}の {上|うえ}に、{名前|なまえ}の ふだが {出|で}たね。ふだを おしてみよう！',
+      en: 'A name tag popped up above Riley’s head. Tap the tag — tag, you’re it!',
     },
     targets: ['.encounter-pin', '.lion-label[data-id="riley"]', 'riley'],
     until: ['observeOpen'],
   },
   {
     text: {
-      ja: 'ここは どうぶつの へや。{動画|どうが}や プロフィールが {見|み}られるよ。{気|き}に{入|い}ったら「ともだちになる」を おしてね。おすかどうかは、きみが {決|き}めてね。',
-      en: 'This is the animal’s room, with videos and a profile. If you like them, tap “Become friends”. It’s up to you.',
+      ja: 'ようこそ、どうぶつの へやへ！ {動画|どうが}や プロフィールが {見|み}られるよ。{気|き}に{入|い}ったら「ともだちになる」を おしてね。おすかどうかは、きみが {決|き}めてね。',
+      en: 'Welcome to the animal’s room, with videos and a profile! If you like them, tap “Become friends”. It’s up to you.',
     },
     targets: ['#befriend', '#befriended'],
     until: ['befriend'],
@@ -110,8 +111,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ともだちに なると「ともだち{帳|ちょう}」に のるよ。ともだち{帳|ちょう}を {開|ひら}いてみよう。',
-      en: 'Friends appear in your Friend Book. Let’s open the Friend Book.',
+      ja: 'ともだちに なると「ともだち{帳|ちょう}」に のるよ。ちょうど いいから {開|ひら}こう！',
+      en: 'Friends go in your Friend Book. Let’s open the Friend Book!',
     },
     // ともだちにならずに「つぎへ」した時は、モニターの「閉じる」→ 帳のボタン（モニターの下に隠れた帳のボタンは照らさない）
     targets: ['#befriend-see', '#observe-close', '#open-book'],
@@ -119,8 +120,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ともだちを おすと、その{子|こ}との トークが {開|ひら}くよ。',
-      en: 'Tap a friend to open your talk with them.',
+      ja: 'ともだちを おすと、その{子|こ}との トークが {開|ひら}くよ。ドキドキ！',
+      en: 'Tap a friend to open your talk with them. Ooh, I wonder what’s waiting!',
     },
     targets: ['#book-list button[data-chat]'],
     until: ['chat'],
@@ -128,7 +129,7 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'トークには、{飼育員|しいくいん}さんからの おしらせや {写真|しゃしん}が とどくよ。おてがみも {書|か}けるよ。「{会|あ}いに{行|い}く」を おすと、いつでも {動画|どうが}で {会|あ}えるよ。おしてみよう！',
+      ja: 'トークには、{飼育員|しいくいん}さんからの おしらせや {写真|しゃしん}が とどくよ。おてがみも {書|か}けるよ。「{会|あ}いに{行|い}く」を おすと、いつでも {動画|どうが}で {会|あ}えるよ。さあ、おしてね！',
       en: 'In the talk you get notices and photos from the keepers, and you can write letters. “Go see” lets you watch the video any time — try it!',
     },
     targets: ['#chat-visit', '#chat-log'],
@@ -137,8 +138,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'つぎは「{観察|かんさつ}スポット」に {行|い}ってみよう。{光|ひか}っている ところを {順番|じゅんばん}に おしてね。スポットまで {歩|ある}くよ。',
-      en: 'Next, let’s go to the observation spot. Tap the glowing places one by one and you’ll walk there.',
+      ja: 'つぎは「{観察|かんさつ}スポット」へ しゅっぱーつ！ {光|ひか}っている ところを {順番|じゅんばん}に おしてね。スポットまで {歩|ある}くよ。',
+      en: 'Next stop: the observation spot! Tap the glowing places one by one and you’ll walk there.',
     },
     // 開いている画面を閉じてから（映像 → トーク → 帳の順）、スポットのボタンかスポットそのもの
     targets: ['#observe-close', '#chat-back', '#book-close', '#goto-spot', 'spot'],
@@ -146,8 +147,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: '{着|つ}いたね！「スコープをのぞく」を おしてみよう。',
-      en: 'You made it! Tap “Look through the scope”.',
+      ja: '{着|つ}いたね！「スコープをのぞく」を おしてみよう。ぼくの なかまだよ！',
+      en: 'You made it — spot on! Tap “Look through the scope”.',
     },
     targets: ['#goto-spot[data-mode="scope"]', 'spot'],
     until: ['scope'],
@@ -155,24 +156,24 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ここが「アニマルスコープ」。いろいろな どうぶつの {動画|どうが}が {見|み}られるよ。',
-      en: 'This is the Animal Scope. You can watch videos of many animals here.',
+      ja: 'ここが「アニマルスコープ」。いろいろな どうぶつの {動画|どうが}が {見|み}られるよ。レンズが くぎづけ！',
+      en: 'This is the Animal Scope, full of animal videos. My lenses are glued!',
     },
     targets: [],
     needs: 'catalog',
   },
   {
     text: {
-      ja: 'ワールドは ぜんぶで {七|なな}つ。ワールドを おすと、そこに いる どうぶつが {見|み}られるよ。{山|やま}の あいだの {道|みち}を {歩|ある}くと、ほかの ワールドにも {行|い}けるよ。',
-      en: 'There are seven worlds. Tap a world to see who lives there. Walk the paths between the mountains to visit other worlds.',
+      ja: 'なんと、ワールドは ぜんぶで {七|なな}つ！ ワールドを おすと、そこに いる どうぶつが {見|み}られるよ。{山|やま}の あいだの {道|みち}を {歩|ある}くと、ほかの ワールドにも {行|い}けるよ。',
+      en: 'Guess what — there are seven worlds! Tap a world to see who lives there. Walk the paths between the mountains to visit other worlds.',
     },
     targets: ['#catalog [data-world]'],
     needs: 'catalog',
   },
   {
     text: {
-      ja: 'さいごに「{地図|ちず}」を {開|ひら}いてみよう。',
-      en: 'Finally, let’s open the map.',
+      ja: 'さいごは「{地図|ちず}」を {開|ひら}こう！',
+      en: 'Last stop: let’s open the map!',
     },
     // 一覧のワールドのページ → 一覧へ戻る → 一覧を閉じる → 地図
     targets: ['#observe-close', '#chat-back', '#book-close', '#catalog [data-list]', '#catalog [data-back]', '#minimap-expand'],
@@ -180,8 +181,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: '{地図|ちず}には、{会|あ}った どうぶつが のるよ。{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。おしてみよう！',
-      en: 'Animals you have met appear on the map. Tap a place to walk there — try it!',
+      ja: '{地図|ちず}には、{会|あ}った どうぶつが のるよ。{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。どこへ {行|い}く？ おしてみよう！',
+      en: 'Animals you have met appear on the map. Tap a place to walk there. Where to? Try it!',
     },
     targets: ['#map-canvas', '#map-3d'],
     until: ['mapClose'],
@@ -189,8 +190,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'これで おしまい！ よく できました。もう{一度|いちど} {見|み}たいときは、ホームの「{設定|せってい}」から いつでも {見|み}られるよ。',
-      en: 'That’s everything — well done! To see this again, open Settings on the home screen.',
+      ja: 'やったね、これで おしまい！ もう{一度|いちど} {見|み}たいときは、ホームの「{設定|せってい}」から いつでも ぼくを よんでね。',
+      en: 'Hooray, all done — well done, explorer! To see this again, call me from Settings on the home screen.',
     },
     targets: [],
   },
@@ -206,6 +207,16 @@ const UI: Record<'next' | 'done' | 'quit' | 'walk' | 'title' | 'away' | 'min' | 
   title: { ja: 'あそびかた', en: 'How to play' },
   away: { ja: 'あと {m} m', en: '{m} m to go' },
 }
+
+/** 完了の祝いの星（スコップのまわり）。左・上は %、散る向きは px */
+const CELEBRATE_STARS = [
+  [-10, 4, -16, -22],
+  [70, -6, 18, -26],
+  [-14, 52, -24, 4],
+  [84, 40, 26, -4],
+  [4, 86, -14, 20],
+  [64, 88, 18, 20],
+]
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string)
 /** `{漢字|よみ}` をふりがなつきの HTML に */
@@ -337,7 +348,7 @@ export function createGuide(): Guide {
   card.setAttribute('role', 'dialog')
   card.setAttribute('aria-live', 'polite')
   card.innerHTML = `
-    <div class="coach-head"><span class="coach-title"></span><span class="coach-count"></span><button type="button" class="coach-min" aria-expanded="true"></button></div>
+    <div class="coach-head"><span class="coach-scop" aria-hidden="true"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /><span class="stars"></span></span><span class="coach-title"></span><span class="coach-count"></span><button type="button" class="coach-min" aria-expanded="true"></button></div>
     <p class="coach-text"></p>
     <div class="coach-actions">
       <button type="button" class="coach-walk"></button>
@@ -356,6 +367,26 @@ export function createGuide(): Guide {
   const nextBtn = card.querySelector('.coach-next') as HTMLButtonElement
   const quitBtn = card.querySelector('.coach-quit') as HTMLButtonElement
   const minBtn = card.querySelector('.coach-min') as HTMLButtonElement
+  const starsEl = card.querySelector('.coach-scop .stars') as HTMLElement
+  /** 完了の段: スコップのまわりに金の星が散る（ともだち登録の祝いと同じ星。動きをへらす時は静かに出して消す） */
+  let starTimer = 0
+  const celebrate = () => {
+    window.clearTimeout(starTimer)
+    const still = document.body.classList.contains('is-reduce-motion')
+    starsEl.innerHTML = CELEBRATE_STARS.map(
+      ([x, y, dx, dy]) => `<svg viewBox="0 0 24 24" style="left:${x}%;top:${y}%;--dx:${dx}px;--dy:${dy}px"><use href="#i-star" /></svg>`,
+    ).join('')
+    starsEl.classList.remove('is-burst', 'is-still')
+    void starsEl.offsetWidth
+    starsEl.classList.add(still ? 'is-still' : 'is-burst')
+    starTimer = window.setTimeout(
+      () => {
+        starsEl.classList.remove('is-burst', 'is-still')
+        starsEl.innerHTML = ''
+      },
+      still ? 1600 : 900,
+    )
+  }
   /** カードを小さくたたんでいるか（下の画面を全部さわれるように。段が変わると開き直す） */
   let minimized = false
   /** 矢印の向きを選んだ時の目印の四角（同じ所なら選び直さない） */
@@ -393,6 +424,9 @@ export function createGuide(): Guide {
     minBtn.innerHTML = html(minimized ? label('expand') : label('min'))
     minBtn.setAttribute('aria-expanded', String(!minimized))
     card.classList.toggle('is-min', minimized)
+    const wasDone = card.classList.contains('is-done')
+    card.classList.toggle('is-done', last)
+    if (last && !wasDone) celebrate()
     document.body.classList.toggle('coach-min', minimized)
     card.classList.remove('is-refresh')
     void card.offsetWidth
