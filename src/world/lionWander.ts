@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { terrainHeight } from './terrain'
-import { SPOT } from './layout'
+import { SPOT, WATERHOLE } from './layout'
+import { isWalkable } from './regions'
 import type { Collider } from './props'
 import type { Lion } from './lions'
 import type { AiLion } from './aiLionModel'
@@ -10,7 +11,8 @@ import type { AiLion } from './aiLionModel'
  * 歩いている間だけ生成モデルの歩行クリップを再生し、止まっている間は立ち姿＋呼吸＋生活感レイヤー（Lion.update）。
  *
  * 守ること:
- * - 行き先は自分の場所から radius 以内で、地面の高さが元の場所と同じくらい（コピエの台地から崖へ出ない、水場の斜面に下りない）
+ * - 行き先は自分の場所から radius 以内で、地面の高さが元の場所から maxRise 以内（コピエの台地から崖へ出ない）。歩ける範囲の中で、サバンナの水場には入らない
+ * - 範囲と速さは種ごとに data/roam.ts
  * - 岩・木・ほかの個体の当たり判定、観察スポットとその登り道、プレイヤーのそばは避ける
  * - プレイヤーが出会いの範囲に来ている間は新しく歩き出さない（名前のピンが逃げない）
  * - 動きをへらす設定では歩かない
@@ -27,6 +29,8 @@ export interface WanderOptions {
   radius: number
   /** 立ち止まる時間の幅（秒） */
   idle: [number, number]
+  /** 行き先の地面の高さが元の場所からこれ以上違う所へは行かない（m）。省略時 0.3 */
+  maxRise?: number
 }
 
 const TURN_SPEED = 2.4
@@ -46,6 +50,7 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
   let target: { x: number; z: number } | null = null
   let timer = opts.idle[0] * (0.3 + Math.random() * 0.7)
   let reduceMotion = false
+  const maxRise = opts.maxRise ?? 0.3
 
   const place = (x: number, z: number) => {
     group.position.set(x, terrainHeight(x, z), z)
@@ -55,8 +60,10 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
   }
 
   const clearOf = (x: number, z: number, player: THREE.Vector3): boolean => {
-    // 地面の高さが元の場所と同じくらい（台地の上・平らな所にとどまる）
-    if (Math.abs(terrainHeight(x, z) - home.h) > 0.3) return false
+    // 地面の高さが元の場所と同じくらい（台地の上・平らな所にとどまる）。歩ける範囲の中、水場の外
+    if (Math.abs(terrainHeight(x, z) - home.h) > maxRise) return false
+    if (!isWalkable(x, z)) return false
+    if (Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) < WATERHOLE.radius + 0.5) return false
     for (const c of colliders) {
       if (c === own) continue
       if (Math.hypot(c.x - x, c.z - z) < c.r + own.r + 0.25) return false
@@ -68,17 +75,18 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
   }
 
   const pick = (player: THREE.Vector3): { x: number; z: number } | null => {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const a = Math.random() * Math.PI * 2
-      const r = opts.radius * (0.45 + Math.random() * 0.55)
+      const r = opts.radius * (0.3 + Math.random() * 0.7)
       const x = home.x + Math.cos(a) * r
       const z = home.z + Math.sin(a) * r
       // 行き先が近すぎる（向きを変えるだけ）のは選ばない
       if (Math.hypot(x - group.position.x, z - group.position.z) < 1.2) continue
       if (!clearOf(x, z, player)) continue
-      // 途中も平らで、ほかの個体や岩にぶつからない
+      // 途中も平らで、ほかの個体や岩にぶつからない（1.5m ごとに確かめる。範囲が広い子でも崖や岩を飛び越えない）
       let ok = true
-      for (let t = 0.25; t < 1 && ok; t += 0.25) {
+      const step = 1 / Math.max(4, Math.ceil(Math.hypot(x - group.position.x, z - group.position.z) / 1.5))
+      for (let t = step; t < 1 && ok; t += step) {
         const mx = group.position.x + (x - group.position.x) * t
         const mz = group.position.z + (z - group.position.z) * t
         ok = clearOf(mx, mz, player)

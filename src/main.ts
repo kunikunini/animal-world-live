@@ -4,7 +4,7 @@ import { createTerrain, terrainHeight } from './world/terrain'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
 import { createSea } from './world/sea'
-import { createResidents } from './world/residents'
+import { createResidents, residentPlace } from './world/residents'
 import { OUTER_REGIONS, REGIONS, REGION_KEYS, biomeAt, emptyWeights, regionAt, routeTo } from './world/regions'
 import type { BiomeWeights, RegionKey } from './world/regions'
 import { getWorld } from './data/worlds'
@@ -19,10 +19,11 @@ import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { getClay, setClay, vividToon } from './render/toon'
-import { LIONS, SPOT, SPAWN } from './world/layout'
+import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
 import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
 import { loadAiLion, POSTURE_DEFAULT, type AiLion, type PostureFix } from './world/aiLionModel'
+import { roamFor } from './data/roam'
 import { createLionWander, type LionWander } from './world/lionWander'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
@@ -265,15 +266,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   if (new URLSearchParams(location.search).get('model') !== 'primitive') {
     // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め
     const posture: Record<string, PostureFix> = { alex: { hind: 0.9, spine: 1.0, tail: 0.5, front: 0.7, ground: true } }
-    // 歩き方: 成獣はゆったり、仔はせわしなく。たてがみの雄はいちばんゆっくり
-    const walk: Record<string, { speed: number; radius: number; idle: [number, number] }> = {
-      alex: { speed: 0.7, radius: 3.0, idle: [9, 18] },
-      angie: { speed: 0.8, radius: 3.0, idle: [7, 15] },
-      riley: { speed: 0.8, radius: 3.2, idle: [7, 15] },
-      claire: { speed: 0.75, radius: 3.5, idle: [4, 10] },
-      carla: { speed: 0.75, radius: 3.5, idle: [4, 10] },
-    }
-    for (const id of Object.keys(walk)) {
+    // 歩き方は data/roam.ts（種ごとの範囲と、仔・雄の違い）
+    for (const id of ['alex', 'angie', 'riley', 'claire', 'carla']) {
       const lion = lions.find((l) => l.id === id)
       if (!lion) continue
       // 大きさはプリミティブ版に合わせる: 群れの中での体の長さ（頭から尾の先、群れの座標）をそろえる
@@ -282,7 +276,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           lion.swapModel(ai.model, ai.parts)
           lion.headHeight = ai.headHeight
           aiLions[id] = ai
-          const w = createLionWander(lion, ai, props.colliders, walk[id])
+          const w = createLionWander(lion, ai, props.colliders, roamFor('ライオン', id))
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
         })
@@ -301,7 +295,6 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       name: string
       file: string
       posture: PostureFix
-      walk: { speed: number; radius: number; idle: [number, number] }
       /** 尾の無い子: 止まっている間の尾の揺れ（生活感レイヤー）も骨に写さない */
       noTail?: boolean
       /** プリミティブ版が無い子の置き場所（体の長さ m は群れの座標。ライオンの成獣は 2.9） */
@@ -314,48 +307,48 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       brighten?: number
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
-      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [8, 16] } },
+      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true } },
       // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
       // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
       // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
       // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
-      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] } },
+      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
-      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.5, idle: [6, 14] }, place: { x: -22, z: 14, yaw: 0.9, length: 3.3 } },
+      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 } },
       // フェン: 北の世界の中心の北のホッキョクオオカミ 3 頭のうち、いちばん東の子（ネガ・マリはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 接地だけだと腰 86〜100% で前足が浮く。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.85 で腰 99.3〜103.3%（フェンで測って決めた値）
-      { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true }, walk: { speed: 0.9, radius: 3.0, idle: [7, 15] } },
+      { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
       // 銀牙: 北の世界の中心の南西、サバンナから来た人が最初に見る雪原（キツネの東 15 m。名簿の全個体を置いた後、ハスキーの群れと重ならないよう東へ 5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ（鼻先〜尾の先）1.4 m は実物の成犬の目安。接地だけだと腰が 86〜89% の忍び足。
       // 後ろ脚 0.75・背骨 0.9・尾 0.5・前脚 0.7 で腰 99.1〜101.3%（銀牙で測って決めた値）
-      { key: 'husky', species: 'シベリアンハスキー', name: '銀牙', file: 'husky-ginga', posture: { hind: 0.75, spine: 0.9, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.0, idle: [5, 12] }, place: { x: 0, z: -291.5, yaw: 0.3, length: 1.4 } },
+      { key: 'husky', species: 'シベリアンハスキー', name: '銀牙', file: 'husky-ginga', posture: { hind: 0.75, spine: 0.9, tail: 0.5, front: 0.7, ground: true }, place: { ...residentPlace('north', 'シベリアンハスキー'), yaw: 0.3, length: 1.4 } },
       // ピーター: サバンナの道（スタート → スポット）の右手の草原。グラン（道の左手）と道をはさんだ向かい、ライリー（40, 5）から 22 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ 1.7 m は実物の成獣の目安。接地だけだと腰 80〜83%。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8 で腰 99.1〜102.3%（ピーターで測って決めた値）
-      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.8, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [6, 14] }, place: { x: 18, z: 4, yaw: -0.6, length: 1.7 } },
+      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.8, ground: true }, place: { ...SAVANNA_HYENA, length: 1.7 } },
       // ゆめこ: ジャングルの中心の西（ティガーの反対側。名簿の全個体を置いた後、アカハナグマの群れと重ならないよう南へ 4.5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 2.1 m は実物の成獣の目安。
       // 色の画像が暗く、ジャングルの光では写真より黒く沈むので、明るさを 2.5 倍にする（1・1.35・1.7・2.5・3.5 を写真と並べて、毛の灰色がいちばん近い値）。
       // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
-      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, brighten: 2.5, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] }, place: { x: -308.5, z: -10.5, yaw: 1.3, length: 2.1 } },
+      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },
       // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
-      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true, walk: { speed: 0.7, radius: 2.0, idle: [6, 14] } },
+      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
       // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
-      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true }, walk: { speed: 0.7, radius: 2.0, idle: [8, 16] } },
+      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true } },
       // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽はプリミティブ版のまま）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
       // ひれが人の腕のように振れて体が歪むので、歩かせない（静止＋呼吸・首・左右の揺れ。waterfolk.ts）。大きさはプリミティブ版の高さにそろえる
-      { key: 'penguin', species: 'ケープペンギン', name: 'リンリン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, walk: { speed: 0, radius: 0, idle: [10, 20] }, upright: true, still: true },
+      { key: 'penguin', species: 'ケープペンギン', name: 'リンリン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
-      { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.85, spine: 1, tail: 0.5, front: 0.95, ground: true }, walk: { speed: 0.6, radius: 1.2, idle: [5, 12] } },
+      { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.85, spine: 1, tail: 0.5, front: 0.95, ground: true } },
       // 虎: サバンナのスタート（0, 72）からスポットへ向かう途中、左手 4.5 m の踏み分け道の上（−4.5, 43.5）。背の高い草の中だと体が隠れるので、草の生えない道に置き、
       // まわり 1 m だけ歩く。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.55 m（鼻先〜尾の先）は実物の成獣の目安。
       // 接地だけだと腰 81〜85%。後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65 で腰 99.6〜102.8%（虎で測って決めた値）
-      { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, walk: { speed: 0.6, radius: 1.0, idle: [4, 10] }, place: { x: -4.5, z: 43.5, yaw: 0.6, length: 0.55 } },
+      { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, place: { ...SAVANNA_MEERKAT, length: 0.55 } },
       // テル: ジャングルの中心の西、ゆめこ（南米）の北 13 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
       // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
-      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, walk: { speed: 0.6, radius: 1.5, idle: [4, 10] }, place: { x: -313, z: 2.5, yaw: 1.3, length: 0.75 } },
+      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
@@ -391,8 +384,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           host.swapModel(ai.model, r.noTail ? { ...ai.parts, tail: new THREE.Object3D() } : ai.parts)
           host.headHeight = ai.headHeight
           aiLions[r.key] = ai
-          if (r.still) return
-          const w = createLionWander(host, ai, props.colliders, r.walk)
+          const roam = roamFor(r.species, animal.id)
+          if (r.still || roam.tier === 'still') return
+          const w = createLionWander(host, ai, props.colliders, roam)
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
         })

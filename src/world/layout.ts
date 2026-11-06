@@ -89,3 +89,11 @@ export const LIONS: ReadonlyArray<LionPlacement> = [
   { id: 'alex', x: KOPJE.x + 4.8, z: KOPJE.z - 5.2, yaw: -2.2, mane: true, size: 1.12, coat: '#cf9a52', maneColor: '#c3883c', maneTopColor: '#6e4222' },
   { id: 'riley', x: 40, z: 5, yaw: 1.7, size: 0.98, coat: '#dcb47c' },
 ]
+
+/**
+ * サバンナで、生成モデルが読めた時だけ置く子・群れのプリミティブと入れ替える子の場所（main.ts の AI_RESIDENTS の place）。
+ * 群れの拠点（residents.ts の EXTRA）と合わせる: ピーターはハイエナの群れの中、虎はミーアキャットの群れの中。グランは西の草原
+ */
+export const SAVANNA_ZEBRA = { x: -46, z: -2, yaw: 0.9 }
+export const SAVANNA_HYENA = { x: -58, z: 31, yaw: -0.9 }
+export const SAVANNA_MEERKAT = { x: -16, z: 45, yaw: 0.6 }

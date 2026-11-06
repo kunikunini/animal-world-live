@@ -1,6 +1,6 @@
 /**
  * 3D 空間の位置に重ねる名前ラベル（ライオン用）。名前だけを出す。
- * 近い個体を優先し、ラベル同士が重なるときは遠い個体のラベルを上へずらす。
+ * 近い個体を優先し、ラベル同士が重なるときは遠い個体のラベルを上へ 1 段ずらす。それでも重なる札は出さない。
  */
 export interface LabelEntry {
   id: string
@@ -94,13 +94,18 @@ export function createWorldLabels(): WorldLabels {
           item.h = item.el.offsetHeight
         }
         const rect: Rect = { l: e.x - item.w / 2, r: e.x + item.w / 2, t: e.y - item.h, b: e.y }
-        // 近い個体のラベルを避けて上へ
-        for (let guard = 0; guard < 8; guard++) {
-          const hit = placed.find((p) => overlaps(rect, p))
-          if (!hit) break
+        // 近い個体のラベルを避けて上へ 1 段だけずらす。それでも重なる（群れの奥の子など）なら、その札は出さない
+        // （11/6 の iPhone 実機テスト: 8 段まで積み上げていたので、群れの札が体から離れた塔になって追えなかった。近づけば近い順に出る）
+        const hit = placed.find((p) => overlaps(rect, p))
+        if (hit) {
           const dy = rect.b - hit.t + GAP
           rect.t -= dy
           rect.b -= dy
+          if (placed.some((p) => overlaps(rect, p))) {
+            shown.delete(e.id)
+            setVisible(item, false)
+            continue
+          }
         }
         item.el.style.transform = `translate(-50%, -100%) translate(${e.x.toFixed(0)}px, ${rect.b.toFixed(0)}px)`
         placed.push(rect)

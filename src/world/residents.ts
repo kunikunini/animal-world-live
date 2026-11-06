@@ -15,7 +15,7 @@ import { createSkyfolk, mergeStatic } from './skyfolk'
 import { createWildfolk } from './wildfolk'
 import type { WildKind } from './wildfolk'
 import type { Collider } from './props'
-import { KOPJE, LIONS, WATERHOLE } from './layout'
+import { KOPJE, LIONS, SAVANNA_ZEBRA, WATERHOLE } from './layout'
 import { isWalkable } from './regions'
 import type { SkyKind, SkyLook } from './skyfolk'
 import { OUTER_REGIONS } from './regions'
@@ -244,14 +244,21 @@ interface Extra {
   make: Make
 }
 const EXTRA: Extra[] = [
-  // サバンナ（原点から）: スポーンからコピエへの道の西にミーアキャットの群れ（スポーンからライリーへの見通しをふさがない）、西の草原にハイエナ、水場の南にカメ
-  { species: 'ミーアキャット', region: 'africa', at: [-14, 48], spread: 2.6, size: 0.38, make: upright('prairie', '#cdb48e') },
-  { species: 'ブチハイエナ', region: 'africa', at: [-44, 28], spread: 3, size: 1.1, make: wild('hyena') },
-  { species: 'ラーテル', region: 'africa', at: [30, 50], spread: 1, size: 1.1, make: wild('ratel') },
-  { species: 'スナネコ', region: 'africa', at: [-30, 52], spread: 1, size: 1.3, make: wild('sandcat') },
-  { species: 'アルダブラゾウガメ', region: 'africa', at: [58, 14], spread: 1, size: 1.6, make: wild('aldabra') },
-  { species: 'ケヅメリクガメ', region: 'africa', at: [63, 19], spread: 2.4, size: 1.0, make: wild('sulcata') },
-  { species: 'パンケーキリクガメ', region: 'africa', at: [54, 19], spread: 1.2, size: 0.6, make: wild('pancake') },
+  // サバンナ（原点から）。11/6 の iPhone 実機テストで「一か所に集まりすぎ・名前の札が重なる」ので、群れ（同じ種）はまとめたまま、
+  // 違う種の群れと 1 頭の子は、地形と目印（木・水場・コピエの麓）に沿って互いに 30m ほど離す。ライオンの家族（コピエの台地）とライリー（水場）はそのまま。
+  // スポーンからライリーへの見通し（南東）と、コピエへの登り道はふさがない
+  // - ミーアキャットの群れ: スポーンの北西の草地（最初に出会える）。巣穴のまわりに少し広く
+  { species: 'ミーアキャット', region: 'africa', at: [-20, 48], spread: 5, size: 0.38, make: upright('prairie', '#cdb48e') },
+  // - ハイエナの群れ: 西の草原、アカシア（-64, 18）の北
+  { species: 'ブチハイエナ', region: 'africa', at: [-62, 34], spread: 4, size: 1.1, make: wild('hyena') },
+  // - ラーテル: 南東のアカシア（44, 78）の根もと
+  { species: 'ラーテル', region: 'africa', at: [50, 72], spread: 1, size: 1.1, make: wild('ratel') },
+  // - スナネコ: 南西のアカシア（-52, 70）のかげ
+  { species: 'スナネコ', region: 'africa', at: [-46, 75], spread: 1, size: 1.3, make: wild('sandcat') },
+  // - リクガメ: 3 種を分ける。アルダブラは水場の東の岸、ケヅメは東の草原（アカシア 88, 2 の南）、パンケーキはコピエの東の麓の岩場
+  { species: 'アルダブラゾウガメ', region: 'africa', at: [70, 16], spread: 1, size: 1.6, make: wild('aldabra') },
+  { species: 'ケヅメリクガメ', region: 'africa', at: [82, -24], spread: 3, size: 1.0, make: wild('sulcata') },
+  { species: 'パンケーキリクガメ', region: 'africa', at: [34, -60], spread: 1.5, size: 0.6, make: wild('pancake') },
   // ジャングル
   { species: 'ワオキツネザル', region: 'jungle', at: [-8, 12], spread: 4, size: 0.4, make: upright('lemur') },
   { species: 'キンカジュー', region: 'jungle', at: [11, -5], spread: 4, size: 0.36, make: lionLike('kinkajou') },
@@ -285,6 +292,49 @@ const EXTRA: Extra[] = [
   { species: 'モモイロペリカン', region: 'water', at: [8, -6.5], spread: 1.5, size: 1.1, make: (at) => createWaterfolk({ ...at, kind: 'pelican' }) },
 ]
 
+/**
+ * ジャングル・北の世界・南半球の群れの拠点を、観察スポットから外へ広げる（11/6 の iPhone 実機テスト: スポットのまわり 15m に 30 頭ほどが集まり、名前の札が重なっていた）。
+ * 群れ（同じ種）は形を変えずに丸ごと動かす: 拠点（その種の RESIDENTS の重心、無ければ EXTRA の at）を SPREAD 倍の距離へ。
+ * ワールドの代表（ティガー・オオカミ・オオカンガルー）と、止まり木の子は動かさない（スポットのそばで出会える）
+ */
+type SpreadRegion = Extra['region']
+const SPREAD: Partial<Record<SpreadRegion, number>> = { jungle: 2.6, north: 2.6, south: 2.6 }
+const STAY_NEAR_SPOT = new Set(['ベンガルトラ', 'ホッキョクオオカミ', 'オオカンガルー'])
+
+/** その種の群れを動かす量（ワールドの中心からのずれに足す m） */
+export function groupShift(region: SpreadRegion, species: string): { dx: number; dz: number } {
+  const k = SPREAD[region]
+  if (!k || STAY_NEAR_SPOT.has(species)) return { dx: 0, dz: 0 }
+  const own = RESIDENTS.filter((r) => r.region === region && r.species === species && !r.perch)
+  let cx: number
+  let cz: number
+  if (own.length > 0) {
+    cx = own.reduce((a, r) => a + r.dx, 0) / own.length
+    cz = own.reduce((a, r) => a + r.dz, 0) / own.length
+  } else {
+    const e = EXTRA.find((x) => x.region === region && x.species === species)
+    if (!e) return { dx: 0, dz: 0 }
+    ;[cx, cz] = e.at
+  }
+  return { dx: cx * (k - 1), dz: cz * (k - 1) }
+}
+
+/**
+ * 生成モデルが読めた時だけ置く子の場所（main.ts の place）: その種の群れの拠点（動かした後）から、ワールドの中心の方へ toward m。
+ * 群れの子と同じ所で出会えるように。ワールドの座標で返す
+ */
+export function residentPlace(region: SpreadRegion, species: string, toward = 1.5): { x: number; z: number } {
+  const center = OUTER_REGIONS.find((g) => g.key === region) ?? { x: 0, z: 0 }
+  const own = RESIDENTS.filter((r) => r.region === region && r.species === species && !r.perch)
+  const e = EXTRA.find((x) => x.region === region && x.species === species)
+  const base = own.length > 0 ? { dx: own.reduce((a, r) => a + r.dx, 0) / own.length, dz: own.reduce((a, r) => a + r.dz, 0) / own.length } : e ? { dx: e.at[0], dz: e.at[1] } : { dx: 0, dz: 0 }
+  const s = groupShift(region, species)
+  const ax = base.dx + s.dx
+  const az = base.dz + s.dz
+  const d = Math.hypot(ax, az) || 1
+  return { x: center.x + ax - (ax / d) * toward, z: center.z + az - (az / d) * toward }
+}
+
 /** EXTRA の子を、当たり判定を避けた空き地へ置く */
 function createExtraResidents(out: Lion[], colliders: Collider[]): void {
   const placedIds = new Set(out.map((l) => l.id))
@@ -292,7 +342,8 @@ function createExtraResidents(out: Lion[], colliders: Collider[]): void {
   // 置いた子（と、サバンナのライオン・グラン）の場所と半径
   const bodies: Array<{ x: number; z: number; r: number }> = out.map((l) => ({ x: l.position.x, z: l.position.z, r: l.collider.r }))
   for (const l of LIONS) bodies.push({ x: l.x, z: l.z, r: 1.4 })
-  bodies.push({ x: -22, z: 14, r: 2 })
+  // シマウマのグラン（生成モデルが読めた時だけ main.ts で置く）の場所をあけておく
+  bodies.push({ x: SAVANNA_ZEBRA.x, z: SAVANNA_ZEBRA.z, r: 2 })
   const free = (x: number, z: number, r: number, cx: number, cz: number, africa: boolean) => {
     if (!isWalkable(x, z)) return false
     if (africa) {
@@ -307,8 +358,9 @@ function createExtraResidents(out: Lion[], colliders: Collider[]): void {
     const region = e.region === 'africa' ? { x: 0, z: 0 } : OUTER_REGIONS.find((g) => g.key === e.region)
     if (!region) continue
     const left = ANIMALS.filter((a) => a.species === e.species && !placedIds.has(a.id))
-    const ax = region.x + e.at[0]
-    const az = region.z + e.at[1]
+    const shift = e.region === 'africa' ? { dx: 0, dz: 0 } : groupShift(e.region, e.species)
+    const ax = region.x + e.at[0] + shift.dx
+    const az = region.z + e.at[1] + shift.dz
     const r = Math.max(0.3, 0.45 * e.size)
     left.forEach((animal, i) => {
       // 金角で広げていき、空いた所が見つかるまで少しずつ外へ
@@ -358,6 +410,21 @@ function createExtraResidents(out: Lion[], colliders: Collider[]): void {
   }
 }
 
+/** (x, z) が歩ける所で木や岩・ほかの子に重ならなければそのまま、だめなら少しずつ外へ探す */
+function freeSpot(x: number, z: number, r: number, colliders: Collider[], placed: Lion[]): { x: number; z: number } {
+  const ok = (px: number, pz: number) =>
+    isWalkable(px, pz) &&
+    colliders.every((c) => Math.hypot(px - c.x, pz - c.z) >= c.r + r + 0.4) &&
+    placed.every((l) => Math.hypot(px - l.position.x, pz - l.position.z) >= l.collider.r + r + 0.35)
+  if (ok(x, z)) return { x, z }
+  for (let k = 1; k < 60; k++) {
+    const a = k * 2.39996
+    const rr = 0.6 * Math.sqrt(k)
+    if (ok(x + Math.cos(a) * rr, z + Math.sin(a) * rr)) return { x: x + Math.cos(a) * rr, z: z + Math.sin(a) * rr }
+  }
+  return { x, z }
+}
+
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
 export function createResidents(colliders: Collider[] = []): Lion[] {
   const out: Lion[] = []
@@ -381,7 +448,11 @@ export function createResidents(colliders: Collider[] = []): Lion[] {
       }
       continue
     }
-    const at = { id: animal.id, x: region.x + r.dx, z: region.z + r.dz, yaw: r.yaw, size: r.size }
+    const shift = groupShift(r.region, r.species)
+    const spot = freeSpot(region.x + r.dx + shift.dx, region.z + r.dz + shift.dz, Math.max(0.3, 0.45 * r.size), colliders, out)
+    // 動かした群れは、ワールドの中心（スポット）の方を向く
+    const yaw = shift.dx || shift.dz ? Math.atan2(region.x - spot.x, region.z - spot.z) + (r.yaw % 0.8) - 0.4 : r.yaw
+    const at = { id: animal.id, x: spot.x, z: spot.z, yaw, size: r.size }
     if (r.kind === 'penguin' || r.kind === 'pelican' || r.kind === 'otter') {
       out.push(createWaterfolk({ ...at, kind: r.kind }))
       continue
