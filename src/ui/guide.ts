@@ -82,7 +82,8 @@ const STEPS: Step[] = [
       en: 'First, let’s meet an animal! Walk to Riley, where the arrow points. Tap the ground to walk there.',
     },
     targets: ['riley'],
-    near: { target: 'riley', within: 9 },
+    // 名前の札（双眼鏡のピン）が出るのはライリーから約 5.4m（当たり判定＋4.2m）なので、その内側に入ったら次へ
+    near: { target: 'riley', within: 5 },
     walkTo: 'riley',
   },
   {
@@ -106,7 +107,8 @@ const STEPS: Step[] = [
       ja: 'ともだちに なると「ともだち{帳|ちょう}」に のるよ。ともだち{帳|ちょう}を {開|ひら}いてみよう。',
       en: 'Friends appear in your Friend Book. Let’s open the Friend Book.',
     },
-    targets: ['#befriend-see', '#open-book', '#observe-close'],
+    // ともだちにならずに「つぎへ」した時は、モニターの「閉じる」→ 帳のボタン（モニターの下に隠れた帳のボタンは照らさない）
+    targets: ['#befriend-see', '#observe-close', '#open-book'],
     until: ['book'],
   },
   {
