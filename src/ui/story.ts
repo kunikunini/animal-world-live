@@ -92,8 +92,31 @@ function rubyHtml(s: string): string {
   return esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>')
 }
 
+/**
+ * 字幕の日本語を、文（。！？のあと）と文節（空白と、「、」「……」のあと）のまとまりにする。
+ * 文節の中では改行せず、文の切れ目で先に改行する（せまい画面で「は/こが」のように言葉の途中で切れないように）
+ */
+function phraseHtml(s: string): string {
+  const sentences = s.match(/[^。！？]+[。！？]*\s*/g) ?? [s]
+  return sentences
+    .map((sent) => {
+      const parts = sent.trim().split(/\s+/)
+      const html = parts
+        .map((part) =>
+          part
+            .split(/(?<=、|……)/)
+            .map((ph) => `<span class="story-ph">${rubyHtml(ph)}</span>`)
+            .join('<wbr>'),
+        )
+        .join(' ')
+      // 元の文の間に空白があれば空白、無ければ改行できる所だけ
+      return `<span class="story-sent">${html}</span>${/\s$/.test(sent) ? ' ' : '<wbr>'}`
+    })
+    .join('')
+}
+
 function lines(l: Lines): string {
-  return getLang() === 'ja' ? rubyHtml(l.ja) : esc(l.en)
+  return getLang() === 'ja' ? phraseHtml(l.ja) : esc(l.en)
 }
 
 /** 日本語ならルビつき、英語ならそのまま */

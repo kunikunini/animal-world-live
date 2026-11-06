@@ -1210,6 +1210,11 @@ button {
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
+/* 字幕は文・文節のまとまりの中で改行しない（story.ts の phraseHtml）。行の長さはそろえる */
+.story-text { text-wrap: balance; }
+.story-text .story-sent { display: inline-block; text-wrap: balance; }
+.story-text .story-ph { display: inline-block; white-space: nowrap; }
+
 .story-text ruby { ruby-position: over; }
 
 .story-text rt {
