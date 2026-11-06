@@ -1,10 +1,13 @@
 /**
  * あそびかたツアー（チュートリアル）。初めての人が、ひと通りのことを順番に体験できるように案内する（2026-11-06 に作り直し）。
- * 画面を少し暗くして、次にさわる所（ボタン・名前の札・ワールドの中のライリーや観察スポット）だけを明るく抜き、矢印で示す。
- * 暗い所も押せる（抜いた所を押させるために画面をふさがない）。カードの「つぎへ」でその段を飛ばせて、「おわる」でいつでも終われる。
+ * 次にさわる所（ボタン・名前の札・ワールドの中のライリーや観察スポット）を光る輪で囲み、矢印で示す。画面の部品を示す時だけ、まわりを少し暗くする。
+ * 暗い所も押せる（抜いた所を押させるために画面をふさがない）。吹き出しの「つぎへ」でその段を飛ばせて、「やめる」でいつでも終われる。
  * 「ともだちになる」は押すよう勧めるだけで、押すのは本人（押さなくても「つぎへ」で進める）。
  *
- * 案内役は双眼鏡のキャラクター「スコップ」（カードの見出しに public/splash-scop.webp の静止画、セリフはおしゃべりでダジャレ好きな口調。11/6）。
+ * 案内役は双眼鏡のキャラクター「スコップ」。セリフはおしゃべりでダジャレ好きな口調で、その場その場でひと言（11/7、くにの「キャラクターの横に寄り添って
+ * 案内する形に」）。ワールドでは 3D のスコップ（world/scopCompanion.ts）が主人公の横についてきて、吹き出しはその頭の上に付く。
+ * 動物の部屋・ともだち帳・トーク・一覧・地図を開いている間（3D のスコップが隠れる）と、3D のスコップが読めない時（?scop=off も）は、
+ * 吹き出しに 2D のスコップ（public/splash-scop.webp）を付けて、示す所に重ならない画面のすみに出す。
  * ことばは子どもにも読めるよう、漢字は小学校で習うものだけにして、すべてにふりがなをつける（`{漢字|よみ}` の書き方）。
  * 初めてワールドに入った時に 1 回だけ自動で出る（記録は awl.guide.v2。前のナビを見た人にも 1 回出す）。
  * 設定の「あそび方をもう一度見る」でいつでも最初から。?guide=1 で毎回出す（確認用）。
@@ -35,6 +38,8 @@ export interface WorldPoint {
 export interface GuideFrame {
   riley: WorldPoint | null
   spot: WorldPoint | null
+  /** 3D のスコップの頭の上（吹き出しの付く所）。読めていなければ null */
+  scop: WorldPoint | null
 }
 
 export interface Guide {
@@ -55,6 +60,10 @@ export interface Guide {
   frame: (f: GuideFrame) => void
   /** 「いっしょに行く」・照らしたライリーやスポットを押した時（main.ts がそこまで歩かせる） */
   onWalkTo: (fn: (target: 'riley' | 'spot') => void) => void
+  /** いま示しているワールドの中の目印（3D のスコップがそちらを向く） */
+  worldTarget: () => 'riley' | 'spot' | null
+  /** 段が変わった時（3D のスコップがしゃべるように跳ねる） */
+  onStep: (fn: () => void) => void
 }
 
 type Text = Record<Lang, string>
@@ -77,15 +86,15 @@ interface Step {
 const STEPS: Step[] = [
   {
     text: {
-      ja: 'ぼく、スコップ！ あそびかたを すこしずつ しょうかいするよ。わからなくなったら「つぎへ」を おしてね。',
-      en: 'Hi, I’m Scop! Let’s scope out how to play, step by step. Stuck? Tap “Next”.',
+      ja: 'ぼく、スコップ！ いっしょに あそびかたを のぞいてみよう！',
+      en: 'Hi, I’m Scop! Let’s scope out how to play!',
     },
     targets: [],
   },
   {
     text: {
-      ja: 'ぼくと どうぶつに {会|あ}いに いこう！ {矢印|やじるし}の ライリーを おすか「いっしょに {行|い}く」を おすと、ライリーの ところまで {歩|ある}くよ。',
-      en: 'Let’s go meet an animal! Tap Riley (where the arrow points) or “Walk me there” to walk over.',
+      ja: 'ライリーに {会|あ}いに いこう！',
+      en: 'Let’s go meet Riley!',
     },
     targets: ['riley'],
     // 名前の札（双眼鏡のピン）が出るのはライリーから約 5.4m（当たり判定＋4.2m）なので、その内側に入ったら次へ
@@ -96,16 +105,16 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ライリーの {頭|あたま}の {上|うえ}に、{名前|なまえ}の ふだが {出|で}たね。ふだを おしてみよう！',
-      en: 'A name tag popped up over Riley. Tap it — tag, you’re it!',
+      ja: '{名前|なまえ}の ふだを おしてみて！',
+      en: 'Tap the name tag — tag, you’re it!',
     },
     targets: ['.encounter-pin', '.lion-label[data-id="riley"]', 'riley'],
     until: ['observeOpen'],
   },
   {
     text: {
-      ja: 'ここは どうぶつの へや。{動画|どうが}や プロフィールが {見|み}られるよ。{気|き}に{入|い}ったら「ともだちになる」を おしてね。おすかどうかは、きみが {決|き}めてね。',
-      en: 'Welcome to the animal’s room, with videos and a profile! If you like them, tap “Become friends”. It’s up to you.',
+      ja: '「ともだちになる」を おすかどうかは、きみが {決|き}めてね。',
+      en: 'Tap “Become friends” if you like. It’s up to you.',
     },
     targets: ['#befriend', '#befriended'],
     until: ['befriend'],
@@ -113,8 +122,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ともだちに なると「ともだち{帳|ちょう}」に のるよ。ちょうど いいから {開|ひら}こう！',
-      en: 'Friends go in your Friend Book. Let’s open the Friend Book!',
+      ja: 'ともだち{帳|ちょう}を {開|ひら}いてみよう！',
+      en: 'Let’s open your Friend Book!',
     },
     // ともだちにならずに「つぎへ」した時は、モニターの「閉じる」→ 帳のボタン（モニターの下に隠れた帳のボタンは照らさない）
     targets: ['#befriend-see', '#observe-close', '#open-book'],
@@ -122,8 +131,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ともだちを おすと、トークが {開|ひら}くよ。ドキドキ！',
-      en: 'Tap a friend to open your talk — ooh!',
+      ja: 'ともだちを おすと、トークが {開|ひら}くよ。',
+      en: 'Tap a friend to open your talk.',
     },
     targets: ['#book-list button[data-chat]'],
     until: ['chat'],
@@ -131,8 +140,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'トークには、{飼育員|しいくいん}さんからの おしらせや {写真|しゃしん}が とどくよ。おてがみも {書|か}けるよ。「{会|あ}いに{行|い}く」を おすと、いつでも {動画|どうが}で {会|あ}えるよ。さあ、おしてね！',
-      en: 'In the talk you get notices and photos from the keepers, and you can write letters. “Go see” lets you watch the video any time — try it!',
+      ja: '{飼育員|しいくいん}さんの おしらせが とどくよ。「{会|あ}いに{行|い}く」も おしてみて！',
+      en: 'Keepers send notes here. Try “Go see”!',
     },
     targets: ['#chat-visit', '#chat-log'],
     until: ['visit', 'observeOpen'],
@@ -140,8 +149,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'つぎは「{観察|かんさつ}スポット」へ しゅっぱーつ！ {光|ひか}っている ところを {順番|じゅんばん}に おしてね。スポットまで {歩|ある}くよ。',
-      en: 'Next stop: the observation spot! Tap the glowing places one by one and you’ll walk there.',
+      ja: 'つぎは {光|ひか}っている {観察|かんさつ}スポットへ しゅっぱーつ！',
+      en: 'Next stop: the glowing observation spot!',
     },
     // 開いている画面を閉じてから（映像 → トーク → 帳の順）、スポットのボタンかスポットそのもの
     targets: ['#observe-close', '#chat-back', '#book-close', '#goto-spot', 'spot'],
@@ -150,7 +159,7 @@ const STEPS: Step[] = [
   {
     text: {
       ja: 'とうちゃーく！「スコープをのぞく」を おしてね。',
-      en: 'Spot on! Now tap “Look through the scope”.',
+      en: 'Spot on! Tap “Look through the scope”.',
     },
     targets: ['#goto-spot[data-mode="scope"]', 'spot'],
     until: ['scope'],
@@ -158,24 +167,24 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ここが「アニマルスコープ」。どうぶつの {動画|どうが}が いっぱい！ レンズが くぎづけ！',
-      en: 'This is the Animal Scope, full of animal videos. My lenses are glued!',
+      ja: '{動画|どうが}が いっぱい！ レンズが くぎづけ！',
+      en: 'So many videos — my lenses are glued!',
     },
     targets: [],
     needs: 'catalog',
   },
   {
     text: {
-      ja: 'ワールドは なんと {七|なな}つ！ ワールドを おすと、そこに いる どうぶつが {見|み}られるよ。{山|やま}の あいだの {道|みち}を {歩|ある}くと、ほかの ワールドにも {行|い}けるよ。',
-      en: 'Seven worlds in all! Tap a world to see who lives there. Walk the paths between the mountains to visit other worlds.',
+      ja: 'ワールドは {七|なな}つ！ おすと、そこの どうぶつが {見|み}られるよ。',
+      en: 'Seven worlds! Tap one to see who lives there.',
     },
     targets: ['#catalog [data-world]'],
     needs: 'catalog',
   },
   {
     text: {
-      ja: 'さいごは「{地図|ちず}」を {開|ひら}こう！',
-      en: 'Last stop: let’s open the map!',
+      ja: 'さいごは {地図|ちず}を {開|ひら}こう！',
+      en: 'Last stop: open the map!',
     },
     // 一覧のワールドのページ → 一覧へ戻る → 一覧を閉じる → 地図
     targets: ['#observe-close', '#chat-back', '#book-close', '#catalog [data-list]', '#catalog [data-back]', '#minimap-expand'],
@@ -183,8 +192,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: '{地図|ちず}には、{会|あ}った どうぶつが のるよ。{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。どこへ {行|い}く？',
-      en: 'Animals you’ve met appear on the map. Tap a place to walk there — where to?',
+      ja: '{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。',
+      en: 'Tap a place and you’ll walk there.',
     },
     targets: ['#map-canvas', '#map-3d'],
     until: ['mapClose'],
@@ -194,25 +203,23 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'やったね、これで おしまい！ また {見|み}たいときは、ホームの「{設定|せってい}」から ぼくを よんでね。',
-      en: 'Hooray, all done! To see this again, call me from Settings on the home screen.',
+      ja: 'やったね！ また {見|み}たいときは ホームの {設定|せってい}から よんでね。',
+      en: 'Hooray! Call me from Settings any time.',
     },
     targets: [],
   },
 ]
 
-const UI: Record<'next' | 'done' | 'quit' | 'walk' | 'title' | 'away' | 'min' | 'expand', Text> = {
+const UI: Record<'next' | 'done' | 'quit' | 'quitLabel' | 'walk' | 'away', Text> = {
   next: { ja: 'つぎへ', en: 'Next' },
   done: { ja: 'おわる', en: 'Finish' },
-  quit: { ja: 'あそびかたを おわる', en: 'End the tour' },
-  min: { ja: 'ちいさく する', en: 'Hide' },
-  expand: { ja: 'ひらく', en: 'Show' },
+  quit: { ja: 'やめる', en: 'Skip' },
+  quitLabel: { ja: 'あそびかたを おわる', en: 'End the tour' },
   walk: { ja: 'いっしょに {行|い}く', en: 'Walk me there' },
-  title: { ja: 'あそびかた', en: 'How to play' },
   away: { ja: 'あと {m} m', en: '{m} m to go' },
 }
 
-/** 完了の祝いの星（スコップのまわり）。左・上は %、散る向きは px */
+/** 完了の祝いの星（吹き出しのまわり）。左・上は %、散る向きは px */
 const CELEBRATE_STARS = [
   [-10, 4, -16, -22],
   [70, -6, 18, -26],
@@ -346,33 +353,37 @@ export function createGuide(): Guide {
   const awayEl = document.createElement('div')
   awayEl.className = 'coach-away'
   awayEl.setAttribute('aria-hidden', 'true')
+  // スコップの吹き出し（クラス名は前のカードのまま。ほかの画面の重なりの判定がこの名前で除いている）
   const card = document.createElement('div')
   card.className = 'coach-card'
   card.hidden = true
   card.setAttribute('role', 'dialog')
   card.setAttribute('aria-live', 'polite')
   card.innerHTML = `
-    <div class="coach-head"><span class="coach-scop" aria-hidden="true"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /><span class="stars"></span></span><span class="coach-title"></span><span class="coach-count"></span><button type="button" class="coach-min" aria-expanded="true"></button></div>
-    <p class="coach-text"></p>
-    <div class="coach-actions">
-      <button type="button" class="coach-walk"></button>
-      <button type="button" class="coach-next"></button>
+    <span class="coach-face" aria-hidden="true"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></span>
+    <div class="coach-body">
+      <p class="coach-text"></p>
+      <div class="coach-actions">
+        <button type="button" class="coach-quit"></button>
+        <span class="coach-count"></span>
+        <button type="button" class="coach-walk"></button>
+        <button type="button" class="coach-next"></button>
+      </div>
     </div>
-    <button type="button" class="coach-quit"></button>`
+    <span class="coach-tail" aria-hidden="true"></span>
+    <span class="stars" aria-hidden="true"></span>`
   document.body.append(hole, arrow, awayEl, card)
   // 画面のふちの矢印（ライリー・スポットが画面の外）を押しても、そこまで歩く
   arrow.addEventListener('click', () => {
     if (lit.world && !lit.rect) for (const fn of walkListeners) fn(lit.world)
   })
-  const titleEl = card.querySelector('.coach-title') as HTMLElement
   const countEl = card.querySelector('.coach-count') as HTMLElement
   const textEl = card.querySelector('.coach-text') as HTMLElement
   const walkBtn = card.querySelector('.coach-walk') as HTMLButtonElement
   const nextBtn = card.querySelector('.coach-next') as HTMLButtonElement
   const quitBtn = card.querySelector('.coach-quit') as HTMLButtonElement
-  const minBtn = card.querySelector('.coach-min') as HTMLButtonElement
-  const starsEl = card.querySelector('.coach-scop .stars') as HTMLElement
-  /** 完了の段: スコップのまわりに金の星が散る（ともだち登録の祝いと同じ星。動きをへらす時は静かに出して消す） */
+  const starsEl = card.querySelector('.stars') as HTMLElement
+  /** 完了の段: 吹き出しのまわりに金の星が散る（ともだち登録の祝いと同じ星。動きをへらす時は静かに出して消す） */
   let starTimer = 0
   const celebrate = () => {
     window.clearTimeout(starTimer)
@@ -391,8 +402,6 @@ export function createGuide(): Guide {
       still ? 1600 : 900,
     )
   }
-  /** カードを小さくたたんでいるか（下の画面を全部さわれるように。段が変わると開き直す） */
-  let minimized = false
   /** 矢印の向きを選んだ時の目印の四角（同じ所なら選び直さない） */
   let arrowFor = ''
   let arrowPick: { ax: number; ay: number; deg: number; dx: number; dy: number } | null = null
@@ -401,37 +410,40 @@ export function createGuide(): Guide {
   let active = false
   let inWorld = false
   let index = 0
-  let world: GuideFrame = { riley: null, spot: null }
+  let world: GuideFrame = { riley: null, spot: null, scop: null }
   let scrolledFor = -1
   /** いま照らしている物（DOM の要素、またはワールドの目印の名前）と、その画面の四角 */
   let lit: { el: Element | null; world: 'riley' | 'spot' | null; rect: { x: number; y: number; w: number; h: number } | null } = { el: null, world: null, rect: null }
   /** 開いている画面（知らせで覚える。分からない時は画面に出ているかで見る） */
   const opened = { observe: false, book: false, chat: false, catalog: false, map: false }
   const walkListeners: Array<(t: 'riley' | 'spot') => void> = []
+  const stepListeners: Array<() => void> = []
+  /** 最後に吹き出しに出した段（段が変わった時だけスコップを跳ねさせる） */
+  let shownIndex = -1
 
   const label = (k: keyof typeof UI) => UI[k][getLang()]
   const html = (s: string) => (getLang() === 'ja' ? rubyHtml(s) : esc(s))
-  // カードの本文は文節の中で改行しない
-  const textHtml = (s: string) => (getLang() === 'ja' ? phraseHtml(s) : esc(s))
+  // 吹き出しの本文は文節の中で改行せず、文の切れ目で先に改行する
+  const textHtml = (s: string) => (getLang() === 'ja' ? phraseHtml(s, { sentences: true }) : esc(s))
 
   const render = () => {
     const step = STEPS[index]
     const last = index === STEPS.length - 1
-    titleEl.innerHTML = html(label('title'))
     countEl.textContent = `${index + 1} / ${STEPS.length}`
     textEl.innerHTML = textHtml(step.text[getLang()])
     nextBtn.innerHTML = html(last ? label('done') : label('next'))
     quitBtn.innerHTML = html(label('quit'))
+    quitBtn.setAttribute('aria-label', label('quitLabel'))
     quitBtn.hidden = last
     walkBtn.innerHTML = html(label('walk'))
     walkBtn.hidden = !step.walkTo
-    minBtn.innerHTML = html(minimized ? label('expand') : label('min'))
-    minBtn.setAttribute('aria-expanded', String(!minimized))
-    card.classList.toggle('is-min', minimized)
     const wasDone = card.classList.contains('is-done')
     card.classList.toggle('is-done', last)
     if (last && !wasDone) celebrate()
-    document.body.classList.toggle('coach-min', minimized)
+    if (shownIndex !== index) {
+      shownIndex = index
+      for (const fn of stepListeners) fn()
+    }
     card.classList.remove('is-refresh')
     void card.offsetWidth
     card.classList.add('is-refresh')
@@ -446,7 +458,8 @@ export function createGuide(): Guide {
       hole.hidden = true
       arrow.hidden = true
       awayEl.hidden = true
-      document.body.classList.remove('coach-on', 'coach-min')
+      document.body.classList.remove('coach-on')
+      shownIndex = -1
     } else {
       document.body.classList.add('coach-on')
       render()
@@ -504,52 +517,129 @@ export function createGuide(): Guide {
     const W = window.innerWidth
     const H = window.innerHeight
 
-    // カードの置き場所: 上・下（スマホ横・横長は左・右も）のうち、照らす所と、隠したくない物（映像・お手紙の入力欄）に重ならない所。
-    // 照らす所との重なりは 10 倍、段ごとの必ずよける物（clear）は 100 倍重く数える。どこも重なるなら重なりのいちばん小さい所（それでも隠れる時は「ちいさく する」でたためる）。
-    // 下に置く時はスティックが出ていればその上
-    const cw = card.offsetWidth || 320
-    const ch = card.offsetHeight || 200
+    // 吹き出しの置き場所。示す所と、隠したくない物（映像・お手紙の入力欄）に重ならない所を選ぶ。
+    // 照らす所との重なりは 10 倍、段ごとの必ずよける物（clear）は 100 倍重く数える。
+    // ワールドにいて 3D のスコップが見えている時は、スコップの頭の上（入らなければ右・左）に付けて、しっぽでスコップを指す。
+    // 画面（動物の部屋・帳・トーク・一覧・地図）を開いている時と、3D のスコップがいない時は、2D のスコップを付けて画面のすみに
+    // 目印が画面の外: 画面のふちに、目印のある向きを指す矢印（カメラの後ろなら向きを裏返す）。吹き出しと重なる時は、あとでふちに沿ってずらす
+    let edge: { ax: number; ay: number; deg: number; dx: number; dy: number } | null = null
+    const avoid: Array<{ x: number; y: number; w: number; h: number }> = []
+    if (!rect && offTarget) {
+      const cx = W / 2
+      const cy = H / 2
+      let dx = offTarget.x - cx
+      let dy = offTarget.y - cy
+      if (offTarget.behind) {
+        dx = -dx
+        dy = Math.abs(dy) + cy
+      }
+      const len = Math.hypot(dx, dy) || 1
+      dx /= len
+      dy /= len
+      const mx = cx - 56
+      const my = cy - 120
+      const k = Math.min(Math.abs(dx) > 1e-3 ? mx / Math.abs(dx) : Infinity, Math.abs(dy) > 1e-3 ? my / Math.abs(dy) : Infinity)
+      // 矢印の絵は下向き（+y）。向きの角度に合わせて回す
+      edge = { ax: cx + dx * k, ay: cy + dy * k, deg: (Math.atan2(dy, dx) * 180) / Math.PI - 90, dx, dy }
+    }
     const short = H < 560
     const stick = document.getElementById('stick')
     const reserve = stick && visibleRect(stick) && !short ? 200 : 12
-    const cands: Array<[number, number]> = [
-      [(W - cw) / 2, short ? 12 : 72],
-      [(W - cw) / 2, H - reserve - ch],
-    ]
-    if (W > cw * 2 + 40) {
-      // 横長の画面: 左右も候補（スマホ横では左右を先に）
-      const side: Array<[number, number]> = [
-        [12, (H - ch) / 2],
-        [W - cw - 12, (H - ch) / 2],
-      ]
-      if (short) cands.unshift(...side)
-      else cands.push(...side)
-    }
     const keep = KEEP_CLEAR.map((sel) => visibleRect(document.querySelector(sel))).filter((r): r is DOMRect => r !== null)
     const must = (step.clear ?? []).map((sel) => visibleRect(document.querySelector(sel))).filter((r): r is DOMRect => r !== null)
     const m = 12
     const overlap = (x: number, y: number, w: number, h: number, r: { x: number; y: number; w: number; h: number }) =>
       Math.max(0, Math.min(x + w, r.x + r.w + m) - Math.max(x, r.x - m)) * Math.max(0, Math.min(y + h, r.y + r.h + m) - Math.max(y, r.y - m))
-    const cost = (x: number, y: number) =>
+    const cost = (x: number, y: number, cw: number, ch: number) =>
       (rect ? overlap(x, y, cw, ch, rect) * 10 : 0) +
+      avoid.reduce((sum, k) => sum + overlap(x, y, cw, ch, k) * 10, 0) +
       keep.reduce((sum, k) => sum + overlap(x, y, cw, ch, { x: k.left, y: k.top, w: k.width, h: k.height }), 0) +
       must.reduce((sum, k) => sum + overlap(x, y, cw, ch, { x: k.left, y: k.top, w: k.width, h: k.height }) * 100, 0)
-    let best = cands[0]
-    let bestA = Infinity
-    for (const c of cands) {
-      const a = cost(c[0], c[1])
-      if (a < bestA - 1) {
-        best = c
-        bestA = a
+    const OFF = 1e7
+    const sheetOpen = opened.observe || opened.book || opened.chat || opened.catalog || opened.map
+    const sp = world.scop
+    let cardX = 0
+    let cardY = 0
+    let placed = false
+    if (!sheetOpen && sp && sp.onScreen) {
+      // スコップの体（頭の上から下）は隠さない
+      avoid.push({ x: sp.x - 50, y: sp.y - 6, w: 100, h: 120 })
+      card.classList.add('is-world')
+      const cw = card.offsetWidth || 240
+      const ch = card.offsetHeight || 110
+      const gap = 18
+      // tail: しっぽの向き（down = 吹き出しの下にしっぽ、left / right = 横）と、しっぽの付く位置（吹き出しの中の px）
+      // 頭の上（真ん中・左寄せ・右寄せ）→ 右 → 左の順
+      const opts: Array<{ x: number; y: number; tail: 'down' | 'left' | 'right' }> = [
+        { x: sp.x - cw / 2, y: sp.y - ch - gap, tail: 'down' },
+        { x: sp.x - cw + 34, y: sp.y - ch - gap, tail: 'down' },
+        { x: sp.x - 34, y: sp.y - ch - gap, tail: 'down' },
+        { x: sp.x + gap + 8, y: sp.y - ch / 2 + 24, tail: 'left' },
+        { x: sp.x - gap - 8 - cw, y: sp.y - ch / 2 + 24, tail: 'right' },
+      ]
+      let best: { x: number; y: number; tail: 'down' | 'left' | 'right'; at: number } | null = null
+      let bestA = Infinity
+      for (const o of opts) {
+        const x = Math.max(8, Math.min(W - cw - 8, o.x))
+        const y = o.y
+        const at = o.tail === 'down' ? sp.x - x : sp.y - y
+        let a = cost(x, y, cw, ch)
+        if (y < 8 || y + ch > H - (o.tail === 'down' ? 8 : reserve)) a += OFF
+        if (o.tail === 'down' ? at < 22 || at > cw - 22 : at < 18 || at > ch - 18) a += OFF
+        // 横に付ける時、画面のふちで押し戻されたら、しっぽがスコップに届かない
+        if (o.tail !== 'down' && Math.abs(x - o.x) > 2) a += OFF
+        if (a < bestA - 1) {
+          best = { x, y, tail: o.tail, at }
+          bestA = a
+        }
+      }
+      if (best && bestA < OFF) {
+        cardX = best.x
+        cardY = best.y
+        card.dataset.tail = best.tail
+        card.style.setProperty('--tail-at', `${Math.round(best.at)}px`)
+        placed = true
       }
     }
-    const cardX = Math.max(8, best[0])
-    const cardY = Math.max(8, best[1])
+    if (!placed) {
+      card.classList.remove('is-world')
+      delete card.dataset.tail
+      const cw = card.offsetWidth || 300
+      const ch = card.offsetHeight || 110
+      const cands: Array<[number, number]> = [
+        [(W - cw) / 2, short ? 12 : 72],
+        [(W - cw) / 2, H - reserve - ch],
+      ]
+      if (W > cw * 2 + 40) {
+        // 横長の画面: 左右も候補（スマホ横では左右を先に）
+        const side: Array<[number, number]> = [
+          [12, (H - ch) / 2],
+          [W - cw - 12, (H - ch) / 2],
+        ]
+        if (short) cands.unshift(...side)
+        else cands.push(...side)
+      }
+      let best = cands[0]
+      let bestA = Infinity
+      for (const c of cands) {
+        const a = cost(c[0], c[1], cw, ch)
+        if (a < bestA - 1) {
+          best = c
+          bestA = a
+        }
+      }
+      cardX = Math.max(8, best[0])
+      cardY = Math.max(8, best[1])
+    }
+    const cw = card.offsetWidth || 240
+    const ch = card.offsetHeight || 110
     card.style.left = `${cardX}px`
     card.style.top = `${cardY}px`
 
     if (rect) {
       hole.classList.toggle('is-round', rect.round)
+      // ワールドの中の目印は輪だけ（まわりを暗くしない）。画面の部品はまわりを少し暗くして目立たせる
+      hole.classList.toggle('is-ring', rect.round)
       hole.classList.remove('is-none')
       hole.style.transform = `translate(${rect.x}px, ${rect.y}px)`
       hole.style.width = `${rect.w}px`
@@ -561,7 +651,7 @@ export function createGuide(): Guide {
         arrowFor = key
         arrowPick = pickArrow(rect, { x: cardX, y: cardY, w: cw, h: ch }, rect.round)
       }
-      if (arrowPick && !minimized) {
+      if (arrowPick) {
         arrow.hidden = false
         arrow.style.transform = `translate(${arrowPick.ax}px, ${arrowPick.ay}px) rotate(${arrowPick.deg}deg)`
         arrow.classList.toggle('is-below', arrowPick.deg === 180)
@@ -572,32 +662,23 @@ export function createGuide(): Guide {
       }
     } else {
       arrowFor = ''
-      // 目印が無い段（説明だけ）・目印が画面の外: 穴をとじて全体を少し暗く
+      // 目印が無い段（説明だけ）・目印が画面の外: 穴をとじる（暗くしない）
       hole.classList.add('is-none')
+      hole.classList.remove('is-ring')
       hole.style.width = '0px'
       hole.style.height = '0px'
       hole.style.transform = `translate(${W / 2}px, ${H / 2}px)`
-      if (offTarget) {
-        // 画面の外: 画面のふちに、目印のある向きを指す矢印（カメラの後ろなら向きを裏返す）
+      if (edge && offTarget) {
+        // 画面の外: 画面のふちの矢印（向きと場所は上で決めた）
         arrow.hidden = false
-        const cx = W / 2
-        const cy = H / 2
-        let dx = offTarget.x - cx
-        let dy = offTarget.y - cy
-        if (offTarget.behind) {
-          dx = -dx
-          dy = Math.abs(dy) + cy
+        const { ax, deg, dx, dy } = edge
+        let { ay } = edge
+        // 矢印・「あと ○ m」が吹き出しに重なるなら、ふちに沿って吹き出しの上へ（入らなければ下へ）ずらす
+        const near = (px: number, py: number, r: number) => px > cardX - r && px < cardX + cw + r && py > cardY - r && py < cardY + ch + r
+        if (near(ax - dx * 40, ay - dy * 40, 44) || near(ax - dx * 96, ay - dy * 96, 30)) {
+          const up = cardY - 56 - Math.max(0, -dy) * 96
+          ay = up > 110 ? up : cardY + ch + 64 + Math.max(0, dy) * 96
         }
-        const len = Math.hypot(dx, dy) || 1
-        dx /= len
-        dy /= len
-        const mx = cx - 56
-        const my = cy - 120
-        const k = Math.min(Math.abs(dx) > 1e-3 ? mx / Math.abs(dx) : Infinity, Math.abs(dy) > 1e-3 ? my / Math.abs(dy) : Infinity)
-        const ax = cx + dx * k
-        const ay = cy + dy * k
-        // 矢印の絵は下向き（+y）。向きの角度に合わせて回す
-        const deg = (Math.atan2(dy, dx) * 180) / Math.PI - 90
         arrow.classList.toggle('is-below', Math.abs(deg) > 90)
         arrow.style.transform = `translate(${ax}px, ${ay}px) rotate(${deg}deg) scale(1.5)`
         awayEl.textContent = label('away').replace('{m}', String(Math.round(offTarget.distance)))
@@ -640,7 +721,6 @@ export function createGuide(): Guide {
     goSeq++
     index = i
     scrolledFor = -1
-    minimized = false
     arrowFor = ''
     render()
   }
@@ -648,7 +728,6 @@ export function createGuide(): Guide {
   const start = () => {
     active = true
     index = 0
-    minimized = false
     sync()
   }
 
@@ -687,10 +766,6 @@ export function createGuide(): Guide {
     true,
   )
   quitBtn.addEventListener('click', stop)
-  minBtn.addEventListener('click', () => {
-    minimized = !minimized
-    render()
-  })
   walkBtn.addEventListener('click', () => {
     const t = STEPS[index].walkTo
     if (t) for (const fn of walkListeners) fn(t)
@@ -755,6 +830,10 @@ export function createGuide(): Guide {
     },
     onWalkTo: (fn) => {
       walkListeners.push(fn)
+    },
+    worldTarget: () => (show() ? lit.world : null),
+    onStep: (fn) => {
+      stepListeners.push(fn)
     },
   }
 }

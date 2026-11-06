@@ -53,6 +53,7 @@ import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 import { createSoundPanel } from './ui/soundControls'
 import { createStaminaUi } from './ui/stamina'
+import { loadScopCompanion, type ScopCompanion } from './world/scopCompanion'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -462,6 +463,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const figure = player.object.children[0]
   const figureHeight = new THREE.Box3().setFromObject(figure).getSize(new THREE.Vector3()).y
   const heroScaleOverride = Number(heroQuery.get('heroScale')) || 0
+  // あそびかたツアーの案内役スコップ（3D、world/scopCompanion.ts）。ツアーが始まった時に初めて読み込む。
+  // 読めない時・?scop=off の時は、吹き出しに 2D のスコップを付けて画面のすみに出す（guide.ts）
+  const scopOff = heroQuery.get('scop') === 'off'
+  let scop: ScopCompanion | null = null
+  let scopAsked = false
+  const scopAnchor = new THREE.Vector3()
   const putHero = (next: HeroModel | null, id: string | null) => {
     if (hero) {
       player.object.remove(hero.root)
@@ -653,6 +660,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     clouds.setReduceMotion(on)
     weather.setReduceMotion(on)
     sea.setReduceMotion(on)
+    scop?.setReduceMotion(on)
   }
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
@@ -1189,11 +1197,29 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         }
       }
       const riley = lions.find((l) => l.id === 'riley')
+      if (!scopAsked && !scopOff) {
+        scopAsked = true
+        loadScopCompanion('/models/scop.glb', { heroHeight: figureHeight, ground: terrainHeight })
+          .then((s) => {
+            scop = s
+            s.setReduceMotion(reduceMotionNow)
+            scene.add(s.root)
+            guide.onStep(() => s.hop())
+          })
+          .catch((err) => console.warn('scop model not loaded', err))
+      }
+      if (scop) {
+        scop.setVisible(true)
+        // ツアーがワールドの中の目印（ライリー・観察スポット）を示している間は、そちらへ少し向く
+        const t = guide.worldTarget()
+        scop.update(dt, pp, camera, t === 'riley' && riley ? riley.position : t === 'spot' ? spot.position : null)
+      }
       guide.frame({
         riley: riley ? toScreen(riley.position, (riley.headHeight ?? 0.95) * riley.group.scale.y * 0.6) : null,
         spot: toScreen(spot.position, 1.6),
+        scop: scop ? toScreen(scop.anchor(scopAnchor), 0) : null,
       })
-    }
+    } else if (scop) scop.setVisible(false)
     if (hero) {
       // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
       const p = player.object.position
