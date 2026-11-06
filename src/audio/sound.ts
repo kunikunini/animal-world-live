@@ -51,6 +51,13 @@ const BASE = `${import.meta.env.BASE_URL}audio/`
 const FADE_S = 1.8
 /** 同じ場所の 2 曲を交互にする時のクロスフェード（秒） */
 const SWAP_S = 3
+/**
+ * BGM の曲の替わり方（くにの「クロスフェードは違和感がある」）: 前の曲を BGM_OUT_S 秒で小さくし、
+ * 消えかけの最後の BGM_OVERLAP_S 秒だけ次の曲を重ねて鳴らし始め、BGM_IN_S 秒で上げる。しっかり鳴っている所どうしは重ねない
+ */
+const BGM_OUT_S = 2
+const BGM_OVERLAP_S = 0.5
+const BGM_IN_S = 1
 /** デコードして持っておく BGM・環境音の数（いまの 2 曲＋フェード中の前の曲＋環境音） */
 const KEEP_LOOPS = 5
 /** 足音のバリエーション */
@@ -107,6 +114,10 @@ interface Layer {
   gain: GainNode | null
   /** 次の曲へ切り替えるタイマー */
   timer: number
+  /** 前の曲を消し始めた時刻（AudioContext の時間。次の曲をいつ鳴らし始めるかに使う） */
+  stoppedAt: number
+  /** BGM は「消えかけに少しだけ重ねる」、環境音は重ねて混ぜる */
+  gap: boolean
 }
 
 const bgmVol0 = readNum(KEY.bgmVol, 0.6)
@@ -131,8 +142,8 @@ let seBus: GainNode | null = null
 let duck = 1
 let bgmBase: BgmKey | null = null
 let bgmOverride: BgmKey | null = null
-const bgm: Layer = { bus: null, want: null, key: null, track: null, src: null, gain: null, timer: 0 }
-const amb: Layer = { bus: null, want: null, key: null, track: null, src: null, gain: null, timer: 0 }
+const bgm: Layer = { bus: null, want: null, key: null, track: null, src: null, gain: null, timer: 0, stoppedAt: 0, gap: true }
+const amb: Layer = { bus: null, want: null, key: null, track: null, src: null, gain: null, timer: 0, stoppedAt: 0, gap: false }
 
 const loops = new Map<string, Promise<AudioBuffer | null>>()
 const loopOrder: string[] = []
@@ -271,7 +282,10 @@ function fadeOut(src: AudioBufferSourceNode, gain: GainNode, seconds: number): v
 
 function stopLayer(layer: Layer): void {
   window.clearTimeout(layer.timer)
-  if (ctx && layer.src && layer.gain) fadeOut(layer.src, layer.gain, FADE_S)
+  if (ctx && layer.src && layer.gain) {
+    fadeOut(layer.src, layer.gain, layer.gap ? BGM_OUT_S : FADE_S)
+    layer.stoppedAt = ctx.currentTime
+  }
   layer.src = null
   layer.gain = null
   layer.key = null
@@ -282,7 +296,7 @@ function stopLayer(layer: Layer): void {
  * その場所の曲を 1 つ鳴らす（ループ再生のまま）。2 曲目があれば、ループ 1 回分の少し前から
  * もう片方の曲へ SWAP_S 秒でクロスフェードし、それを交互にくり返す。タイマーが遅れても、鳴っている曲はループするので途切れない
  */
-function playTrack(layer: Layer, list: string[], index: number, buf: AudioBuffer, lengths: Record<string, number>, fadeS: number): void {
+function playTrack(layer: Layer, list: string[], index: number, buf: AudioBuffer, lengths: Record<string, number>, fadeS: number, startAt = 0): void {
   if (!ctx || !layer.bus) return
   const file = list[index]
   const src = ctx.createBufferSource()
@@ -295,7 +309,9 @@ function playTrack(layer: Layer, list: string[], index: number, buf: AudioBuffer
     src.loopEnd = LOOP_PAD + len
   }
   const gain = ctx.createGain()
-  const now = ctx.currentTime
+  // startAt: 鳴らし始める時刻（前の曲の消えかけに合わせる）。過ぎていればすぐ
+  const now = Math.max(ctx.currentTime, startAt)
+  gain.gain.setValueAtTime(0, ctx.currentTime)
   gain.gain.setValueAtTime(0, now)
   gain.gain.linearRampToValueAtTime(1, now + fadeS)
   src.connect(gain)
@@ -307,16 +323,22 @@ function playTrack(layer: Layer, list: string[], index: number, buf: AudioBuffer
   if (list.length < 2) return
   const nextIndex = (index + 1) % list.length
   const next = list[nextIndex]
-  // 次の曲は切り替えの少し前から読んでおく
-  const playFor = (padded ? len : buf.duration) - SWAP_S
+  // 次の曲は切り替えの少し前から読んでおく。BGM はループの終わりで消え切るように、その BGM_OUT_S 秒前から小さくする
+  const playFor = (padded ? len : buf.duration) - (layer.gap ? BGM_OUT_S : SWAP_S) + (now - (ctx.currentTime))
   const key = layer.key
   window.clearTimeout(layer.timer)
   layer.timer = window.setTimeout(async () => {
     if (layer.src !== src || layer.key !== key) return
     const nextBuf = await loadLoop(next)
     if (!nextBuf || layer.src !== src || layer.key !== key) return
-    fadeOut(src, gain, SWAP_S)
-    playTrack(layer, list, nextIndex, nextBuf, lengths, SWAP_S)
+    if (!ctx) return
+    if (layer.gap) {
+      fadeOut(src, gain, BGM_OUT_S)
+      playTrack(layer, list, nextIndex, nextBuf, lengths, BGM_IN_S, ctx.currentTime + BGM_OUT_S - BGM_OVERLAP_S)
+    } else {
+      fadeOut(src, gain, SWAP_S)
+      playTrack(layer, list, nextIndex, nextBuf, lengths, SWAP_S)
+    }
   }, Math.max(1, playFor) * 1000)
   window.setTimeout(() => {
     if (layer.src === src) void loadLoop(next)
@@ -336,7 +358,8 @@ async function syncLayer(layer: Layer): Promise<void> {
   // 2 曲目が loops.json にあれば交互にする（環境音は 1 本）
   const second = secondOf(want)
   const list = baseOf(second) in lengths ? [want, second] : [want]
-  playTrack(layer, list, 0, buf, lengths, FADE_S)
+  if (layer.gap) playTrack(layer, list, 0, buf, lengths, BGM_IN_S, layer.stoppedAt ? layer.stoppedAt + BGM_OUT_S - BGM_OVERLAP_S : 0)
+  else playTrack(layer, list, 0, buf, lengths, FADE_S)
 }
 
 function syncBgm(): void {
@@ -637,7 +660,7 @@ export const sound = {
   },
   /** 開発用: 今の状態（検証で使う） */
   debug() {
-    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmTrack: bgm.track, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
+    return { played: [...played], unlocked, failed, ctx: ctx?.state ?? null, bgm: bgm.key, bgmTrack: bgm.track, bgmWant: bgm.want, amb: amb.key, ambWant: amb.want, bgmLoop: bgm.src ? [bgm.src.loopStart, bgm.src.loopEnd] : null, bgmGain: bgm.gain ? +bgm.gain.gain.value.toFixed(2) : null, t: ctx ? +ctx.currentTime.toFixed(2) : null, ambLoop: amb.src ? [amb.src.loopStart, amb.src.loopEnd] : null, ...state }
   },
 }
 

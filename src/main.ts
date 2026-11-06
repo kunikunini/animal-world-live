@@ -1553,6 +1553,9 @@ function main(): void {
     try {
       if (shell.story.shouldShow()) await shell.story.play()
       await shell.iris.close()
+      // 初めて入る時はワールドの組み立てに時間がかかるので、幕が閉じた所で出発地のサバンナの曲へ替える
+      // （待っている間もホームの曲が流れ続けていた。組み立て済みなら、最初のコマでいまいるワールドの曲になる）
+      if (!world) sound.setBgm('savanna')
       // 裏での準備が間に合っていなければ、幕に「じゅんびちゅう」を出してから組み立てる
       shell.iris.setWaiting(true)
       if (!world) {
