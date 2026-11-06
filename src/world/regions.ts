@@ -79,9 +79,31 @@ export function distToPassAxis(x: number, z: number): number {
   return best
 }
 
+/**
+ * 円の縁の先の、見えている地面。ワールドごと・向きごとに、中心から歩ける距離（m）を持つ。
+ * 円（walk）の外も、山のふもと・海の波打ちぎわ・崖の手前までは歩ける（見えているのに見えない壁で止まらないように）。
+ * 表は props.ts が山を作ったあとに、山の頂点と地面の高さから決めて setReach で渡す。渡される前は円（walk）のまま
+ */
+export const REACH_BINS = 240
+const reachTables = new Map<RegionKey, Float32Array>()
+export function setReach(key: RegionKey, table: Float32Array): void {
+  reachTables.set(key, table)
+}
+/** 向き（中心から x, z への角度）の表の番号 */
+export function reachBin(r: Region, x: number, z: number): number {
+  const a = Math.atan2(z - r.z, x - r.x)
+  const i = Math.round((a / (Math.PI * 2)) * REACH_BINS)
+  return ((i % REACH_BINS) + REACH_BINS) % REACH_BINS
+}
+/** その向きで中心から歩ける距離（m）。表が無ければ円の半径 */
+export function reachAt(r: Region, x: number, z: number): number {
+  const t = reachTables.get(r.key)
+  return t ? t[reachBin(r, x, z)] : r.walk
+}
+
 /** 歩ける場所か */
 export function isWalkable(x: number, z: number): boolean {
-  for (const r of REGIONS) if (Math.hypot(x - r.x, z - r.z) <= r.walk) return true
+  for (const r of REGIONS) if (Math.hypot(x - r.x, z - r.z) <= reachAt(r, x, z)) return true
   for (const r of OUTER_REGIONS) {
     const s = passSegment(r)
     if (closestOnSegment(x, z, s.ax, s.az, s.bx, s.bz).d <= PASS_HALF_WIDTH) return true
@@ -99,8 +121,9 @@ export function clampToWalkable(p: { x: number; z: number }): void {
     const dx = p.x - r.x
     const dz = p.z - r.z
     const d = Math.hypot(dx, dz) || 1
-    const cx = r.x + (dx / d) * r.walk
-    const cz = r.z + (dz / d) * r.walk
+    const reach = reachAt(r, p.x, p.z)
+    const cx = r.x + (dx / d) * reach
+    const cz = r.z + (dz / d) * reach
     const dist = Math.hypot(p.x - cx, p.z - cz)
     if (dist < bd) {
       bd = dist
@@ -131,11 +154,11 @@ export function clampToWalkable(p: { x: number; z: number }): void {
  */
 function branchOf(x: number, z: number): { key: RegionKey; inCircle: boolean } {
   const tol = 0.5
-  if (Math.hypot(x - SAVANNA.x, z - SAVANNA.z) <= SAVANNA.walk + tol) return { key: 'africa', inCircle: true }
+  if (Math.hypot(x - SAVANNA.x, z - SAVANNA.z) <= reachAt(SAVANNA, x, z) + tol) return { key: 'africa', inCircle: true }
   let best: Region = OUTER_REGIONS[0]
   let bd = Infinity
   for (const r of OUTER_REGIONS) {
-    if (Math.hypot(x - r.x, z - r.z) <= r.walk + tol) return { key: r.key, inCircle: true }
+    if (Math.hypot(x - r.x, z - r.z) <= reachAt(r, x, z) + tol) return { key: r.key, inCircle: true }
     const s = passSegment(r)
     const d = closestOnSegment(x, z, s.ax, s.az, s.bx, s.bz).d
     if (d < bd) {

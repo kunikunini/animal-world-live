@@ -756,7 +756,7 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
     const gz = r.z + GOAT_ROCKS.dz
     const stone = toonMaterial({ color: '#9c948e' })
     // 岩の板: 段ごとに平たい岩を半分埋めて並べ、のっぺりした丘ではなく、ごつごつした岩場に見せる。
-    // 板の上面は地面の高さのすぐ上なので、上を歩ける（当たり判定なし）。縁にはごろごろした岩
+    // 板の上面は地面の高さのすぐ上（約 0.2m）なので、上を歩ける（当たり判定なし）。ヤギは板の上に立つよう少し持ち上げる（residents.ts）。縁にはごろごろした岩
     const slabs: Array<{ x: number; z: number; s: number; flat: number }> = []
     const rings: Array<[number, number]> = [
       [0.0, 2],
@@ -786,7 +786,7 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
     const rockB = new THREE.Color('#bdb5ab')
     slabs.forEach((b, i) => {
       _q.setFromEuler(_e.set((rand() - 0.5) * 0.25, rand() * 3, (rand() - 0.5) * 0.25))
-      _m.compose(_p.set(b.x, terrainHeight(b.x, b.z) - b.s * b.flat * 0.3, b.z), _q, _s.set(b.s * 1.4, b.s * b.flat, b.s * 1.2))
+      _m.compose(_p.set(b.x, terrainHeight(b.x, b.z) - b.s * b.flat * 0.72, b.z), _q, _s.set(b.s * 1.4, b.s * b.flat, b.s * 1.2))
       slabMesh.setMatrixAt(i, _m)
       slabMesh.setColorAt(i, _c.copy(rockA).lerp(rockB, rand()))
     })

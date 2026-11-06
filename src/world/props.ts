@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
-import { WATER_LEVEL, savannaTrail, terrainHeight } from './terrain'
-import { OUTER_REGIONS, PASS_HALF_WIDTH, distToPassAxis, distToPassAxisOf } from './regions'
+import { SEA_LEVEL, WATER_LEVEL, savannaTrail, terrainHeight } from './terrain'
+import { MAP_BOUNDS, OUTER_REGIONS, PASS_HALF_WIDTH, REACH_BINS, REGIONS, biomeAt, distToPassAxis, distToPassAxisOf, emptyWeights, reachBin, setReach } from './regions'
 import type { Region } from './regions'
 import { toonMaterial } from '../render/toon'
 
@@ -438,6 +438,72 @@ function createRange(group: THREE.Group, o: RangeOptions): void {
   }
 }
 
+/** 円の外へ歩ける分の上限（m）。サバンナは内側の山（172m）の手前、ほかのワールドは自分の山並み（150m）の手前まで */
+const REACH_EXTRA_SAVANNA = 40
+const REACH_EXTRA_OUTER = 38
+/** 山から離しておく距離（m） */
+const REACH_MOUNTAIN_MARGIN = 10
+
+/**
+ * 円の縁の先で、見えている地面を歩けるようにする（regions.ts の setReach）。向きごとに、
+ * ①山（地面より 1m 以上高い山並みの頂点）のふもとの手前、②海の波打ちぎわ・地形の端、③急な段差、のいちばん近いところまで。
+ * 山は峠やとなりのワールドのところで切ってあるので、実際に作った山の頂点で測る（切った所の先は開けたまま歩ける）
+ */
+function measureReach(group: THREE.Group): void {
+  const step = (Math.PI * 2) / REACH_BINS
+  const w = emptyWeights()
+  // 海は水の世界の地面の、海面より低い所だけ（sea.ts と同じ見分け方。サバンナの縁の低い地面は海ではない）
+  const isSea = (x: number, z: number, h: number) => h < SEA_LEVEL + 0.25 && biomeAt(x, z, w).water >= 0.5
+  const peaks: number[] = []
+  group.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.name.startsWith('mountains')) return
+    const pos = o.geometry.getAttribute('position')
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i)
+      const y = pos.getY(i)
+      const z = pos.getZ(i)
+      if (y > terrainHeight(x, z) + 1) peaks.push(x, z)
+    }
+  })
+  for (const r of REGIONS) {
+    const cap = r.walk + (r.key === 'africa' ? REACH_EXTRA_SAVANNA : REACH_EXTRA_OUTER)
+    const table = new Float32Array(REACH_BINS).fill(cap)
+    // ① 山: 頂点の向きと、まわり（頂点の間隔ぶん）の向きを、その手前までにする
+    for (let i = 0; i < peaks.length; i += 2) {
+      const x = peaks[i]
+      const z = peaks[i + 1]
+      const d = Math.hypot(x - r.x, z - r.z)
+      if (d >= cap + REACH_MOUNTAIN_MARGIN) continue
+      const limit = Math.max(r.walk, d - REACH_MOUNTAIN_MARGIN)
+      const b = reachBin(r, x, z)
+      const spread = Math.ceil(Math.atan2(9, Math.max(1, d)) / step)
+      for (let k = -spread; k <= spread; k++) {
+        const j = (b + k + REACH_BINS) % REACH_BINS
+        if (limit < table[j]) table[j] = limit
+      }
+    }
+    // ② 海・地形の端、③ 急な段差: 円の縁から外へ 2m ずつたどる
+    for (let j = 0; j < REACH_BINS; j++) {
+      const a = j * step
+      const ca = Math.cos(a)
+      const sa = Math.sin(a)
+      let prev = terrainHeight(r.x + ca * r.walk, r.z + sa * r.walk)
+      for (let rr = r.walk + 2; rr <= table[j]; rr += 2) {
+        const x = r.x + ca * rr
+        const z = r.z + sa * rr
+        const h = terrainHeight(x, z)
+        const off = x < MAP_BOUNDS.minX + 8 || x > MAP_BOUNDS.maxX - 8 || z < MAP_BOUNDS.minZ + 8 || z > MAP_BOUNDS.maxZ - 8
+        if (off || isSea(x, z, h) || Math.abs(h - prev) > 1.6) {
+          table[j] = Math.max(r.walk, rr - 4)
+          break
+        }
+        prev = h
+      }
+    }
+    setReach(r.key, table)
+  }
+}
+
 /**
  * 遠くの山脈。サバンナの輪（いままでの 3 層）には各ワールドへの峠を切る。
  * ほかのワールドにも、それぞれの色の山並みを、サバンナに面した側を開けて置く
@@ -818,6 +884,7 @@ export function createProps(options: PropsOptions): Props {
   createRocks(rand, group, colliders)
   const water = createWater(group, options)
   createMountains(group)
+  measureReach(group)
   const grass = createGrass(rand, group, options.mobile ? 6000 : 16000, options.mobile ? 110 : 175)
   createBushes(rand2, group, options.mobile ? 110 : 150)
   createTermiteMounds(rand2, group, colliders, 7)

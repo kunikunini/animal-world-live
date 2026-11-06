@@ -6,9 +6,11 @@ import { createKangaroo } from './kangaroo'
 import type { UprightVariant } from './kangaroo'
 import { createSloth } from './sloth'
 import { createWaterfolk } from './waterfolk'
+import { createFarmfolk } from './farmfolk'
+import type { FarmKind } from './farmfolk'
+import { GOAT_ROCKS, farmPens, terrainHeight } from './terrain'
 import type { WaterfolkKind } from './waterfolk'
 import { JUNGLE_PERCH } from './biomes'
-import { terrainHeight } from './terrain'
 import { OUTER_REGIONS } from './regions'
 
 /**
@@ -81,6 +83,80 @@ const RESIDENTS: Resident[] = [
   { species: 'コツメカワウソ', name: 'ミナト', kind: 'otter', region: 'water', dx: -2.6, dz: -13.6, yaw: -Math.PI / 2 + 1.1, size: 1.46 },
 ]
 
+/**
+ * ふれあいワールドの子（D-32 ②のあと、デモ用に追加）。中心からの向きは、峠（原点）の向きを 0 として測る。
+ * ヤギはヤギの岩場の段（rocks: 入り口の向きからの角度・岩場の半径に対する割合）と入り口の前の草地、
+ * ポニーとヒツジは左右の放牧場の中（pen: 放牧場の番号・中心からのずれ m）、犬とブタは広場のまわり（plaza: 角度・距離）。
+ * 向きは、岩場と放牧場の子は入り口（広場）の方、広場の子は峠から来た人の方。ギープは形の手がかりが無いので置かない
+ */
+interface FarmResident {
+  species: string
+  pick: number
+  kind: FarmKind
+  size: number
+  rocks?: [number, number]
+  pen?: [number, number, number]
+  plaza?: [number, number]
+  /** 向きのずらし（ラジアン） */
+  turn?: number
+}
+const FARM_RESIDENTS: FarmResident[] = [
+  { species: 'ヤギ', pick: 0, kind: 'goat', size: 1.15, rocks: [Math.PI, 0.02] },
+  { species: 'ヤギ', pick: 1, kind: 'goat', size: 1.1, rocks: [0.9, 0.36], turn: 0.4 },
+  { species: 'ヤギ', pick: 2, kind: 'goat', size: 1.12, rocks: [-1.3, 0.34], turn: -0.5 },
+  { species: 'ヤギ', pick: 3, kind: 'goat', size: 1.05, rocks: [2.3, 0.6], turn: 0.8 },
+  { species: 'ヤギ', pick: 4, kind: 'goat', size: 1.1, rocks: [-2.4, 0.62], turn: -0.6 },
+  { species: 'ヤギ', pick: 5, kind: 'goat', size: 1.08, rocks: [0.55, 0.78], turn: 0.3 },
+  { species: 'ヤギ', pick: 6, kind: 'goat', size: 1.05, rocks: [-0.45, 1.22] },
+  { species: 'ヤギ', pick: 7, kind: 'goat', size: 1.0, rocks: [0.2, 1.36], turn: 0.9 },
+  { species: 'ポニー', pick: 0, kind: 'pony', size: 1.1, pen: [0, -3, 2] },
+  { species: 'ポニー', pick: 1, kind: 'pony', size: 1.05, pen: [0, 2.5, -2], turn: 0.5 },
+  { species: 'ポニー', pick: 2, kind: 'pony', size: 1.0, pen: [0, 4, 4], turn: -0.6 },
+  { species: 'ヒツジ', pick: 0, kind: 'sheep', size: 1.15, pen: [2, -2.5, 1.5] },
+  { species: 'ヒツジ', pick: 1, kind: 'sheep', size: 1.1, pen: [2, -0.5, -1.8], turn: 0.4 },
+  { species: 'ヒツジ', pick: 2, kind: 'sheep', size: 1.12, pen: [2, 1.8, 0.6], turn: -0.3 },
+  { species: 'ヒツジ', pick: 3, kind: 'sheep', size: 1.05, pen: [2, 0.6, 3.0], turn: 0.7 },
+  { species: 'セントバーナード', pick: 0, kind: 'stbernard', size: 1.15, plaza: [0.95, 7] },
+  { species: 'ボーダーコリー', pick: 0, kind: 'collie', size: 1.15, plaza: [-1.3, 7] },
+  { species: 'ピレネーシェパード', pick: 0, kind: 'pyrenean', size: 1.2, plaza: [-1.75, 9.5] },
+  { species: 'ホットベリーピック（ブタ）', pick: 0, kind: 'pig', size: 1.2, plaza: [1.95, 11] },
+]
+
+function createFarmResidents(out: Lion[]): void {
+  const region = OUTER_REGIONS.find((g) => g.key === 'partner')
+  if (!region) return
+  const a0 = Math.atan2(-region.z, -region.x)
+  const pens = farmPens()
+  const faceTo = (fx: number, fz: number) => Math.atan2(fx, fz)
+  for (const r of FARM_RESIDENTS) {
+    const animal = ANIMALS.filter((a) => a.species === r.species)[r.pick]
+    if (!animal) continue
+    let x = region.x
+    let z = region.z
+    let yaw = 0
+    let lift = 0
+    if (r.rocks) {
+      // 岩場の段の上（入り口の前の草地は持ち上げない）
+      lift = r.rocks[1] < 1.05 ? 0.2 : 0
+      const a = GOAT_ROCKS.gate + r.rocks[0]
+      x += GOAT_ROCKS.dx + Math.cos(a) * GOAT_ROCKS.radius * r.rocks[1]
+      z += GOAT_ROCKS.dz + Math.sin(a) * GOAT_ROCKS.radius * r.rocks[1]
+      yaw = faceTo(Math.cos(GOAT_ROCKS.gate), Math.sin(GOAT_ROCKS.gate))
+    } else if (r.pen) {
+      const p = pens[r.pen[0]]
+      x += p.x + r.pen[1]
+      z += p.z + r.pen[2]
+      yaw = faceTo(Math.cos(p.gate), Math.sin(p.gate))
+    } else if (r.plaza) {
+      const a = a0 + r.plaza[0]
+      x += Math.cos(a) * r.plaza[1]
+      z += Math.sin(a) * r.plaza[1]
+      yaw = faceTo(Math.cos(a0), Math.sin(a0))
+    }
+    out.push(createFarmfolk({ id: animal.id, kind: r.kind, x, z, yaw: yaw + (r.turn ?? 0), size: r.size, lift }))
+  }
+}
+
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
 export function createResidents(): Lion[] {
   const out: Lion[] = []
@@ -116,6 +192,7 @@ export function createResidents(): Lion[] {
         : createLion({ ...at, species: r.kind as NonNullable<LionOptions['species']> }),
     )
   }
+  createFarmResidents(out)
   // 小さい子は影の読み取りのずれ（normalBias 1.8m）で体がまだらに暗くなるので、影は受けず落とすだけにする
   for (const lion of out) {
     if (lion.group.scale.x >= 0.75) continue

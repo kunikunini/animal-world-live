@@ -6,13 +6,15 @@ import { getLang, onLangChange } from './i18n'
  * ホーム: キービジュアル 1 枚と、入口（「のぞいてみる」と絵の中の双眼鏡）、ともだち帳の居場所。
  * 絵は画面の縦横比で CSS が選ぶ。
  * まだ帳で見ていない新しいともだちがいれば、帳のボタンに印が付く（印は帳を閉じた時に消える）。
- * 「だれで冒険する？」: 名簿の子どもたちを同じ大きさで並べ、押した子を選ぶ（選んだ子に輪と印）。矢印キーでも動かせる。
+ * 「だれで冒険する？」: 「のぞいてみる」（または絵の双眼鏡）を押すと、同じホームの上に出てくる。名簿の子どもたちを同じ大きさで並べ、
+ * 押した子でそのまま冒険に出る（選んだ子に輪と印。前に選んだ子が最初から選ばれている）。矢印キーで動かし、Enter / Space で決める。
+ * まわりを押すか Esc で閉じてホームに戻る。
  */
 export interface HomeView {
   show: () => void
   hide: () => void
   isOpen: () => boolean
-  /** 「のぞいてみる」とスコープのタップ */
+  /** 「だれで冒険する？」で子を選び終えた時（「のぞいてみる」とスコープのタップのあと） */
   onEnter: (fn: () => void) => void
   /** 「ともだち帳」 */
   onBook: (fn: () => void) => void
@@ -38,8 +40,6 @@ export function createHome(store: FriendBookStore): HomeView {
   const bookListeners: Array<() => void> = []
 
   const enter = () => enterListeners.forEach((fn) => fn())
-  scope.addEventListener('click', enter)
-  enterBtn.addEventListener('click', enter)
   const openBook = () => {
     bookBtn.classList.remove('is-new')
     bookListeners.forEach((fn) => fn())
@@ -57,6 +57,7 @@ export function createHome(store: FriendBookStore): HomeView {
   fallbackBook.addEventListener('click', openBook)
 
   // だれで冒険する？
+  const pickBox = document.getElementById('home-pick') as HTMLElement
   const pickRow = document.getElementById('home-pick-row') as HTMLElement
   const heroListeners: Array<(id: string) => void> = []
   let picked = getHeroId()
@@ -85,22 +86,58 @@ export function createHome(store: FriendBookStore): HomeView {
       b.tabIndex = on ? 0 : -1
     })
   }
-  const pick = (i: number, focus = false) => {
+  const select = (i: number) => {
     const id = HEROES[i].id
-    if (focus) picks[i].focus()
     if (id === picked) return
     picked = id
     syncPick()
     heroListeners.forEach((fn) => fn(id))
   }
+  // 「のぞいてみる」で開き、子を押したらその子で出発する
+  let picking = false
+  const openPick = () => {
+    if (picking || enterBtn.disabled) return
+    picking = true
+    syncPick()
+    pickBox.hidden = false
+    root.classList.add('is-picking')
+    const on = picks.find((b) => b.getAttribute('aria-checked') === 'true') ?? picks[0]
+    on.focus({ preventScroll: true })
+  }
+  const closePick = (focusEnter: boolean) => {
+    if (!picking) return
+    picking = false
+    pickBox.hidden = true
+    root.classList.remove('is-picking')
+    if (focusEnter) enterBtn.focus({ preventScroll: true })
+  }
+  scope.addEventListener('click', openPick)
+  enterBtn.addEventListener('click', openPick)
   picks.forEach((b, i) => {
-    b.addEventListener('click', () => pick(i))
+    b.addEventListener('click', () => {
+      select(i)
+      closePick(false)
+      enter()
+    })
     b.addEventListener('keydown', (e) => {
       const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
       if (!step) return
       e.preventDefault()
-      pick((i + step + picks.length) % picks.length, true)
+      // 矢印は選ぶだけ（出発は Enter / Space / タップ）
+      const next = (i + step + picks.length) % picks.length
+      select(next)
+      picks[next].focus()
     })
+  })
+  // まわり（ホームの絵のところ）を押すか Esc で閉じる
+  root.addEventListener('click', (e) => {
+    if (!picking) return
+    const t = e.target as Node
+    if (pickBox.contains(t) || enterBtn.contains(t) || scope.contains(t)) return
+    closePick(true)
+  })
+  window.addEventListener('keydown', (e) => {
+    if (picking && e.key === 'Escape') closePick(true)
   })
   syncPick()
   onLangChange(syncPick)
@@ -117,6 +154,7 @@ export function createHome(store: FriendBookStore): HomeView {
     },
     hide: () => {
       open = false
+      closePick(false)
       root.hidden = true
     },
     isOpen: () => open,
