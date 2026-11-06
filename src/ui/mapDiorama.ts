@@ -334,6 +334,48 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     return g
   }
 
+  // 雲: ジオラマの上をゆっくり流れる（動きをへらす時は止める）。ふわふわの球を重ねた形
+  const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x9aa8b8, transparent: true, opacity: 0.88, flatShading: true })
+  const cloudGeo = new THREE.IcosahedronGeometry(1, 1)
+  const clouds: Array<{ g: THREE.Group; x0: number; z: number; v: number; y: number }> = []
+  for (const [x0, z, sc2, v, y] of [
+    [-150, -120, 1.1, 9, 78],
+    [40, 60, 0.85, 12, 92],
+    [170, -40, 1, 7, 70],
+    [-60, 170, 0.9, 10, 86],
+  ] as Array<[number, number, number, number, number]>) {
+    const g = new THREE.Group()
+    for (const [dx, dy, dz, r] of [[0, 0, 0, 13], [-13, -3, 3, 9.5], [13, -2, -2, 10.5], [5, 6, 2, 9], [-6, 4, -5, 8]] as Array<[number, number, number, number]>) {
+      const m = new THREE.Mesh(cloudGeo, cloudMat)
+      m.position.set(dx, dy, dz)
+      m.scale.set(r, r * 0.72, r)
+      g.add(m)
+    }
+    g.scale.setScalar(sc2)
+    scene.add(g)
+    clouds.push({ g, x0, z, v, y })
+  }
+  const CLOUD_SPAN = 520
+  const placeClouds = (now: number) => {
+    for (const c of clouds) {
+      const d = reduceMotion ? 0 : (now / 1000) * c.v
+      const x = ((((c.x0 + d + CLOUD_SPAN / 2) % CLOUD_SPAN) + CLOUD_SPAN) % CLOUD_SPAN) - CLOUD_SPAN / 2
+      c.g.position.set(center.x + x, c.y, center.z + c.z)
+    }
+  }
+  // 観察スポットの上で回る金の星（キラキラ）
+  const starShape = new THREE.Shape()
+  for (let i = 0; i < 10; i++) {
+    const a = Math.PI / 2 + (i * Math.PI) / 5
+    const r = i % 2 ? 2.2 : 5
+    if (i === 0) starShape.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+    else starShape.lineTo(Math.cos(a) * r, Math.sin(a) * r)
+  }
+  const starGeo = new THREE.ExtrudeGeometry(starShape, { depth: 1.4, bevelEnabled: false })
+  starGeo.center()
+  const starMat = new THREE.MeshLambertMaterial({ color: 0xffcf2e, emissive: 0xb07800 })
+  let stars: THREE.Mesh[] = []
+
   /** となりのワールドは空色に透ける（いまのワールドになったら元にもどす） */
   const setHaze = (g: THREE.Group, on: boolean) => {
     g.position.y = on ? NEIGHBOR_DROP : 0
@@ -386,6 +428,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     overlay.textContent = ''
     tags = []
     pins = []
+    stars = []
     const inside = (x: number, z: number) => Math.hypot(x - center.x, z - center.z) < radius - 1
     // 道: 5m ごとの飛び石（ワールドの中だけ）
     const stones: Array<[number, number]> = []
@@ -414,6 +457,13 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       p.position.set(b.x, y + 0.7, b.z)
       if (state.target === b.id) p.scale.setScalar(1.25)
       dynamic.add(p)
+      if (b.kind === 'spot') {
+        const st = new THREE.Mesh(starGeo, starMat)
+        st.position.set(b.x, y + 16, b.z)
+        st.userData.y = y + 16
+        dynamic.add(st)
+        stars.push(st)
+      }
       // いま立っている拠点の札は出さない（小さな主人公がその場所の印。札で主人公を隠さない）
       if (Math.hypot(b.x - state.player.x, b.z - state.player.z) < 10) continue
       const el = document.createElement('button')
@@ -483,6 +533,12 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const h = canvas.clientHeight
     if (!w || !h) return
     const placed: Array<{ l: number; t: number; r: number; b: number }> = []
+    // 凡例と右上のボタンの上には札を置かない
+    const wr = wrap.getBoundingClientRect()
+    wrap.parentElement?.querySelectorAll<HTMLElement>('.map-legend, .map-tools').forEach((el) => {
+      const r = el.getBoundingClientRect()
+      if (r.width) placed.push({ l: r.left - wr.left - 4, t: r.top - wr.top - 4, r: r.right - wr.left + 4, b: r.bottom - wr.top + 4 })
+    })
     // 小さな主人公（足もとから「いまここ」の三角まで）の上には札を置かない
     _v.copy(hero.position).project(camera)
     const fx = ((_v.x + 1) / 2) * w
@@ -760,6 +816,11 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     here.position.y = 36 + (reduceMotion ? 0 : Math.sin(now / 250) * 2)
     here.rotation.y = now / 600
     ring.scale.setScalar(reduceMotion ? 1 : 1 + Math.sin(now / 300) * 0.12)
+    for (const st of stars) {
+      st.rotation.y = reduceMotion ? 0.4 : now / 700
+      st.position.y = st.userData.y + (reduceMotion ? 0 : Math.sin(now / 380) * 1.6)
+    }
+    placeClouds(now)
     renderer.render(scene, camera)
     placeTags()
     requestAnimationFrame(frame)

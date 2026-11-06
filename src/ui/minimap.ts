@@ -141,6 +141,19 @@ const C = {
 }
 
 const FONT = "'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif"
+/** 地図の看板の字（index.html で読む。届くまではふつうの丸ゴシック） */
+const SIGN_FONT = "'Mochiy Pop One', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', system-ui, sans-serif"
+
+/** 広げた地図の上を流れる雲（世界座標。東へゆっくり流れ、大陸の東の外へ出たら西から戻る） */
+const CLOUDS: Array<{ x: number; z: number; s: number; v: number }> = [
+  { x: -420, z: -420, s: 1.1, v: 6 },
+  { x: 120, z: -250, s: 0.8, v: 8 },
+  { x: -250, z: 120, s: 0.9, v: 5 },
+  { x: 300, z: 300, s: 1.2, v: 7 },
+  { x: -60, z: 520, s: 0.85, v: 6.5 },
+  { x: 380, z: -520, s: 0.7, v: 9 },
+]
+const CLOUD_SPAN = 1300
 
 const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]
 
@@ -1296,6 +1309,85 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     return bx
   }
 
+  /** 木の看板（ワールドの名前）: 板に濃い縁と木目、2 本の短い足。置けたら箱を返す */
+  const signAt = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, avoid: Box[], force = false): Box | null => {
+    ctx.font = `400 ${Math.round(size * u)}px ${SIGN_FONT}`
+    const tw = ctx.measureText(text).width
+    const padX = 8 * u
+    const h = size * u * 1.55
+    const w = tw + padX * 2
+    const l = x - w / 2
+    const t0 = y - h / 2
+    const bx: Box = { l: l - 1 * u, t: t0 - 1 * u, r: l + w + 1 * u, b: t0 + h + 6 * u }
+    if (bx.r < 0 || bx.l > width || bx.b < 0 || bx.t > height) return null
+    if (!force && avoid.some((p) => overlaps(bx, p))) return null
+    // 足
+    ctx.fillStyle = '#5e3a1c'
+    ctx.fillRect(l + w * 0.22 - 1.5 * u, t0 + h - 1 * u, 3 * u, 6 * u)
+    ctx.fillRect(l + w * 0.78 - 1.5 * u, t0 + h - 1 * u, 3 * u, 6 * u)
+    // 影・板・縁
+    ctx.fillStyle = 'rgba(40, 24, 10, 0.3)'
+    roundRect(ctx, l + 1 * u, t0 + 2 * u, w, h, 4 * u)
+    ctx.fill()
+    const g = ctx.createLinearGradient(0, t0, 0, t0 + h)
+    g.addColorStop(0, '#c38b55')
+    g.addColorStop(1, '#94602f')
+    ctx.fillStyle = g
+    roundRect(ctx, l, t0, w, h, 4 * u)
+    ctx.fill()
+    ctx.strokeStyle = '#5e3a1c'
+    ctx.lineWidth = 1.6 * u
+    ctx.stroke()
+    // 木目（細い線を 2 本）
+    ctx.strokeStyle = 'rgba(94, 58, 28, 0.28)'
+    ctx.lineWidth = 0.8 * u
+    ctx.beginPath()
+    ctx.moveTo(l + 3 * u, t0 + h * 0.3)
+    ctx.lineTo(l + w - 6 * u, t0 + h * 0.3)
+    ctx.moveTo(l + 6 * u, t0 + h * 0.74)
+    ctx.lineTo(l + w - 3 * u, t0 + h * 0.74)
+    ctx.stroke()
+    ctx.font = `400 ${Math.round(size * u)}px ${SIGN_FONT}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = '#5e3a1c'
+    ctx.lineWidth = 2.4 * u
+    ctx.strokeText(text, x, t0 + h / 2 + 0.5 * u)
+    ctx.fillStyle = '#fff4d6'
+    ctx.fillText(text, x, t0 + h / 2 + 0.5 * u)
+    return bx
+  }
+
+  /** 雲: 大陸の全体を見ている時だけ（寄るほど薄く、3 倍で消える）。下の地面に影 */
+  const drawClouds = (ctx: CanvasRenderingContext2D, tm: number, zl: number) => {
+    const a = Math.max(0, Math.min(1, 1.5 - zl * 0.5))
+    if (a <= 0.02) return
+    for (const c of CLOUDS) {
+      const drift = reduceMotion ? 0 : tm * c.v
+      const x = ((((c.x + drift + 650) % CLOUD_SPAN) + CLOUD_SPAN) % CLOUD_SPAN) - 650
+      const r = 26 * c.s * k
+      const puffs: Array<[number, number, number]> = [[0, 0, 1], [-0.9, 0.25, 0.72], [0.95, 0.2, 0.78], [0.35, -0.45, 0.7], [-0.4, -0.35, 0.6]]
+      // 影（南東へずらす）
+      const [sx, sy] = S(x + 18 * c.s, c.z + 30 * c.s)
+      ctx.fillStyle = `rgba(40, 60, 80, ${(0.14 * a).toFixed(3)})`
+      ctx.beginPath()
+      for (const [px2, py2, pr] of puffs) {
+        ctx.moveTo(sx + px2 * r + pr * r, sy + py2 * r)
+        ctx.arc(sx + px2 * r, sy + py2 * r, pr * r, 0, Math.PI * 2)
+      }
+      ctx.fill()
+      const [cx2, cy2] = S(x, c.z)
+      ctx.fillStyle = `rgba(255, 255, 255, ${(0.6 * a).toFixed(3)})`
+      ctx.beginPath()
+      for (const [px2, py2, pr] of puffs) {
+        ctx.moveTo(cx2 + px2 * r + pr * r, cy2 + py2 * r)
+        ctx.arc(cx2 + px2 * r, cy2 + py2 * r, pr * r, 0, Math.PI * 2)
+      }
+      ctx.fill()
+    }
+  }
+
   /** 観察スポット: 金色の星。まわりで小さな光がまたたく */
   const drawStar = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number, tm: number, seed: number) => {
     ctx.save()
@@ -1494,6 +1586,8 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     hits = []
     const placed: Box[] = []
 
+    drawClouds(ctx, tm, zl)
+
     // 道: 拠点をつなぐ点線（地図の上の小道）
     if (overlay) {
       ctx.lineCap = 'round'
@@ -1553,16 +1647,15 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       const name = r.key === 'africa' ? t('catSavanna') : (getWorld(r.key)?.name[getLang()] ?? r.key)
       const [lx, lz] = REGION_LABEL_AT[r.key]
       const [x, y] = S(lx, lz)
-      const size = Math.min(19, 14 + (zl - 1) * 2.2)
-      const o = { size, weight: 900, color: '#3b2614', halo: 'rgba(255, 250, 236, 0.92)', haloW: 4.4, avoid: worldBoxes }
-      const d = size * 1.3 * u
-      // ワールドの名前はいつも出す。印に重なる時は上下左右へ少しずらし、それでもだめならそのまま
+      const size = Math.min(16, 12 + (zl - 1) * 1.8)
+      const d = size * 1.8 * u
+      // ワールドの名前は木の看板でいつも出す。重なる時は上下左右へ少しずらし、それでもだめならそのまま
       let bx: Box | null = null
-      for (const [ox2, oy2] of [[0, 0], [0, d], [0, -d], [d * 2, 0], [-d * 2, 0], [0, d * 2]]) {
-        bx = textAt(ctx, name, x + ox2, y + oy2, o)
+      for (const [ox2, oy2] of [[0, 0], [0, d], [0, -d], [d * 2.5, 0], [-d * 2.5, 0], [0, d * 2]]) {
+        bx = signAt(ctx, name, x + ox2, y + oy2, size, worldBoxes)
         if (bx) break
       }
-      if (!bx) bx = textAt(ctx, name, x, y, { ...o, force: true })
+      if (!bx) bx = signAt(ctx, name, x, y, size, worldBoxes, true)
       if (bx) {
         placed.push(bx)
         worldBoxes.push(bx)
