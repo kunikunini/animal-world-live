@@ -856,7 +856,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         groups.push({ species, x: l.position.x, y: l.position.y, z: l.position.z, n: 1, r: l.collider.r })
       }
     }
-    groups.sort((a, b) => b.r - a.r)
+    // 体の大きさで比べる（半径の 2 乗の合計）。小さい子がたくさんいる群れ（キンカジュー・ミーアキャットなど）より、
+    // ライオンやトラのような見ばえのする子を選ぶ（11/6 に全個体を置いて、頭数だけだと小さい子の群れが選ばれるようになったため）
+    const weight = (g: { r: number; n: number }) => g.n * (g.r / g.n) ** 2
+    groups.sort((a, b) => weight(b) - weight(a))
     const g = groups[0]
     return g ? { at: new THREE.Vector3(g.x, g.y, g.z), size: g.r / g.n } : null
   }
