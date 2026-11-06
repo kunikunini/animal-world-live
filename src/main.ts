@@ -367,6 +367,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
       // ラピ: 南半球のカピバラ 3 頭のうちラピ。マロの値（0.7／1／1／0.9）の流用だけで腰 100.0〜101.4%。尾の骨は動かさない（noTail）
       { key: 'capybaraRapi', species: 'カピバラ', name: 'ラピ', file: 'capybara-rapi', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
+      // ライム: 南半球のマーラ 5 頭のうちライム。ゆずの値（1／0.8／1／0.7）の流用だけで腰 100.3〜102.4%。尾の骨は動かさない（noTail）
+      { key: 'maraLime', species: 'マーラ', name: 'ライム', file: 'mara-lime', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
