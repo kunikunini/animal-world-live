@@ -75,8 +75,8 @@ interface Step {
 const STEPS: Step[] = [
   {
     text: {
-      ja: 'やあ、ぼくは スコップ！ あそびかたを すこーしずつ しょうかいするよ。わからなくなったら「つぎへ」を おしてね。',
-      en: 'Hi, I’m Scop! Let’s scope out how to play, one step at a time. If you get stuck, tap “Next”.',
+      ja: 'ぼく、スコップ！ あそびかたを すこしずつ しょうかいするよ。わからなくなったら「つぎへ」を おしてね。',
+      en: 'Hi, I’m Scop! Let’s scope out how to play, step by step. Stuck? Tap “Next”.',
     },
     targets: [],
   },
@@ -95,14 +95,14 @@ const STEPS: Step[] = [
   {
     text: {
       ja: 'ライリーの {頭|あたま}の {上|うえ}に、{名前|なまえ}の ふだが {出|で}たね。ふだを おしてみよう！',
-      en: 'A name tag popped up above Riley’s head. Tap the tag — tag, you’re it!',
+      en: 'A name tag popped up over Riley. Tap it — tag, you’re it!',
     },
     targets: ['.encounter-pin', '.lion-label[data-id="riley"]', 'riley'],
     until: ['observeOpen'],
   },
   {
     text: {
-      ja: 'ようこそ、どうぶつの へやへ！ {動画|どうが}や プロフィールが {見|み}られるよ。{気|き}に{入|い}ったら「ともだちになる」を おしてね。おすかどうかは、きみが {決|き}めてね。',
+      ja: 'ここは どうぶつの へや。{動画|どうが}や プロフィールが {見|み}られるよ。{気|き}に{入|い}ったら「ともだちになる」を おしてね。おすかどうかは、きみが {決|き}めてね。',
       en: 'Welcome to the animal’s room, with videos and a profile! If you like them, tap “Become friends”. It’s up to you.',
     },
     targets: ['#befriend', '#befriended'],
@@ -120,8 +120,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ともだちを おすと、その{子|こ}との トークが {開|ひら}くよ。ドキドキ！',
-      en: 'Tap a friend to open your talk with them. Ooh, I wonder what’s waiting!',
+      ja: 'ともだちを おすと、トークが {開|ひら}くよ。ドキドキ！',
+      en: 'Tap a friend to open your talk — ooh!',
     },
     targets: ['#book-list button[data-chat]'],
     until: ['chat'],
@@ -147,8 +147,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: '{着|つ}いたね！「スコープをのぞく」を おしてみよう。ぼくの なかまだよ！',
-      en: 'You made it — spot on! Tap “Look through the scope”.',
+      ja: 'とうちゃーく！「スコープをのぞく」を おしてね。',
+      en: 'Spot on! Now tap “Look through the scope”.',
     },
     targets: ['#goto-spot[data-mode="scope"]', 'spot'],
     until: ['scope'],
@@ -156,7 +156,7 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'ここが「アニマルスコープ」。いろいろな どうぶつの {動画|どうが}が {見|み}られるよ。レンズが くぎづけ！',
+      ja: 'ここが「アニマルスコープ」。どうぶつの {動画|どうが}が いっぱい！ レンズが くぎづけ！',
       en: 'This is the Animal Scope, full of animal videos. My lenses are glued!',
     },
     targets: [],
@@ -164,8 +164,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'なんと、ワールドは ぜんぶで {七|なな}つ！ ワールドを おすと、そこに いる どうぶつが {見|み}られるよ。{山|やま}の あいだの {道|みち}を {歩|ある}くと、ほかの ワールドにも {行|い}けるよ。',
-      en: 'Guess what — there are seven worlds! Tap a world to see who lives there. Walk the paths between the mountains to visit other worlds.',
+      ja: 'ワールドは なんと {七|なな}つ！ ワールドを おすと、そこに いる どうぶつが {見|み}られるよ。{山|やま}の あいだの {道|みち}を {歩|ある}くと、ほかの ワールドにも {行|い}けるよ。',
+      en: 'Seven worlds in all! Tap a world to see who lives there. Walk the paths between the mountains to visit other worlds.',
     },
     targets: ['#catalog [data-world]'],
     needs: 'catalog',
@@ -181,8 +181,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: '{地図|ちず}には、{会|あ}った どうぶつが のるよ。{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。どこへ {行|い}く？ おしてみよう！',
-      en: 'Animals you have met appear on the map. Tap a place to walk there. Where to? Try it!',
+      ja: '{地図|ちず}には、{会|あ}った どうぶつが のるよ。{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。どこへ {行|い}く？',
+      en: 'Animals you’ve met appear on the map. Tap a place to walk there — where to?',
     },
     targets: ['#map-canvas', '#map-3d'],
     until: ['mapClose'],
@@ -190,8 +190,8 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: 'やったね、これで おしまい！ もう{一度|いちど} {見|み}たいときは、ホームの「{設定|せってい}」から いつでも ぼくを よんでね。',
-      en: 'Hooray, all done — well done, explorer! To see this again, call me from Settings on the home screen.',
+      ja: 'やったね、これで おしまい！ また {見|み}たいときは、ホームの「{設定|せってい}」から ぼくを よんでね。',
+      en: 'Hooray, all done! To see this again, call me from Settings on the home screen.',
     },
     targets: [],
   },
