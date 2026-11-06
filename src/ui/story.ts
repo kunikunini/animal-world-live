@@ -7,7 +7,7 @@ import { getLang, t } from './i18n'
 import { hideView, showView } from './transition'
 
 /**
- * おはなし: ワールドに入る前に 1 回だけ見る、紙芝居ふうのオープニング（クレイアニメの絵 11 枚）。
+ * おはなし: ワールドに入る前に 1 回だけ見る、紙芝居ふうのオープニング（クレイアニメの絵 12 枚）。
  * 6 人の子どもたちに ふしぎな箱が届く → 青い双眼鏡 → のぞくとサバンナ → 歩く・跳ぶ → ライリーと出会う（名前の札）
  * → 収録映像で本当の姿も見られる → ともだちになるかは きみが決める → ともだち帳 → 7 つのワールド → みんなで。
  * 絵は期間中に画像生成で作ったもの（出所は README）。言葉は全部 HTML で重ね、漢字は小学校までで全部ルビ。
@@ -66,9 +66,9 @@ const PANELS: Panel[] = [
   { img: 's3-lens', voice: 'lens', voiceSec: 4.8, tint: ['#f6b73c', '#c9762a'], hold: 6600, text: T.lens, move: 'out', overlay: 'iris' },
   { img: 's4-run', voice: 'run', voiceSec: 5.7, tint: ['#9fdcff', '#f6b73c'], hold: 7600, text: T.run, move: 'right' },
   { img: 's5-meet', voice: 'meet', voiceSec: 6.9, tint: ['#f6b73c', '#c9762a'], hold: 8400, text: T.meet, move: 'in', overlay: 'pin' },
-  { img: 's5-meet', voice: 'monitor', voiceSec: 4.2, tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.monitor, move: 'left', overlay: 'monitor' },
+  { img: 's6-monitor', voice: 'monitor', voiceSec: 4.2, tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.monitor, move: 'left', overlay: 'monitor' },
   { img: 's7-decide', voice: 'decide', voiceSec: 3.2, tint: ['#ffb27a', '#e8640a'], hold: 6800, text: T.decide, move: 'in', overlay: 'decide' },
-  { img: 's8-night', voice: 'book', voiceSec: 5.4, tint: ['#2b3a6b', '#13192b'], hold: 7200, text: T.book, move: 'out', overlay: 'book' },
+  { img: 's8-night', voice: 'book', voiceSec: 4.7, tint: ['#2b3a6b', '#13192b'], hold: 7200, text: T.book, move: 'out', overlay: 'book' },
   { img: 'home:lens-jungle', voice: 'worlds', voiceSec: 5.0, tint: ['#43b968', '#16764a'], hold: 1800, text: T.worlds, move: 'in', overlay: 'world', world: 'jungle', leave: 'quick' },
   { img: 'home:lens-north', tint: ['#8cc7ee', '#3f78b5'], hold: 1700, text: T.worlds, move: 'left', overlay: 'world', world: 'north', leave: 'quick' },
   { img: 'home:lens-south', tint: ['#f08a4b', '#b8492c'], hold: 1700, text: T.worlds, move: 'in', overlay: 'world', world: 'south', leave: 'quick' },
