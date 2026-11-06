@@ -335,6 +335,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // まわり 1 m だけ歩く。プリミティブ版は無いので新しく置く。体の長さ 0.55 m（鼻先〜尾の先）は実物の成獣の目安。
       // 接地だけだと腰 81〜85%。後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65 で腰 99.6〜102.8%（虎で測って決めた値）
       { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, walk: { speed: 0.6, radius: 1.0, idle: [4, 10] }, place: { x: -4.5, z: 43.5, yaw: 0.6, length: 0.55 } },
+      // テル: ジャングルの中心の西、ゆめこ（南米）の南 10 m、ワオキツネザルの西 11 m。プリミティブ版は無いので新しく置く。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
+      // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
+      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, walk: { speed: 0.6, radius: 1.5, idle: [4, 10] }, place: { x: -313, z: 3, yaw: 1.3, length: 0.75 } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
