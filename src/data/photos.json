@@ -1,4 +1,27 @@
 {
   "$comment": "tools/photos-import.mjs が書く。個体の id → 顔の写真（public/faces/<id>.webp）。ここに無い子は自作の顔のまま。写真の出所は README に書く",
-  "photos": {}
+  "photos": {
+    "r-10pu0va": "/faces/r-10pu0va.webp",
+    "r-14a9x66": "/faces/r-14a9x66.webp",
+    "r-1cb853": "/faces/r-1cb853.webp",
+    "r-1dc1imy": "/faces/r-1dc1imy.webp",
+    "r-1hoh9sb": "/faces/r-1hoh9sb.webp",
+    "r-1v1pqub": "/faces/r-1v1pqub.webp",
+    "r-1vmqxs9": "/faces/r-1vmqxs9.webp",
+    "r-1yfbvz7": "/faces/r-1yfbvz7.webp",
+    "r-6s8gun": "/faces/r-6s8gun.webp",
+    "r-e1fyhj": "/faces/r-e1fyhj.webp",
+    "r-h5a6qs": "/faces/r-h5a6qs.webp",
+    "r-lau52a": "/faces/r-lau52a.webp",
+    "r-w8jr1o": "/faces/r-w8jr1o.webp",
+    "r-wo6arh": "/faces/r-wo6arh.webp"
+  },
+  "edited": {
+    "r-1cb853": "ゆめこ（アメリカバク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-1v1pqub": "グラン（グラントシマウマ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-6s8gun": "ティガー（ベンガルトラ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-1hoh9sb": "テチ（ベニコンゴウインコ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-10pu0va": "パセリ（ビントロング）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-lau52a": "パーシー（ワオキツネザル）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）"
+  }
 }
