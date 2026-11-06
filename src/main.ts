@@ -379,6 +379,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ラーテル・プレーリードッグ・ワオキツネザルの群れのプリミティブ版（wildfolk・直立の形）は差し替え口が無いので replaceHost
       { key: 'ratelWinnie', species: 'ラーテル', name: 'ウィニー', file: 'ratel-winnie', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'prairieCookie', species: 'プレーリードッグ', name: 'クッキー', file: 'prairie-cookie', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'kinkajouFig', species: 'キンカジュー', name: 'フィグ', file: 'kinkajou-fig', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
