@@ -8,7 +8,7 @@ import { hideView, showView } from './transition'
 
 /**
  * おはなし: ワールドに入る前に 1 回だけ見る、紙芝居ふうのオープニング（クレイアニメの絵 12 枚）。
- * 6 人の子どもたちに ふしぎな箱が届く → 青い双眼鏡 → のぞくとサバンナ → 歩く・跳ぶ → ライリーと出会う（名前の札）
+ * 6 人の子どもたちに ふしぎな箱が届く → 青い双眼鏡 → のぞくとサバンナ → 歩く・跳ぶ → ライリー（おとなの雌ライオン）と出会う（名前の札）
  * → 収録映像で本当の姿も見られる → ともだちになるかは きみが決める → ともだち帳 → 7 つのワールド → みんなで。
  * 絵は期間中に画像生成で作ったもの（出所は README）。言葉は全部 HTML で重ね、漢字は小学校までで全部ルビ。
  * ナレーションは黄色いパーカーの子の声（ElevenLabs）、最後の一言は 6 人全員。間はサバンナの曲（ループしない 1 本）。
@@ -52,7 +52,7 @@ const T = {
   bino: { ja: '{中|なか}には、{青|あお}い そうがんきょう。', en: 'Inside: a pair of blue binoculars.' },
   lens: { ja: 'のぞいてみると…… {遠|とお}い{国|くに}の どうぶつたちが {見|み}えた！', en: 'Look through them… and there are animals from a faraway land!' },
   run: { ja: '{気|き}がつくと、どうぶつたちの{世界|せかい}に！ {歩|ある}いて、{走|はし}って、ジャンプ！', en: 'Suddenly you are in the animals’ world! Walk, run, jump!' },
-  meet: { ja: 'あっ、{見|み}つけた！ ライオンの{子|こ}、ライリー。どうぶつには みんな {名前|なまえ}がある。', en: 'Look! A lion cub named Riley. Every animal here has a name.' },
+  meet: { ja: 'あっ、{見|み}つけた！ ライリー。どうぶつには みんな {名前|なまえ}がある。', en: 'Look! It’s Riley. Every animal here has a name.' },
   monitor: { ja: 'ほんものの ようすも {見|み}られる。{飼育員|しいくいん}さんの おはなしも。', en: 'You can watch the real animal too, with words from the keepers.' },
   decide: { ja: 'ともだちになるかどうかは、きみが きめる。', en: 'Whether to become friends is up to you.' },
   book: { ja: 'ともだち{帳|ちょう}に ともだちが ふえた。お{知|し}らせや {写真|しゃしん}も とどくよ。', en: 'A new friend in your Friend Book. News and photos will arrive there too.' },
@@ -65,7 +65,7 @@ const PANELS: Panel[] = [
   { img: 's2-bino', voice: 'bino', voiceSec: 2.8, tint: ['#9fdcff', '#2f6bff'], hold: 5000, text: T.bino, move: 'in', overlay: 'sparkle' },
   { img: 's3-lens', voice: 'lens', voiceSec: 4.8, tint: ['#f6b73c', '#c9762a'], hold: 6600, text: T.lens, move: 'out', overlay: 'iris' },
   { img: 's4-run', voice: 'run', voiceSec: 5.7, tint: ['#9fdcff', '#f6b73c'], hold: 7600, text: T.run, move: 'right' },
-  { img: 's5-meet', voice: 'meet', voiceSec: 6.9, tint: ['#f6b73c', '#c9762a'], hold: 8400, text: T.meet, move: 'in', overlay: 'pin' },
+  { img: 's5-meet', voice: 'meet', voiceSec: 5.4, tint: ['#f6b73c', '#c9762a'], hold: 7200, text: T.meet, move: 'in', overlay: 'pin' },
   { img: 's6-monitor', voice: 'monitor', voiceSec: 4.2, tint: ['#f6b73c', '#c9762a'], hold: 6200, text: T.monitor, move: 'left', overlay: 'monitor' },
   { img: 's7-decide', voice: 'decide', voiceSec: 3.2, tint: ['#ffb27a', '#e8640a'], hold: 6800, text: T.decide, move: 'in', overlay: 'decide' },
   { img: 's8-night', voice: 'book', voiceSec: 4.7, tint: ['#2b3a6b', '#13192b'], hold: 7200, text: T.book, move: 'out', overlay: 'book' },
