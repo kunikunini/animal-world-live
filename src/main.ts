@@ -302,6 +302,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
       { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.5, idle: [6, 14] }, place: { x: -22, z: 14, yaw: 0.9, length: 3.3 } },
+      // 銀牙: 北の世界の中心の南西、サバンナから来た人が最初に見る雪原（キツネの東 10 m）。プリミティブ版は無いので新しく置く。
+      // 体の長さ（鼻先〜尾の先）1.4 m は実物の成犬の目安。接地だけだと腰が 86〜89% の忍び足。
+      // 後ろ脚 0.75・背骨 0.9・尾 0.5・前脚 0.7 で腰 99.1〜101.3%（銀牙で測って決めた値）
+      { key: 'husky', species: 'シベリアンハスキー', name: '銀牙', file: 'husky-ginga', posture: { hind: 0.75, spine: 0.9, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.0, idle: [5, 12] }, place: { x: -5, z: -291, yaw: 0.3, length: 1.4 } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
