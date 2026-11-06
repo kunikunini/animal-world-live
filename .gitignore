@@ -47,6 +47,7 @@ public/models/*
 !public/models/hyena-amber.glb
 !public/models/capybara-rapi.glb
 !public/models/mara-lime.glb
+!public/models/mara-lemon.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
