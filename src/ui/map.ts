@@ -34,7 +34,13 @@ export interface MapView {
   /** 最新の位置。開いている間だけ描き直す */
   update: (player: MapPlayer, lions: MinimapMarker[]) => void
   /** 本編の情報: 動物の今の位置（出会っていない子も）、木や岩、主人公の服の色、動きをへらす */
-  configure: (deps: { animalAt: (id: string) => { x: number; z: number } | null; colliders: Collider[]; heroColor: () => string }) => void
+  configure: (deps: {
+    animalAt: (id: string) => { x: number; z: number } | null
+    colliders: Collider[]
+    heroColor: () => string
+    /** いま操作している子の GLB（読めていなければ null） */
+    heroModel: () => string | null
+  }) => void
   setReduceMotion: (on: boolean) => void
 }
 
@@ -138,6 +144,7 @@ export function createMapView(): MapView {
         showMarkers: markers,
         player: last.player,
         heroColor: deps.heroColor(),
+        heroModel: deps.heroModel(),
         target,
       },
       deps.colliders,
@@ -290,9 +297,10 @@ export function createMapView(): MapView {
     pickListeners.forEach((fn) => fn(w.x, w.z))
     setOpen(false)
   })
-  // 3D: 拠点の札でない所を押した時も、歩いている途中ならすぐ着く
+  // 3D: 拠点の札でない所を押した時も、歩いている途中ならすぐ着く（回したり寄ったりした時は除く）
   wrap3d.addEventListener('pointerup', (e) => {
-    if ((e.target as HTMLElement).closest('[data-base]')) return
+    if ((e.target as HTMLElement).closest('[data-base], .map3d-compass')) return
+    if (diorama?.wasDrag()) return
     skip()
   })
 

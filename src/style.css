@@ -4032,6 +4032,28 @@ button.bk-tab:hover {
 .map3d-base.is-pass { --base-c: #8a6a46; }
 .map3d-base.is-animal { --base-c: #3f9a4a; }
 .map3d-base.is-target { outline: 3px solid #ffd21f; }
+/* 方位の印: 赤い先が北。押すと北が上の最初の見え方にもどる */
+.map3d-compass {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 2px 6px rgba(31, 42, 68, 0.3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.map3d-compass-needle {
+  position: absolute;
+  inset: 7px;
+  background: linear-gradient(to bottom, #e8452c 0 50%, #8a94a6 50% 100%);
+  clip-path: polygon(50% 0, 64% 50%, 50% 100%, 36% 50%);
+}
 .map3d-heart {
   position: absolute;
   left: 0;

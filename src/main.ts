@@ -626,7 +626,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     return l ? { x: l.position.x, z: l.position.z } : null
   }
   const HERO_COLOR: Record<string, string> = { yellow: '#f2c230', teal: '#2bb3a8', pink: '#f07fa8', bluecap: '#2f6bff', purple: '#8a5cd6', braids: '#7cbf3c' }
-  mapView.configure({ animalAt, colliders: props.colliders, heroColor: () => HERO_COLOR[heroId ?? 'yellow'] ?? '#f2c230' })
+  mapView.configure({ animalAt, colliders: props.colliders, heroColor: () => HERO_COLOR[heroId ?? 'yellow'] ?? '#f2c230', heroModel: () => (heroId ? heroById(heroId).model : null) })
   mapView.onTravel((base) => {
     const a = arrivalOf(base, animalAt)
     player.teleport(a.x, a.z, a.heading)

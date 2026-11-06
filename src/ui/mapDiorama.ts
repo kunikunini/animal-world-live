@@ -3,6 +3,9 @@ import { ACACIAS, WATERHOLE } from '../world/layout'
 import type { Collider } from '../world/props'
 import type { RegionKey } from '../world/regions'
 import { SEA_LEVEL, WATER_LEVEL, terrainHeight } from '../world/terrain'
+import { loadHero } from '../player/heroModel'
+import type { HeroModel } from '../player/heroModel'
+import { t } from './i18n'
 import { mapGroundColor } from './minimap'
 
 /**
@@ -10,6 +13,10 @@ import { mapGroundColor } from './minimap'
  * - 地面は本編と同じ高さ（少し強調）と、2D の地図と同じ色。ふちは粘土の板のような崖
  * - 木と岩は本編の当たり判定の場所に、軽い形（インスタンス）で。動物は本編のモデルを使わず、ピンで表す
  * - 拠点は色のついたパネル、道は飛び石。小さな主人公が道をたどって歩く
+ * - 見る向きは指で変えられる（11/6 のくにの要望「Google マップの 3D のように」）: 1 本指でくるっと回す・傾ける、
+ *   2 本指でつまんで寄る／離れる・ずらす・ひねって回す。PC はドラッグで回す、右ドラッグか Shift＋ドラッグでずらす、ホイールで寄る。
+ *   右上の方位の印を押すと、北が上の最初の見え方に戻る。開くたびに最初の見え方から
+ * - 小さな主人公は、いま操作している子のモデル（読めない時は今までの粘土の人形）
  * 開いている間だけ描く（自分の WebGL を 1 つ持つ。初めて 3D を開いた時に作る）
  */
 export interface DioramaBase {
@@ -34,6 +41,8 @@ export interface DioramaState {
   showMarkers: boolean
   player: { x: number; z: number; heading: number }
   heroColor: string
+  /** いま操作している子の GLB。null なら粘土の人形 */
+  heroModel: string | null
   target: string | null
 }
 
@@ -48,6 +57,8 @@ export interface Diorama {
   isTraveling: () => boolean
   setReduceMotion: (on: boolean) => void
   onBase: (fn: (id: string) => void) => void
+  /** いまの指の動きがドラッグ（回す・寄る）だったか。押した所への「すぐ着く」に使わない */
+  wasDrag: () => boolean
 }
 
 /** ジオラマの半径（m）と高さの強調 */
@@ -57,6 +68,16 @@ const V_SCALE = 2.6
 const RINGS = 34
 const SEGS = 96
 const SKIRT = 9
+/** 小さな主人公のモデルの高さ（粘土の人形と同じくらい。ワールドマップのコマのように大きく） */
+const HERO_PIECE_H = 27
+/** 見る向きの範囲: 見下ろす角度（水平から）、寄り（最初の距離に対する倍率） */
+const PITCH_MIN = (20 * Math.PI) / 180
+const PITCH_MAX = (86 * Math.PI) / 180
+const PITCH_DEFAULT = (60 * Math.PI) / 180
+const ZOOM_MIN = 0.32
+const ZOOM_MAX = 1.35
+/** 押しただけか、ドラッグか（px） */
+const DRAG_PX = 6
 
 const BASE_COLOR: Record<DioramaBase['kind'], number> = { entry: 0x2f6bff, spot: 0xf26a1b, pass: 0x8a6a46, animal: 0x3f9a4a }
 const TREE_STYLE: Record<RegionKey, { leaf: number; shape: 'flat' | 'ball' | 'cone' }> = {
@@ -114,7 +135,40 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   const here = new THREE.Mesh(new THREE.ConeGeometry(4.5, 7, 3), new THREE.MeshLambertMaterial({ color: 0xffd21f, emissive: 0x6a4a00 }))
   here.rotation.x = Math.PI
   here.position.y = 36
-  hero.add(heroFig, ring, here)
+  // いま操作している子のモデル（読めたら人形と入れ替える）
+  const heroPiece = new THREE.Group()
+  let heroModel: HeroModel | null = null
+  let heroUrl: string | null = null
+  let heroWant: string | null = null
+  const setHeroModel = (url: string | null) => {
+    if (url === heroWant) return
+    heroWant = url
+    const drop = () => {
+      if (heroModel) {
+        heroPiece.remove(heroModel.root)
+        heroModel.dispose()
+      }
+      heroModel = null
+      heroUrl = null
+      heroFig.visible = true
+    }
+    if (!url) return drop()
+    loadHero(url, { height: HERO_PIECE_H, separation: false, ground: () => 0 })
+      .then((m) => {
+        if (heroWant !== url) return m.dispose()
+        drop()
+        heroModel = m
+        heroUrl = url
+        heroPiece.add(m.root)
+        heroFig.visible = false
+      })
+      .catch((err) => {
+        // 読めなければ粘土の人形のまま
+        console.warn('map hero not loaded', url, err)
+        if (heroWant === url) drop()
+      })
+  }
+  hero.add(heroFig, heroPiece, ring, here)
   scene.add(hero)
 
   let base0 = 0
@@ -277,7 +331,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     return m
   }
   /** 画面の上の札（拠点の名前・ともだちのハート）。位置は描くたびに合わせる */
-  let tags: Array<{ el: HTMLElement; x: number; y: number; z: number; under?: boolean; free?: boolean }> = []
+  let tags: Array<{ el: HTMLElement; x: number; y: number; z: number; under?: boolean; free?: boolean; target?: boolean; bw: number; bh: number }> = []
   /** ピン（足もと）の場所。札で隠さない */
   let pins: Array<{ x: number; y: number; z: number }> = []
 
@@ -323,7 +377,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       el.dataset.base = b.id
       el.textContent = b.label
       overlay.append(el)
-      tags.push({ el, x: b.x, y, z: b.z, under: true })
+      tags.push({ el, x: b.x, y, z: b.z, under: true, target: state.target === b.id, bw: 0, bh: 0 })
     }
     // 出会った動物のピン（ともだちはピンクとハート）
     if (state.showMarkers) {
@@ -343,9 +397,17 @@ export function createDiorama(wrap: HTMLElement): Diorama {
           el.textContent = '♥'
           el.setAttribute('aria-hidden', 'true')
           overlay.append(el)
-          tags.push({ el, x: mk.x, y: y + 19, z: mk.z, free: true })
+          tags.push({ el, x: mk.x, y: y + 19, z: mk.z, free: true, bw: 0, bh: 0 })
         }
       }
+    }
+    measureTags()
+  }
+  /** 札の大きさは作った時に 1 回だけ測る（向きを変えるたびに測ると重い） */
+  const measureTags = () => {
+    for (const tg of tags) {
+      tg.bw = tg.el.offsetWidth
+      tg.bh = tg.el.offsetHeight
     }
   }
 
@@ -355,10 +417,14 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   })
 
   const _v = new THREE.Vector3()
-  /** 札を置く。カメラは動かないので、作り直した時と大きさが変わった時だけ。重なる札は上へ（だめなら下へ）ずらす */
+  /**
+   * 札を置く。見る向きが変わるので毎コマ。重なる札は下・上・左右へずらし、それでもだめなら出さない
+   * （寄ったり回したりすると離れて出てくる）。カメラの後ろ・枠の外の札も出さない。押そうとしている拠点の札はいつも出す
+   */
   const placeTags = () => {
     const w = canvas.clientWidth
     const h = canvas.clientHeight
+    if (!w || !h) return
     const placed: Array<{ l: number; t: number; r: number; b: number }> = []
     // 小さな主人公（足もとから「いまここ」の三角まで）の上には札を置かない
     _v.copy(hero.position).project(camera)
@@ -366,22 +432,36 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const fy = ((1 - _v.y) / 2) * h
     _v.copy(hero.position).setY(hero.position.y + 42).project(camera)
     const hy = ((1 - _v.y) / 2) * h
-    placed.push({ l: fx - 22, t: hy - 8, r: fx + 22, b: fy + 10 })
+    placed.push({ l: fx - 22, t: Math.min(hy, fy) - 8, r: fx + 22, b: Math.max(hy, fy) + 10 })
     for (const p of pins) {
       _v.set(p.x, p.y, p.z).project(camera)
       const px = ((_v.x + 1) / 2) * w
       const py = ((1 - _v.y) / 2) * h
       _v.set(p.x, p.y + 17, p.z).project(camera)
-      placed.push({ l: px - 10, t: ((1 - _v.y) / 2) * h - 4, r: px + 10, b: py + 4 })
+      const qy = ((1 - _v.y) / 2) * h
+      placed.push({ l: px - 10, t: Math.min(qy, py) - 4, r: px + 10, b: Math.max(qy, py) + 4 })
     }
+    if (tags.some((tg) => !tg.bw)) measureTags()
     const items = tags.map((tg) => {
       _v.set(tg.x, tg.y, tg.z).project(camera)
-      return { tg, sx: ((_v.x + 1) / 2) * w, sy: ((1 - _v.y) / 2) * h, bw: tg.el.offsetWidth, bh: tg.el.offsetHeight }
+      return { tg, sx: ((_v.x + 1) / 2) * w, sy: ((1 - _v.y) / 2) * h, behind: _v.z > 1, bw: tg.bw, bh: tg.bh }
     })
-    items.sort((a, b) => b.sy - a.sy)
+    // 押そうとしている拠点 → 手前（画面の下）の札から場所を取る
+    items.sort((a, b) => Number(!!b.tg.target) - Number(!!a.tg.target) || b.sy - a.sy)
+    // 隠すのは visibility で（大きさを測れるまま。押せなくもなる）
+    const show = (el: HTMLElement, on: boolean) => {
+      const v = on ? '' : 'hidden'
+      if (el.style.visibility !== v) el.style.visibility = v
+    }
     for (const it of items) {
+      const off = it.behind || it.sx < -it.bw / 2 || it.sx > w + it.bw / 2 || it.sy < -it.bh || it.sy > h + it.bh
+      if (off) {
+        show(it.tg.el, false)
+        continue
+      }
       // ハートはピンの上にそのまま（ほかの札をよけない）
       if (it.tg.free) {
+        show(it.tg.el, true)
         it.tg.el.style.transform = `translate(${(it.sx - it.bw / 2).toFixed(1)}px, ${(it.sy - it.bh).toFixed(1)}px)`
         continue
       }
@@ -389,7 +469,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       const hit = (l: number, t: number) => placed.some((p) => l < p.r && l + it.bw > p.l && t < p.b && t + it.bh > p.t)
       const x0 = it.sx - it.bw / 2
       const y0 = it.tg.under ? it.sy + 6 : it.sy - it.bh
-      let at = { l: x0, t: y0 }
+      let at: { l: number; t: number } | null = null
       const step = it.bh + 3
       const cands: Array<[number, number]> = [[0, 0], [0, step], [0, -step], [it.bw * 0.6, 0], [-it.bw * 0.6, 0], [0, 2 * step], [0, -2 * step], [it.bw * 0.6, step], [-it.bw * 0.6, step]]
       for (const [dx, dy] of cands) {
@@ -398,11 +478,177 @@ export function createDiorama(wrap: HTMLElement): Diorama {
           break
         }
       }
+      if (!at) {
+        if (!it.tg.target) {
+          show(it.tg.el, false)
+          continue
+        }
+        at = { l: x0, t: y0 }
+      }
       at.l = Math.max(2, Math.min(w - it.bw - 2, at.l))
       placed.push({ l: at.l, t: at.t, r: at.l + it.bw, b: at.t + it.bh })
+      show(it.tg.el, true)
       it.tg.el.style.transform = `translate(${at.l.toFixed(1)}px, ${at.t.toFixed(1)}px)`
     }
   }
+
+  // 見る向き: 見る点（地面の上）、まわりの角度（0 で北が上）、見下ろす角度、寄り
+  const view = { tx: 0, tz: 0, yaw: 0, pitch: PITCH_DEFAULT, zoom: 1 }
+  let fitDist = 300
+  const resetView = () => {
+    view.tx = center.x
+    view.tz = center.z + radius * 0.06
+    view.yaw = 0
+    view.pitch = PITCH_DEFAULT
+    view.zoom = 1
+  }
+  const clampView = () => {
+    view.pitch = Math.min(PITCH_MAX, Math.max(PITCH_MIN, view.pitch))
+    view.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, view.zoom))
+    const dx = view.tx - center.x
+    const dz = view.tz - center.z
+    const d = Math.hypot(dx, dz)
+    const lim = radius * 0.85
+    if (d > lim) {
+      view.tx = center.x + (dx / d) * lim
+      view.tz = center.z + (dz / d) * lim
+    }
+  }
+  const applyCamera = () => {
+    clampView()
+    const d = fitDist * view.zoom
+    const cp = Math.cos(view.pitch)
+    camera.position.set(view.tx + Math.sin(view.yaw) * cp * d, Math.sin(view.pitch) * d, view.tz + Math.cos(view.yaw) * cp * d)
+    camera.lookAt(view.tx, 0, view.tz)
+    compassNeedle.style.transform = `rotate(${view.yaw}rad)`
+  }
+
+  // 方位の印（押すと最初の見え方に戻る）。札の入れ物とは別に置く（札を作り直しても消えない）
+  const compass = document.createElement('button')
+  compass.type = 'button'
+  compass.className = 'map3d-compass'
+  const compassNeedle = document.createElement('span')
+  compassNeedle.className = 'map3d-compass-needle'
+  compassNeedle.setAttribute('aria-hidden', 'true')
+  compass.append(compassNeedle)
+  const labelCompass = () => {
+    compass.setAttribute('aria-label', t('map3dReset'))
+    compass.title = t('map3dReset')
+  }
+  labelCompass()
+  wrap.append(compass)
+  compass.addEventListener('click', () => {
+    resetView()
+    applyCamera()
+  })
+
+  // 指とマウス
+  const pointers = new Map<number, { x: number; y: number }>()
+  let downAt: { x: number; y: number } | null = null
+  let dragged = false
+  let panMode = false
+  let gesture: { dist: number; angle: number; cx: number; cy: number } | null = null
+  const twoFinger = () => {
+    const [a, b] = [...pointers.values()]
+    return { dist: Math.hypot(b.x - a.x, b.y - a.y), angle: Math.atan2(b.y - a.y, b.x - a.x), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 }
+  }
+  /** 画面の上で dx, dy 動かした分、見る点を地面の上でずらす（指の下の地面がついてくるように） */
+  const pan = (dx: number, dy: number) => {
+    const h = canvas.clientHeight || 400
+    const per = (2 * fitDist * view.zoom * Math.tan((camera.fov * Math.PI) / 360)) / h
+    const rx = Math.cos(view.yaw)
+    const rz = -Math.sin(view.yaw)
+    const fx = -Math.sin(view.yaw)
+    const fz = -Math.cos(view.yaw)
+    const k = 1 / Math.max(0.35, Math.sin(view.pitch))
+    view.tx += -rx * dx * per + fx * dy * per * k
+    view.tz += -rz * dx * per + fz * dy * per * k
+  }
+  wrap.addEventListener('pointerdown', (e) => {
+    if (!pointers.size) dragged = false
+    if ((e.target as HTMLElement).closest('.map3d-compass')) return
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.size === 1) {
+      downAt = { x: e.clientX, y: e.clientY }
+      dragged = false
+      panMode = e.button === 2 || e.shiftKey
+    }
+    if (pointers.size === 2) {
+      gesture = twoFinger()
+      dragged = true
+    }
+  })
+  wrap.addEventListener('pointermove', (e) => {
+    const p = pointers.get(e.pointerId)
+    if (!p) return
+    const dx = e.clientX - p.x
+    const dy = e.clientY - p.y
+    p.x = e.clientX
+    p.y = e.clientY
+    if (!dragged && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > DRAG_PX) {
+      dragged = true
+      // ドラッグになってから指を捕まえる（押しただけの時は札のボタンに押した知らせが届くように）
+      try {
+        wrap.setPointerCapture(e.pointerId)
+      } catch {
+        // 捕まえられなくても動かせる
+      }
+    }
+    if (!dragged) return
+    if (pointers.size >= 2 && gesture) {
+      // 2 本指: つまんで寄る・ひねって回す・まとめて動かしてずらす
+      const g = twoFinger()
+      if (g.dist > 10 && gesture.dist > 10) view.zoom *= gesture.dist / g.dist
+      let da = g.angle - gesture.angle
+      if (da > Math.PI) da -= Math.PI * 2
+      if (da < -Math.PI) da += Math.PI * 2
+      view.yaw += da
+      pan(g.cx - gesture.cx, g.cy - gesture.cy)
+      gesture = g
+    } else if (pointers.size === 1) {
+      if (panMode) pan(dx, dy)
+      else {
+        // 1 本指: 横でくるっと回す、縦で傾ける
+        const w = canvas.clientWidth || 300
+        view.yaw -= (dx / w) * Math.PI * 1.2
+        view.pitch += (dy / (canvas.clientHeight || 400)) * Math.PI * 0.8
+      }
+    }
+    applyCamera()
+  })
+  const up = (e: PointerEvent) => {
+    pointers.delete(e.pointerId)
+    if (pointers.size < 2) gesture = null
+    if (pointers.size === 1) {
+      // 2 本指の片方を離した: 残った指はそこから回す
+      const [q] = [...pointers.values()]
+      downAt = { x: q.x, y: q.y }
+    }
+  }
+  // 枠の外で離しても忘れない
+  window.addEventListener('pointerup', up)
+  window.addEventListener('pointercancel', up)
+  // ドラッグの後の「押した」は札に届けない
+  wrap.addEventListener(
+    'click',
+    (e) => {
+      if (dragged) {
+        e.stopPropagation()
+        e.preventDefault()
+      }
+    },
+    true,
+  )
+  wrap.addEventListener('contextmenu', (e) => e.preventDefault())
+  wrap.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault()
+      view.zoom *= Math.exp(e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015))
+      applyCamera()
+    },
+    { passive: false },
+  )
 
   const resize = () => {
     if (!renderer) return
@@ -410,13 +656,11 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const h = canvas.clientHeight || 400
     renderer.setSize(w, h, false)
     camera.aspect = w / h
-    // ジオラマ全体（直径）が横幅に収まる距離
+    // 最初の見え方: ジオラマ全体（直径）が横幅に収まる距離
     const fitW = (radius * 2.25) / (2 * Math.tan((camera.fov * Math.PI) / 360) * camera.aspect)
-    const dist = Math.max(fitW, radius * 2.1)
-    // 上から 65° ほどで見下ろす（縦長の枠に板が大きく入り、起伏も読める）
-    camera.position.set(center.x, dist * 0.86, center.z + dist * 0.5)
-    camera.lookAt(center.x, 0, center.z + radius * 0.06)
+    fitDist = Math.max(fitW, radius * 2.1)
     camera.updateProjectionMatrix()
+    applyCamera()
   }
 
   // 歩く
@@ -429,6 +673,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   const putHero = (x: number, z: number, heading: number) => {
     hero.position.set(x, yAt(x, z), z)
     heroFig.rotation.y = heading
+    heroPiece.rotation.y = heading
   }
   const finish = () => {
     const p = path[path.length - 1]
@@ -461,14 +706,30 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     }
     const bob = reduceMotion ? 0 : path.length > 1 ? Math.abs(Math.sin(now / 90)) * 0.9 : Math.sin(now / 400) * 0.25
     heroFig.position.y = bob
+    // モデルは歩きのアニメで動く（止まっている時は待機）
+    heroModel?.update(dt, path.length > 1 ? speed : 0, 0)
     here.position.y = 36 + (reduceMotion ? 0 : Math.sin(now / 250) * 2)
     here.rotation.y = now / 600
     ring.scale.setScalar(reduceMotion ? 1 : 1 + Math.sin(now / 300) * 0.12)
     renderer.render(scene, camera)
+    placeTags()
     requestAnimationFrame(frame)
   }
 
-  if (import.meta.env.DEV) (window as unknown as { __awlMap3d: unknown }).__awlMap3d = { scene, hero, camera, yAt, info: () => renderer?.info.render }
+  if (import.meta.env.DEV)
+    (window as unknown as { __awlMap3d: unknown }).__awlMap3d = {
+      scene,
+      hero,
+      camera,
+      yAt,
+      info: () => renderer?.info,
+      view,
+      setView: (v: Partial<typeof view>) => {
+        Object.assign(view, v)
+        applyCamera()
+      },
+      heroUrl: () => heroUrl,
+    }
   return {
     set: (s, colliders) => {
       const worldChanged = !state || state.world !== s.world
@@ -486,11 +747,13 @@ export function createDiorama(wrap: HTMLElement): Diorama {
         current = g
         scene.add(g)
       }
+      if (worldChanged) resetView()
       ;(heroBody.material as THREE.MeshLambertMaterial).color.set(s.heroColor)
+      setHeroModel(s.heroModel)
       if (!path.length) putHero(s.player.x, s.player.z, s.player.heading)
       rebuildDynamic()
       resize()
-      placeTags()
+      labelCompass()
     },
     setVisible: (on) => {
       if (on === visible) return
@@ -501,8 +764,9 @@ export function createDiorama(wrap: HTMLElement): Diorama {
           renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
           renderer.outputColorSpace = THREE.SRGBColorSpace
         }
+        // 開くたびに最初の見え方から
+        resetView()
         resize()
-        placeTags()
         last = 0
         requestAnimationFrame(frame)
       }
@@ -530,5 +794,6 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     onBase: (fn) => {
       baseListeners.push(fn)
     },
+    wasDrag: () => dragged,
   }
 }
