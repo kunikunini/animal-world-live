@@ -244,8 +244,8 @@ interface Extra {
   make: Make
 }
 const EXTRA: Extra[] = [
-  // サバンナ（原点から）: スポーンからコピエへの道のそばにミーアキャットの群れ、西の草原にハイエナ、水場の南にカメ
-  { species: 'ミーアキャット', region: 'africa', at: [14, 52], spread: 2.6, size: 0.38, make: upright('prairie', '#cdb48e') },
+  // サバンナ（原点から）: スポーンからコピエへの道の西にミーアキャットの群れ（スポーンからライリーへの見通しをふさがない）、西の草原にハイエナ、水場の南にカメ
+  { species: 'ミーアキャット', region: 'africa', at: [-14, 48], spread: 2.6, size: 0.38, make: upright('prairie', '#cdb48e') },
   { species: 'ブチハイエナ', region: 'africa', at: [-44, 28], spread: 3, size: 1.1, make: wild('hyena') },
   { species: 'ラーテル', region: 'africa', at: [30, 50], spread: 1, size: 1.1, make: wild('ratel') },
   { species: 'スナネコ', region: 'africa', at: [-30, 52], spread: 1, size: 1.3, make: wild('sandcat') },

@@ -89,6 +89,12 @@ function createShell() {
     if (store.has(animal.id)) guide.reach('befriend')
   }
   observe.onBefriend(() => guide.reach('befriend'))
+  // あそびかたツアーの節目（開く・閉じる）
+  observe.onOpenChange((open) => guide.reach(open ? 'observeOpen' : 'observeClose'))
+  book.onOpenChange((open) => {
+    if (!open) guide.reach('bookClose')
+  })
+  book.onChatOpen(() => guide.reach('chat'))
   observe.onOpenChange((open) => document.body.classList.toggle('observe-open', open))
   book.onOpenChange((open) => {
     document.body.classList.toggle('book-open', open)
@@ -354,6 +360,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   player.onJump(() => sound.play('jump'))
   player.onLand(() => sound.play('land'))
   scene.add(player.object)
+  const guideProj = new THREE.Vector3()
+  // あそびかたツアーの「いっしょに行く」: ライリーの手前（4m）まで歩く
+  guide.onWalkTo(() => {
+    const riley = lions.find((l) => l.id === 'riley')
+    if (!riley) return
+    const p = player.object.position
+    const dx = p.x - riley.position.x
+    const dz = p.z - riley.position.z
+    const d = Math.hypot(dx, dz) || 1
+    player.goTo(routeTo({ x: p.x, z: p.z }, { x: riley.position.x + (dx / d) * 4, z: riley.position.z + (dz / d) * 4 }))
+  })
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
 
@@ -493,6 +510,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (catalog.isOpen()) body.classList.add('is-viewing')
   }
   catalog.onOpenChange((open) => {
+    guide.reach(open ? 'scope' : 'scopeClose')
     syncInput()
     if (open) return
     // 一覧を閉じた: 世界がぼけた寄りから戻ってくる。HUD もふわっと戻る
@@ -520,6 +538,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   })
   mapView.onPick(walkTo)
   mapView.onOpenChange((open) => {
+    guide.reach(open ? 'map' : 'mapClose')
     // 地図が開いている間は、あそび方ナビのカードを下に（地図の見出しと「動物の名前」をふさがない）
     document.body.classList.toggle('map-open', open)
     syncInput()
@@ -1060,6 +1079,25 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
     walkX = player.object.position.x
     walkZ = player.object.position.z
+    // あそびかたツアー: ライリーと観察スポットの画面の位置（暗幕の穴と矢印を合わせる）
+    if (guide.isActive()) {
+      const pp = player.object.position
+      const toScreen = (p: THREE.Vector3, lift: number) => {
+        guideProj.copy(p).setY(p.y + lift).project(camera)
+        return {
+          x: ((guideProj.x + 1) / 2) * window.innerWidth,
+          y: ((1 - guideProj.y) / 2) * window.innerHeight,
+          onScreen: guideProj.z < 1 && Math.abs(guideProj.x) < 0.92 && Math.abs(guideProj.y) < 0.92,
+          behind: guideProj.z >= 1,
+          distance: Math.hypot(p.x - pp.x, p.z - pp.z),
+        }
+      }
+      const riley = lions.find((l) => l.id === 'riley')
+      guide.frame({
+        riley: riley ? toScreen(riley.position, (riley.headHeight ?? 0.95) * riley.group.scale.y * 0.6) : null,
+        spot: toScreen(spot.position, 1.6),
+      })
+    }
     if (hero) {
       // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
       const p = player.object.position
@@ -1176,7 +1214,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
     spot.update(time, distance, player.object.position)
+    const wasArrived = arrived
     arrived = distance < SPOT.arriveRadius
+    if (arrived && !wasArrived) guide.reach('spot')
     // 着いたらボタンが「スコープをのぞく」に変わる。のぞくのは押した時だけ（勝手には開かない）
     hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
 
