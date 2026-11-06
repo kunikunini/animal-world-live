@@ -540,6 +540,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
   shell.settings.onReduceMotionChange(applyReduceMotion)
+  player.setSensitivity(shell.settings.sensitivity)
+  shell.settings.onSensitivityChange((s) => player.setSensitivity(s))
   hud.show()
 
   // ピンを画面の端に寄せる時の余白。下は HUD（スティック・ジャンプ・観察スポットへ）の上端から測る

@@ -25,6 +25,11 @@ export interface PlayerController {
   jump: () => void
   /** バーチャルスティック。カメラ基準の (x, z)、長さ 0〜1。倒した量で速さが変わる。(0, 0) で離した状態 */
   setStick: (x: number, z: number) => void
+  /**
+   * 操作の感度（0〜1。1 が 11/6 までの速さ、既定 0.5）。スティックの速さ、ドラッグで見回す速さ、
+   * 歩いている時にカメラが背後へ回り込む速さにかける。タップ移動と WASD の歩く速さは変えない
+   */
+  setSensitivity: (s: number) => void
   /** 開発用: 位置と向きを即座に変える（スクリーンショットの定点） */
   teleport: (x: number, z: number, heading?: number, camYaw?: number) => void
   /** 開発用: 追従カメラを止めて固定の位置・注視点にする。null で戻す */
@@ -254,6 +259,7 @@ export function createPlayer(
   let lastX = 0
   let lastY = 0
   let dragging = false
+  let sensitivity = 0.5
 
   const onPointerDown = (e: PointerEvent) => {
     if (!inputEnabled || pointerId !== null) return
@@ -269,8 +275,8 @@ export function createPlayer(
     if (!dragging && Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_THRESHOLD) dragging = true
     if (dragging) {
       // 横で回り込み、縦で見上げ・見下ろし
-      camYaw -= (e.clientX - lastX) * 0.006
-      camPitch = Math.max(CAM_PITCH_MIN, Math.min(CAM_PITCH_MAX, camPitch + (e.clientY - lastY) * 0.005))
+      camYaw -= (e.clientX - lastX) * 0.006 * sensitivity
+      camPitch = Math.max(CAM_PITCH_MIN, Math.min(CAM_PITCH_MAX, camPitch + (e.clientY - lastY) * 0.005 * sensitivity))
     }
     lastX = e.clientX
     lastY = e.clientY
@@ -343,7 +349,7 @@ export function createPlayer(
       if (mag > 0.12) {
         kx = stickX
         kz = stickZ
-        throttle = Math.min(1, (mag - 0.12) / 0.75 + 0.25)
+        throttle = Math.min(1, (mag - 0.12) / 0.75 + 0.25) * sensitivity
       }
     }
 
@@ -492,7 +498,7 @@ export function createPlayer(
     if (moving && pointerId === null) {
       let diff = heading + Math.PI - camYaw
       diff = Math.atan2(Math.sin(diff), Math.cos(diff))
-      camYaw += diff * Math.min(1, 1.6 * dt)
+      camYaw += diff * Math.min(1, 1.6 * sensitivity * dt)
     }
     placeCamera(false, dt)
 
@@ -538,6 +544,9 @@ export function createPlayer(
     },
     setReduceMotion: (on) => {
       reduceMotion = on
+    },
+    setSensitivity: (s) => {
+      sensitivity = Math.min(1, Math.max(0.1, s))
     },
     jump,
     onStep: (fn) => {

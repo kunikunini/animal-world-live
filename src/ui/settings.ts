@@ -1,5 +1,5 @@
 /**
- * 設定。ホームの歯車から開くシート。「動きをへらす」と「言語」（日本語・English）。
+ * 設定。ホームの歯車から開くシート。「動きをへらす」「操作の感度」「音」「言語」（日本語・English）など。
  * 「動きをへらす」は前と同じ保存キーを使う（ワールドの HUD にあった時の選択を引き継ぐ）。
  * 保存が無ければ端末の「視差効果を減らす」に従う。
  */
@@ -8,6 +8,9 @@ import { sound, type FriendSound } from '../audio/sound'
 import { setViewOpen } from './transition'
 
 const MOTION_KEY = 'awl.reduceMotion'
+const SENS_KEY = 'awl.sensitivity'
+/** 操作の感度の既定（1 が 11/6 までの速さ。くにの「感度が高いので半分くらいに」） */
+const SENS_DEFAULT = 0.5
 
 export interface Settings {
   open: () => void
@@ -15,6 +18,9 @@ export interface Settings {
   isOpen: () => boolean
   readonly reduceMotion: boolean
   onReduceMotionChange: (fn: (on: boolean) => void) => void
+  /** 操作の感度（0.1〜1） */
+  readonly sensitivity: number
+  onSensitivityChange: (fn: (s: number) => void) => void
   /** 「あそび方をもう一度見る」が押された（シートは閉じてから伝える） */
   onReplayGuide: (fn: () => void) => void
 }
@@ -28,6 +34,17 @@ function readMotion(): boolean | null {
     // localStorage が使えない環境では既定値にする
   }
   return null
+}
+
+function readSensitivity(): number {
+  try {
+    const v = localStorage.getItem(SENS_KEY)
+    const n = v === null ? NaN : Number(v)
+    if (Number.isFinite(n)) return Math.min(1, Math.max(0.1, n))
+  } catch {
+    // localStorage が使えない環境では既定値にする
+  }
+  return SENS_DEFAULT
 }
 
 function writeMotion(on: boolean): void {
@@ -53,6 +70,21 @@ export function createSettings(): Settings {
     reduceMotion = motion.checked
     writeMotion(reduceMotion)
     motionListeners.forEach((fn) => fn(reduceMotion))
+  })
+
+  // 操作の感度: つまみは 10〜100（100 が 11/6 までの速さ）
+  const sens = document.getElementById('sensitivity') as HTMLInputElement
+  let sensitivity = readSensitivity()
+  sens.value = String(Math.round(sensitivity * 100))
+  const sensListeners: Array<(s: number) => void> = []
+  sens.addEventListener('input', () => {
+    sensitivity = Number(sens.value) / 100
+    try {
+      localStorage.setItem(SENS_KEY, String(sensitivity))
+    } catch {
+      // 保存できなくても動作は続ける
+    }
+    sensListeners.forEach((fn) => fn(sensitivity))
   })
 
   // 言語: 押した方に切り替える。押されている方は aria-pressed
@@ -138,6 +170,12 @@ export function createSettings(): Settings {
     },
     onReduceMotionChange: (fn) => {
       motionListeners.push(fn)
+    },
+    get sensitivity() {
+      return sensitivity
+    },
+    onSensitivityChange: (fn) => {
+      sensListeners.push(fn)
     },
     onReplayGuide: (fn) => {
       replayListeners.push(fn)

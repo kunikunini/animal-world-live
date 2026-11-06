@@ -174,6 +174,8 @@ const DICT = {
   profileInJa: { ja: '', en: 'Profile notes are shown in the original Japanese.' },
   reduceMotion: { ja: '動きをへらす', en: 'Reduce motion' },
   reduceMotionDesc: { ja: '画面の揺れ・アニメーションを少なくします', en: 'Less camera sway and animation' },
+  sensitivity: { ja: '操作の感度', en: 'Control sensitivity' },
+  sensitivityDesc: { ja: 'スティックと、ドラッグで見回す速さ', en: 'Speed of the stick and of looking around by dragging' },
   bgmVolume: { ja: 'BGM・まわりの音', en: 'Music & ambience' },
   bgmVolumeDesc: { ja: '曲と、風や鳥などの音', en: 'Music and sounds like wind and birds' },
   bgmMute: { ja: 'BGM を消す', en: 'Mute music' },

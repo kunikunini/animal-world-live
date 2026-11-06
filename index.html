@@ -54,6 +54,7 @@
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
       <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></symbol>
       <symbol id="i-jump" viewBox="0 0 24 24"><path d="M12 19V6M6.5 11.5L12 6l5.5 5.5" /><path d="M6 20h12" opacity=".5" /></symbol>
+      <symbol id="i-stick" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><circle cx="13.5" cy="10.5" r="3" fill="currentColor" stroke="none" /></symbol>
       <symbol id="i-motion" viewBox="0 0 24 24"><path d="M3 8c3 0 3-3 6-3s3 3 6 3 3-3 6-3M3 16c3 0 3-3 6-3s3 3 6 3 3-3 6-3" /></symbol>
       <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" /></symbol>
       <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6l5.5-2 6 2 5.5-2v14l-5.5 2-6-2-5.5 2z" /><path d="M9 4v14M15 6v14" /></symbol>
@@ -231,6 +232,13 @@
             <span class="set-text"><strong><span data-i18n="reduceMotion">動きをへらす</span></strong><small><span data-i18n="reduceMotionDesc">画面の揺れ・アニメーションを少なくします</span></small></span>
             <input id="reduce-motion" class="switch" type="checkbox" role="switch" />
           </label>
+          <div class="set-row set-row-vol" role="group" aria-labelledby="sens-label">
+            <svg class="ico"><use href="#i-stick" /></svg>
+            <span class="set-text"><strong id="sens-label" data-i18n="sensitivity">操作の感度</strong><small data-i18n="sensitivityDesc">スティックと、ドラッグで見回す速さ</small></span>
+            <span class="vol-ctl">
+              <input id="sensitivity" class="vol" type="range" min="10" max="100" step="5" aria-labelledby="sens-label" />
+            </span>
+          </div>
           <div class="set-row set-row-vol" role="group" aria-labelledby="vol-bgm-label">
             <svg class="ico"><use href="#i-music" /></svg>
             <span class="set-text"><strong id="vol-bgm-label" data-i18n="bgmVolume">BGM・まわりの音</strong><small data-i18n="bgmVolumeDesc">曲と、風や鳥などの音</small></span>
