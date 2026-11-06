@@ -43,6 +43,7 @@ public/models/*
 !public/models/capybara-maro.glb
 !public/models/SOURCE.md
 !public/models/mara-yuzu.glb
+!public/models/pony-kinoko.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
