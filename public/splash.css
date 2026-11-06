@@ -2,7 +2,7 @@
    動きは Motion Prompt（MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/）の
    #005 マスクリビール・#003 バースト・#008 キネティックタイポグラフィを移したもの。くわしくは道具の頭の説明 */
 .splash {
-  --bw: clamp(170px, min(56vw, 38vh), 320px);
+  --bw: clamp(140px, min(56vw, 32vh), 300px);
   --fs0: clamp(32px, min(10.5vw, 7.6vh), 76px);
   --fs: var(--fs0);
   --sp-bg: #fbcd03;
@@ -23,7 +23,7 @@
   transition: opacity 0.6s ease, visibility 0s linear 0.6s;
   animation: sp-auto 0.6s ease 7s forwards;
 }
-.sp-stage { position: relative; width: var(--bw); aspect-ratio: 400 / 310; }
+.sp-stage { position: relative; width: var(--bw); aspect-ratio: 560 / 624; }
 .sp-stage > * { position: absolute; }
 /* バースト（スコップの後ろ）。中心はスコップの真ん中 */
 .sp-burst { left: 50%; top: 50%; width: 0; height: 0; }
@@ -176,43 +176,46 @@
   100% { transform: scaleX(0); }
 }
 @keyframes sp-rise {
-  0% { transform: translateY(calc(var(--bw) * 0.8)); }
-  35% { transform: translateY(calc(var(--bw) * 0.8)); }
-  36.6667% { transform: translateY(calc(var(--bw) * 0.7026)); }
-  38.3333% { transform: translateY(calc(var(--bw) * 0.6149)); }
-  40% { transform: translateY(calc(var(--bw) * 0.5361)); }
-  41.6667% { transform: translateY(calc(var(--bw) * 0.4657)); }
-  43.3333% { transform: translateY(calc(var(--bw) * 0.4029)); }
-  45% { transform: translateY(calc(var(--bw) * 0.347)); }
-  46.6667% { transform: translateY(calc(var(--bw) * 0.2975)); }
-  48.3333% { transform: translateY(calc(var(--bw) * 0.2538)); }
-  50% { transform: translateY(calc(var(--bw) * 0.2155)); }
-  51.6667% { transform: translateY(calc(var(--bw) * 0.1819)); }
-  53.3333% { transform: translateY(calc(var(--bw) * 0.1526)); }
-  55% { transform: translateY(calc(var(--bw) * 0.1272)); }
-  56.6667% { transform: translateY(calc(var(--bw) * 0.1053)); }
-  58.3333% { transform: translateY(calc(var(--bw) * 0.0866)); }
-  60% { transform: translateY(calc(var(--bw) * 0.0706)); }
-  61.6667% { transform: translateY(calc(var(--bw) * 0.0571)); }
-  63.3333% { transform: translateY(calc(var(--bw) * 0.0457)); }
-  65% { transform: translateY(calc(var(--bw) * 0.0362)); }
-  66.6667% { transform: translateY(calc(var(--bw) * 0.0284)); }
-  68.3333% { transform: translateY(calc(var(--bw) * 0.022)); }
-  70% { transform: translateY(calc(var(--bw) * 0.0168)); }
-  71.6667% { transform: translateY(calc(var(--bw) * 0.0126)); }
-  73.3333% { transform: translateY(calc(var(--bw) * 0.0093)); }
-  75% { transform: translateY(calc(var(--bw) * 0.0067)); }
-  76.6667% { transform: translateY(calc(var(--bw) * 0.0048)); }
-  78.3333% { transform: translateY(calc(var(--bw) * 0.0033)); }
-  80% { transform: translateY(calc(var(--bw) * 0.0022)); }
-  81.6667% { transform: translateY(calc(var(--bw) * 0.0014)); }
-  83.3333% { transform: translateY(calc(var(--bw) * 0.0009)); }
-  85% { transform: translateY(calc(var(--bw) * 0.0005)); }
-  86.6667% { transform: translateY(calc(var(--bw) * 0.0003)); }
-  88.3333% { transform: translateY(calc(var(--bw) * 0.0001)); }
-  90% { transform: translateY(calc(var(--bw) * 0.0001)); }
-  91.6667% { transform: translateY(calc(var(--bw) * 0)); }
-  100% { transform: translateY(calc(var(--bw) * 0)); }
+  0% { transform: translateY(122.449%); }
+  35% { transform: translateY(122.449%); }
+  36.6667% { transform: translateY(107.5351%); }
+  38.3333% { transform: translateY(94.1111%); }
+  40% { transform: translateY(82.0625%); }
+  41.6667% { transform: translateY(71.2808%); }
+  43.3333% { transform: translateY(61.6633%); }
+  45% { transform: translateY(53.1131%); }
+  46.6667% { transform: translateY(45.5388%); }
+  48.3333% { transform: translateY(38.8544%); }
+  50% { transform: translateY(32.9791%); }
+  51.6667% { transform: translateY(27.837%); }
+  53.3333% { transform: translateY(23.3573%); }
+  55% { transform: translateY(19.4738%); }
+  56.6667% { transform: translateY(16.125%); }
+  58.3333% { transform: translateY(13.2535%); }
+  60% { transform: translateY(10.8066%); }
+  61.6667% { transform: translateY(8.7352%); }
+  63.3333% { transform: translateY(6.9943%); }
+  65% { transform: translateY(5.5428%); }
+  66.6667% { transform: translateY(4.3429%); }
+  68.3333% { transform: translateY(3.3605%); }
+  70% { transform: translateY(2.5645%); }
+  71.6667% { transform: translateY(1.927%); }
+  73.3333% { transform: translateY(1.4231%); }
+  75% { transform: translateY(1.0306%); }
+  76.6667% { transform: translateY(0.7299%); }
+  78.3333% { transform: translateY(0.5039%); }
+  80% { transform: translateY(0.3377%); }
+  81.6667% { transform: translateY(0.2186%); }
+  83.3333% { transform: translateY(0.1357%); }
+  85% { transform: translateY(0.0801%); }
+  86.6667% { transform: translateY(0.0445%); }
+  88.3333% { transform: translateY(0.0228%); }
+  90% { transform: translateY(0.0106%); }
+  91.6667% { transform: translateY(0.0042%); }
+  93.3333% { transform: translateY(0.0014%); }
+  95% { transform: translateY(0.0003%); }
+  96.6667% { transform: translateY(0%); }
+  100% { transform: translateY(0%); }
 }
 @keyframes sp-pop {
   0% { transform: scale(1); }

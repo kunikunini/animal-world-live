@@ -36,7 +36,7 @@
     <!-- 立ち上げの画面（スプラッシュ）: JS より先に出す。アイコンと同じ黄色の地に、双眼鏡のスコップとロゴ。
          見た目と動きは public/splash.css（tools/splash-motion.mjs が書き出す）。
          消すのは src/ui/splash.ts（ホームの絵が読めたら）。JS が動かない時も 7 秒で CSS だけで消える -->
-    <link rel="preload" as="image" type="image/webp" href="/splash-bino.webp" />
+    <link rel="preload" as="image" type="image/webp" href="/splash-scop.webp" />
     <link rel="stylesheet" href="/splash.css" />
     <!-- ホームのキービジュアル: 画面の縦横比に合う 1 枚だけを先に読む（CSS の切り替えと同じ境目） -->
     <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-portrait.webp" media="(max-aspect-ratio: 13/20)" />
@@ -57,7 +57,7 @@
       <!-- splash:begin -->
       <div class="sp-stage">
         <div class="sp-burst"><i class="sp-ring o"></i><i class="sp-ring i"></i><span class="sp-rays"><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b></span><span class="sp-dots"><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b></span></div>
-        <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-bino.webp" alt="" width="400" height="310" decoding="async" /></div></div></div></div>
+        <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></div></div></div></div>
         <i class="sp-line"></i>
       </div>
       <div class="splash-logo"><span class="sp-row"><span class="sp-word sp-w1"><i>A</i><i>N</i><i>I</i><i>M</i><i>A</i><i>L</i></span><span class="sp-word sp-w2"><i>W</i><i>O</i><i>R</i><i>L</i><i>D</i></span></span><span class="sp-live"><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><span class="sp-word sp-w3"><i>L</i><i>I</i><i>V</i><i>E</i></span></span></div>

@@ -7,7 +7,8 @@
 // 見本は Canvas に時刻 u から 1 コマずつ描く関数。ここではその関数を 1/60 秒ごとに計算して CSS の keyframes にする。
 // 立ち上げ中は本体の JS がワールドの組み立てで約 2 秒止まるので、Canvas や JS の動きだと止まってしまう。
 // transform と opacity だけの CSS の動きは別のスレッドで動くので、止まらない。
-// 距離は見本のカードの px を、スコップは幅 150px、ロゴは文字の大きさ 88px を基準に、画面に合わせて伸び縮みさせる。
+// 距離は見本のカードの px を、スコップは幅 150px、ロゴは文字の大きさ 88px を基準に、画面に合わせて伸び縮みさせる
+// （せり上がりだけはスコップの高さに対する割合）。スコップの絵は public/splash-scop.webp（くにが用意したキャラクターの絵を切り抜いた物）。
 // 色は黄色の地で見えるように替えた（見本の黄 → 白、ミント → コーラルなど）。
 // 見本どおりにできなかった所: バーストの輪の太さ（16 → 0）は、白い円の上に地の色の円を重ねて作った。
 // 2 つの円の大きさの差で、太さが同じように細くなる
@@ -65,9 +66,10 @@ kf.push(keyframes('sp-line', 2.3, (lu) => {
 }))
 // 上の段: 線より上だけ見える切り抜きの中で、120px 下から定位置へ（0.35〜1.0 秒・easeOut 5 乗）。
 // 文字の下端は線の 14px 上、切り抜きの下端は線の 5px 上
+// スコップは文字より縦に長いので、距離は文字の高さ 98px に対する 120px の割合（スコップの高さの 122%）で
 kf.push(keyframes('sp-rise', 1.0, (lu) => {
   const up = (1 - eOut5(P(lu, 0.35, 1.0))) * 120
-  return `transform: translateY(${B(up)});`
+  return `transform: translateY(${n4((up / 98) * 100)}%);`
 }))
 
 // ---- Motion Prompt #003 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#003 ----
@@ -166,7 +168,7 @@ css += `/* 立ち上げの画面（スプラッシュ）。tools/splash-motion.m
    動きは Motion Prompt（MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/）の
    #005 マスクリビール・#003 バースト・#008 キネティックタイポグラフィを移したもの。くわしくは道具の頭の説明 */
 .splash {
-  --bw: clamp(170px, min(56vw, 38vh), 320px);
+  --bw: clamp(140px, min(56vw, 32vh), 300px);
   --fs0: clamp(32px, min(10.5vw, 7.6vh), 76px);
   --fs: var(--fs0);
   --sp-bg: #fbcd03;
@@ -187,7 +189,7 @@ css += `/* 立ち上げの画面（スプラッシュ）。tools/splash-motion.m
   transition: opacity 0.6s ease, visibility 0s linear 0.6s;
   animation: sp-auto 0.6s ease 7s forwards;
 }
-.sp-stage { position: relative; width: var(--bw); aspect-ratio: 400 / 310; }
+.sp-stage { position: relative; width: var(--bw); aspect-ratio: 560 / 624; }
 .sp-stage > * { position: absolute; }
 /* バースト（スコップの後ろ）。中心はスコップの真ん中 */
 .sp-burst { left: 50%; top: 50%; width: 0; height: 0; }
@@ -266,7 +268,7 @@ css += kf.join('')
 // スプラッシュの中身（index.html の <div id="splash"> の中に入れる）
 export const HTML = `<div class="sp-stage">
         <div class="sp-burst"><i class="sp-ring o"></i><i class="sp-ring i"></i><span class="sp-rays">${RAYS.map(() => '<b class="sp-ray"><i></i></b>').join('')}</span><span class="sp-dots">${DOTS.map(() => '<b class="sp-dot"><i></i></b>').join('')}</span></div>
-        <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-bino.webp" alt="" width="400" height="310" decoding="async" /></div></div></div></div>
+        <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></div></div></div></div>
         <i class="sp-line"></i>
       </div>
       <div class="splash-logo">${(() => {
