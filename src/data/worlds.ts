@@ -15,7 +15,8 @@ export interface WorldInfo {
 }
 
 export const WORLDS: readonly WorldInfo[] = [
-  { key: 'africa', name: { ja: 'アフリカ', en: 'Africa' }, open: true, colors: ['#f6b73c', '#c9762a'] },
+  // 台帳の区分は「アフリカ」（key のまま）。画面の名前は 3D・地図・ワールドの名前の表示と同じ「サバンナ」にそろえる（台帳の小区分も「サバンナ・砂漠」。11/6 の UT 健診）
+  { key: 'africa', name: { ja: 'サバンナ', en: 'Savanna' }, open: true, colors: ['#f6b73c', '#c9762a'] },
   { key: 'jungle', name: { ja: 'ジャングル', en: 'Jungle' }, open: true, colors: ['#43b968', '#16764a'] },
   { key: 'south', name: { ja: '南半球', en: 'Southern Lands' }, open: true, colors: ['#f08a4b', '#b8492c'] },
   { key: 'north', name: { ja: '北の世界', en: 'The North' }, open: true, colors: ['#8cc7ee', '#3f78b5'] },

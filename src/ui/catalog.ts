@@ -13,7 +13,7 @@ import { hideView, showView } from './transition'
 /**
  * アニマルスコープ（動画一覧）。どのワールドの観察スポットでも、スコープをのぞくと同じ一覧が開く。
  * いまある映像は実物、まだ無い枠（ライブ・ほかのワールド・ほかの動物・動物園）は形だけのシルエットで、押せない。
- * 段の並びは「ライブ → 注目 → ともだち → ワールド → どうぶつ → 人気 → おすすめ → 動物園」。
+ * 段の並びは「ライブ → 注目 → ともだち → ワールド → どうぶつ → おすすめ → すべての動画 → 動物園」。
  * 「ワールド」の段から、開いているワールド（D-36）の動物の一覧へ入れる（サバンナも同じ）。一覧は同じ画面の中で切り替える。
  */
 export interface CatalogView {
@@ -240,14 +240,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
 
+    // 人気を測ったデータは無いので、順位（1・2…）は出さない（11/6 の UT 健診）。見出しは「おすすめ」、縦長のポスターの棚
     const popular = section(
       'popular',
       meta('catRowPopular'),
       `<div class="cat-row cat-row-rank">${
         main
-          ? `<button type="button" class="cat-rank" data-watch="${esc(main.id)}" aria-label="${esc(`1. ${featuredTitle()}`)}"><span class="cat-rank-n" aria-hidden="true">1</span><img src="${esc(FEATURED.poster)}" alt="" /></button>`
+          ? `<button type="button" class="cat-rank" data-watch="${esc(main.id)}" aria-label="${esc(featuredTitle())}"><img src="${esc(FEATURED.poster)}" alt="" /></button>`
           : ''
-      }${[2, 3, 4, 5].map((n) => `<div class="cat-rank cat-rank-sil" aria-hidden="true"><span class="cat-rank-n">${n}</span><div class="cat-sil">${PLAY}</div></div>`).join('')}</div>`,
+      }${times(4, () => `<div class="cat-rank cat-rank-sil" aria-hidden="true"><div class="cat-sil">${PLAY}</div></div>`)}</div>`,
     )
 
     // 種の映像のカード（3 枚に満たない分は形だけのシルエット）
@@ -299,6 +300,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   }
 
   const scrollEl = () => root.querySelector<HTMLElement>('.cat-scroll')
+  // 下へ送ったら、上に貼りついた見出し（戻るボタン）に地の色を敷く（いちばん上では今までどおり光の模様が見える）
+  root.addEventListener(
+    'scroll',
+    (e) => {
+      const el = e.target as HTMLElement
+      if (el.classList?.contains('cat-scroll')) el.classList.toggle('is-scrolled', el.scrollTop > 8)
+    },
+    true,
+  )
 
   root.addEventListener('click', (e) => {
     const target = (e.target as HTMLElement).closest<HTMLElement>('button')

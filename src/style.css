@@ -576,6 +576,33 @@ button {
   height: 1.45em;
 }
 
+/* 当たり判定だけ 44×44 以上に広げる（見た目の大きさはそのまま。11/6 の UT 健診: 歯車 31×31・ともだち帳 高さ 37・物語をみる 高さ 28・地図を広げる 36×36）。
+   透明な ::after を押しても、押したのはボタン */
+.home .home-settings {
+  position: relative;
+}
+.home :is(.home-settings, .home-book)::after,
+.minimap-expand::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 46px);
+  height: max(100%, 46px);
+  translate: -50% -50%;
+  border-radius: 999px;
+}
+/* 物語をみるは真下が「のぞいてみる」なので、上へ広げる（下は 4px だけ） */
+.home .home-story-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 46px;
+  border-radius: 999px;
+}
+
 /* 下のまん中: のぞいてみる（オレンジの大きなボタン。白いふちと、角のきらきら） */
 .home-cta {
   position: absolute;
@@ -1211,10 +1238,11 @@ button {
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* 字幕は文・文節のまとまりの中で改行しない（story.ts の phraseHtml）。行の長さはそろえる */
+/* 字幕は文・文節のまとまりの中で改行しない（ui/phrase.ts の phraseHtml）。行の長さはそろえる */
 .story-text { text-wrap: balance; }
-.story-text .story-sent { display: inline-block; text-wrap: balance; }
-.story-text .story-ph { display: inline-block; white-space: nowrap; }
+.story-text .ph-sent { display: inline-block; text-wrap: balance; }
+/* 文節の中では改行しない（ui/phrase.ts）。おはなしの字幕・あそびかたのカード */
+.ph { display: inline-block; white-space: nowrap; }
 
 .story-text ruby { ruby-position: over; }
 
@@ -2435,6 +2463,9 @@ body.is-reduce-motion .stamina.is-resting svg { animation: none; }
   font-size: var(--fs-caption);
   font-weight: 700;
   color: var(--ink-soft);
+  /* 文節の切れ目（i18n の \u200b）でだけ折る。はみ出す時だけどこでも折る */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .set-row-lang {
@@ -3491,27 +3522,27 @@ button.bk-tab:hover {
   z-index: 2;
 }
 
+/* 「収録映像」は押せない札: トークの映像の札（.ch-badge）と同じ、こげ茶の半透明に白い字の小さな札（11/6 の UT 健診: 白い丸い形がボタンに見えた） */
 .m-badge {
   position: absolute;
   right: 12px;
-  top: calc(12px + var(--safe-top));
+  top: calc(18px + var(--safe-top));
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px 7px 10px;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--ink);
+  background: rgba(43, 29, 18, 0.72);
+  color: #fff;
   font-size: var(--fs-caption);
   font-weight: 800;
-  box-shadow: var(--shadow-card);
   pointer-events: none;
 }
 
 .m-badge .ico {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 .m-placeholder {
@@ -3862,7 +3893,7 @@ button.bk-tab:hover {
   }
   .m-video { grid-area: video; align-self: start; border-radius: 20px; overflow: hidden; max-height: none; }
   .m-back { top: 12px; }
-  .m-badge { top: 12px; }
+  .m-badge { top: 16px; }
   .m-placeholder { top: 56px; }
   .m-sheet { display: contents; }
   .chips { grid-area: chips; margin: 0; align-self: start; }
@@ -4178,12 +4209,19 @@ body.is-reduce-motion .is-refresh {
   background: radial-gradient(closest-side, rgba(242, 106, 27, 0.38), rgba(242, 106, 27, 0));
   pointer-events: none;
 }
+/* 一覧を下へ送っても戻るボタンが流れないよう、上に貼りつける（11/6 の UT 健診）。送った時は下の段が透けないよう地の色を敷く（catalog.ts の is-scrolled） */
 .cat-top {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: calc(14px + env(safe-area-inset-top)) 16px 0;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 10px;
+  margin-bottom: -10px;
+}
+.cat-scroll.is-scrolled .cat-top {
+  background: linear-gradient(to bottom, var(--c-bg) 80%, rgba(34, 22, 15, 0));
 }
 .cat-icon-btn {
   flex: none;
@@ -4515,7 +4553,7 @@ body.is-reduce-motion .is-refresh {
 }
 .cat-face-check svg { width: 15px; height: 15px; }
 
-/* 人気（順位） */
+/* おすすめ（縦長のポスター。順位は出さない） */
 .cat-row-rank { gap: 14px; }
 .cat-rank {
   flex: none;
@@ -4528,22 +4566,11 @@ body.is-reduce-motion .is-refresh {
   font: inherit;
   cursor: pointer;
 }
-.cat-rank-n {
-  font-size: 96px;
-  line-height: 0.8;
-  font-weight: 900;
-  color: var(--c-bg);
-  -webkit-text-stroke: 2.5px var(--gold);
-  margin-right: -14px;
-  position: relative;
-  z-index: 1;
-}
-.cat-rank-sil .cat-rank-n { -webkit-text-stroke-color: rgba(244, 194, 66, 0.55); }
 .cat-rank img,
 .cat-rank .cat-sil { width: 112px; height: 156px; border-radius: 16px; object-fit: cover; object-position: 28% 50%; display: grid; }
 .cat-rank-sil { cursor: default; }
 
-/* おすすめ */
+/* すべての動画（横長のカード） */
 .cat-card {
   flex: none;
   width: 208px;
@@ -4573,7 +4600,7 @@ div.cat-card { cursor: default; }
 
 @media (min-width: 768px) {
   .catalog .cat-scroll { gap: 34px; }
-  .cat-top { padding: 20px 40px 0; }
+  .cat-top { padding: 20px 40px 10px; }
   .cat-logo { justify-content: flex-start; font-size: 22px; }
   .cat-row, .cat-h { padding-left: 40px; padding-right: 40px; }
   .cat-hero-sec { padding: 0 40px; }
@@ -5412,8 +5439,8 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 }
 .coach-head {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 10px;
   font-size: 13px;
   font-weight: 800;
   color: #b8741a;
@@ -5476,6 +5503,37 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 }
 .coach-quit[hidden] {
   display: none;
+}
+/* 「ちいさく する」: 見出しの行だけの小さな札にたたむ。暗幕も外して、下の画面を全部見て・さわれるようにする */
+.coach-count {
+  margin-left: auto;
+}
+.coach-min {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 4px 0 12px;
+  border: 0;
+  background: none;
+  color: #2f4fd8;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.coach-card.is-min {
+  width: auto;
+  padding: 2px 6px 2px 14px;
+}
+.coach-card.is-min :is(.coach-text, .coach-actions, .coach-quit) {
+  display: none;
+}
+body.coach-min .coach-hole {
+  box-shadow:
+    0 0 0 3px rgba(255, 236, 140, 0.95),
+    0 0 18px 6px rgba(255, 220, 90, 0.55);
+}
+body.coach-min .coach-hole.is-none {
+  box-shadow: none;
 }
 /* スマホ横・背の低い画面: カードを小さく（横に寄せて置く） */
 @media (max-height: 560px) {

@@ -53,7 +53,8 @@ export function createStaminaUi(): StaminaUi {
     if (!enabled || btn.classList.contains('is-tired')) return
     e.preventDefault()
     pointer = e.pointerId
-    downAt = performance.now()
+    // 押した・離した時刻はイベントの時刻で測る（画面が重くて処理が遅れても、短いタップを長押しと間違えない）
+    downAt = e.timeStamp
     try {
       btn.setPointerCapture(e.pointerId)
     } catch {
@@ -70,7 +71,7 @@ export function createStaminaUi(): StaminaUi {
   const release = (e: PointerEvent) => {
     if (e.pointerId !== pointer) return
     pointer = null
-    if (on && performance.now() - downAt > HOLD_MS) set(false)
+    if (on && e.timeStamp - downAt > HOLD_MS) set(false)
   }
   btn.addEventListener('pointerup', release)
   btn.addEventListener('pointercancel', release)

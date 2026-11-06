@@ -33,7 +33,7 @@ export interface PlayerController {
   /**
    * ダッシュ。on の間（スティック・キー・タップ移動のどれで歩いていても）速く走り、がんばりゲージが減る。
    * ゲージが空になると息切れして少しのあいだ立ち止まり、満タンに戻るまではダッシュできない。
-   * 止まって 0.4 秒たつと自分でオフに戻る
+   * 走ったあと止まって 0.4 秒たつと自分でオフに戻る（止まったまま押した時は、歩き出すまでオンのまま）
    */
   setDash: (on: boolean) => void
   /** がんばりゲージ（0〜1）・走っているか・息切れ中か・息切れで立ち止まっているか（UI の表示用） */
@@ -292,11 +292,14 @@ export function createPlayer(
   let restT = 0
   let dashing = false
   let idleT = 0
+  /** ダッシュがオンになってから実際に走ったか（止まった状態で押してから歩き出しても走れるよう、自分で戻すのは走ったあとだけ） */
+  let dashRan = false
   const dashEndListeners: Array<() => void> = []
   const exhaustListeners: Array<() => void> = []
   const endDash = () => {
     if (!dashOn) return
     dashOn = false
+    dashRan = false
     dashEndListeners.forEach((fn) => fn())
   }
 
@@ -431,9 +434,10 @@ export function createPlayer(
       stamina = Math.min(1, stamina + dt / (exhausted ? STAMINA_REFILL_TIRED_S : STAMINA_REFILL_S))
       if (exhausted && stamina >= 1) exhausted = false
     }
-    // 止まって少したったらダッシュのボタンを戻す
+    // 走ったあと止まって少したったらダッシュのボタンを戻す（止まったまま押した時は、歩き出すまでオンのまま。11/6 の UT 健診）
+    if (dashing) dashRan = true
     idleT = wantsMove ? 0 : idleT + dt
-    if (idleT > 0.4) endDash()
+    if (dashRan && idleT > 0.4) endDash()
     const speedMul = dashing ? DASH_MULT : 1
 
     _prev.copy(object.position)
@@ -638,6 +642,7 @@ export function createPlayer(
       if (on && (!inputEnabled || exhausted)) return
       dashOn = on
       if (on) idleT = 0
+      if (!on) dashRan = false
     },
     stamina: () => ({ value: stamina, dashing, exhausted, resting: restT > 0 }),
     onDashEnd: (fn) => {
