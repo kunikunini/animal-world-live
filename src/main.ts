@@ -312,6 +312,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ゆめこ: ジャングルの中心の西（ワオキツネザルの北 13 m、ティガーの反対側）。プリミティブ版は無いので新しく置く。体の長さ 2.1 m は実物の成獣の目安。
       // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
       { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] }, place: { x: -309, z: -6, yaw: 1.3, length: 2.1 } },
+      // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
+      // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
+      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true, walk: { speed: 0.7, radius: 2.0, idle: [6, 14] } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
