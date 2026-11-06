@@ -183,7 +183,7 @@ const STEPS: Step[] = [
       ja: '{地図|ちず}には、{会|あ}った どうぶつが のるよ。{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。おしてみよう！',
       en: 'Animals you have met appear on the map. Tap a place to walk there — try it!',
     },
-    targets: ['#map-canvas'],
+    targets: ['#map-canvas', '#map-3d'],
     until: ['mapClose'],
     needs: 'map',
   },

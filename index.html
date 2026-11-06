@@ -188,16 +188,22 @@
         <div class="grabber"></div>
         <header class="sheet-head">
           <h2 class="sheet-title"><svg class="ico"><use href="#i-map" /></svg><span data-i18n="map">地図</span></h2>
-          <!-- 動物の名前（種の名前）を出す／隠す。押された状態＝出す -->
-          <button id="map-names" class="map-names" type="button" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span data-i18n="mapNames">動物の名前</span></button>
+          <!-- 2D（平面の大陸）と 3D（いまのワールドのジオラマ）の切り替え。選んだ方を覚える -->
+          <div class="map-mode" role="radiogroup" aria-label="地図の表示" data-i18n-aria="mapMode">
+            <button id="map-2d" class="map-mode-btn" type="button" role="radio" aria-checked="true">2D</button>
+            <button id="map-3d-btn" class="map-mode-btn" type="button" role="radio" aria-checked="false">3D</button>
+          </div>
+          <!-- 動物の印（点・ピン・名前・動物の拠点）を出す／隠す。押された状態＝出す。2D・3D の両方に効く -->
+          <button id="map-names" class="map-names" type="button" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span data-i18n="mapAnimals">動物</span></button>
           <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
         <div class="sheet-body">
           <canvas id="map-canvas" class="map-canvas" role="img" aria-label="7 つのワールドがある大陸の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
+          <div id="map-3d" class="map-3d" hidden role="img" aria-label="いまいるワールドのジオラマ。北が上。拠点を押すと、そこまで歩いていく" data-i18n-aria="map3dCanvas"></div>
           <ul class="map-legend" aria-label="凡例" data-i18n-aria="legend">
             <li><span class="map-dot dot-you"></span><span data-i18n="you">あなた</span></li>
             <li><span class="map-dot dot-met"></span><span data-i18n="metAnimals">出会った動物</span></li>
-            <li><span class="map-dot dot-friend"></span><span data-i18n="friends">ともだち</span></li>
+            <li><span class="map-dot dot-friend"></span><span class="map-heart" aria-hidden="true">♥</span><span data-i18n="friends">ともだち</span></li>
             <li><span class="map-dot dot-spot"></span><span data-i18n="spot">観察スポット</span></li>
           </ul>
         </div>

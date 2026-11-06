@@ -31,6 +31,7 @@ import { createWorldLabels } from './ui/labels'
 import type { LabelEntry, Rect } from './ui/labels'
 import { createEncounterIcon } from './ui/encounter'
 import { createMinimap } from './ui/minimap'
+import { arrivalOf } from './world/mapBases'
 import { createMapView } from './ui/map'
 import { createJoystick } from './ui/joystick'
 import { createHome } from './ui/home'
@@ -619,6 +620,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     mapView.open()
   })
   mapView.onPick(walkTo)
+  // 地図の拠点（2D・3D）: 地図の中で歩き終えたら、本編のその場所に立っている。動物の拠点は、着いた時の個体の位置のそば
+  const animalAt = (id: string) => {
+    const l = lions.find((x) => x.id === id)
+    return l ? { x: l.position.x, z: l.position.z } : null
+  }
+  const HERO_COLOR: Record<string, string> = { yellow: '#f2c230', teal: '#2bb3a8', pink: '#f07fa8', bluecap: '#2f6bff', purple: '#8a5cd6', braids: '#7cbf3c' }
+  mapView.configure({ animalAt, colliders: props.colliders, heroColor: () => HERO_COLOR[heroId ?? 'yellow'] ?? '#f2c230' })
+  mapView.onTravel((base) => {
+    const a = arrivalOf(base, animalAt)
+    player.teleport(a.x, a.z, a.heading)
+  })
   mapView.onOpenChange((open) => {
     guide.reach(open ? 'map' : 'mapClose')
     // 地図が開いている間は、あそび方ナビのカードを下に（地図の見出しと「動物の名前」をふさがない）
@@ -635,6 +647,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     lions.forEach((l) => l.setReduceMotion(on))
     reduceMotionNow = on
     wanderers.forEach((w) => w.setReduceMotion(on))
+    mapView.setReduceMotion(on)
     encounterIcon.setReduceMotion(on)
     fauna.setReduceMotion(on)
     clouds.setReduceMotion(on)
@@ -1139,7 +1152,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 止めたまま作った時に描く枚数（後処理のシェーダーもここで用意される）
   let warmFrames = startPaused ? 2 : 0
   const tick = () => {
-    if (paused || viewing) {
+    // 3D の地図を開いている間は本編を描かない（地図のジオラマだけ描く）
+    if (paused || viewing || mapView.is3DOpen()) {
       if (warmFrames > 0) {
         warmFrames--
         postfx.render()

@@ -49,6 +49,25 @@ export interface MapRenderer {
   setView: (cx: number, cz: number, radius: number) => void
   /** 広げた地図の動物の名前（種の名前）を出すかどうか */
   setNames: (on: boolean) => void
+  /** 動物の印（点・名前）を出すかどうか */
+  setMarkers: (on: boolean) => void
+  /** 拠点と道（広げた地図だけ）。拠点の場所は描く時の位置 */
+  setOverlay: (o: MapOverlay | null) => void
+  /** キャンバス座標の近くの拠点（なければ null） */
+  baseAt: (mx: number, my: number) => string | null
+  /** 地図の中を歩いている主人公（拠点への移動の途中）。null でいつもの位置 */
+  setTraveler: (p: { x: number; z: number; heading: number } | null) => void
+}
+
+/** 広げた地図の拠点（マリオ 3 のワールドマップのパネル）と道 */
+export interface MapOverlay {
+  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string }>
+  /** 名前の札を出すワールド（いまいるワールド。ほかのワールドの拠点は記号のパネルだけにして、大陸の地図を札だらけにしない） */
+  labelWorld: string
+  /** x1, z1, x2, z2, 動物の拠点への道か（動物を隠している時は描かない） */
+  roads: Array<[number, number, number, number, boolean?]>
+  /** 選んで歩いている先 */
+  target?: string | null
 }
 
 /** 出会った子を「ワールド × 種」でまとめる（1 つのワールドに同じ種の名前は 1 つ）。名前はその子たちのまん中に置く */
@@ -290,6 +309,19 @@ function groundTexture(): HTMLCanvasElement {
   g.putImageData(img, 0, 0)
   groundCanvas = cv
   return cv
+}
+
+let groundPixels: Uint8ClampedArray | null = null
+/** 地図の地面の色（0..255）。3D のジオラマ（mapDiorama.ts）が 2D の地図と同じ色にするため */
+export function mapGroundColor(x: number, z: number, out: [number, number, number]): void {
+  const cv = groundTexture()
+  if (!groundPixels) groundPixels = (cv.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, cv.width, cv.height).data
+  const i = Math.max(0, Math.min(cv.width - 1, Math.round((x - GROUND_BOX.minX) / GROUND_STEP)))
+  const j = Math.max(0, Math.min(cv.height - 1, Math.round((z - GROUND_BOX.minZ) / GROUND_STEP)))
+  const o = (j * cv.width + i) * 4
+  out[0] = groundPixels[o]
+  out[1] = groundPixels[o + 1]
+  out[2] = groundPixels[o + 2]
 }
 
 // ---------------------------------------------------------------------------
@@ -952,6 +984,53 @@ export function createMapRenderer(options: { width: number; height?: number; lab
   }
 
   let showNames = true
+  let showMarkers = true
+  let overlay: MapOverlay | null = null
+  let traveler: { x: number; z: number; heading: number } | null = null
+  const BASE_FILL: Record<MapOverlay['bases'][number]['kind'], string> = { entry: '#2f6bff', spot: '#f26a1b', pass: '#7a5a3a', animal: '#3f9a4a' }
+  /** 道（ベージュの太線に濃い縁）と拠点（角の丸いパネル。種類で色と記号を変える） */
+  const drawOverlay = (ctx: CanvasRenderingContext2D): Box[] => {
+    if (!overlay) return []
+    ctx.lineCap = 'round'
+    for (const [lw, col] of [[6.5, 'rgba(90, 62, 32, 0.55)'], [3.6, '#fff1cf']] as Array<[number, string]>) {
+      ctx.strokeStyle = col
+      ctx.lineWidth = lw * u
+      ctx.setLineDash(col === '#fff1cf' ? [1 * u, 5 * u] : [])
+      ctx.beginPath()
+      for (const [x1, z1, x2, z2, animal] of overlay.roads) {
+        if (animal && !showMarkers) continue
+        ctx.moveTo(px(x1), py(z1))
+        ctx.lineTo(px(x2), py(z2))
+      }
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+    const boxes: Box[] = []
+    for (const b of overlay.bases) {
+      if (b.kind === 'animal' && !showMarkers) continue
+      const x = px(b.x)
+      const y = py(b.z)
+      const s = (b.kind === 'spot' ? 7.5 : 6) * u
+      const on = overlay.target === b.id
+      ctx.fillStyle = 'rgba(40, 26, 12, 0.35)'
+      roundRect(ctx, x - s, y - s + 1.6 * u, s * 2, s * 2, 3 * u)
+      ctx.fill()
+      ctx.fillStyle = BASE_FILL[b.kind]
+      ctx.strokeStyle = on ? '#ffd21f' : '#fff'
+      ctx.lineWidth = (on ? 3 : 2) * u
+      roundRect(ctx, x - s, y - s, s * 2, s * 2, 3 * u)
+      ctx.fill()
+      ctx.stroke()
+      ctx.fillStyle = '#fff'
+      ctx.font = `900 ${Math.round(9 * u)}px ${FONT}`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      const mark = b.kind === 'entry' ? 'S' : b.kind === 'spot' ? '◎' : b.kind === 'pass' ? '➜' : b.friend ? '♥' : '●'
+      ctx.fillText(mark, x, y + 0.5 * u)
+      boxes.push({ l: x - s, t: y - s, r: x + s, b: y + s })
+    }
+    return boxes
+  }
   const draw = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
     if (dirty) drawBase()
     ctx.clearRect(0, 0, width, height)
@@ -960,6 +1039,9 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     ctx.drawImage(base, 0, 0)
     ctx.globalAlpha = 1
     const placeBoxes = drawPlaceLabels(ctx)
+    placeBoxes.push(...drawOverlay(ctx))
+    if (!showMarkers) lions = []
+    if (traveler) player = traveler
 
     // 出会った個体: 黄褐色の点に暗い縁。そばにいる個体は少し大きく。ともだちは緑の輪を足す
     for (const l of lions) {
@@ -982,6 +1064,17 @@ export function createMapRenderer(options: { width: number; height?: number; lab
         ctx.beginPath()
         ctx.arc(px(l.x), py(l.z), r + 3 * u, 0, Math.PI * 2)
         ctx.stroke()
+        // ともだちのしるし: 右上に小さなハート
+        if (options.labels) {
+          ctx.font = `900 ${Math.round(10 * u)}px ${FONT}`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.lineWidth = 2.5 * u
+          ctx.strokeStyle = '#fff'
+          ctx.strokeText('♥', px(l.x) + r + 3 * u, py(l.z) - r - 3 * u)
+          ctx.fillStyle = '#f0508a'
+          ctx.fillText('♥', px(l.x) + r + 3 * u, py(l.z) - r - 3 * u)
+        }
       }
     }
 
@@ -1039,7 +1132,18 @@ export function createMapRenderer(options: { width: number; height?: number; lab
         drawPill(ctx, text, found.l, found.t, u)
       }
       // 動物は個体名ではなく種の名前（同じワールドの同じ種は 1 つにまとめる）。増えても名前だらけにならない
-      if (showNames) for (const g of speciesGroups(lions)) put(g.name, px(g.x), py(g.z))
+      // 拠点の名前（動物の拠点は動物の印を出している時だけ）。拠点と同じ名前の種の名前は重ねて出さない
+      const baseNames = new Set<string>()
+      if (overlay)
+        for (const b of overlay.bases) {
+          if (b.kind === 'animal' && !showMarkers) continue
+          // 観察スポットは場所の名前（サバンナ）と凡例で分かるので札を重ねない
+          // 峠は矢印のパネルとワールドの名前で分かるので札を重ねない（大陸の地図ではサバンナが小さい）
+          if (b.world !== overlay.labelWorld || b.kind === 'spot' || b.kind === 'pass') continue
+          put(b.label, px(b.x), py(b.z))
+          baseNames.add(b.label)
+        }
+      if (showNames) for (const g of speciesGroups(lions)) if (!baseNames.has(g.name)) put(g.name, px(g.x), py(g.z))
       put(t('you'), px(player.x), py(player.z))
     }
   }
@@ -1061,6 +1165,29 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     setView,
     setNames: (on) => {
       showNames = on
+    },
+    setMarkers: (on) => {
+      showMarkers = on
+    },
+    setOverlay: (o) => {
+      overlay = o
+    },
+    setTraveler: (p) => {
+      traveler = p
+    },
+    baseAt: (mx, my) => {
+      if (!overlay) return null
+      let best: string | null = null
+      let bd = 16 * u
+      for (const b of overlay.bases) {
+        if (b.kind === 'animal' && !showMarkers) continue
+        const d = Math.hypot(px(b.x) - mx, py(b.z) - my)
+        if (d < bd) {
+          bd = d
+          best = b.id
+        }
+      }
+      return best
     },
   }
 }

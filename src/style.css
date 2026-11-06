@@ -3932,7 +3932,6 @@ button.bk-tab:hover {
    ========================================================================== */
 /* 地図の「動物の名前」: 押されている間は出す（空色＋チェック）、押していない時は隠す（灰色・チェックなし） */
 .map-names {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3958,6 +3957,90 @@ button.bk-tab:hover {
 
 .map {
   z-index: 12;
+}
+/* 2D・3D の切り替え（ふたつ並んだ丸いボタン） */
+.map-mode {
+  margin-left: auto;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: rgba(31, 42, 68, 0.08);
+}
+.map-mode + .map-names { margin-left: 8px; }
+.map-mode-btn {
+  min-width: 48px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.map-mode-btn[aria-checked="true"] { background: #fff; color: var(--sky-deep); box-shadow: 0 1px 3px rgba(31, 42, 68, 0.2); }
+.map-heart { color: #f0508a; font-weight: 900; margin-left: -4px; }
+.map .sheet-title, .map-names, .map-mode-btn { white-space: nowrap; }
+@media (max-width: 420px) {
+  .map .sheet-title .ico { display: none; }
+  .map-mode-btn { min-width: 44px; padding: 0 10px; }
+  .map-names { padding: 0 12px 0 8px; }
+}
+
+/* 3D のジオラマ（2D の地図と同じ大きさの枠）。空色の地に粘土の板が浮かぶ */
+.map-3d {
+  position: relative;
+  width: min(100%, calc((100vh - 300px) * 0.75));
+  aspect-ratio: 3 / 4;
+  margin: 4px auto 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 30%, #d8f1ff, #9fd2f0);
+  box-shadow: 0 0 0 4px #fff, var(--shadow-card);
+  touch-action: none;
+}
+.map-3d[hidden] { display: none; }
+.map-3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map-3d-overlay { position: absolute; inset: 0; overflow: hidden; }
+/* 拠点の札: 押せる（拠点へ歩く）。種類で色を変える */
+.map3d-base {
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 2px solid #fff;
+  border-radius: var(--r-pill);
+  background: var(--base-c, #2f6bff);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(31, 42, 68, 0.35);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 当たり判定は 44 以上 */
+.map3d-base::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 36px; translate: -50% -50%; }
+.map3d-base.is-entry { --base-c: #2f6bff; }
+.map3d-base.is-spot { --base-c: #f26a1b; }
+.map3d-base.is-pass { --base-c: #8a6a46; }
+.map3d-base.is-animal { --base-c: #3f9a4a; }
+.map3d-base.is-target { outline: 3px solid #ffd21f; }
+.map3d-heart {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #f0508a;
+  font-size: 16px;
+  font-weight: 900;
+  text-shadow: 0 0 2px #fff, 0 0 4px #fff;
+  pointer-events: none;
 }
 
 /* 縦長 3:4 の大陸の地図。凡例までシートに収まる高さにする */
@@ -4009,7 +4092,7 @@ button.bk-tab:hover {
 @media (max-height: 520px) and (orientation: landscape) {
   /* 横向き: 左に地図、右に凡例を縦に */
   .map .sheet-body { display: grid; grid-template-columns: auto 1fr; column-gap: 24px; align-items: start; overflow: hidden; }
-  .map-canvas { width: calc((100vh - 110px) * 0.75); height: calc(100vh - 110px); margin: 0; }
+  .map-canvas, .map-3d { width: calc((100vh - 110px) * 0.75); height: calc(100vh - 110px); margin: 0; }
   .map-legend { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; gap: 8px; }
   .map-legend li { white-space: nowrap; }
 }
