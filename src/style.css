@@ -5249,6 +5249,11 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   pointer-events: none;
   transform-origin: 0 0;
 }
+/* 矢印の絵は押せる（画面の外の目印へ歩く） */
+.coach-arrow svg {
+  pointer-events: auto;
+  cursor: pointer;
+}
 .coach-arrow svg {
   position: absolute;
   left: -24px;
@@ -5290,20 +5295,23 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 }
 .coach-card {
   position: fixed;
-  left: 50%;
-  top: calc(72px + var(--safe-top, 0px));
+  /* 位置は guide.ts が照らす所と重ならない所に決める */
+  left: 0;
+  top: 0;
   z-index: 23;
-  translate: -50% 0;
   width: min(460px, calc(100% - 32px));
   padding: 14px 16px 10px;
   border-radius: 22px;
-  background: #fffaf0;
+  /* 前のナビと同じく半透明（後ろが少し透ける）。カードはタップを素通りさせ、押せるのはボタンだけ（下に照らした物が来ても押せる） */
+  background: rgba(255, 255, 255, 0.74);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
+  pointer-events: none;
   color: #2b1d12;
   border: 3px solid #ffd21f;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
   font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
 }
-/* 下に出す時の位置は guide.ts が top で決める（照らす所と重ならない側・スティックの上） */
 .coach-card.is-refresh {
   animation: coach-in 0.3s ease-out;
 }
@@ -5336,6 +5344,9 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+.coach-card button {
+  pointer-events: auto;
 }
 .coach-actions button {
   min-height: 46px;
@@ -5376,6 +5387,27 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 }
 .coach-quit[hidden] {
   display: none;
+}
+/* スマホ横・背の低い画面: カードを小さく（横に寄せて置く） */
+@media (max-height: 560px) {
+  .coach-card {
+    width: min(340px, 42vw);
+    padding: 10px 12px 6px;
+  }
+  .coach-text {
+    margin: 4px 0 6px;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  .coach-actions button {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+  .coach-quit {
+    min-height: 30px;
+    margin-top: 2px;
+  }
 }
 .is-reduce-motion .coach-arrow svg,
 .is-reduce-motion .coach-card.is-refresh {

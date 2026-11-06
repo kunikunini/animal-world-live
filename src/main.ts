@@ -375,15 +375,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   })
   scene.add(player.object)
   const guideProj = new THREE.Vector3()
-  // あそびかたツアーの「いっしょに行く」: ライリーの手前（4m）まで歩く
-  guide.onWalkTo(() => {
+  // あそびかたツアーの「いっしょに行く」・照らしたライリーを押した時: ライリーの手前（2.5m）まで歩く
+  guide.onWalkTo((target) => {
+    // 照らした観察スポットを押した時は「観察スポットへ」と同じ道で歩く
+    if (target === 'spot') {
+      // 着いていればスコープを開く（「スコープをのぞく」と同じ）。まだならスポットまで歩く
+      if (arrived) void openScope()
+      else player.goTo(here.route)
+      return
+    }
     const riley = lions.find((l) => l.id === 'riley')
     if (!riley) return
     const p = player.object.position
     const dx = p.x - riley.position.x
     const dz = p.z - riley.position.z
     const d = Math.hypot(dx, dz) || 1
-    player.goTo(routeTo({ x: p.x, z: p.z }, { x: riley.position.x + (dx / d) * 4, z: riley.position.z + (dz / d) * 4 }))
+    player.goTo(routeTo({ x: p.x, z: p.z }, { x: riley.position.x + (dx / d) * 2.5, z: riley.position.z + (dz / d) * 2.5 }))
   })
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
@@ -1345,6 +1352,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         met.mark(lion.id)
         // 「〇〇のそばに来ました」の通知は出さない（頭の上の名前の札で分かる）
         guide.reach('near')
+        if (lion.id === 'riley') guide.reach('nearRiley')
       }
     }
 

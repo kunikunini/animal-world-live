@@ -353,6 +353,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const from = page
     page = next
     returnFocus = null
+    // のぞく演出（3.3 秒）の途中でページを替えると、作り直したページで演出が最初からやり直しになり、しばらく拡大されたままずれて見える。替える前に演出を終える
+    root.classList.remove('is-scope-in')
     render()
     const scroller = scrollEl()
     if (next) {
