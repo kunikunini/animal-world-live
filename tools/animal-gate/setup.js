@@ -1,0 +1,1 @@
+localStorage.setItem('awl.story.v1','1'); localStorage.setItem('awl.story.v2','1'); localStorage.setItem('awl.guide.v1','1'); localStorage.setItem('awl.guide.v2','1'); localStorage.setItem('awl.flyover.v1', JSON.stringify(['africa','north','jungle','south','water','partner','sky']));

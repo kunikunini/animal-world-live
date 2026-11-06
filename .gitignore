@@ -47,3 +47,7 @@ public/models/*
 
 # 画像生成の原本（参照画像・キャラクターシート）。DEVLOG で参照するが、原本はリポジトリの外で保管する
 artwork/
+
+# 計測ツールの作業出力（tools/animal-gate）
+tools/animal-gate/work/
+tools/animal-gate/.mainci.tmp
