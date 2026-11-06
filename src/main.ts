@@ -356,6 +356,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ウーピーで振って背骨だけ 1 に上げた（後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8 で腰 99.2〜101.6%）
       // ハイエナの群れのプリミティブ版（wildfolk）は差し替え口が無いので、その子の場所・向き・体の長さで入れ替える（replaceHost）
       { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      // マロ: 南半球の西のカピバラ 2 頭のうち中心に近い方（しずかの隣）。コピー方式でしずかの値（後ろ脚 0.7・背骨 0.98・尾 1・前脚 0.9）を流用。尾の骨は動かさない
+      { key: 'capybaraMaro', species: 'カピバラ', name: 'マロ', file: 'capybara-maro', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
