@@ -31,6 +31,7 @@ public/models/*
 !public/models/capybara-shizuka.glb
 !public/models/husky-ginga.glb
 !public/models/hyena-peter.glb
+!public/models/tapir-yumeko.glb
 !public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）

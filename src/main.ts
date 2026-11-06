@@ -309,6 +309,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ピーター: サバンナの道（スタート → スポット）の右手の草原。グラン（道の左手）と道をはさんだ向かい、ライリー（40, 5）から 22 m。プリミティブ版は無いので新しく置く。
       // 体の長さ 1.7 m は実物の成獣の目安。接地だけだと腰 80〜83%。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8 で腰 99.1〜102.3%（ピーターで測って決めた値）
       { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.8, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [6, 14] }, place: { x: 18, z: 4, yaw: -0.6, length: 1.7 } },
+      // ゆめこ: ジャングルの中心の西（ワオキツネザルの北 13 m、ティガーの反対側）。プリミティブ版は無いので新しく置く。体の長さ 2.1 m は実物の成獣の目安。
+      // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
+      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, walk: { speed: 0.6, radius: 2.5, idle: [8, 18] }, place: { x: -309, z: -6, yaw: 1.3, length: 2.1 } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
