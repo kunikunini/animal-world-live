@@ -4,7 +4,8 @@
  *   それまでに頼まれた曲は覚えておき、操作の直後に流し始める
  * - BGM と環境音はループ。切り替えはクロスフェード。デコードした曲は少しだけ持ち（iPhone のメモリ対策）、古いものは捨てる
  * - 音源が無い・読めない・AudioContext が作れない時は、黙って無音のまま続ける（操作は止めない）
- * - 音量とミュートは BGM（環境音を含む）と効果音で別々。「動きをへらす」とは独立。この端末に覚える
+ * - 音量とミュートは BGM（曲）・まわりの音（環境音）・効果音で別々。「動きをへらす」とは独立。この端末に覚える
+ *   （まわりの音は 11/6 に BGM から分けた。保存が無ければ、それまでの BGM の値を引き継ぐ）
  */
 import { playFriendChime } from '../ui/chime'
 
@@ -35,14 +36,16 @@ const VOICE_VARIANTS: Record<VoiceLine, string[]> = {
 }
 /** セリフごとの大きさ（息づかいは小さく） */
 const VOICE_GAIN: Record<VoiceLine, number> = { start: 1, jump: 0.8, land: 0.8, breath: 0.4, find: 0.9, friend: 1 }
-/** ふつうのジャンプの滞空（約 0.95 秒）より長く落ちた時だけ、着地の声 */
-const LAND_VOICE_AIR_S = 1.3
+/** ふつうのジャンプの高さ（約 2.5 m）より大きく落ちた時だけ、着地の声 */
+const LAND_VOICE_DROP_M = 4
 /** 歩き続けて息づかいが出るまでと、その間隔（秒） */
 const BREATH_AFTER_S = 5
 const BREATH_EVERY_S = 6
 
 /** ともだちになる時の音: いまの合成チャイム（既定）か、ElevenLabs で作った候補 */
 export type FriendSound = 'chime' | 'new'
+/** 音量・ミュートを別々に持つ 3 つの系統 */
+export type SoundChannel = 'bgm' | 'amb' | 'se'
 
 const BASE = `${import.meta.env.BASE_URL}audio/`
 const FADE_S = 1.8
@@ -57,6 +60,8 @@ const KEY = {
   bgmVol: 'awl.vol.bgm',
   seVol: 'awl.vol.se',
   bgmMute: 'awl.mute.bgm',
+  ambVol: 'awl.vol.amb',
+  ambMute: 'awl.mute.amb',
   seMute: 'awl.mute.se',
   friend: 'awl.friendSound',
 }
@@ -102,10 +107,15 @@ interface Layer {
   timer: number
 }
 
+const bgmVol0 = readNum(KEY.bgmVol, 0.6)
+const bgmMute0 = readStr(KEY.bgmMute) === '1'
+const ambMuteStr = readStr(KEY.ambMute)
 const state = {
-  bgmVol: readNum(KEY.bgmVol, 0.6),
+  bgmVol: bgmVol0,
+  ambVol: readNum(KEY.ambVol, bgmVol0),
   seVol: readNum(KEY.seVol, 0.8),
-  bgmMute: readStr(KEY.bgmMute) === '1',
+  bgmMute: bgmMute0,
+  ambMute: ambMuteStr === null ? bgmMute0 : ambMuteStr === '1',
   seMute: readStr(KEY.seMute) === '1',
   friend: (readStr(KEY.friend) === 'new' ? 'new' : 'chime') as FriendSound,
 }
@@ -142,8 +152,9 @@ function applyVolumes(): void {
   if (!ctx) return
   const now = ctx.currentTime
   const b = state.bgmMute ? 0 : curve(state.bgmVol) * duck
+  const a = state.ambMute ? 0 : curve(state.ambVol) * duck
   bgm.bus?.gain.setTargetAtTime(b * 0.75, now, 0.08)
-  amb.bus?.gain.setTargetAtTime(b * 0.55, now, 0.08)
+  amb.bus?.gain.setTargetAtTime(a * 0.55, now, 0.08)
   seBus?.gain.setTargetAtTime(state.seMute ? 0 : curve(state.seVol), now, 0.03)
 }
 
@@ -380,7 +391,6 @@ let voiceHero = 'yellow'
 let voiceSrc: AudioBufferSourceNode | null = null
 const voiceTurn: Partial<Record<VoiceLine, number>> = {}
 let lastJumpVoice = 0
-let jumpAt = 0
 let walkStart = 0
 let lastWalkStep = 0
 let lastBreath = 0
@@ -485,17 +495,15 @@ export const sound = {
     if (line === 'jump') {
       // ジャンプの声は続けて跳んでも 1.2 秒に 1 回まで
       const now = performance.now()
-      jumpAt = now
       if (now - lastJumpVoice < 1200) return
       lastJumpVoice = now
     }
     if (delayMs > 0) window.setTimeout(() => sayNow(line), delayMs)
     else sayNow(line)
   },
-  /** 着地: 高い所から落ちた時だけ声を出す */
-  landed(): void {
-    if (jumpAt && performance.now() - jumpAt > LAND_VOICE_AIR_S * 1000) sayNow('land')
-    jumpAt = 0
+  /** 着地: 高い所から落ちた時だけ声を出す（drop は跳んだいちばん高い所からの落差 m） */
+  landed(drop: number): void {
+    if (drop > LAND_VOICE_DROP_M) sayNow('land')
   },
   /** 歩いた 1 歩ごとに呼ぶ。歩き続けている時だけ、ときどき息づかい */
   walkStep(): void {
@@ -578,6 +586,29 @@ export const sound = {
     applyVolumes()
     listeners.forEach((fn) => fn())
   },
+  /** 系統ごとの音量（0〜1） */
+  volume(ch: SoundChannel): number {
+    return ch === 'bgm' ? state.bgmVol : ch === 'amb' ? state.ambVol : state.seVol
+  },
+  muted(ch: SoundChannel): boolean {
+    return ch === 'bgm' ? state.bgmMute : ch === 'amb' ? state.ambMute : state.seMute
+  },
+  setVolume(ch: SoundChannel, v: number): void {
+    if (ch === 'bgm') return this.setBgmVolume(v)
+    if (ch === 'se') return this.setSeVolume(v)
+    state.ambVol = Math.min(1, Math.max(0, v))
+    write(KEY.ambVol, String(state.ambVol))
+    applyVolumes()
+    listeners.forEach((fn) => fn())
+  },
+  setMuted(ch: SoundChannel, on: boolean): void {
+    if (ch === 'bgm') return this.setBgmMuted(on)
+    if (ch === 'se') return this.setSeMuted(on)
+    state.ambMute = on
+    write(KEY.ambMute, on ? '1' : '0')
+    applyVolumes()
+    listeners.forEach((fn) => fn())
+  },
   setFriendSound(v: FriendSound): void {
     state.friend = v
     write(KEY.friend, v)
@@ -600,9 +631,10 @@ export const REGION_BGM: Record<string, BgmKey> = {
   south: 'south',
   water: 'water',
   partner: 'partner',
+  sky: 'sky',
 }
 
-/** ワールドの判定から環境音へ（ふれあいワールドの環境音はまだ無い） */
+/** ワールドの判定から環境音へ（ふれあいワールド・空の世界の環境音はまだ無い） */
 export const REGION_AMB: Record<string, AmbKey> = {
   africa: 'savanna',
   jungle: 'jungle',

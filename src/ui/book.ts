@@ -23,6 +23,8 @@ export interface BookView {
   isOpen: () => boolean
   onVisit: (fn: (animal: Animal) => void) => void
   onOpenChange: (fn: (open: boolean) => void) => void
+  /** ともだちのトークを開いた時（あそびかたツアーの節目） */
+  onChatOpen: (fn: (animal: Animal) => void) => void
   /** 観察モニターから帳へ戻ってきた時、さっき押したところにフォーカスを戻す */
   restoreFocus: () => void
   setReduceMotion: (on: boolean) => void
@@ -160,6 +162,7 @@ export function createBookView(store: FriendBookStore): BookView {
     ;(focusId ? rowOf(focusId) : null)?.focus()
   }
 
+  const chatListeners: Array<(animal: Animal) => void> = []
   const openChat = (animal: Animal) => {
     lastRowId = animal.id
     // トークを開いたら見たことにする（行の印が消え、HUD とホームの点も消える）
@@ -169,6 +172,7 @@ export function createBookView(store: FriendBookStore): BookView {
     }
     listPage.hidden = true
     chat.show(animal, true)
+    for (const fn of chatListeners) fn(animal)
   }
 
   list.addEventListener('click', (e) => {
@@ -269,6 +273,9 @@ export function createBookView(store: FriendBookStore): BookView {
     },
     onOpenChange: (fn) => {
       openListeners.push(fn)
+    },
+    onChatOpen: (fn) => {
+      chatListeners.push(fn)
     },
     restoreFocus: () => {
       if (!open) return

@@ -233,6 +233,32 @@ function partnerHeight(x: number, z: number): number {
   return h
 }
 
+/**
+ * 空の世界: 雲に近い高原。まわりより約 10m 高く、峠は登り坂になる。観察スポットのまわりは石を敷いた平らな広場、
+ * そこから鳥のフライトの輪（小道）が回り、峠へも道がつながる。輪の外は花の咲く高原の草地
+ */
+const SKY = OUTER_REGIONS.find((r) => r.key === 'sky') ?? { x: -254.6, z: -254.6, walk: 100 }
+/** 高原の高さ（まわりの地面からの持ち上げ、m） */
+export const SKY_LIFT = 10
+/** 広場のまわりを回るフライトの輪の半径（m） */
+export const SKY_RING = 28
+/** 中心から峠への向き（原点の方向） */
+export const SKY_TO_ORIGIN = Math.atan2(-SKY.z, -SKY.x)
+/** 空の世界の小道までの距離（中心からのずれで測る）。フライトの輪と、輪から峠への道 */
+export function skyPathDist(lx: number, lz: number): number {
+  const ring = Math.abs(Math.hypot(lx, lz) - SKY_RING)
+  const ux = Math.cos(SKY_TO_ORIGIN)
+  const uz = Math.sin(SKY_TO_ORIGIN)
+  const t = lx * ux + lz * uz
+  const toPass = t > SKY_RING - 2 ? Math.abs(lx * uz - lz * ux) : Infinity
+  return Math.min(ring, toPass)
+}
+function skyHeight(x: number, z: number): number {
+  const r = Math.hypot(x - SKY.x, z - SKY.z)
+  const hills = simplex.fbm(x * 0.01 + 3, z * 0.01 - 7, 3, 2.0, 0.5) * 3.0 + outerNoise.fbm(x * 0.045, z * 0.045, 2, 2, 0.5) * 0.25
+  return SKY_LIFT + lerp(hills * 0.12 + 0.3, hills, smoothstep(16, 48, r))
+}
+
 const _w: BiomeWeights = emptyWeights()
 
 /**
@@ -249,6 +275,7 @@ export function terrainHeight(x: number, z: number): number {
   if (w.south > 0) h += w.south * southHeight(x, z)
   if (w.water > 0) h += w.water * waterHeight(x, z)
   if (w.partner > 0) h += w.partner * partnerHeight(x, z)
+  if (w.sky > 0) h += w.sky * skyHeight(x, z)
   return h
 }
 
@@ -481,6 +508,28 @@ function partnerColor(x: number, z: number, _h: number, slope: number, out: THRE
   if (slope < 0.9) out.lerp(colPastureDeep, Math.min(1, (0.9 - slope) * 4))
 }
 
+// 空の世界: 高原の明るい草、うす紫と白の花のまだら、広場の敷石と小道の白っぽい土、斜面の青みがかった岩
+const colAlpine = new THREE.Color('#a4d66a')
+const colAlpineDeep = new THREE.Color('#78bd52')
+const colAlpineFlower = new THREE.Color('#cdbdf2')
+const colAlpineWhite = new THREE.Color('#eef2e0')
+const colSkyStone = new THREE.Color('#d9d4c8')
+const colSkyPath = new THREE.Color('#e6dcc4')
+const colSkyRock = new THREE.Color('#9aa2b6')
+function skyColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
+  const n = detail.noise(x * 0.05 - 3, z * 0.05 + 6) * 0.5 + 0.5
+  out.copy(colAlpine).lerp(colAlpineDeep, n * 0.65)
+  const big = patch.noise(x * 0.03 - 6, z * 0.03 + 2) * 0.5 + 0.5
+  out.lerp(colAlpineFlower, Math.max(0, big - 0.62) * 1.7)
+  const small = patch.noise(x * 0.09 + 11, z * 0.09 - 4) * 0.5 + 0.5
+  out.lerp(colAlpineWhite, Math.max(0, small - 0.72) * 1.6)
+  const lx = x - SKY.x
+  const lz = z - SKY.z
+  out.lerp(colSkyStone, (1 - smoothstep(5, 8, Math.hypot(lx, lz))) * 0.85)
+  out.lerp(colSkyPath, (1 - smoothstep(1.8, 3.4, skyPathDist(lx, lz))) * 0.9)
+  if (slope < 0.9) out.lerp(colSkyRock, Math.min(1, (0.9 - slope) * 4))
+}
+
 const _cTmp = new THREE.Color()
 function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   const w = biomeAt(x, z, _w)
@@ -513,6 +562,10 @@ function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
   if (w.partner > 0) {
     partnerColor(x, z, h, slope, _cTmp)
     out.add(_cTmp.multiplyScalar(w.partner))
+  }
+  if (w.sky > 0) {
+    skyColor(x, z, h, slope, _cTmp)
+    out.add(_cTmp.multiplyScalar(w.sky))
   }
 }
 
@@ -598,7 +651,7 @@ function addSkirt(geo: THREE.BufferGeometry, segX: number, segZ: number): void {
 }
 
 /**
- * 地形。サバンナ（中央 400m 四方）はいままでの細かさ、まわりの 5 枚（北・南・西・東・南西の角）は 2 倍の粗さ。
+ * 地形。サバンナ（中央 400m 四方）はいままでの細かさ、まわりの 6 枚（北・南・西・東・南西の角・北西の角）は 2 倍の粗さ。
  * タイルごとに画面の外なら描かない。継ぎ目の頂点はサバンナの 1 つおきに重なる
  */
 export function createTerrain(): THREE.Group {
@@ -621,5 +674,7 @@ export function createTerrain(): THREE.Group {
   group.add(createTile(half + outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
   // 南西の角（-x, +z）: ふれあいワールド
   group.add(createTile(-half - outerDepth / 2, half + outerDepth / 2, outerDepth, outerDepth, outerSegs, outerSegs, mat))
+  // 北西の角（-x, -z）: 空の世界
+  group.add(createTile(-half - outerDepth / 2, -half - outerDepth / 2, outerDepth, outerDepth, outerSegs, outerSegs, mat))
   return group
 }

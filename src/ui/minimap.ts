@@ -2,7 +2,7 @@ import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
 import { Simplex2D, smoothstep } from '../world/noise'
-import { CREEK, FARM_LOOP, GOAT_ROCKS, LAGOON, savannaMapColor } from '../world/terrain'
+import { CREEK, FARM_LOOP, GOAT_ROCKS, LAGOON, SKY_RING, savannaMapColor } from '../world/terrain'
 import { getWorld } from '../data/worlds'
 import { getLang, t } from './i18n'
 
@@ -107,7 +107,7 @@ const FONT = "'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', syst
 const hex = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]
 
 // ---------------------------------------------------------------------------
-// 大陸の形: 中心 LAND_C からの向きごとの海岸までの距離。6 つのワールドを包む円と、あいだを埋める円の外形をならし、でこぼこを足す
+// 大陸の形: 中心 LAND_C からの向きごとの海岸までの距離。7 つのワールドを包む円と、あいだを埋める円の外形をならし、でこぼこを足す
 // ---------------------------------------------------------------------------
 const LAND_C = { x: -40, z: 0 }
 const LAND_DISCS = [
@@ -192,6 +192,7 @@ const GROUND: Record<RegionKey, [[number, number, number], [number, number, numb
   south: [hex('#f0a66a'), hex('#c9643a')],
   water: [hex('#fbefc6'), hex('#b9dc7a')],
   partner: [hex('#b4e27a'), hex('#7cc456')],
+  sky: [hex('#c4e68a'), hex('#94cc66')],
 }
 const SAVANNA_SAT = 1.0
 const SAVANNA_SPREAD = 0.7
@@ -328,6 +329,8 @@ const RANGES: Array<{ cx: number; cz: number; pass: boolean; style: PeakStyle; s
       water: { style: 'island', snow: false, layers: [[150, '#7f8e86', '#6cc06a'], [188, '#8aa29a', '#86cc7e'], [230, '#a2bcc2', '#b4dcb0']] },
       // ふれあいワールド: 牧場を囲むなだらかな丘
       partner: { style: 'hill', snow: false, layers: [[150, '#5fae4a', '#9ad86a'], [188, '#72b85e', '#b2e282'], [230, '#94c890', '#cdeab4']] },
+      // 空の世界: 高原を囲むとがった岩の峰（3D と同じうす紫とクリーム色）
+      sky: { style: 'peak', snow: false, layers: [[150, '#a4a2d4', '#f6ead2'], [188, '#b2b2dc', '#faf0de'], [230, '#c4c6e8', '#fdf8ee']] },
     }
     return { cx: r.x, cz: r.z, pass: false, ...looks[r.key] }
   }),
@@ -371,7 +374,7 @@ const PEAKS: Peak[] = (() => {
 const TREES: Array<{ x: number; z: number; key: RegionKey; s: number }> = (() => {
   const list: Array<{ x: number; z: number; key: RegionKey; s: number }> = []
   const n = new Simplex2D(6427)
-  const density: Partial<Record<RegionKey, number>> = { jungle: -0.25, north: 0.15, south: 0.42, partner: 0.35 }
+  const density: Partial<Record<RegionKey, number>> = { jungle: -0.25, north: 0.15, south: 0.42, partner: 0.35, sky: 0.45 }
   for (const r of OUTER_REGIONS) {
     const th = density[r.key] ?? 1
     for (let gx = -r.walk; gx <= r.walk; gx += 13) {
@@ -411,6 +414,7 @@ const REGION_LABEL_AT: Record<RegionKey, [number, number]> = {
   south: [0, 366],
   water: [300, -98],
   partner: [-258, 204],
+  sky: [-256, -318],
 }
 
 // ---------------------------------------------------------------------------
@@ -822,6 +826,22 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.fill()
     }
 
+    // 空の世界のフライトの輪（広場を回る小道。峠への道は上の峠の道と重なる）
+    const skyWorld = OUTER_REGIONS.find((r) => r.key === 'sky')
+    if (skyWorld) {
+      b.strokeStyle = C.roadEdge
+      b.lineWidth = 3.4 * u
+      b.setLineDash([])
+      b.beginPath()
+      b.arc(px(skyWorld.x), py(skyWorld.z), SKY_RING * k, 0, Math.PI * 2)
+      b.stroke()
+      b.strokeStyle = C.road
+      b.lineWidth = 1.8 * u
+      b.setLineDash([4 * u, 3 * u])
+      b.stroke()
+      b.setLineDash([])
+    }
+
     // コピエ: 岩肌の円、南の坂、頂上の台地
     b.fillStyle = C.rock
     b.beginPath()
@@ -851,7 +871,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.fill()
     }
 
-    // 観察スポット: 金の輪に白い縁（6 つのワールドそれぞれ）
+    // 観察スポット: 金の輪に白い縁（7 つのワールドそれぞれ）
     spotRing(SPOT.x, SPOT.z)
     for (const r of OUTER_REGIONS) spotRing(r.x, r.z)
     b.restore()

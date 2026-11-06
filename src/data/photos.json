@@ -1,0 +1,4 @@
+{
+  "$comment": "tools/photos-import.mjs が書く。個体の id → 顔の写真（public/faces/<id>.webp）。ここに無い子は自作の顔のまま。写真の出所は README に書く",
+  "photos": {}
+}

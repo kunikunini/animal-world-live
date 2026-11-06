@@ -48,6 +48,7 @@ import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
 import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
+import { createSoundPanel } from './ui/soundControls'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -70,6 +71,8 @@ function createShell() {
   const store = createFriendBookStore()
   const met = createEncounterStore()
   const hud = createHud()
+  // HUD の音のボタン（双眼鏡の右）と、押すと開く BGM・まわりの音・効果音の板
+  createSoundPanel()
   const observe = createObserveView(store, met)
   const book = createBookView(store)
   const home = createHome(store)
@@ -86,6 +89,12 @@ function createShell() {
     if (store.has(animal.id)) guide.reach('befriend')
   }
   observe.onBefriend(() => guide.reach('befriend'))
+  // あそびかたツアーの節目（開く・閉じる）
+  observe.onOpenChange((open) => guide.reach(open ? 'observeOpen' : 'observeClose'))
+  book.onOpenChange((open) => {
+    if (!open) guide.reach('bookClose')
+  })
+  book.onChatOpen(() => guide.reach('chat'))
   observe.onOpenChange((open) => document.body.classList.toggle('observe-open', open))
   book.onOpenChange((open) => {
     document.body.classList.toggle('book-open', open)
@@ -225,7 +234,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   // 様式化ライオン。当たり判定も岩と同じ配列に入れる
   // ほかのワールドで会える子（トラ・オオカミ）も同じ伏せの体で作り、出会いの仕組みに乗せる
-  const lions = [...LIONS.map((l) => createLion(l)), ...createResidents()]
+  const lions = [...LIONS.map((l) => createLion(l)), ...createResidents(props.colliders)]
   for (const lion of lions) {
     vividToon(lion.group)
     scene.add(lion.group)
@@ -356,11 +365,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sound.play('jump')
     sound.say('jump')
   })
-  player.onLand(() => {
+  player.onLand((drop) => {
     sound.play('land')
-    sound.landed()
+    sound.landed(drop)
   })
   scene.add(player.object)
+  const guideProj = new THREE.Vector3()
+  // あそびかたツアーの「いっしょに行く」: ライリーの手前（4m）まで歩く
+  guide.onWalkTo(() => {
+    const riley = lions.find((l) => l.id === 'riley')
+    if (!riley) return
+    const p = player.object.position
+    const dx = p.x - riley.position.x
+    const dz = p.z - riley.position.z
+    const d = Math.hypot(dx, dz) || 1
+    player.goTo(routeTo({ x: p.x, z: p.z }, { x: riley.position.x + (dx / d) * 4, z: riley.position.z + (dz / d) * 4 }))
+  })
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
 
@@ -500,6 +520,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (catalog.isOpen()) body.classList.add('is-viewing')
   }
   catalog.onOpenChange((open) => {
+    guide.reach(open ? 'scope' : 'scopeClose')
     syncInput()
     if (open) return
     // 一覧を閉じた: 世界がぼけた寄りから戻ってくる。HUD もふわっと戻る
@@ -527,6 +548,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   })
   mapView.onPick(walkTo)
   mapView.onOpenChange((open) => {
+    guide.reach(open ? 'map' : 'mapClose')
     // 地図が開いている間は、あそび方ナビのカードを下に（地図の見出しと「動物の名前」をふさがない）
     document.body.classList.toggle('map-open', open)
     syncInput()
@@ -550,6 +572,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
   shell.settings.onReduceMotionChange(applyReduceMotion)
+  player.setSensitivity(shell.settings.sensitivity)
+  shell.settings.onSensitivityChange((s) => player.setSensitivity(s))
   hud.show()
 
   // ピンを画面の端に寄せる時の余白。下は HUD（スティック・ジャンプ・観察スポットへ）の上端から測る
@@ -586,6 +610,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     water: new THREE.Color('#c4e6f4'),
     // ふれあいワールド: 春の牧場のやわらかい明るい霞（少し黄緑がかった白）
     partner: new THREE.Color('#e2efd8'),
+    // 空の世界: 雲に近い高原の澄んだ明るい青白（遠くの岩の峰が空に溶ける）
+    sky: new THREE.Color('#d8e6fb'),
   }
   // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
@@ -752,6 +778,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sunDisc: 4.0,
       sunHalo: 1.3,
     },
+    // 空の世界: 高い所の深い青空と強い日差し、照り返しは高原の明るい草。霞は遠く（澄んだ空気）
+    sky: {
+      exposure: 0.98,
+      sky: new THREE.Color('#d0e2ff'),
+      ground: new THREE.Color('#a8cf7a'),
+      intensity: 0.7,
+      sun: 2.35,
+      top: new THREE.Color('#1f5fd8'),
+      horizon: new THREE.Color('#a8d4fa'),
+      near: 140,
+      far: 560,
+      gradeSat: 1.06,
+      gradeContrast: 1.05,
+      sunElev: 24,
+      sunGlow: new THREE.Color('#fff4d6'),
+      sunDisc: 4.2,
+      sunHalo: 1.5,
+    },
   }
   const lightTarget: Light = { ...baseLight() }
   // 空の太陽の仰角と大きさ（度）。ワールドの重みで目標が変わり、ほかの光と同じ速さで寄せる
@@ -844,7 +888,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         groups.push({ species, x: l.position.x, y: l.position.y, z: l.position.z, n: 1, r: l.collider.r })
       }
     }
-    groups.sort((a, b) => b.r - a.r)
+    // 体の大きさで比べる（半径の 2 乗の合計）。小さい子がたくさんいる群れ（キンカジュー・ミーアキャットなど）より、
+    // ライオンやトラのような見ばえのする子を選ぶ（11/6 に全個体を置いて、頭数だけだと小さい子の群れが選ばれるようになったため）
+    const weight = (g: { r: number; n: number }) => g.n * (g.r / g.n) ** 2
+    groups.sort((a, b) => weight(b) - weight(a))
     const g = groups[0]
     return g ? { at: new THREE.Vector3(g.x, g.y, g.z), size: g.r / g.n } : null
   }
@@ -1042,6 +1089,25 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
     walkX = player.object.position.x
     walkZ = player.object.position.z
+    // あそびかたツアー: ライリーと観察スポットの画面の位置（暗幕の穴と矢印を合わせる）
+    if (guide.isActive()) {
+      const pp = player.object.position
+      const toScreen = (p: THREE.Vector3, lift: number) => {
+        guideProj.copy(p).setY(p.y + lift).project(camera)
+        return {
+          x: ((guideProj.x + 1) / 2) * window.innerWidth,
+          y: ((1 - guideProj.y) / 2) * window.innerHeight,
+          onScreen: guideProj.z < 1 && Math.abs(guideProj.x) < 0.92 && Math.abs(guideProj.y) < 0.92,
+          behind: guideProj.z >= 1,
+          distance: Math.hypot(p.x - pp.x, p.z - pp.z),
+        }
+      }
+      const riley = lions.find((l) => l.id === 'riley')
+      guide.frame({
+        riley: riley ? toScreen(riley.position, (riley.headHeight ?? 0.95) * riley.group.scale.y * 0.6) : null,
+        spot: toScreen(spot.position, 1.6),
+      })
+    }
     if (hero) {
       // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
       const p = player.object.position
@@ -1158,7 +1224,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 観察スポットとの距離。着いたら「観察スポットへ」を隠す
     const distance = Math.hypot(player.object.position.x - spot.position.x, player.object.position.z - spot.position.z)
     spot.update(time, distance, player.object.position)
+    const wasArrived = arrived
     arrived = distance < SPOT.arriveRadius
+    if (arrived && !wasArrived) guide.reach('spot')
     // 着いたらボタンが「スコープをのぞく」に変わる。のぞくのは押した時だけ（勝手には開かない）
     hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
 

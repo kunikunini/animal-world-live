@@ -26,10 +26,10 @@
     <meta name="twitter:title" content="ANIMAL WORLD LIVE｜世界中の動物たちと、友達になろう。" />
     <meta name="twitter:description" content="3Dのサバンナを歩いて、実在のライオンたちと出会い、自分の意思で「ともだちになる」Webプロトタイプ。" />
     <meta name="twitter:image" content="https://animal-world-live.pages.dev/og.jpg" />
-    <!-- ホームのロゴ（英字 11 文字）だけ Web フォント（Zen Maru Gothic, SIL OFL 1.1）。text= でその文字だけ取り、届くまではシステムの丸ゴシックで描く。1 行の見出しなので入れ替わっても他の要素は動かない -->
+    <!-- ホームのロゴ（英字 11 文字）と「のぞいてみる」（Take a look）だけ Web フォント（Zen Maru Gothic 900, SIL OFL 1.1）。text= でその文字だけ取り、届くまではシステムの丸ゴシックで描く。システムの丸ゴシック（ヒラギノ丸ゴ）は太さが 1 つしかなく、ボタンが細く見えるため -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&text=ANIMALWORDVE&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&text=ANIMALWORDVETakelo%E3%81%AE%E3%81%9E%E3%81%84%E3%81%A6%E3%81%BF%E3%82%8B&display=swap" />
     <link rel="stylesheet" href="/src/style.css" />
     <!-- ホームのキービジュアル: 画面の縦横比に合う 1 枚だけを先に読む（CSS の切り替えと同じ境目） -->
     <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-portrait.webp" media="(max-aspect-ratio: 13/20)" />
@@ -54,6 +54,8 @@
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
       <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></symbol>
       <symbol id="i-jump" viewBox="0 0 24 24"><path d="M12 19V6M6.5 11.5L12 6l5.5 5.5" /><path d="M6 20h12" opacity=".5" /></symbol>
+      <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13.5 14-14 .5 9-5 14-13 14z" /><path d="M5 19c3-4 6-6.5 9.5-8.5" /></symbol>
+      <symbol id="i-stick" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><circle cx="13.5" cy="10.5" r="3" fill="currentColor" stroke="none" /></symbol>
       <symbol id="i-motion" viewBox="0 0 24 24"><path d="M3 8c3 0 3-3 6-3s3 3 6 3 3-3 6-3M3 16c3 0 3-3 6-3s3 3 6 3 3-3 6-3" /></symbol>
       <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" /></symbol>
       <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6l5.5-2 6 2 5.5-2v14l-5.5 2-6-2-5.5 2z" /><path d="M9 4v14M15 6v14" /></symbol>
@@ -152,7 +154,7 @@
           <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
         <div class="sheet-body">
-          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="6 つのワールドがある大陸の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
+          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="7 つのワールドがある大陸の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
           <ul class="map-legend" aria-label="凡例" data-i18n-aria="legend">
             <li><span class="map-dot dot-you"></span><span data-i18n="you">あなた</span></li>
             <li><span class="map-dot dot-met"></span><span data-i18n="metAnimals">出会った動物</span></li>
@@ -231,20 +233,35 @@
             <span class="set-text"><strong><span data-i18n="reduceMotion">動きをへらす</span></strong><small><span data-i18n="reduceMotionDesc">画面の揺れ・アニメーションを少なくします</span></small></span>
             <input id="reduce-motion" class="switch" type="checkbox" role="switch" />
           </label>
+          <div class="set-row set-row-vol" role="group" aria-labelledby="sens-label">
+            <svg class="ico"><use href="#i-stick" /></svg>
+            <span class="set-text"><strong id="sens-label" data-i18n="sensitivity">操作の感度</strong><small data-i18n="sensitivityDesc">スティックと、ドラッグで見回す速さ</small></span>
+            <span class="vol-ctl">
+              <input id="sensitivity" class="vol" type="range" min="10" max="100" step="5" aria-labelledby="sens-label" />
+            </span>
+          </div>
           <div class="set-row set-row-vol" role="group" aria-labelledby="vol-bgm-label">
             <svg class="ico"><use href="#i-music" /></svg>
-            <span class="set-text"><strong id="vol-bgm-label" data-i18n="bgmVolume">BGM・まわりの音</strong><small data-i18n="bgmVolumeDesc">曲と、風や鳥などの音</small></span>
+            <span class="set-text"><strong id="vol-bgm-label" data-i18n="bgmVolume">BGM</strong><small data-i18n="bgmVolumeDesc">ワールドごとの曲</small></span>
             <span class="vol-ctl">
-              <input id="vol-bgm" class="vol" type="range" min="0" max="100" step="5" aria-labelledby="vol-bgm-label" />
-              <button id="mute-bgm" class="vol-mute" type="button" aria-pressed="false" aria-label="BGM を消す" data-i18n-aria="bgmMute" title="BGM を消す" data-i18n-title="bgmMute"><svg class="ico"><use href="#i-sound" /></svg></button>
+              <input id="vol-bgm" class="vol" type="range" min="0" max="100" step="5" data-vol="bgm" aria-labelledby="vol-bgm-label" />
+              <button id="mute-bgm" class="vol-mute" type="button" data-mute="bgm" aria-pressed="false" aria-label="BGM を消す" title="BGM を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
+            </span>
+          </div>
+          <div class="set-row set-row-vol" role="group" aria-labelledby="vol-amb-label">
+            <svg class="ico"><use href="#i-leaf" /></svg>
+            <span class="set-text"><strong id="vol-amb-label" data-i18n="ambVolume">まわりの音</strong><small data-i18n="ambVolumeDesc">風や鳥・水などの音</small></span>
+            <span class="vol-ctl">
+              <input id="vol-amb" class="vol" type="range" min="0" max="100" step="5" data-vol="amb" aria-labelledby="vol-amb-label" />
+              <button id="mute-amb" class="vol-mute" type="button" data-mute="amb" aria-pressed="false" aria-label="まわりの音を消す" title="まわりの音を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
             </span>
           </div>
           <div class="set-row set-row-vol" role="group" aria-labelledby="vol-se-label">
             <svg class="ico"><use href="#i-sound" /></svg>
             <span class="set-text"><strong id="vol-se-label" data-i18n="seVolume">効果音</strong><small data-i18n="seVolumeDesc">足音・ボタン・お知らせなど</small></span>
             <span class="vol-ctl">
-              <input id="vol-se" class="vol" type="range" min="0" max="100" step="5" aria-labelledby="vol-se-label" />
-              <button id="mute-se" class="vol-mute" type="button" aria-pressed="false" aria-label="効果音を消す" data-i18n-aria="seMute" title="効果音を消す" data-i18n-title="seMute"><svg class="ico"><use href="#i-sound" /></svg></button>
+              <input id="vol-se" class="vol" type="range" min="0" max="100" step="5" data-vol="se" aria-labelledby="vol-se-label" />
+              <button id="mute-se" class="vol-mute" type="button" data-mute="se" aria-pressed="false" aria-label="効果音を消す" title="効果音を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
             </span>
           </div>
           <div class="set-row set-row-lang" role="group" aria-labelledby="friend-sound-label">
@@ -348,20 +365,6 @@
     </div>
 
     <!-- あそび方ナビ: 初回だけ自動で出る小さなカード。実際の操作で次へ進む。設定からもう一度出せる -->
-    <div id="guide" class="guide" hidden>
-      <span class="guide-ico" aria-hidden="true"><svg class="ico ico-fill"><use href="#i-bino" /></svg></span>
-      <div class="guide-main">
-        <div class="guide-head">
-          <span class="guide-title"><span data-i18n="guideTitle">あそび方ナビ</span> <span id="guide-count" class="guide-count"></span></span>
-          <button id="guide-skip" class="guide-btn" type="button"><span data-i18n="guideSkip">スキップ</span></button>
-        </div>
-        <p id="guide-text" class="guide-text" role="status" aria-live="polite"></p>
-        <span class="guide-bar" aria-hidden="true"><i></i></span>
-      </div>
-      <span class="guide-spark s1" aria-hidden="true">✦</span>
-      <span class="guide-spark s2" aria-hidden="true">✦</span>
-      <span class="guide-spark s3" aria-hidden="true">✦</span>
-    </div>
 
     <div id="hud" class="hud" hidden>
       <div class="hud-nav">
@@ -369,6 +372,22 @@
         <button id="go-home" class="icon-btn" type="button" aria-label="ホームへ" data-i18n-aria="goHome" title="ホームへ" data-i18n-title="goHome"><svg class="ico"><use href="#i-home" /></svg></button>
       </div>
       <button id="goto-spot" class="btn btn-hero hud-spot" type="button" aria-label="観察スポットへ" data-i18n-aria="gotoSpot" title="観察スポットへ" data-i18n-title="gotoSpot"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span class="hud-spot-text"><span data-i18n="gotoSpot">観察スポットへ</span></span><span class="hud-spot-tail" aria-hidden="true"></span></button>
+      <!-- 音: 双眼鏡の右。押すと BGM・まわりの音・効果音のオン・オフと音量の板が開く。絵は生成画像（artwork/ui-sound、出所は README） -->
+      <button id="hud-sound" class="icon-btn hud-sound" type="button" aria-expanded="false" aria-controls="sound-panel" aria-label="音の設定" data-i18n-aria="soundPanel" title="音の設定" data-i18n-title="soundPanel"><svg class="ico hud-sound-fallback" aria-hidden="true"><use href="#i-sound" /></svg><img src="/ui/sound-on.webp" alt="" width="160" height="160" draggable="false" /></button>
+      <div id="sound-panel" class="sound-panel" hidden role="group" aria-label="音の設定" data-i18n-aria="soundPanel">
+        <div class="snd-row">
+          <button class="snd-toggle" type="button" data-mute="bgm" aria-pressed="false"><svg class="ico"><use href="#i-music" /></svg><span data-i18n="bgmVolume">BGM</span><i class="snd-state" aria-hidden="true"></i></button>
+          <input class="vol" type="range" min="0" max="100" step="5" data-vol="bgm" aria-label="BGM" data-i18n-aria="bgmVolume" />
+        </div>
+        <div class="snd-row">
+          <button class="snd-toggle" type="button" data-mute="amb" aria-pressed="false"><svg class="ico"><use href="#i-leaf" /></svg><span data-i18n="ambVolume">まわりの音</span><i class="snd-state" aria-hidden="true"></i></button>
+          <input class="vol" type="range" min="0" max="100" step="5" data-vol="amb" aria-label="まわりの音" data-i18n-aria="ambVolume" />
+        </div>
+        <div class="snd-row">
+          <button class="snd-toggle" type="button" data-mute="se" aria-pressed="false"><svg class="ico"><use href="#i-sound" /></svg><span data-i18n="seVolume">効果音</span><i class="snd-state" aria-hidden="true"></i></button>
+          <input class="vol" type="range" min="0" max="100" step="5" data-vol="se" aria-label="効果音" data-i18n-aria="seVolume" />
+        </div>
+      </div>
       <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" data-i18n-aria="jump" title="ジャンプ" data-i18n-title="jump"><svg class="ico"><use href="#i-jump" /></svg></button>
       <div id="fps" class="fps" hidden></div>
     </div>

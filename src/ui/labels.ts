@@ -60,6 +60,7 @@ export function createWorldLabels(): WorldLabels {
     add: (id, name) => {
       const el = document.createElement('div')
       el.className = 'spot-label lion-label'
+      el.dataset.id = id
       el.hidden = true
       el.setAttribute('aria-hidden', 'true')
       const nameEl = document.createElement('span')

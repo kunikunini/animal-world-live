@@ -10,7 +10,14 @@ import { createFarmfolk } from './farmfolk'
 import type { FarmKind } from './farmfolk'
 import { GOAT_ROCKS, farmPens, terrainHeight } from './terrain'
 import type { WaterfolkKind } from './waterfolk'
-import { JUNGLE_PERCH } from './biomes'
+import { JUNGLE_PERCH, skyPerches } from './biomes'
+import { createSkyfolk, mergeStatic } from './skyfolk'
+import { createWildfolk } from './wildfolk'
+import type { WildKind } from './wildfolk'
+import type { Collider } from './props'
+import { KOPJE, LIONS, WATERHOLE } from './layout'
+import { isWalkable } from './regions'
+import type { SkyKind, SkyLook } from './skyfolk'
 import { OUTER_REGIONS } from './regions'
 
 /**
@@ -157,8 +164,202 @@ function createFarmResidents(out: Lion[]): void {
   }
 }
 
+/**
+ * 空の世界の鳥（名簿の 27 種 39 羽すべて）。種ごとに組み方（kind）・色（look）・大きさを決め、
+ * 止まり木の列（biomes.ts の skyPerches）に名簿の並びで順に置く。小さい種は見つけやすいよう本物より大きめ。
+ * 色は種の目印で、個体の羽色の再現ではない
+ */
+interface SkySpecies {
+  kind: SkyKind
+  perch: 'hawk' | 'owl' | 'parrot' | 'vulture'
+  size: number
+  look: SkyLook
+}
+const BEAK_DARK = '#3a3438'
+const BEAK_PALE = '#e8dcc4'
+const SKY_SPECIES: Record<string, SkySpecies> = {
+  // インコ・オウム
+  ベニコンゴウインコ: { kind: 'parrot', perch: 'parrot', size: 1.35, look: { body: '#d8342c', belly: '#d8342c', wing: '#2f8a4a', accent: '#2a64c8', tail: '#c8302a', face: '#f4ece4', beak: BEAK_PALE, longTail: true } },
+  ヒメコンゴウインコ: { kind: 'parrot', perch: 'parrot', size: 1.0, look: { body: '#3faa4a', belly: '#5cbc5a', wing: '#2f9442', accent: '#d8342c', face: '#f4ece4', beak: BEAK_DARK, longTail: true } },
+  タイハクオウム: { kind: 'parrot', perch: 'parrot', size: 1.2, look: { body: '#f6f4ee', belly: '#ffffff', crest: '#ffffff', beak: BEAK_DARK } },
+  キバタン: { kind: 'parrot', perch: 'parrot', size: 1.2, look: { body: '#f6f4ee', belly: '#ffffff', crest: '#ffd84a', beak: BEAK_DARK } },
+  ヨウム: { kind: 'parrot', perch: 'parrot', size: 1.05, look: { body: '#8c9096', belly: '#a2a6ac', wing: '#7a7e84', tail: '#d8342c', face: '#dcdee2', beak: BEAK_DARK } },
+  オカメインコ: { kind: 'parrot', perch: 'parrot', size: 0.85, look: { body: '#8c8c92', belly: '#9a9aa0', wing: '#7c7c82', accent: '#f4f2ec', head: '#f4dc6a', crest: '#f4dc6a', cheek: '#f08a3a', beak: '#9a9aa0', longTail: true } },
+  // フクロウ（耳のような羽角があるのはミミズク・コノハズク）
+  メンフクロウ: { kind: 'owl', perch: 'owl', size: 1.15, look: { body: '#d8ae72', belly: '#f6efe2', face: '#fbf8f2', rim: '#c89a62', beak: BEAK_PALE } },
+  アカアシモリフクロウ: { kind: 'owl', perch: 'owl', size: 1.1, look: { body: '#7a5236', belly: '#c89a6e', face: '#b88a5e', rim: '#5a3a24', beak: '#e8c860' } },
+  モリフクロウ: { kind: 'owl', perch: 'owl', size: 1.05, look: { body: '#8a5e3a', belly: '#c8a072', face: '#c49a6c', rim: '#6a4428', beak: BEAK_PALE } },
+  ナンベイヒナフクロウ: { kind: 'owl', perch: 'owl', size: 0.95, look: { body: '#6a4a32', belly: '#d8bc94', face: '#a8805a', rim: '#4a3020', beak: BEAK_PALE } },
+  オオフクロウ: { kind: 'owl', perch: 'owl', size: 1.3, look: { body: '#5e4030', belly: '#d8b88a', face: '#c8a272', rim: '#3e2a1e', beak: BEAK_PALE } },
+  ウラルフクロウ: { kind: 'owl', perch: 'owl', size: 1.2, look: { body: '#bcb4a6', belly: '#e8e2d6', face: '#e4ded2', rim: '#8a8274', beak: '#e8c860' } },
+  ベンガルワシミミズク: { kind: 'owl', perch: 'owl', size: 1.4, look: { body: '#a07a52', belly: '#e2c89c', face: '#c8a676', rim: '#5a3e28', iris: '#ff9a1f', beak: BEAK_DARK, tufts: true } },
+  ユーラシアワシミミズク: { kind: 'owl', perch: 'owl', size: 1.5, look: { body: '#9a6e44', belly: '#dcb684', face: '#c09a6a', rim: '#4a3220', iris: '#ff8a1a', beak: BEAK_DARK, tufts: true } },
+  ワシミミズク: { kind: 'owl', perch: 'owl', size: 1.4, look: { body: '#8a6a4a', belly: '#e6d4b6', face: '#c8915a', rim: '#3e2c1e', iris: '#ffd030', beak: BEAK_DARK, tufts: true } },
+  クロワシミミズク: { kind: 'owl', perch: 'owl', size: 1.45, look: { body: '#b4aca0', belly: '#ece6dc', face: '#e6e0d6', rim: '#5a524a', beak: BEAK_PALE, tufts: true } },
+  'ベンガル×ワシミミズク': { kind: 'owl', perch: 'owl', size: 1.4, look: { body: '#946e48', belly: '#e0c294', face: '#c4a070', rim: '#4e3624', iris: '#ff9a1f', beak: BEAK_DARK, tufts: true } },
+  アビシニアンワシミミズク: { kind: 'owl', perch: 'owl', size: 1.25, look: { body: '#7a5a40', belly: '#d6bc98', face: '#bc9c78', rim: '#4a3424', iris: '#f08a2a', beak: BEAK_DARK, tufts: true } },
+  アフリカワシミミズク: { kind: 'owl', perch: 'owl', size: 1.15, look: { body: '#a0907e', belly: '#e8dccb', face: '#d8ccbc', rim: '#5a4a3c', iris: '#ffd030', beak: BEAK_DARK, tufts: true } },
+  アフリカオオコノハズク: { kind: 'owl', perch: 'owl', size: 0.95, look: { body: '#9c9690', belly: '#e0dcd6', face: '#fbfaf6', rim: '#26242a', iris: '#ff8a1a', beak: BEAK_PALE, tufts: true } },
+  インドオオコノハズク: { kind: 'owl', perch: 'owl', size: 0.9, look: { body: '#a08262', belly: '#d8c4a4', face: '#c8b08c', rim: '#5a4430', iris: '#e87a2a', beak: BEAK_PALE, tufts: true } },
+  スピックスコノハズク: { kind: 'owl', perch: 'owl', size: 0.85, look: { body: '#8a7a68', belly: '#d6ccbc', face: '#c4b8a6', rim: '#3e3428', iris: '#ffd030', beak: BEAK_PALE, tufts: true } },
+  コキンメフクロウ: { kind: 'owl', perch: 'owl', size: 0.85, look: { body: '#8a6e52', belly: '#e6d8c2', face: '#d8c8b0', rim: '#6a5038', iris: '#ffd84a', beak: '#c8b878' } },
+  // タカ・ハヤブサ
+  ハリスホーク: { kind: 'hawk', perch: 'hawk', size: 1.3, look: { body: '#3e2a20', belly: '#4a3226', accent: '#a04a24', tail: '#2e2018', iris: '#4a2a14', beak: BEAK_DARK } },
+  ワシノスリ: { kind: 'hawk', perch: 'hawk', size: 1.5, look: { body: '#3c4048', belly: '#ece8e0', wing: '#5a5e68', tail: '#3a3c42', head: '#3c4048', beak: BEAK_DARK } },
+  ラナーハヤブサ: { kind: 'hawk', perch: 'hawk', size: 1.1, look: { body: '#7a7e88', belly: '#f0e2ca', wing: '#6a6e78', head: '#c47a4a', face: '#3a3438', beak: '#3a4a6a' } },
+  // コンドル
+  ヒメコンドル: { kind: 'vulture', perch: 'vulture', size: 1.5, look: { body: '#2e2622', belly: '#3a302a', wing: '#2a2420', accent: '#8a8078', head: '#c8443a', beak: BEAK_PALE } },
+}
+
+function createSkyResidents(out: Lion[]): void {
+  const perches = skyPerches()
+  const used = { hawk: 0, owl: 0, parrot: 0, vulture: 0 }
+  for (const animal of ANIMALS) {
+    if (animal.world !== 'sky') continue
+    const sp = SKY_SPECIES[animal.species]
+    if (!sp) continue
+    const p = perches[sp.perch][used[sp.perch]++]
+    if (!p) continue
+    // 止まり木の上で見つけやすいよう、どの種も 1.4 倍（水の世界のペンギンと同じくらいの見え方）
+    out.push(createSkyfolk({ id: animal.id, kind: sp.kind, look: sp.look, x: p.x, y: p.y, z: p.z, yaw: p.face, size: sp.size * 1.4 }))
+  }
+}
+
+/**
+ * 名簿のうち、上の表でまだ置いていない子（2026-11-06、全個体を置く）。種ごとに集まる場所（anchor、ワールドの中心からのずれ。
+ * サバンナは原点から）と広がり（spread）を決め、残りの子を名簿の並びで、木や岩の当たり判定・ほかの子・観察スポットを避けた空き地へ置く。
+ * 向きはワールドの中心（観察スポット）の方。形は既存の目印（オオカミ・キツネ・クマ・カンガルーなど。ハスキー・ギンギツネ・アカカンガルー・
+ * ミーアキャット・ウッドチャックは毛色だけ変えた近い形）と、wildfolk.ts の新しい目印。ギープは形の手がかりが無いので、ここでも置かない
+ */
+type Make = (at: { id: string; x: number; z: number; yaw: number; size: number }) => Lion
+const lionLike = (species: NonNullable<LionOptions['species']>, coat?: string): Make => (at) => createLion({ ...at, species, coat })
+const upright = (variant: UprightVariant, coat?: string): Make => (at) => createKangaroo({ ...at, variant, coat })
+const wild = (kind: WildKind): Make => (at) => createWildfolk({ ...at, kind })
+interface Extra {
+  species: string
+  region: 'africa' | 'north' | 'jungle' | 'south' | 'water' | 'partner'
+  at: [number, number]
+  spread: number
+  size: number
+  make: Make
+}
+const EXTRA: Extra[] = [
+  // サバンナ（原点から）: スポーンからコピエへの道の西にミーアキャットの群れ（スポーンからライリーへの見通しをふさがない）、西の草原にハイエナ、水場の南にカメ
+  { species: 'ミーアキャット', region: 'africa', at: [-14, 48], spread: 2.6, size: 0.38, make: upright('prairie', '#cdb48e') },
+  { species: 'ブチハイエナ', region: 'africa', at: [-44, 28], spread: 3, size: 1.1, make: wild('hyena') },
+  { species: 'ラーテル', region: 'africa', at: [30, 50], spread: 1, size: 1.1, make: wild('ratel') },
+  { species: 'スナネコ', region: 'africa', at: [-30, 52], spread: 1, size: 1.3, make: wild('sandcat') },
+  { species: 'アルダブラゾウガメ', region: 'africa', at: [58, 14], spread: 1, size: 1.6, make: wild('aldabra') },
+  { species: 'ケヅメリクガメ', region: 'africa', at: [63, 19], spread: 2.4, size: 1.0, make: wild('sulcata') },
+  { species: 'パンケーキリクガメ', region: 'africa', at: [54, 19], spread: 1.2, size: 0.6, make: wild('pancake') },
+  // ジャングル
+  { species: 'ワオキツネザル', region: 'jungle', at: [-8, 12], spread: 4, size: 0.4, make: upright('lemur') },
+  { species: 'キンカジュー', region: 'jungle', at: [11, -5], spread: 4, size: 0.36, make: lionLike('kinkajou') },
+  { species: 'ビントロング', region: 'jungle', at: [10, -13], spread: 2, size: 0.48, make: lionLike('binturong') },
+  { species: 'アカハナグマ', region: 'jungle', at: [-11, -4], spread: 3.5, size: 1.2, make: wild('coati') },
+  { species: 'アメリカバク', region: 'jungle', at: [-3, -13], spread: 1, size: 1.0, make: wild('tapir') },
+  { species: 'コモンリスザル', region: 'jungle', at: [13, 4], spread: 1, size: 1.8, make: wild('squirrelmonkey') },
+  { species: 'コモンマーモセット', region: 'jungle', at: [14, 8], spread: 1, size: 1.9, make: wild('marmoset') },
+  { species: 'スローロリス', region: 'jungle', at: [15, 0], spread: 1, size: 1.9, make: wild('loris') },
+  { species: 'シャムワニ', region: 'jungle', at: [-15, 6], spread: 1, size: 1.3, make: wild('croc') },
+  { species: 'メガネカイマン', region: 'jungle', at: [-15, 11], spread: 1, size: 1.0, make: wild('caiman') },
+  { species: 'ビルマニシキヘビ', region: 'jungle', at: [6, 15], spread: 2.5, size: 1.2, make: wild('python') },
+  // 北の世界
+  { species: 'ホッキョクオオカミ', region: 'north', at: [0, -12], spread: 6, size: 0.82, make: lionLike('wolf') },
+  { species: 'シベリアンハスキー', region: 'north', at: [-8, 10], spread: 4, size: 0.74, make: lionLike('wolf', '#8a929e') },
+  { species: 'ツキノワグマ', region: 'north', at: [14, 3], spread: 1, size: 0.95, make: lionLike('bear') },
+  { species: 'ギンギツネ', region: 'north', at: [-14, 5], spread: 1, size: 0.55, make: lionLike('fox', '#4a4a54') },
+  { species: 'ホンドタヌキ', region: 'north', at: [-9, -12], spread: 1, size: 1.2, make: wild('tanuki') },
+  { species: 'ウッドチャック', region: 'north', at: [10, 11], spread: 1, size: 0.5, make: upright('prairie', '#86643f') },
+  { species: 'プレーリードッグ', region: 'north', at: [5.6, 10.8], spread: 1, size: 0.32, make: upright('prairie') },
+  { species: 'ヤマアラシ', region: 'north', at: [12, -8], spread: 1, size: 1.2, make: wild('porcupine') },
+  { species: 'アメリカビーバー', region: 'north', at: [15, -4], spread: 1, size: 1.2, make: wild('beaver') },
+  { species: 'ニホンザル', region: 'north', at: [-3, 14], spread: 1, size: 1.5, make: wild('macaque') },
+  // 南半球
+  { species: 'オオカンガルー', region: 'south', at: [2, 12], spread: 5, size: 0.95, make: upright('kangaroo') },
+  { species: 'アカカンガルー', region: 'south', at: [8, 14], spread: 1, size: 1.0, make: upright('kangaroo', '#b8643c') },
+  { species: 'パルマワラビー', region: 'south', at: [13, 9], spread: 3, size: 0.6, make: upright('wallaby') },
+  { species: 'カピバラ', region: 'south', at: [-13, 7], spread: 1, size: 0.76, make: lionLike('capybara') },
+  { species: 'マーラ', region: 'south', at: [-9, 16], spread: 3, size: 0.49, make: lionLike('mara') },
+  // 水の世界: 潟のふちのペリカンのそば
+  { species: 'モモイロペリカン', region: 'water', at: [8, -6.5], spread: 1.5, size: 1.1, make: (at) => createWaterfolk({ ...at, kind: 'pelican' }) },
+]
+
+/** EXTRA の子を、当たり判定を避けた空き地へ置く */
+function createExtraResidents(out: Lion[], colliders: Collider[]): void {
+  const placedIds = new Set(out.map((l) => l.id))
+  for (const l of LIONS) placedIds.add(l.id)
+  // 置いた子（と、サバンナのライオン・グラン）の場所と半径
+  const bodies: Array<{ x: number; z: number; r: number }> = out.map((l) => ({ x: l.position.x, z: l.position.z, r: l.collider.r }))
+  for (const l of LIONS) bodies.push({ x: l.x, z: l.z, r: 1.4 })
+  bodies.push({ x: -22, z: 14, r: 2 })
+  const free = (x: number, z: number, r: number, cx: number, cz: number, africa: boolean) => {
+    if (!isWalkable(x, z)) return false
+    if (africa) {
+      if (Math.hypot(x - KOPJE.x, z - KOPJE.z) < KOPJE.radius + 3) return false
+      if (Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) < WATERHOLE.radius + 1.5) return false
+    } else if (Math.hypot(x - cx, z - cz) < 4) return false
+    for (const c of colliders) if (Math.hypot(x - c.x, z - c.z) < c.r + r + 0.4) return false
+    for (const b of bodies) if (Math.hypot(x - b.x, z - b.z) < b.r + r + 0.35) return false
+    return true
+  }
+  for (const e of EXTRA) {
+    const region = e.region === 'africa' ? { x: 0, z: 0 } : OUTER_REGIONS.find((g) => g.key === e.region)
+    if (!region) continue
+    const left = ANIMALS.filter((a) => a.species === e.species && !placedIds.has(a.id))
+    const ax = region.x + e.at[0]
+    const az = region.z + e.at[1]
+    const r = Math.max(0.3, 0.45 * e.size)
+    left.forEach((animal, i) => {
+      // 金角で広げていき、空いた所が見つかるまで少しずつ外へ
+      let x = ax
+      let z = az
+      for (let k = 0; k < 80; k++) {
+        const n = i + k * left.length
+        const rr = e.spread * Math.sqrt((n + 0.5) / Math.max(1, left.length)) * (k > 0 ? 1 + k * 0.08 : 1)
+        const a = n * 2.39996
+        x = ax + Math.cos(a) * rr
+        z = az + Math.sin(a) * rr
+        if (free(x, z, r, region.x, region.z, e.region === 'africa')) break
+      }
+      const cx = e.region === 'africa' ? 0 : region.x
+      const cz = e.region === 'africa' ? 30 : region.z
+      const yaw = Math.atan2(cx - x, cz - z) + Math.sin(i * 1.7) * 0.5
+      const lion = e.make({ id: animal.id, x, z, yaw, size: e.size })
+      // 描く回数を抑える（1 頭 40 個ほどの部品を数個に）
+      mergeStatic(lion.group)
+      out.push(lion)
+      placedIds.add(animal.id)
+      bodies.push({ x, z, r: lion.collider.r })
+    })
+  }
+  // ふれあいワールド: 岩場が込み合うので、残りのヤギ 4 頭は岩場の入り口の前の草地に
+  const partner = OUTER_REGIONS.find((g) => g.key === 'partner')
+  if (partner) {
+    const goats = ANIMALS.filter((a) => a.species === 'ヤギ' && !placedIds.has(a.id))
+    const gx = partner.x + GOAT_ROCKS.dx + Math.cos(GOAT_ROCKS.gate) * (GOAT_ROCKS.radius + 3.5)
+    const gz = partner.z + GOAT_ROCKS.dz + Math.sin(GOAT_ROCKS.gate) * (GOAT_ROCKS.radius + 3.5)
+    goats.forEach((animal, i) => {
+      let x = gx
+      let z = gz
+      for (let k = 0; k < 60; k++) {
+        const rr = 2.2 * Math.sqrt(i + 0.5 + k * goats.length) * 0.7
+        const a = (i + k * goats.length) * 2.39996
+        x = gx + Math.cos(a) * rr
+        z = gz + Math.sin(a) * rr
+        if (free(x, z, 0.5, partner.x, partner.z, false)) break
+      }
+      const goat = createFarmfolk({ id: animal.id, kind: 'goat', x, z, yaw: Math.atan2(partner.x - x, partner.z - z) + Math.sin(i * 2.1) * 0.6, size: 1.05 })
+      mergeStatic(goat.group)
+      out.push(goat)
+      placedIds.add(animal.id)
+      bodies.push({ x, z, r: 0.5 })
+    })
+  }
+}
+
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
-export function createResidents(): Lion[] {
+export function createResidents(colliders: Collider[] = []): Lion[] {
   const out: Lion[] = []
   for (const r of RESIDENTS) {
     const animal = r.name
@@ -193,6 +394,10 @@ export function createResidents(): Lion[] {
     )
   }
   createFarmResidents(out)
+  createSkyResidents(out)
+  createExtraResidents(out, colliders)
+  // 描く回数を抑える: 動かない部品をまとめる（首・尾・体のまとまりと名前のある耳は残すので、動きと生成モデルへの差し替えはそのまま）
+  for (const lion of out) mergeStatic(lion.group)
   // 小さい子は影の読み取りのずれ（normalBias 1.8m）で体がまだらに暗くなるので、影は受けず落とすだけにする
   for (const lion of out) {
     if (lion.group.scale.x >= 0.75) continue
