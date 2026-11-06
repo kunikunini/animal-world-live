@@ -74,6 +74,28 @@
       } catch (e) {}
       // JS（本体）が動かない時の保険: 7 秒で消えたらホームの動きも動かす
       setTimeout(function () { document.documentElement.classList.remove('is-splash') }, 7600)
+      // 音の許可: ブラウザは最初の操作まで音を出させない。本体（JS、約 1MB）が届く前のタップでも許可を取れるよう、
+      // ここで操作を待って AudioContext を動かしておく（src/audio/sound.ts が同じ AudioContext を引き継ぐ）。
+      // iPhone は touchend の中でないと動かないので、動くまで操作のたびに試す
+      ;(function () {
+        var AC = window.AudioContext || window.webkitAudioContext
+        if (!AC) return
+        var evs = ['pointerdown', 'keydown', 'touchend']
+        function early() {
+          try {
+            var ac = window.__awlAudio || (window.__awlAudio = new AC())
+            if (ac.state !== 'running') {
+              ac.resume()
+              var s = ac.createBufferSource()
+              s.buffer = ac.createBuffer(1, 1, 22050)
+              s.connect(ac.destination)
+              s.start(0)
+            }
+            if (ac.state === 'running') evs.forEach(function (t) { window.removeEventListener(t, early, true) })
+          } catch (e) {}
+        }
+        evs.forEach(function (t) { window.addEventListener(t, early, true) })
+      })()
     </script>
     <!-- 自作 SVG アイコン。OS の絵文字は使わない -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
