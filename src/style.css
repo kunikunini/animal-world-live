@@ -1065,13 +1065,14 @@ button {
   gap: 10px;
 }
 
-/* 木の枠。中で絵を横に引き抜く */
+/* 木の枠。中でページがめくれる */
 .story-frame {
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 2;
   border-radius: 18px;
   overflow: hidden;
+  perspective: 1400px;
   background: #13192b;
   box-shadow:
     0 0 0 9px #b57b3f,
@@ -1092,19 +1093,46 @@ button {
   overflow: hidden;
 }
 
-/* 次のコマは上に重なって、ゆっくり溶けて現れる（少し大きい所から落ち着く）。7 つのワールドは速く */
-.story-card.is-enter {
-  animation: st-dissolve 0.85s ease-out both;
+/* 前のコマが紙芝居のページのように左の端を軸にめくれて、下の次のコマが現れる。7 つのワールドは速く */
+.story-card.is-leave,
+.story-card.is-leave-quick {
+  z-index: 2;
+  transform-origin: 0% 50%;
+  backface-visibility: hidden;
+  pointer-events: none;
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.45);
 }
 
-.story-card.is-enter-quick {
-  animation: st-dissolve 0.45s ease-out both;
+.story-card.is-leave { animation: st-turn 1.1s cubic-bezier(0.45, 0, 0.3, 1) both; }
+.story-card.is-leave-quick { animation: st-turn 0.6s cubic-bezier(0.45, 0, 0.3, 1) both; }
+
+/* めくれる面に落ちる影 */
+.story-card.is-leave::after,
+.story-card.is-leave-quick::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%);
+  opacity: 0;
+  animation: st-turn-shade inherit;
+  animation-duration: inherit;
+  animation-timing-function: inherit;
 }
 
-@keyframes st-dissolve {
-  from { opacity: 0; transform: scale(1.04); }
-  to { opacity: 1; transform: none; }
+@keyframes st-turn {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(100deg); }
 }
+
+@keyframes st-turn-shade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 一時停止: 絵の動き・帯・仕掛けを止める（音は sound.setPaused） */
+.story.is-paused .story-frame *,
+.story.is-paused .story-seg i { animation-play-state: paused !important; }
 
 .story-img {
   position: absolute;
@@ -1554,9 +1582,10 @@ button {
   letter-spacing: 0.01em;
   color: #ffd233;
   text-align: center;
-  -webkit-text-stroke: 0.08em #1f2a44;
+  /* 太い黒い輪郭（stroke は fill の下に描くので、見える太さは半分） */
+  -webkit-text-stroke: 0.18em #000;
   paint-order: stroke fill;
-  text-shadow: 0 0.12em 0 #1f2a44, 0 0.25em 0.3em rgba(0, 0, 0, 0.35);
+  text-shadow: 0 0.12em 0 #000, 0 0.25em 0.3em rgba(0, 0, 0, 0.4);
   opacity: 0;
   scale: 0.6;
   transition: opacity 0.4s, scale 0.6s cubic-bezier(0.2, 1.4, 0.4, 1);
@@ -1564,14 +1593,17 @@ button {
 
 .logo-on .st-logo { opacity: 1; scale: 1; }
 
-/* 動きをへらす: カメラの寄りと引き抜きをやめて、フェードだけ */
+/* 動きをへらす: カメラの寄りとめくりをやめて、フェードだけ */
 .story.is-still .story-img { animation: none; }
-.story.is-still .story-card.is-enter,
-.story.is-still .story-card.is-enter-quick { animation: st-fade-in 0.3s ease both; }
+.story.is-still .story-card.is-leave,
+.story.is-still .story-card.is-leave-quick { animation: st-fade-out 0.3s ease both; box-shadow: none; }
+.story.is-still .story-card.is-leave::after,
+.story.is-still .story-card.is-leave-quick::after { display: none; }
 .story.is-still :is(.st-star, .st-cta, .st-book-heart, .btn-hero, .st-burst i) { animation: none; }
 .story.is-still .st-world { animation: none; }
 
 @keyframes st-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes st-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* スマホ横: 枠を左、言葉とボタンを右に */
 @media (max-height: 520px) and (orientation: landscape) {

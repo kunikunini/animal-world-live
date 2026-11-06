@@ -563,6 +563,12 @@ export const sound = {
   stopNarration(): void {
     stopNarration()
   },
+  /** 一時停止（おはなし）: 音の全部を止めて、続ける時に同じ所から鳴らす（AudioContext を止める） */
+  setPaused(on: boolean): void {
+    if (!ctx) return
+    if (on && ctx.state === 'running') void ctx.suspend()
+    else if (!on && ctx.state === 'suspended') void ctx.resume()
+  },
   /** 物語の間の曲（ループしない 1 本）。ホームの曲は止め、終わったら戻す */
   setStoryBgm(on: boolean): void {
     if (storyOn === on) return

@@ -12,8 +12,9 @@ import { hideView, showView } from './transition'
  * → 収録映像で本当の姿も見られる → ともだちになるかは きみが決める → ともだち帳 → 7 つのワールド → みんなで。
  * 絵は期間中に画像生成で作ったもの（出所は README）。言葉は全部 HTML で重ね、漢字は小学校までで全部ルビ。
  * ナレーションは黄色いパーカーの子の声（ElevenLabs）、最後の一言は 6 人全員。間はサバンナの曲（ループしない 1 本）。
- * コマは自動で進み（1 コマ 5〜8 秒、ナレーションが終わるまで）、絵を押すか「つぎへ」で先へ、「とばす」・Esc でいつでも終われる。
- * 絵が読めなくても色の地と言葉だけで続く（白画面にしない）。「動きをへらす」ではカメラの寄りと引き抜きをやめてフェードだけ。
+ * コマは自動で進み（1 コマ 5〜8 秒、ナレーションが終わるまで）、絵を押すか「つぎへ」で先へ、「とまる」で一時停止、「とばす」・Esc でいつでも終われる。
+ * 切り替えは前のコマが紙芝居のページのように左の端からめくれて、下の次のコマが現れる。
+ * 絵が読めなくても色の地と言葉だけで続く（白画面にしない）。「動きをへらす」ではカメラの寄りとめくりをやめてフェードだけ。
  * 主人公はホームで選んだ子（声はその子）。絵はキービジュアルと同じ 6 人の子どもたち。
  * 記録は awl.story.v2（前の 3 コマを見た人にも 1 回出す）。?story=1 で毎回出す（確認用）。
  */
@@ -42,8 +43,8 @@ interface Panel {
   overlay?: Overlay
   /** 7 つのワールドのコマ: ワールドの名前を出す */
   world?: WorldKey
-  /** 次のコマへの移り方。dissolve＝ゆっくり溶けて替わる（既定）、quick＝速く替わる */
-  leave?: 'dissolve' | 'quick'
+  /** 次のコマへの移り方。turn＝ページをめくる（既定）、quick＝速くめくる */
+  leave?: 'turn' | 'quick'
 }
 
 const T = {
@@ -188,17 +189,27 @@ export function createStory(): StoryView {
   const caption = document.getElementById('story-text') as HTMLElement
   const prog = document.getElementById('story-prog') as HTMLElement
   const nextBtn = document.getElementById('story-next') as HTMLButtonElement
+  const pauseBtn = document.getElementById('story-pause') as HTMLButtonElement
   const skipBtn = document.getElementById('story-skip') as HTMLButtonElement
   const forced = new URLSearchParams(location.search).get('story') === '1'
 
   let index = -1
   let resolveDone: ((how: StoryEnd) => void) | null = null
   let reduceMotion = false
-  let timer = 0
-  const cues: number[] = []
   let current: HTMLElement | null = null
   let lastText: Lines | null = null
   let preloaded = false
+  // 一時停止: コマの中の仕掛けは「絵が出てからの時間」で予約し、止めた時は残りの時間を取って、続ける時にかけ直す
+  let paused = false
+  let panelStart = 0
+  let pausedAt = 0
+  interface Cue {
+    at: number
+    fn: () => void
+    id: number
+    fired: boolean
+  }
+  const cues: Cue[] = []
 
   // 進み具合: コマごとの短い帯。見ている帯だけが hold の時間をかけて満ちる
   prog.innerHTML = PANELS.map(() => '<span class="story-seg"><i></i></span>').join('')
@@ -215,14 +226,24 @@ export function createStory(): StoryView {
     }
   }
 
+  const elapsed = () => (paused ? pausedAt : performance.now()) - panelStart
+  const arm = (c: Cue) => {
+    c.id = window.setTimeout(() => {
+      c.fired = true
+      c.fn()
+    }, Math.max(0, c.at - elapsed()))
+  }
+  const disarm = () => {
+    for (const c of cues) window.clearTimeout(c.id)
+  }
   const clearCues = () => {
-    window.clearTimeout(timer)
-    timer = 0
-    for (const c of cues) window.clearTimeout(c)
+    disarm()
     cues.length = 0
   }
   const cue = (ms: number, fn: () => void) => {
-    cues.push(window.setTimeout(fn, ms))
+    const c: Cue = { at: ms, fn, id: 0, fired: false }
+    cues.push(c)
+    if (!paused) arm(c)
   }
 
   /** コマを組み立てる */
@@ -300,8 +321,6 @@ export function createStory(): StoryView {
       default:
         break
     }
-    // ジャンプの声はナレーションが終わってから
-    if (p.img === 's4-run') cue(Math.round((p.voiceSec ?? 0) * 1000) + 300, () => sound.say('jump'))
   }
 
   /** ナレーション: 日本語の時だけ（声は日本語で作ってある）。言葉が変わるコマで 1 回。最後の 1 枚はロゴが出てから */
@@ -314,15 +333,20 @@ export function createStory(): StoryView {
   const show = (i: number) => {
     clearCues()
     index = i
+    panelStart = performance.now()
     const p = PANELS[i]
     const prev = current
     const card = buildCard(p)
-    // 新しいコマを前のコマの上に重ね、ゆっくり溶けて替わる（7 つのワールドは速く）
+    // 次のコマを前のコマの下に置き、前のコマを紙芝居のページのように左の端からめくる（7 つのワールドは速く）
     const quick = PANELS[i - 1]?.leave === 'quick'
-    if (prev) card.classList.add(quick ? 'is-enter-quick' : 'is-enter')
-    frame.appendChild(card)
+    if (prev) {
+      frame.insertBefore(card, prev)
+      prev.classList.add(quick ? 'is-leave-quick' : 'is-leave')
+      const gone = () => prev.remove()
+      prev.addEventListener('animationend', gone, { once: true })
+      window.setTimeout(gone, quick ? 700 : 1300)
+    } else frame.appendChild(card)
     current = card
-    if (prev) window.setTimeout(() => prev.remove(), quick ? 460 : 860)
     // 言葉とナレーションは変わる時だけ
     if (p.text !== lastText) {
       lastText = p.text
@@ -345,11 +369,31 @@ export function createStory(): StoryView {
     else nextBtn.removeAttribute('aria-label')
     root.classList.toggle('is-last', last)
     direct(p, card)
-    if (!last) timer = window.setTimeout(() => advance(), p.hold)
+    if (!last) cue(p.hold, () => advance())
+  }
+
+  const setPaused = (on: boolean) => {
+    if (paused === on) return
+    paused = on
+    if (on) {
+      pausedAt = performance.now()
+      disarm()
+    } else {
+      // 止めていた分だけコマの始まりをずらし、まだ鳴っていない仕掛けをかけ直す
+      panelStart += performance.now() - pausedAt
+      for (const c of cues) if (!c.fired) arm(c)
+    }
+    root.classList.toggle('is-paused', on)
+    sound.setPaused(on)
+    pauseBtn.innerHTML = on
+      ? `<svg class="ico ico-fill"><use href="#i-play" /></svg><span>${esc(t('resume'))}</span>`
+      : `<svg class="ico ico-fill"><use href="#i-pause" /></svg><span>${esc(t('pause'))}</span>`
+    pauseBtn.setAttribute('aria-pressed', on ? 'true' : 'false')
   }
 
   const finish = (how: StoryEnd) => {
     clearCues()
+    setPaused(false)
     sound.stopNarration()
     sound.setStoryBgm(false)
     writeSeen()
@@ -370,9 +414,14 @@ export function createStory(): StoryView {
     else finish('end')
   }
 
-  nextBtn.addEventListener('click', advance)
+  nextBtn.addEventListener('click', () => {
+    setPaused(false)
+    advance()
+  })
+  pauseBtn.addEventListener('click', () => setPaused(!paused))
   frame.addEventListener('click', () => {
-    if (index < PANELS.length - 1) advance()
+    if (paused) setPaused(false)
+    else if (index < PANELS.length - 1) advance()
   })
   skipBtn.addEventListener('click', () => finish('skip'))
   window.addEventListener('keydown', (e) => {
@@ -382,16 +431,23 @@ export function createStory(): StoryView {
       // ボタンに焦点がある時の Space はボタン自身の click に任せる（二重に進めない）
       if (e.key === ' ' && document.activeElement instanceof HTMLButtonElement) return
       e.preventDefault()
+      setPaused(false)
       advance()
     }
   })
-  // 裏に回ったら自動で進むのを止め、戻ったら今のコマから続ける
+  // 裏に回ったら止め、戻ったら続ける（自分で止めていた時はそのまま）
+  let hiddenPause = false
   document.addEventListener('visibilitychange', () => {
     if (!resolveDone || index < 0) return
     if (document.hidden) {
-      clearCues()
-      sound.stopNarration()
-    } else if (index < PANELS.length - 1 && !timer) timer = window.setTimeout(() => advance(), 1500)
+      if (!paused) {
+        hiddenPause = true
+        setPaused(true)
+      }
+    } else if (hiddenPause) {
+      hiddenPause = false
+      setPaused(false)
+    }
   })
 
   return {
@@ -408,6 +464,7 @@ export function createStory(): StoryView {
         current = null
         lastText = null
         frame.innerHTML = ''
+        setPaused(false)
         showView(root)
         sound.setStoryBgm(true)
         show(0)

@@ -34,6 +34,8 @@ const DICT = {
   gettingReady: { ja: 'じゅんびちゅう…', en: 'Getting ready…' },
   skip: { ja: 'とばす', en: 'Skip' },
   next: { ja: 'つぎへ', en: 'Next' },
+  pause: { ja: 'とまる', en: 'Pause' },
+  resume: { ja: 'つづける', en: 'Resume' },
   minimap: { ja: '地図。タップした場所へ歩く', en: 'Map. Tap a place to walk there' },
   expandMap: { ja: '地図を広げる', en: 'Open the map' },
   map: { ja: '地図', en: 'Map' },
