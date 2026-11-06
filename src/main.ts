@@ -19,7 +19,7 @@ import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { getClay, setClay, vividToon } from './render/toon'
-import { LIONS, SPOT } from './world/layout'
+import { LIONS, SPOT, SPAWN } from './world/layout'
 import { createLion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
 import { loadAiLion, POSTURE_DEFAULT, type AiLion, type PostureFix } from './world/aiLionModel'
@@ -176,6 +176,8 @@ interface WorldHandle {
   setHero: (id: string) => void
   /** いま読み込み中の主人公が出そろうまで（読み込んでいなければすぐ）。幕を開ける前に待つ */
   heroReady: () => Promise<void>
+  /** スタート地点（サバンナの南、コピエの方を向く）へ戻す。あそびかたツアーを設定から見返す時に使う */
+  toStart: () => void
 }
 
 /**
@@ -1423,6 +1425,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   requestAnimationFrame(tick)
 
   return {
+    toStart: () => {
+      player.teleport(SPAWN.x, SPAWN.z, Math.PI)
+    },
     pause: () => {
       paused = true
       player.setInputEnabled(false)
@@ -1593,6 +1598,8 @@ function main(): void {
   // 設定の「あそび方をもう一度見る」: ナビを最初に戻してワールドへ
   shell.settings.onReplayGuide(() => {
     shell.guide.start()
+    // ほかのワールドにいても、ライリーに近いスタート地点から始める
+    world?.toStart()
     void enterWorld()
   })
 }
