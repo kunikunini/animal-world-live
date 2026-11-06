@@ -30,7 +30,6 @@ An entry for **Built with Claude: Japan 2026**, built from scratch during the ha
 
 ## What's next (during the hackathon)
 
-- Footage for Alex and Riley (currently shown as "coming soon")
 - Final profile text for all five lions
 - Polish of the world (light, fog, grass) and testing on real phones
 - The 3-minute demo video
@@ -48,7 +47,7 @@ All animal footage in this prototype is **recorded footage**, shot at Hokkaido A
 - 2026-11-03: the lion family (Angie with the twins Claire and Carla)
 - 2026-11-04: a spotted hyena; a South American tapir with a capybara; great white pelicans with kangaroos and a mara; ponies; a common squirrel monkey (listed in `src/data/videos.json`)
 
-- Filmed by staff (shown in the "Filmed by staff" shelf of the Animal Scope and on that animal's monitor, newest first): the woodchuck ファス, the Asian black bear まっ君, the lowland tapir ゆめこ (a capybara is also in the frame), the spotted hyena アンバー, the raccoon dog タムタム, ring-tailed lemurs (several) and kinkajous (several). No filming date is shown, and these videos are not covered by the "shot during the hackathon" statement above. The animal is set only when the file name exactly matches a name on the register. A video with several animals where the individual is not set (the lemurs, the kinkajous) is shown by species name only, and that species' monitors say it is not yet confirmed which one is in the video. The filmer's name is not shown. Some videos show a keeper's hands or arms, but no faces. The delivery versions keep the original size (not upscaled) with metadata removed; on the monitor a portrait video is shown in the middle over a blurred copy of its poster.
+- Filmed by staff (shown in the "Filmed by staff" shelf of the Animal Scope and on that animal's monitor, newest first; the newest five also rotate every 7 seconds in the large panel at the top of the Animal Scope, playing muted without the user pressing play — not with "reduce motion", and only while the panel is on screen): the woodchuck ファス, the Asian black bear まっ君, the lowland tapir ゆめこ (a capybara is also in the frame), the spotted hyena アンバー, the raccoon dog タムタム, ring-tailed lemurs (several), kinkajous (several) and the lion アレックス (shown on his monitor, which had no video before). No filming date is shown, and these videos are not covered by the "shot during the hackathon" statement above. The animal is set only when the file name exactly matches a name on the register. A video with several animals where the individual is not set (the lemurs, the kinkajous) is shown by species name only, and that species' monitors say it is not yet confirmed which one is in the video. The filmer's name is not shown. Some videos show a keeper's hands or arms, but no faces. The delivery versions keep the original size (not upscaled) with metadata removed; on the monitor a portrait video is shown in the middle over a blurred copy of its poster.
 
 The species of each 2026-11-04 video come from the names of the original files. Which animal is on camera has not been checked, so for a species with several animals the same video is shown for each of them and the monitor says so. If only one animal of that species lives at the facility, the video is shown as that animal's.
 
@@ -142,7 +141,6 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 
 ## これから作るもの（期間中の予定）
 
-- アレックスとライリーの映像（現在は「準備中」表示）
 - 5頭のプロフィール原稿の投入
 - 世界の磨き（光・霧・草）、スマホ実機での確認
 - 3分のデモ動画
@@ -160,7 +158,7 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 - 2026-11-03：ライオンの親子（アンジーと、ふたごのクレア・カーラ）
 - 2026-11-04：ブチハイエナ、アメリカバクとカピバラ、モモイロペリカンとカンガルーとマーラ、ポニー、コモンリスザル（一覧は `src/data/videos.json`）
 
-- スタッフ撮影（アニマルスコープの「スタッフ撮影」の棚と、その子のモニターに出す。新しい順）：ウッドチャックのファス、ツキノワグマのまっ君、アメリカバクのゆめこ（カピバラも一緒に映る）、ブチハイエナのアンバー、ホンドタヌキのタムタム、ワオキツネザル（複数）、キンカジュー（複数）。撮影日は出しておらず、上の「ハッカソン期間中に収録」には含みません。どの子の映像かは、ファイル名が名簿の個体名と完全一致した時だけ決めています。複数の子が映っていて個体が決まらない映像（ワオキツネザル・キンカジュー）は種名だけで出し、その種の子のモニターに「どの子が映っているかは、まだ確かめていません」と出します。撮影した人の名前は出しません。飼育員の手や腕が映っている映像がありますが、顔は映っていません。配信用の版は元の大きさのまま（拡大しない）でメタデータを消しています。縦長の映像は、モニターで左右にぼかした表紙を敷いて中央に出します。
+- スタッフ撮影（アニマルスコープの「スタッフ撮影」の棚と、その子のモニターに出す。新しい順。いちばん新しい 5 本は、アニマルスコープのいちばん上の大きな枠で 7 秒ごとに切り替わり、音なしで自動で流れる。動きをへらす設定の時と、枠が画面の外にある時は流さない）：ウッドチャックのファス、ツキノワグマのまっ君、アメリカバクのゆめこ（カピバラも一緒に映る）、ブチハイエナのアンバー、ホンドタヌキのタムタム、ワオキツネザル（複数）、キンカジュー（複数）、ライオンのアレックス（映像が無かったモニターに出す）。撮影日は出しておらず、上の「ハッカソン期間中に収録」には含みません。どの子の映像かは、ファイル名が名簿の個体名と完全一致した時だけ決めています。複数の子が映っていて個体が決まらない映像（ワオキツネザル・キンカジュー）は種名だけで出し、その種の子のモニターに「どの子が映っているかは、まだ確かめていません」と出します。撮影した人の名前は出しません。飼育員の手や腕が映っている映像がありますが、顔は映っていません。配信用の版は元の大きさのまま（拡大しない）でメタデータを消しています。縦長の映像は、モニターで左右にぼかした表紙を敷いて中央に出します。
 
 2026-11-04 の映像の種は、収録した元ファイルの名前から取っています。どの個体が映っているかは確かめていないので、同じ種が複数いる時はその子たちみんなに同じ映像を出し、モニターにそう書いています。施設にその種が 1 頭だけの時は、その子の映像として出しています。
 

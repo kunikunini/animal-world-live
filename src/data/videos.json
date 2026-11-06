@@ -139,6 +139,17 @@
       "animalIds": [],
       "title": { "ja": "キンカジュー", "en": "Kinkajous" },
       "subjects": [{ "species": ["キンカジュー"] }]
+    },
+    {
+      "id": "staff-alex-01",
+      "file": "staff_alex_01.mp4",
+      "poster": "staff_alex_01_poster.jpg",
+      "duration": "0:14",
+      "onR2": true,
+      "staff": true,
+      "animalIds": ["alex"],
+      "title": { "ja": "アレックス", "en": "アレックス" },
+      "subjects": []
     }
   ]
 }

@@ -1,6 +1,7 @@
 import type { Animal } from '../data/animals'
 import { animalsInVideo, animalsInWorld, getAnimal, listReadyAnimals } from '../data/animals'
 import { SPECIES_VIDEOS, STAFF_VIDEOS, videoForSpecies } from '../data/videos'
+import type { SpeciesVideo } from '../data/videos'
 import { WORLDS, getWorld } from '../data/worlds'
 import type { WorldInfo, WorldKey } from '../data/worlds'
 import type { FriendBookStore } from '../data/friends'
@@ -79,6 +80,17 @@ const WORLD_ART: Partial<Record<WorldKey, string>> = {
     '<path d="M0 132V92l40-44 30 30 46-58 50 62 30-26 36 36V132z" fill="#2f5f96"/><path d="M116 20l-18 24 10-4 8 8 8-8 10 4zM40 48l-12 14 7-3 5 5 5-5 7 3z" fill="#fff"/><path d="M0 132v-22q58-12 116-6t116-4V132z" fill="#e9f4fb"/><path d="M180 112l10-28 10 28zM196 116l8-22 8 22z" fill="#1f4f3a"/>',
 }
 
+/** いちばん上の大きな枠: 新着の映像を何本まで順に見せるか、1 本を何ミリ秒見せるか */
+const HERO_MAX = 5
+const HERO_MS = 7000
+
+interface HeroSlide {
+  animal: Animal
+  video: SpeciesVideo
+  title: string
+  meta: string
+}
+
 /** 一覧の小さな絵は 640×360 の縮小版（1280×720 の表紙を何枚も並べると、iPhone でメモリを使いすぎる） */
 const thumb = (poster: string) => poster.replace(/_poster\.jpg$/, '_poster-sm.jpg')
 
@@ -96,6 +108,149 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     if (!main || !b || !c) return main ? animalName(main) : ''
     return t('catHeroTitle', { a: animalName(main), b: animalName(b), c: animalName(c) })
   }
+
+  // ---- いちばん上の新着の枠 ----
+  let heroSlides: HeroSlide[] = []
+  let heroIndex = 0
+  let heroTimer = 0
+  let heroVisible = true
+  let heroIo: IntersectionObserver | null = null
+
+  /** 新着の映像: スタッフ撮影（新しい順）のあとに種の映像（videos.json の下の行ほど新しい）。開ける子がいる物だけ */
+  const newestSlides = (): HeroSlide[] => {
+    const out: HeroSlide[] = []
+    for (const v of [...STAFF_VIDEOS, ...[...SPECIES_VIDEOS].reverse()]) {
+      const named = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
+      const a = named ?? listReadyAnimals().find((x) => x.videoId === v.id)
+      if (!a) continue
+      const w = a.world ? getWorld(a.world) : undefined
+      const place = a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
+      out.push({
+        animal: a,
+        video: v,
+        title: named ? animalName(a) : v.title[getLang()],
+        meta: [t('catNew'), place, speciesName(a.species)].filter(Boolean).join(' ・ '),
+      })
+      if (out.length >= HERO_MAX) break
+    }
+    return out
+  }
+
+  const heroEl = () => root.querySelector<HTMLElement>('.cat-hero[aria-roledescription]')
+  const reduceMotion = () => document.body.classList.contains('is-reduce-motion')
+
+  /** 今の 1 本を枠に出す（作り直さず、中身だけ入れ替える） */
+  const showSlide = (i: number) => {
+    const el = heroEl()
+    const sl = heroSlides[i]
+    if (!el || !sl) return
+    heroIndex = i
+    el.classList.remove('is-playing')
+    el.classList.toggle('is-portrait', sl.video.portrait)
+    const img = el.querySelector<HTMLImageElement>('.cat-hero-img')
+    if (img) img.src = sl.video.poster
+    ;(el.querySelector('.cat-badge-staff') as HTMLElement).hidden = !sl.video.staff
+    ;(el.querySelector('.cat-hero-meta') as HTMLElement).textContent = sl.meta
+    ;(el.querySelector('.cat-hero-title') as HTMLElement).textContent = sl.title
+    const watch = el.querySelector<HTMLElement>('.cat-watch')
+    if (watch) {
+      watch.dataset.watch = sl.animal.id
+      watch.setAttribute('aria-label', `${t('catWatch')}: ${sl.title}`)
+    }
+    ;(el.querySelector('.cat-inbook') as HTMLElement).hidden = !store.has(sl.animal.id)
+    el.querySelectorAll<HTMLElement>('.cat-hero-dot').forEach((d, n) => {
+      if (n === i) d.setAttribute('aria-current', 'true')
+      else d.removeAttribute('aria-current')
+    })
+    if (!reduceMotion()) {
+      const text = el.querySelector<HTMLElement>('.cat-hero-text')
+      text?.classList.remove('is-in')
+      void text?.offsetWidth
+      text?.classList.add('is-in')
+    }
+    window.clearTimeout(heroTimer)
+    heroTimer = 0
+    syncHero()
+  }
+
+  /**
+   * 音なしのプレビューと切り替えを、見えている間だけ動かす。一覧を閉じた・ワールドの一覧へ移った・モニターや帳を開いた・
+   * 枠が画面の外・タブが裏、のどれかなら止めて映像を手放す（スマホのメモリ。モニターの映像と同時に 2 本読まない）。
+   * 動きをへらす設定では、流さず・切り替えず、点で選んだ時だけ替える
+   */
+  const syncHero = () => {
+    const el = heroEl()
+    const video = el?.querySelector<HTMLVideoElement>('.cat-hero-video')
+    const body = document.body
+    const active =
+      !!el &&
+      open &&
+      page === null &&
+      heroVisible &&
+      !document.hidden &&
+      !body.classList.contains('observe-open') &&
+      !body.classList.contains('book-open') &&
+      !reduceMotion()
+    const sl = heroSlides[heroIndex]
+    if (video) {
+      if (active && sl) {
+        if (video.dataset.src !== sl.video.url) {
+          video.dataset.src = sl.video.url
+          video.src = sl.video.url
+          video.load()
+        }
+        video.muted = true
+        if (video.paused) void video.play().catch(() => undefined)
+      } else if (video.dataset.src) {
+        video.pause()
+        delete video.dataset.src
+        video.removeAttribute('src')
+        video.load()
+        el?.classList.remove('is-playing')
+      }
+    }
+    if (active && heroSlides.length > 1) {
+      if (!heroTimer) heroTimer = window.setTimeout(() => {
+        heroTimer = 0
+        showSlide((heroIndex + 1) % heroSlides.length)
+      }, HERO_MS)
+    } else if (heroTimer) {
+      window.clearTimeout(heroTimer)
+      heroTimer = 0
+    }
+  }
+
+  /** 描き直したあとに枠をつなぐ */
+  const mountHero = () => {
+    heroIo?.disconnect()
+    heroIo = null
+    const el = heroEl()
+    if (!el) {
+      syncHero()
+      return
+    }
+    const video = el.querySelector<HTMLVideoElement>('.cat-hero-video')
+    video?.addEventListener('playing', () => el.classList.add('is-playing'))
+    video?.addEventListener('error', () => el.classList.remove('is-playing'))
+    heroVisible = true
+    if ('IntersectionObserver' in window) {
+      heroIo = new IntersectionObserver(
+        (entries) => {
+          heroVisible = entries.some((e) => e.isIntersecting)
+          syncHero()
+        },
+        { threshold: 0.25 },
+      )
+      heroIo.observe(el)
+    }
+    showSlide(heroIndex)
+  }
+
+  document.addEventListener('visibilitychange', syncHero)
+  // モニター・帳を開いた／閉じた、動きをへらすを切り替えた時（body の class で分かる）
+  new MutationObserver(() => {
+    if (open) syncHero()
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] })
 
   const section = (key: string, title: string, body: string, extra = '') =>
     `<section class="cat-sec" data-sec="${key}"><h2 class="cat-h">${title}${extra}</h2>${body}</section>`
@@ -150,6 +305,17 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   }
 
   const render = () => {
+    // 描き直す前に、今の枠の映像を手放す（外れた <video> が読み続けないように）
+    const oldVideo = heroEl()?.querySelector<HTMLVideoElement>('.cat-hero-video')
+    if (oldVideo) {
+      oldVideo.pause()
+      oldVideo.removeAttribute('src')
+      oldVideo.load()
+    }
+    window.clearTimeout(heroTimer)
+    heroTimer = 0
+    heroIo?.disconnect()
+    heroIo = null
     const pageWorld = page ? getWorld(page) : undefined
     if (pageWorld) {
       renderWorldPage(pageWorld)
@@ -176,8 +342,35 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       )}</div>`,
     )
 
-    const hero = main
+    // いちばん上: 新着の映像（アプリに足した新しい順）を最大 5 本、時間で切り替える。今の 1 本は音なしで流す（下の mountHero）
+    heroSlides = newestSlides()
+    if (heroIndex >= heroSlides.length) heroIndex = 0
+    const hero = heroSlides.length
       ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
+          <div class="cat-hero" aria-roledescription="carousel" aria-label="${meta('catNew')}">
+            <img class="cat-hero-img" src="" alt="" />
+            <video class="cat-hero-video" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+            <div class="cat-hero-shade" aria-hidden="true"></div>
+            <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
+            ${
+              heroSlides.length > 1
+                ? `<div class="cat-hero-dots">${heroSlides
+                    .map((sl, i) => `<button type="button" class="cat-hero-dot" data-slide="${i}" aria-label="${esc(t('catSlide', { n: String(i + 1), title: sl.title }))}"></button>`)
+                    .join('')}</div>`
+                : ''
+            }
+            <div class="cat-hero-text" aria-live="off">
+              <span class="cat-hero-meta"></span>
+              <span class="cat-hero-title"></span>
+              <div class="cat-hero-actions">
+                <button type="button" class="cat-watch" data-watch="">${PLAY}${meta('catWatch')}</button>
+                <span class="cat-inbook" role="img" aria-label="${meta('inBook')}" title="${meta('inBook')}" hidden>${CHECK}</span>
+              </div>
+            </div>
+          </div>
+        </section>`
+      : main
+        ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero">
             <img class="cat-hero-img" src="${esc(FEATURED.poster)}" alt="" />
             <div class="cat-hero-shade" aria-hidden="true"></div>
@@ -192,7 +385,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
             </div>
           </div>
         </section>`
-      : ''
+        : ''
 
     const friendsRow = section(
       'friends',
@@ -315,6 +508,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         </nav>
         ${live}${hero}${friendsRow}${worlds}${animals}${popular}${recs}${staff}${zoos}
       </div>`
+    mountHero()
   }
 
   const scrollEl = () => root.querySelector<HTMLElement>('.cat-scroll')
@@ -333,6 +527,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     if (!target || !open) return
     if (target.dataset.back) {
       setOpen(false)
+      return
+    }
+    if (target.dataset.slide) {
+      showSlide(Number(target.dataset.slide))
       return
     }
     const worldKey = target.dataset.world as WorldKey | undefined
@@ -418,6 +616,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     open = next
     if (next) {
       page = startPage
+      // 開くたびに、いちばん新しい 1 本から見せる
+      heroIndex = 0
       render()
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)
@@ -432,6 +632,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       root.classList.add('is-leave')
       hideView(root, () => root.classList.remove('is-leave'))
     }
+    syncHero()
     openListeners.forEach((fn) => fn(next))
   }
 

@@ -112,7 +112,15 @@ const rosterAnimals: Animal[] = rosterRows.map((r) => {
   }
 })
 
-const lions: Animal[] = data.animals.map((a) => ({ ...a, world: 'africa', subArea: '', representative: true }))
+// ライオン（animals.json）。自分の映像がまだ無い子（アレックス）に、名前で決まったスタッフ撮影があればそれを出す
+const lions: Animal[] = data.animals.map((a) => {
+  const staff = a.video.url ? undefined : staffVideosFor(a.id)[0]
+  const video: VideoSource = staff
+    ? { source: 'recorded', url: staff.url, fallbackUrl: staff.fallbackUrl, poster: staff.poster, staff: true, portrait: staff.portrait }
+    : a.video
+  // 映像がそろったので「準備中」（一覧に出さない）から外す
+  return { ...a, video, videoId: staff?.id ?? a.videoId, status: staff ? 'ready' : a.status, world: 'africa', subArea: '', representative: true }
+})
 
 /** 顔の写真（tools/photos-import.mjs が書く。id → public/faces の画像）。無い子は自作の顔のまま */
 const PHOTOS = (photosRaw as { photos: Record<string, string> }).photos

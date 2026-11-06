@@ -4614,6 +4614,21 @@ body.is-reduce-motion .is-refresh {
 }
 .cat-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; }
 .cat-hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(34, 22, 15, 0) 35%, rgba(34, 22, 15, 0.92) 88%); }
+/* 新着の枠: 今の 1 本を音なしで流す。流れ始めるまでは表紙のまま（読めない時も表紙が残る） */
+.cat-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+.cat-hero.is-playing .cat-hero-video { opacity: 1; }
+/* 縦長の映像: 中央に縦のまま出し、うしろの表紙をぼかして左右を埋める（ぼかすのは流れている間だけ） */
+.cat-hero.is-portrait .cat-hero-video { object-fit: contain; object-position: 50% 50%; }
+.cat-hero.is-portrait .cat-hero-img { object-position: 50% 50%; }
+.cat-hero.is-portrait.is-playing .cat-hero-img { filter: blur(18px) brightness(0.8); transform: scale(1.15); }
+.cat-hero-text.is-in { animation: cat-hero-in 0.5s ease both; }
+@keyframes cat-hero-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+.cat-hero-dots { position: absolute; top: 12px; right: 12px; display: flex; gap: 2px; }
+.cat-hero-dot { width: 26px; height: 26px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
+.cat-hero-dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.5); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); transition: width 0.3s ease, background 0.3s ease; }
+.cat-hero-dot[aria-current]::before { width: 20px; background: #fff; }
+.cat-hero-dot:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 999px; }
+body.is-reduce-motion .cat-hero-text.is-in { animation: none; }
 .cat-badge {
   position: absolute;
   left: 14px;

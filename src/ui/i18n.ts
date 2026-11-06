@@ -217,6 +217,8 @@ const DICT = {
   catRowPopular: { ja: 'おすすめ', en: 'Recommended' },
   catRowRecs: { ja: 'すべての動画', en: 'All videos' },
   catRowStaff: { ja: 'スタッフ撮影', en: 'Filmed by staff' },
+  catNew: { ja: '新着', en: 'New' },
+  catSlide: { ja: '{n}本目: {title}', en: 'Video {n}: {title}' },
   catRowZoos: { ja: '動物園からえらぶ', en: 'Pick a zoo' },
   silhouetteOf: { ja: '{name}（写真はじゅんびちゅう）', en: '{name} (photo coming soon)' },
   catWorldSoon: { ja: 'じゅんびちゅう', en: 'Coming soon' },
