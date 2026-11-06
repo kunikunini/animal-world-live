@@ -68,6 +68,7 @@ public/models/*
 !public/models/prairie-tanpopo.glb
 !public/models/goat-shiki.glb
 !public/models/goat-twotone.glb
+!public/models/goat-marble.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
