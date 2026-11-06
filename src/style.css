@@ -590,7 +590,8 @@ button {
   padding: 0 1.4em;
   gap: 0.42em;
   border: 0.13em solid #fff;
-  font-family: var(--font-home);
+  /* ロゴと同じ Zen Maru Gothic の 900（太く丸い）。ヒラギノ丸ゴは太さが 1 つで細く見える */
+  font-family: var(--font-logo);
   font-size: 1em;
   font-weight: 900;
   letter-spacing: 0.05em;
