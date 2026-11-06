@@ -55,7 +55,10 @@ export const POSTURE_DEFAULT: PostureFix = { hind: 0.6, spine: 0.8, tail: 0.5, f
 /** 歩行の重みが 0 → 1 に変わるまでの秒数 */
 const WALK_FADE = 0.35
 
-export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix }): Promise<AiLion> {
+/**
+ * upright: 直立の子（ペンギン、ヒューマノイドのリグ）。向きは書き出しのまま（前が +z）で、length は前後の長さではなく高さとして合わせる
+ */
+export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean }): Promise<AiLion> {
   const loader = new GLTFLoader()
   loader.setMeshoptDecoder(MeshoptDecoder)
   const gltf = await loader.loadAsync(url)
@@ -92,7 +95,7 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   wrap.name = 'ai-lion'
   wrap.add(inner)
   inner.updateMatrixWorld(true)
-  if (head && hips) {
+  if (head && hips && !opts.upright) {
     const h = head.getWorldPosition(new THREE.Vector3())
     const p = hips.getWorldPosition(new THREE.Vector3())
     inner.rotation.y = -Math.atan2(h.x - p.x, h.z - p.z)
@@ -102,7 +105,8 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   // 大きさと接地（立ち姿で足が y=0）
   const box = new THREE.Box3().setFromObject(inner)
   const size = box.getSize(new THREE.Vector3())
-  const s = size.z > 0 ? opts.length / size.z : 1
+  const along = opts.upright ? size.y : size.z
+  const s = along > 0 ? opts.length / along : 1
   inner.scale.setScalar(s)
   inner.updateMatrixWorld(true)
   box.setFromObject(inner)

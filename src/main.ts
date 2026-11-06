@@ -291,6 +291,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       noTail?: boolean
       /** プリミティブ版が無い子の置き場所（体の長さ m は群れの座標。ライオンの成獣は 2.9） */
       place?: { x: number; z: number; yaw: number; length: number }
+      /** 直立の子（ヒューマノイドのリグ）: 向きは書き出しのまま、大きさはプリミティブ版の高さに合わせる */
+      upright?: boolean
+      /** 歩かない子: 歩き回りを付けず、その場で呼吸・首・揺れだけ */
+      still?: boolean
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [8, 16] } },
@@ -321,6 +325,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
       { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true }, walk: { speed: 0.7, radius: 2.0, idle: [8, 16] } },
+      // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽はプリミティブ版のまま）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
+      // ひれが人の腕のように振れて体が歪むので、歩かせない（静止＋呼吸・首・左右の揺れ。waterfolk.ts）。大きさはプリミティブ版の高さにそろえる
+      { key: 'penguin', species: 'ケープペンギン', name: 'リンリン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, walk: { speed: 0, radius: 0, idle: [10, 20] }, upright: true, still: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
@@ -329,7 +336,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       let host = lions.find((l) => l.id === animal.id)
       if (!host && !r.place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
-      loadAiLion(`/models/${r.file}.glb`, { length: host ? primitiveLength(host.group) : r.place!.length, posture })
+      loadAiLion(`/models/${r.file}.glb`, { length: host ? primitiveLength(host.group, r.upright ? 'y' : 'z') : r.place!.length, posture, upright: r.upright })
         .then((ai) => {
           if (!host) {
             // 新しく置く子: 入れ物だけ作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる
@@ -345,6 +352,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           host.swapModel(ai.model, r.noTail ? { ...ai.parts, tail: new THREE.Object3D() } : ai.parts)
           host.headHeight = ai.headHeight
           aiLions[r.key] = ai
+          if (r.still) return
           const w = createLionWander(host, ai, props.colliders, r.walk)
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
@@ -1571,7 +1579,7 @@ function main(): void {
 main()
 
 /** プリミティブ版の体の長さ（群れの座標系の z 方向、頭から尾の先まで）。生成モデルの大きさをこれにそろえる */
-function primitiveLength(group: THREE.Object3D): number {
+function primitiveLength(group: THREE.Object3D, axis: 'y' | 'z' = 'z'): number {
   group.updateMatrixWorld(true)
   const inv = group.matrixWorld.clone().invert()
   const box = new THREE.Box3()
@@ -1582,5 +1590,5 @@ function primitiveLength(group: THREE.Object3D): number {
     if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
     box.union(mesh.geometry.boundingBox!.clone().applyMatrix4(m.multiplyMatrices(inv, mesh.matrixWorld)))
   })
-  return box.getSize(new THREE.Vector3()).z
+  return box.getSize(new THREE.Vector3())[axis]
 }
