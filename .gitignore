@@ -60,6 +60,7 @@ public/models/*
 !public/models/binturong-basil.glb
 !public/models/bear-gorou.glb
 !public/models/bear-makkun.glb
+!public/models/binturong-parsley.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
