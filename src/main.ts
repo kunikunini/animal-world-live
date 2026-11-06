@@ -48,6 +48,7 @@ import { createFriendBookStore } from './data/friends'
 import { createEncounterStore } from './data/encounters'
 import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
+import { createSoundPanel } from './ui/soundControls'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -70,6 +71,8 @@ function createShell() {
   const store = createFriendBookStore()
   const met = createEncounterStore()
   const hud = createHud()
+  // HUD の音のボタン（双眼鏡の右）と、押すと開く BGM・まわりの音・効果音の板
+  createSoundPanel()
   const observe = createObserveView(store, met)
   const book = createBookView(store)
   const home = createHome(store)

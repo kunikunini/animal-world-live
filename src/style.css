@@ -1209,6 +1209,97 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
 .hud-spot-text { display: none; }
 .hud-spot .ico { width: 32px; height: 32px; margin: 0; }
 
+/* 音のボタン: 双眼鏡の右に同じ大きさの白い丸。絵は生成画像（クレイ風のスピーカー）。読めない時は下のスピーカーの記号が見える */
+.hud-sound {
+  --snd-size: 60px;
+  position: absolute;
+  left: calc(16px + 60px + 12px + var(--safe-left));
+  top: calc(16px + 136px + 18px + var(--safe-top));
+  width: var(--snd-size);
+  height: var(--snd-size);
+  border: 3px solid #fff;
+  background: radial-gradient(circle at 35% 28%, #ffffff 0%, #eaf4ff 70%, #d6e8fb 100%);
+  box-shadow: 0 4px 0 rgba(31, 42, 68, 0.18), 0 8px 18px rgba(31, 42, 68, 0.22);
+  overflow: hidden;
+}
+.hud-sound > * { grid-area: 1 / 1; }
+.hud-sound img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.hud-sound-fallback { width: 26px; height: 26px; color: var(--sky); }
+.hud-sound:active { transform: scale(0.94); }
+.hud-sound[aria-expanded="true"] { box-shadow: 0 0 0 4px rgba(61, 123, 216, 0.45), 0 8px 18px rgba(31, 42, 68, 0.22); }
+.hud-sound:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+
+/* 音の板: ボタンの下に出る小さなカード。札（BGM・まわりの音・効果音）を押すとオン・オフ、つまみで音量 */
+.sound-panel {
+  position: absolute;
+  z-index: 8;
+  left: calc(16px + var(--safe-left));
+  top: calc(16px + 136px + 18px + 60px + 12px + var(--safe-top));
+  width: min(300px, calc(100vw - 32px - var(--safe-left) - var(--safe-right)));
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+  border: 3px solid #fff;
+  border-radius: 24px;
+  background: var(--cream);
+  box-shadow: var(--shadow-float);
+  color: var(--h-navy);
+  font-family: var(--font-home);
+}
+.sound-panel[hidden] { display: none; }
+/* 札の幅は一番長い札（まわりの音／Ambience）に合わせ、つまみの左端をそろえる */
+.sound-panel { grid-template-columns: max-content minmax(90px, 1fr); column-gap: 10px; }
+.snd-row { display: contents; }
+.snd-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sky);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #2b5fae;
+  -webkit-tap-highlight-color: transparent;
+}
+.snd-toggle .ico { flex: none; width: 20px; height: 20px; }
+.snd-toggle span { flex: 1; text-align: left; white-space: nowrap; }
+/* 右端の ON / OFF の札 */
+.snd-state {
+  flex: none;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.28);
+}
+.snd-state::before { content: 'ON'; }
+.snd-toggle.is-muted {
+  background: #d9d4cc;
+  color: var(--ink-soft);
+  box-shadow: 0 3px 0 #b8b1a6;
+}
+.snd-toggle.is-muted .snd-state { background: rgba(0, 0, 0, 0.08); }
+.snd-toggle.is-muted .snd-state::before { content: 'OFF'; }
+.snd-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 #2b5fae; }
+.snd-toggle.is-muted:active { box-shadow: 0 1px 0 #b8b1a6; }
+.snd-toggle:focus-visible { outline: 3px solid var(--h-navy); outline-offset: 2px; }
+.sound-panel .vol { height: 36px; }
+
 .hud-jump {
   position: absolute;
   right: calc(20px + var(--safe-right));
@@ -1529,10 +1620,18 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   .hud-spot:active { transform: scale(0.94); }
   .hud-spot-text { display: none; }
   .hud-spot .ico { width: 30px; height: 30px; margin: 0; }
+  .hud-sound { --snd-size: 56px; left: calc(16px + 56px + 10px + var(--safe-left)); top: calc(16px + 92px + 14px + var(--safe-top)); }
+  .sound-panel { top: calc(16px + 92px + 14px + 56px + 10px + var(--safe-top)); }
   .hud-jump { width: 64px; height: 64px; bottom: calc(28px + var(--safe-bottom)); }
   .stick { bottom: calc(24px + var(--safe-bottom)); }
   .hud-book { min-height: 48px; font-size: 16px; }
-  .toast.hud-toast { top: calc(16px + 92px + 10px + var(--safe-top)); max-width: calc(100% - 2 * (16px + 56px + 12px)); }
+  /* 通知は地図の下の段。双眼鏡と音のボタンの右に寄せる（重ならない） */
+  .toast.hud-toast {
+    top: calc(16px + 92px + 10px + var(--safe-top));
+    left: calc(16px + 56px + 10px + 56px + 10px + var(--safe-left));
+    transform: none;
+    max-width: calc(100% - (16px + 56px + 10px + 56px + 10px) - 12px - var(--safe-left) - var(--safe-right));
+  }
 }
 
 /* ---- スマホ横 ---- */
@@ -1560,6 +1659,11 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   .hud-spot:active { transform: scale(0.94); }
   .hud-spot-text { display: none; }
   .hud-spot .ico { width: 26px; height: 26px; margin: 0; }
+  .hud-sound { --snd-size: 48px; border-width: 2px; left: calc(12px + 48px + 10px + var(--safe-left)); top: calc(12px + 72px + 12px + var(--safe-top)); }
+  /* 横向きは高さが無いので、板はボタンの右に出す */
+  .sound-panel { left: calc(12px + 48px + 10px + 48px + 10px + var(--safe-left)); top: calc(12px + var(--safe-top)); gap: 2px; padding: 6px 10px; }
+  .sound-panel .snd-toggle { min-height: 38px; }
+  .sound-panel .vol { height: 30px; }
   .hud-jump { width: 56px; height: 56px; right: calc(16px + var(--safe-right)); bottom: calc(22px + var(--safe-bottom)); }
   .hud-nav { top: calc(10px + var(--safe-top)); right: calc(12px + var(--safe-right)); }
   .hud-book { min-height: 40px; font-size: 14px; padding: 0 14px 0 10px; }
