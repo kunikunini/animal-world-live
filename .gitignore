@@ -56,6 +56,7 @@ public/models/*
 !public/models/goat-latte.glb
 !public/models/lemur-jimin.glb
 !public/models/fox-daichan.glb
+!public/models/binturong-bin.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
