@@ -3939,8 +3939,29 @@ button.bk-tab:hover {
 .map .sheet {
   top: calc(var(--safe-top) + 10px);
   max-height: none;
-  padding: 6px 12px calc(10px + var(--safe-bottom));
+  padding: 6px 14px calc(14px + var(--safe-bottom));
+  /* 冒険の地図: 古い羊皮紙の地（ふちが少し焼けた色） */
+  background:
+    radial-gradient(130% 90% at 50% 40%, rgba(255, 249, 232, 0) 55%, rgba(168, 112, 52, 0.22) 100%),
+    linear-gradient(180deg, #f8ecd0, #f0dcb2);
 }
+/* 見出しの「地図」は木の看板 */
+.map .sheet-title > span {
+  position: relative;
+  padding: 3px 14px 4px;
+  border: 2px solid #5e3a1c;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #c38b55, #94602f);
+  color: #fff4d6;
+  font-family: 'Mochiy Pop One', var(--font);
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 0 #5e3a1c, 1px 0 0 #5e3a1c, -1px 0 0 #5e3a1c, 0 -1px 0 #5e3a1c;
+  box-shadow: 0 2px 0 #5e3a1c, 0 4px 8px rgba(60, 34, 12, 0.3);
+}
+.map .sheet-title .ico { color: #8a5a32; }
+.map #map-close { background: #fffaf0; box-shadow: 0 0 0 2px #7a4a24, 0 2px 6px rgba(60, 34, 12, 0.3); color: #5e3a1c; }
 .map .grabber { margin: 2px auto 6px; }
 .map .sheet-head { min-height: 48px; margin-bottom: 8px; gap: 8px; }
 .map-body {
@@ -3954,10 +3975,12 @@ button.bk-tab:hover {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  border-radius: 18px;
+  margin: 4px;
+  border-radius: 16px;
   overflow: hidden;
   background: #86c4e4;
-  box-shadow: 0 0 0 3px #fff, var(--shadow-card);
+  /* 木の額縁に金の細い線 */
+  box-shadow: 0 0 0 2px #e9c46a, 0 0 0 6px #7a4a24, 0 6px 16px rgba(60, 34, 12, 0.35);
   isolation: isolate;
 }
 
@@ -4027,7 +4050,9 @@ button.bk-tab:hover {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.map-mode-btn[aria-checked="true"] { background: #fff; color: var(--sky-deep); box-shadow: 0 1px 3px rgba(31, 42, 68, 0.2); }
+.map-mode-btn[aria-checked="true"] { background: #fffaf0; color: #7a4a24; box-shadow: 0 1px 3px rgba(60, 34, 12, 0.3); }
+.map .map-mode { background: rgba(122, 74, 36, 0.14); }
+.map .map-mode-btn { color: rgba(94, 58, 28, 0.7); }
 .map .sheet-title, .map-mode-btn { white-space: nowrap; }
 @media (max-width: 420px) {
   .map .sheet-title .ico { display: none; }
@@ -4089,14 +4114,31 @@ button.bk-tab:hover {
 .map3d-base.is-pass { --base-c: #8a6a46; }
 .map3d-base.is-animal { --base-c: #3f9a4a; }
 .map3d-base.is-target { outline: 3px solid #ffd21f; }
-/* となりのワールドの名前（うっすら。押すとそのワールドのスポットへ） */
+/* となりのワールドの名前は木の看板（少し透ける。押すとそのワールドのスポットへ） */
 .map3d-base.is-world {
-  --base-c: rgba(255, 255, 255, 0.72);
-  color: var(--map-ink);
-  border-color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
-  min-height: 26px;
-  box-shadow: 0 1px 4px rgba(31, 42, 68, 0.18);
+  background: linear-gradient(180deg, #c38b55, #94602f);
+  color: #fff4d6;
+  border: 2px solid #5e3a1c;
+  border-radius: 7px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-family: 'Mochiy Pop One', var(--font);
+  font-weight: 400;
+  font-size: 13px;
+  text-shadow: 0 1px 0 #5e3a1c, 1px 0 0 #5e3a1c, -1px 0 0 #5e3a1c, 0 -1px 0 #5e3a1c;
+  box-shadow: 0 2px 0 #5e3a1c, 0 4px 8px rgba(60, 34, 12, 0.3);
+  opacity: 0.9;
+}
+/* 看板の足 */
+.map3d-base.is-world::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 4px;
+  height: 8px;
+  translate: -50% 2px;
+  background: #5e3a1c;
 }
 .map3d-heart {
   position: absolute;
@@ -4123,10 +4165,10 @@ button.bk-tab:hover {
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 0;
+  border: 2px solid #7a4a24;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 2px 8px rgba(31, 42, 68, 0.28);
+  background: rgba(250, 240, 214, 0.94);
+  box-shadow: 0 2px 8px rgba(60, 34, 12, 0.35);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -4151,7 +4193,7 @@ button.bk-tab:hover {
   transform-origin: 50% 23px;
 }
 .map-follow svg { width: 20px; height: 20px; fill: none; stroke: var(--map-you); stroke-width: 2.4; stroke-linejoin: round; }
-.map-follow[aria-pressed="true"] { background: var(--map-you); }
+.map-follow[aria-pressed="true"] { background: var(--map-you); border-color: #fff; }
 .map-follow[aria-pressed="true"] svg { fill: #fff; stroke: #fff; }
 
 /* 凡例: 地図の左下に、透ける小さな札で。動物を隠している時は動物の行を出さない */
@@ -4168,7 +4210,7 @@ button.bk-tab:hover {
   flex-wrap: wrap;
   gap: 2px 10px;
   border-radius: 12px;
-  background: rgba(255, 252, 244, 0.62);
+  background: rgba(250, 238, 210, 0.66);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   color: var(--map-ink);

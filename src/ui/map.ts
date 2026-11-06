@@ -599,6 +599,11 @@ export function createMapView(): MapView {
     skip()
   })
 
+  // 看板の字（Web フォント）が届いたら描き直す
+  document.fonts?.load("16px 'Mochiy Pop One'", 'サバンナ').then(() => {
+    needs = true
+  }, () => {})
+
   if (import.meta.env.DEV) (window as unknown as { __awlMap2d: unknown }).__awlMap2d = { view, pushView, fitK, renderer }
 
   return {
