@@ -53,6 +53,7 @@ public/models/*
 !public/models/ratel-winnie.glb
 !public/models/prairie-cookie.glb
 !public/models/kinkajou-fig.glb
+!public/models/goat-latte.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
