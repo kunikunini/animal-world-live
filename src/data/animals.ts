@@ -1,6 +1,6 @@
 import raw from './animals.json'
 import rosterRaw from './roster.json'
-import { staffVideosFor, videoForSpecies } from './videos'
+import { staffVideoForSpecies, staffVideosFor, videoForSpecies } from './videos'
 import photosRaw from './photos.json'
 import type { VideoSubject } from './videos'
 import type { WorldKey } from './worlds'
@@ -82,7 +82,8 @@ const rosterRows = (rosterRaw as { animals: RosterRow[] }).animals
 const rosterAnimals: Animal[] = rosterRows.map((r) => {
   // その子と名前で決まったスタッフ撮影の映像があれば、種の映像より先に出す（この子が映っていると言える）
   const staff = staffVideosFor(r.id)[0]
-  const found = staff ? null : videoForSpecies(r.species)
+  // 種の映像が無ければ、個体の決まっていないスタッフ撮影（種だけ分かっている物）をその種のみんなに出す
+  const found = staff ? null : (videoForSpecies(r.species) ?? staffVideoForSpecies(r.species))
   // 映像のまとまり（例: カンガルー 2 種）に何頭いるか。1 頭ならその子の映像と言える
   const groupSize = found ? rosterRows.filter((x) => found.subject.species.includes(x.species)).length : 0
   return {
@@ -99,7 +100,9 @@ const rosterAnimals: Animal[] = rosterRows.map((r) => {
     video: staff
       ? { source: 'recorded', url: staff.url, fallbackUrl: staff.fallbackUrl, poster: staff.poster, staff: true, portrait: staff.portrait }
       : found
-        ? { source: 'recorded', url: found.video.url, fallbackUrl: found.video.fallbackUrl, poster: found.video.poster }
+        ? found.video.staff
+          ? { source: 'recorded', url: found.video.url, fallbackUrl: found.video.fallbackUrl, poster: found.video.poster, staff: true, portrait: found.video.portrait }
+          : { source: 'recorded', url: found.video.url, fallbackUrl: found.video.fallbackUrl, poster: found.video.poster }
         : { source: 'recorded', url: '', poster: '' },
     world: r.world,
     subArea: r.subArea,

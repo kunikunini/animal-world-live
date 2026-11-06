@@ -1,5 +1,5 @@
 import type { Animal } from '../data/animals'
-import { animalsInVideo, animalsInWorld, getAnimal } from '../data/animals'
+import { animalsInVideo, animalsInWorld, getAnimal, listReadyAnimals } from '../data/animals'
 import { SPECIES_VIDEOS, STAFF_VIDEOS, videoForSpecies } from '../data/videos'
 import { WORLDS, getWorld } from '../data/worlds'
 import type { WorldInfo, WorldKey } from '../data/worlds'
@@ -280,12 +280,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
     // スタッフ撮影（新しい順）。縦長の映像も同じ形のカード（表紙は 16:9 に切り抜いてある）。順位や人気の飾りは付けない
     const staffCards = STAFF_VIDEOS.flatMap((v) => {
-      const a = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
+      const named = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
+      // 個体が決まっていない映像（複数の子が映っている等）は、その映像を出しているその種の子のモニターを開き、カードは種名だけ（個体名はあとで animalIds に足す）
+      const a = named ?? listReadyAnimals().find((x) => x.videoId === v.id)
       if (!a) return []
       const w = a.world ? getWorld(a.world) : undefined
       const place = a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
+      const title = named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()]
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(animalName(a))}（${esc(speciesName(a.species))}）</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const staff = staffCards.length ? section('staff', meta('catRowStaff'), `<div class="cat-row">${staffCards.join('')}</div>`) : ''
