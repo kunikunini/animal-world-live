@@ -3928,36 +3928,83 @@ button.bk-tab:hover {
 }
 
 /* ==========================================================================
-   全体地図
+   全体地図。シートを縦いっぱいに使い、地図（2D の大陸／3D のジオラマ）を全面に。
+   操作の部品（方位・向き合わせ・凡例）は地図の上に浮かべる（Google マップのように、主役は地形と場所）
    ========================================================================== */
-/* 地図の「動物の名前」: 押されている間は出す（空色＋チェック）、押していない時は隠す（灰色・チェックなし） */
-.map-names {
+.map {
+  z-index: 12;
+  --map-you: #1f7aff;
+  --map-ink: #3b2614;
+}
+.map .sheet {
+  top: calc(var(--safe-top) + 10px);
+  max-height: none;
+  padding: 6px 12px calc(10px + var(--safe-bottom));
+}
+.map .grabber { margin: 2px auto 6px; }
+.map .sheet-head { min-height: 48px; margin-bottom: 8px; gap: 8px; }
+.map-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.map-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #86c4e4;
+  box-shadow: 0 0 0 3px #fff, var(--shadow-card);
+  isolation: isolate;
+}
+
+/* 「動物」のスイッチ: オフは灰色、オンは緑（つまみが右へ）。押すたびに切り替わる */
+.map-switch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 40px;
-  padding: 0 14px 0 10px;
-  border: 2px solid var(--ink-faint);
+  padding: 0 6px 0 12px;
+  border: 0;
   border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-soft);
+  background: #e6e2dc;
+  color: #5d554c;
   font: inherit;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 900;
+  white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s, color 0.2s;
 }
-.map-names .ico { width: 18px; height: 18px; opacity: 0; transition: opacity 0.15s; }
-.map-names[aria-pressed="true"] {
-  border-color: var(--sky);
-  background: var(--sky-tint);
-  color: var(--sky-deep);
+.map-switch-track {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  background: #b7b0a6;
+  transition: background-color 0.2s;
 }
-.map-names[aria-pressed="true"] .ico { opacity: 1; }
+.map-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: translate 0.2s var(--ease-soft, ease);
+}
+.map-switch-state { min-width: 26px; font-size: 11px; letter-spacing: 0.04em; text-align: left; }
+.map-switch[aria-checked="true"] { background: #e3f3d2; color: #2f6a12; }
+.map-switch[aria-checked="true"] .map-switch-track { background: #4caf3a; }
+.map-switch[aria-checked="true"] .map-switch-knob { translate: 16px 0; }
 
-.map {
-  z-index: 12;
-}
 /* 2D・3D の切り替え（ふたつ並んだ丸いボタン） */
 .map-mode {
   margin-left: auto;
@@ -3966,7 +4013,6 @@ button.bk-tab:hover {
   border-radius: var(--r-pill);
   background: rgba(31, 42, 68, 0.08);
 }
-.map-mode + .map-names { margin-left: 8px; }
 .map-mode-btn {
   min-width: 48px;
   min-height: 38px;
@@ -3982,24 +4028,35 @@ button.bk-tab:hover {
   -webkit-tap-highlight-color: transparent;
 }
 .map-mode-btn[aria-checked="true"] { background: #fff; color: var(--sky-deep); box-shadow: 0 1px 3px rgba(31, 42, 68, 0.2); }
-.map-heart { color: #f0508a; font-weight: 900; margin-left: -4px; }
-.map .sheet-title, .map-names, .map-mode-btn { white-space: nowrap; }
+.map .sheet-title, .map-mode-btn { white-space: nowrap; }
 @media (max-width: 420px) {
   .map .sheet-title .ico { display: none; }
-  .map-mode-btn { min-width: 44px; padding: 0 10px; }
-  .map-names { padding: 0 12px 0 8px; }
+  .map .sheet-title { font-size: 20px; }
+  .map-mode-btn { min-width: 42px; padding: 0 9px; }
+  .map-switch { padding-left: 10px; gap: 5px; }
+}
+@media (max-width: 350px) {
+  .map-switch-state { display: none; }
 }
 
-/* 3D のジオラマ（2D の地図と同じ大きさの枠）。空色の地に粘土の板が浮かぶ */
+/* 2D の大陸の地図（指でずらす・つまむ・ひねる） */
+.map-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+.map-canvas[hidden] { display: none; }
+
+/* 3D のジオラマ。空色の地に粘土の板が浮かぶ */
 .map-3d {
-  position: relative;
-  width: min(100%, calc((100vh - 300px) * 0.75));
-  aspect-ratio: 3 / 4;
-  margin: 4px auto 12px;
-  border-radius: 18px;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   background: radial-gradient(120% 80% at 50% 30%, #d8f1ff, #9fd2f0);
-  box-shadow: 0 0 0 4px #fff, var(--shadow-card);
   touch-action: none;
 }
 .map-3d[hidden] { display: none; }
@@ -4027,11 +4084,20 @@ button.bk-tab:hover {
 }
 /* 当たり判定は 44 以上 */
 .map3d-base::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 36px; translate: -50% -50%; }
-.map3d-base.is-entry { --base-c: #2f6bff; }
+.map3d-base.is-entry { --base-c: #d9452b; }
 .map3d-base.is-spot { --base-c: #f26a1b; }
 .map3d-base.is-pass { --base-c: #8a6a46; }
 .map3d-base.is-animal { --base-c: #3f9a4a; }
 .map3d-base.is-target { outline: 3px solid #ffd21f; }
+/* となりのワールドの名前（うっすら。押すとそのワールドのスポットへ） */
+.map3d-base.is-world {
+  --base-c: rgba(255, 255, 255, 0.72);
+  color: var(--map-ink);
+  border-color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  min-height: 26px;
+  box-shadow: 0 1px 4px rgba(31, 42, 68, 0.18);
+}
 .map3d-heart {
   position: absolute;
   left: 0;
@@ -4043,58 +4109,97 @@ button.bk-tab:hover {
   pointer-events: none;
 }
 
-/* 縦長 3:4 の大陸の地図。凡例までシートに収まる高さにする */
-.map-canvas {
-  display: block;
-  width: min(100%, calc((100vh - 300px) * 0.75));
-  aspect-ratio: 3 / 4;
-  margin: 4px auto 12px;
-  border-radius: 18px;
-  box-shadow: 0 0 0 4px #fff, var(--shadow-card);
-  touch-action: none;
-  cursor: pointer;
+/* 右上の丸いボタン: 方位（赤い先が北。押すと北が上）と、向いている方を上にする */
+.map-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
 }
+.map-tool {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(31, 42, 68, 0.28);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.map-compass-needle {
+  position: absolute;
+  inset: 8px;
+  background: linear-gradient(to bottom, #e8452c 0 50%, #8a94a6 50% 100%);
+  clip-path: polygon(50% 0, 64% 50%, 50% 100%, 36% 50%);
+}
+.map-compass-n {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  translate: -50% 0;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  color: #e8452c;
+  rotate: var(--n-rot, 0deg);
+  transform-origin: 50% 23px;
+}
+.map-follow svg { width: 20px; height: 20px; fill: none; stroke: var(--map-you); stroke-width: 2.4; stroke-linejoin: round; }
+.map-follow[aria-pressed="true"] { background: var(--map-you); }
+.map-follow[aria-pressed="true"] svg { fill: #fff; stroke: #fff; }
 
+/* 凡例: 地図の左下に、透ける小さな札で。動物を隠している時は動物の行を出さない */
 .map-legend {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
+  max-width: calc(100% - 16px);
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 5px 9px;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-
-.map-legend li {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px 5px 8px;
-  border-radius: var(--r-pill);
-  background: var(--paper);
-  font-size: var(--fs-caption);
+  gap: 2px 10px;
+  border-radius: 12px;
+  background: rgba(255, 252, 244, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--map-ink);
+  font-size: 11px;
   font-weight: 800;
-  box-shadow: var(--shadow-card);
+  line-height: 1.5;
+  pointer-events: none;
 }
+.map-legend li { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.map:not(.is-animals) .lg-animal { display: none; }
+.lg { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.lg-you { background: var(--map-you); box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(31, 122, 255, 0.25); }
+.lg-spot { width: auto; height: auto; border-radius: 0; color: #f6b800; font-size: 13px; line-height: 1; text-shadow: 0 0 2px #fff, 0 0 6px #ffd84d; }
+.lg-paw { background: #3f9a4a; box-shadow: 0 0 0 1.5px #fff; }
+.lg-met { background: #d9a95f; box-shadow: inset 0 0 0 1.5px #6a4727; }
+.lg-friend { width: auto; height: auto; border-radius: 0; color: #f0508a; font-size: 12px; line-height: 1; }
 
-.map-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  flex: none;
+@media (min-width: 768px) {
+  .map .sheet { top: 50%; width: min(980px, calc(100% - 48px)); height: calc(100% - 48px); max-height: none; padding: 16px 20px 20px; }
 }
-
-.dot-you { background: var(--sun); box-shadow: inset 0 0 0 2px #fff; }
-.dot-met { background: #d9a95f; box-shadow: inset 0 0 0 2px #6a4727; }
-.dot-friend { background: #d9a95f; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--leaf); }
-.dot-spot { background: var(--gold); box-shadow: inset 0 0 0 3px #fff; }
-
 @media (max-height: 520px) and (orientation: landscape) {
-  /* 横向き: 左に地図、右に凡例を縦に */
-  .map .sheet-body { display: grid; grid-template-columns: auto 1fr; column-gap: 24px; align-items: start; overflow: hidden; }
-  .map-canvas, .map-3d { width: calc((100vh - 110px) * 0.75); height: calc(100vh - 110px); margin: 0; }
-  .map-legend { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; gap: 8px; }
-  .map-legend li { white-space: nowrap; }
+  /* 横向きのスマホ: 画面いっぱい（PC の中央寄せの位置決めを解く） */
+  .map .sheet {
+    inset: 0;
+    width: auto;
+    height: auto;
+    transform: none;
+    border-radius: 0;
+    padding: 2px calc(12px + var(--safe-right)) calc(6px + var(--safe-bottom)) calc(12px + var(--safe-left));
+  }
+  .map .sheet-head { min-height: 44px; margin-bottom: 4px; }
 }
 
 /* ==========================================================================
@@ -5528,6 +5633,54 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   font-weight: 800;
   color: #b8741a;
 }
+/* 案内役のスコップ（公式の絵）。見出しの行の中に収め、カードの高さを増やさない（照らす所と重ならない置き場所の計算はそのまま） */
+.coach-scop {
+  position: relative;
+  flex: none;
+  width: 54px;
+  height: 60px;
+  margin: -12px -2px -4px -6px;
+}
+.coach-scop img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+}
+.coach-scop .stars {
+  inset: 0;
+}
+/* 完了の段: 祝いの瞬間としてスコップを大きく出し、まわりに金の星（ともだち登録の祝いと同じ） */
+.coach-card.is-done .coach-scop {
+  width: 66px;
+  height: 74px;
+  margin: -6px 0 -4px -4px;
+}
+.coach-head > :not(.coach-scop) {
+  white-space: nowrap;
+}
+@media (max-width: 380px) {
+  .coach-head {
+    gap: 6px;
+  }
+  .coach-min {
+    padding-left: 6px;
+  }
+}
+.coach-card.is-done.is-refresh .coach-scop img {
+  animation: coach-scop-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes coach-scop-pop {
+  from {
+    scale: 0.6;
+  }
+}
+.coach-card.is-min .coach-scop {
+  width: 32px;
+  height: 36px;
+  margin: -4px 0;
+}
 .coach-text {
   margin: 6px 0 10px;
   font-size: 17px;
@@ -5624,6 +5777,15 @@ body.coach-min .coach-hole.is-none {
     width: min(340px, 42vw);
     padding: 10px 12px 6px;
   }
+  .coach-scop {
+    width: 36px;
+    height: 40px;
+    margin: -8px -2px -6px -4px;
+  }
+  .coach-card.is-done .coach-scop {
+    width: 56px;
+    height: 62px;
+  }
   .coach-text {
     margin: 4px 0 6px;
     font-size: 14px;
@@ -5640,7 +5802,8 @@ body.coach-min .coach-hole.is-none {
   }
 }
 .is-reduce-motion .coach-arrow svg,
-.is-reduce-motion .coach-card.is-refresh {
+.is-reduce-motion .coach-card.is-refresh,
+.is-reduce-motion .coach-card.is-done.is-refresh .coach-scop img {
   animation: none;
 }
 .is-reduce-motion .coach-hole {

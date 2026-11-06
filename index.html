@@ -59,6 +59,7 @@
         <div class="sp-burst"><i class="sp-ring o"></i><i class="sp-ring i"></i><span class="sp-rays"><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b></span><span class="sp-dots"><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b></span></div>
         <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></div></div></div></div>
         <i class="sp-line"></i>
+        <div class="sp-bubble"><div><span class="sp-bub-ring"></span><span class="sp-bub-ring"></span><span class="sp-bub-bg"></span><span class="sp-bub-line"></span><span class="sp-ja"><i style="--i:0"><ruby>画面<rt>がめん</rt></ruby></i><i style="--i:1">を</i> <b><i style="--i:2">タ</i><i style="--i:3">ッ</i><i style="--i:4">プ</i></b><i style="--i:5">し</i><i style="--i:6">て</i><br /><i style="--i:7">は</i><i style="--i:8">じ</i><i style="--i:9">め</i><i style="--i:10">よ</i><i style="--i:11">う</i><i style="--i:12">！</i></span><span class="sp-en"><b><i style="--i:0">T</i><i style="--i:1">a</i><i style="--i:2">p</i></b> <i style="--i:3">t</i><i style="--i:4">h</i><i style="--i:5">e</i> <i style="--i:6">s</i><i style="--i:7">c</i><i style="--i:8">r</i><i style="--i:9">e</i><i style="--i:10">e</i><i style="--i:11">n</i><br /><i style="--i:12">t</i><i style="--i:13">o</i> <i style="--i:14">s</i><i style="--i:15">t</i><i style="--i:16">a</i><i style="--i:17">r</i><i style="--i:18">t</i><i style="--i:19">!</i></span></div></div>
       </div>
       <div class="splash-logo"><span class="sp-row"><span class="sp-word sp-w1"><i>A</i><i>N</i><i>I</i><i>M</i><i>A</i><i>L</i></span><span class="sp-word sp-w2"><i>W</i><i>O</i><i>R</i><i>L</i><i>D</i></span></span><span class="sp-live"><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><span class="sp-word sp-w3"><i>L</i><i>I</i><i>V</i><i>E</i></span></span></div>
       <!-- splash:end -->
@@ -73,7 +74,29 @@
         if (m === '1' || (m !== '0' && matchMedia('(prefers-reduced-motion: reduce)').matches)) document.getElementById('splash').classList.add('is-still')
       } catch (e) {}
       // JS（本体）が動かない時の保険: 7 秒で消えたらホームの動きも動かす
-      setTimeout(function () { document.documentElement.classList.remove('is-splash') }, 7600)
+      setTimeout(function () { if (!window.__awlSplashJs) document.documentElement.classList.remove('is-splash') }, 7600)
+      // 音の許可: ブラウザは最初の操作まで音を出させない。本体（JS、約 1MB）が届く前のタップでも許可を取れるよう、
+      // ここで操作を待って AudioContext を動かしておく（src/audio/sound.ts が同じ AudioContext を引き継ぐ）。
+      // iPhone は touchend の中でないと動かないので、動くまで操作のたびに試す
+      ;(function () {
+        var AC = window.AudioContext || window.webkitAudioContext
+        if (!AC) return
+        var evs = ['pointerdown', 'keydown', 'touchend']
+        function early() {
+          try {
+            var ac = window.__awlAudio || (window.__awlAudio = new AC())
+            if (ac.state !== 'running') {
+              ac.resume()
+              var s = ac.createBufferSource()
+              s.buffer = ac.createBuffer(1, 1, 22050)
+              s.connect(ac.destination)
+              s.start(0)
+            }
+            if (ac.state === 'running') evs.forEach(function (t) { window.removeEventListener(t, early, true) })
+          } catch (e) {}
+        }
+        evs.forEach(function (t) { window.addEventListener(t, early, true) })
+      })()
     </script>
     <!-- 自作 SVG アイコン。OS の絵文字は使わない -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
@@ -193,19 +216,27 @@
             <button id="map-2d" class="map-mode-btn" type="button" role="radio" aria-checked="true">2D</button>
             <button id="map-3d-btn" class="map-mode-btn" type="button" role="radio" aria-checked="false">3D</button>
           </div>
-          <!-- 動物の印（点・ピン・名前・動物の拠点）を出す／隠す。押された状態＝出す。2D・3D の両方に効く -->
-          <button id="map-names" class="map-names" type="button" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span data-i18n="mapAnimals">動物</span></button>
+          <!-- 動物の印（点・ピン・名前・動物の拠点）を出す／隠す。オン＝緑、オフ＝灰色のスイッチ。2D と 3D で別々に覚える（2D は最初オフ） -->
+          <button id="map-names" class="map-switch" type="button" role="switch" aria-checked="false"><span class="map-switch-label" data-i18n="mapAnimals">動物</span><span class="map-switch-track" aria-hidden="true"><span class="map-switch-knob"></span></span><span class="map-switch-state" aria-hidden="true">OFF</span></button>
           <button id="map-close" class="icon-btn" type="button" aria-label="閉じる" data-i18n-aria="close" title="閉じる" data-i18n-title="close"><svg class="ico"><use href="#i-close" /></svg></button>
         </header>
-        <div class="sheet-body">
-          <canvas id="map-canvas" class="map-canvas" role="img" aria-label="7 つのワールドがある大陸の地図。北が上。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
-          <div id="map-3d" class="map-3d" hidden role="img" aria-label="いまいるワールドのジオラマ。北が上。拠点を押すと、そこまで歩いていく" data-i18n-aria="map3dCanvas"></div>
-          <ul class="map-legend" aria-label="凡例" data-i18n-aria="legend">
-            <li><span class="map-dot dot-you"></span><span data-i18n="you">あなた</span></li>
-            <li><span class="map-dot dot-met"></span><span data-i18n="metAnimals">出会った動物</span></li>
-            <li><span class="map-dot dot-friend"></span><span class="map-heart" aria-hidden="true">♥</span><span data-i18n="friends">ともだち</span></li>
-            <li><span class="map-dot dot-spot"></span><span data-i18n="spot">観察スポット</span></li>
-          </ul>
+        <div class="sheet-body map-body">
+          <!-- 地図の舞台: 2D・3D のどちらかが全面に広がる。右上に方位と「向いている方を上に」、左下に小さな凡例 -->
+          <div id="map-stage" class="map-stage">
+            <canvas id="map-canvas" class="map-canvas" role="img" aria-label="7 つのワールドがある大陸の地図。指でずらす・つまんで拡大・ひねって回す。タップした場所へ歩く" data-i18n-aria="mapCanvas"></canvas>
+            <div id="map-3d" class="map-3d" hidden role="img" aria-label="いまいるワールドのジオラマ。まわりのワールドもうっすら見える。指でなぞると回る・傾く、2 本指でつまむと寄る。拠点を押すと、そこまで歩いていく" data-i18n-aria="map3dCanvas"></div>
+            <div class="map-tools">
+              <button id="map-compass" class="map-tool map-compass" type="button" aria-label="北を上にもどす" data-i18n-aria="mapNorthUp" title="北を上にもどす" data-i18n-title="mapNorthUp"><span class="map-compass-needle" aria-hidden="true"></span><span class="map-compass-n" aria-hidden="true">N</span></button>
+              <button id="map-follow" class="map-tool map-follow" type="button" aria-pressed="false" aria-label="向いている方を上にする" data-i18n-aria="mapHeadingUp" title="向いている方を上にする" data-i18n-title="mapHeadingUp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" /></svg></button>
+            </div>
+            <ul class="map-legend" aria-label="凡例" data-i18n-aria="legend">
+              <li><span class="lg lg-you" aria-hidden="true"></span><span data-i18n="you">あなた</span></li>
+              <li><span class="lg lg-spot" aria-hidden="true">★</span><span data-i18n="spot">観察スポット</span></li>
+              <li class="lg-animal"><span class="lg lg-paw" aria-hidden="true"></span><span data-i18n="mapAnimalPlace">動物のいる所</span></li>
+              <li class="lg-animal"><span class="lg lg-met" aria-hidden="true"></span><span data-i18n="metAnimals">出会った動物</span></li>
+              <li class="lg-animal"><span class="lg lg-friend" aria-hidden="true">♥</span><span data-i18n="friends">ともだち</span></li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>

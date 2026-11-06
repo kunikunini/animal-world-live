@@ -22,6 +22,118 @@ export interface Props {
   update: (time: number) => void
 }
 
+const _rc = new THREE.Vector3()
+/** 形ごとの、重ならない頂点（もとの形の座標）と辺（頂点の番号の組）。三角形ごとに頂点を持つ形でも、同じ点は 1 つにまとめる */
+const edgeCache = new WeakMap<THREE.BufferGeometry, { verts: Float32Array; edges: Uint16Array }>()
+function edgesOf(geo: THREE.BufferGeometry): { verts: Float32Array; edges: Uint16Array } {
+  const hit = edgeCache.get(geo)
+  if (hit) return hit
+  const pos = geo.getAttribute('position')
+  const index = geo.getIndex()
+  const count = index ? index.count : pos.count
+  const ids = new Map<string, number>()
+  const verts: number[] = []
+  const idOf = (k: number) => {
+    const v = index ? index.getX(k) : k
+    const x = pos.getX(v)
+    const y = pos.getY(v)
+    const z = pos.getZ(v)
+    const key = `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`
+    let id = ids.get(key)
+    if (id === undefined) {
+      id = verts.length / 3
+      ids.set(key, id)
+      verts.push(x, y, z)
+    }
+    return id
+  }
+  const seen = new Set<number>()
+  const edges: number[] = []
+  for (let t = 0; t + 2 < count; t += 3) {
+    const tri = [idOf(t), idOf(t + 1), idOf(t + 2)]
+    for (let e = 0; e < 3; e++) {
+      const a = Math.min(tri[e], tri[(e + 1) % 3])
+      const b = Math.max(tri[e], tri[(e + 1) % 3])
+      if (a === b || seen.has(a * 65536 + b)) continue
+      seen.add(a * 65536 + b)
+      edges.push(a, b)
+    }
+  }
+  const out = { verts: new Float32Array(verts), edges: new Uint16Array(edges) }
+  edgeCache.set(geo, out)
+  return out
+}
+
+/**
+ * 形（geo を m で置いたもの）の辺を、両端の点と「その点の地面からの高さ」でたどる。凸の岩なら、輪郭はかならず辺の上にある。
+ * 地面の高さは頂点で測り、辺の上は直線で補う（岩は小さいので地面はほぼまっすぐ）
+ */
+function forEachEdge(
+  geo: THREE.BufferGeometry,
+  m: THREE.Matrix4,
+  fn: (x0: number, z0: number, up0: number, x1: number, z1: number, up1: number, y0: number, y1: number) => void,
+): void {
+  const { verts, edges } = edgesOf(geo)
+  const n = verts.length / 3
+  const wx = new Float32Array(n)
+  const wy = new Float32Array(n)
+  const wz = new Float32Array(n)
+  const up = new Float32Array(n)
+  for (let i = 0; i < n; i++) {
+    _rc.fromArray(verts, i * 3).applyMatrix4(m)
+    wx[i] = _rc.x
+    wy[i] = _rc.y
+    wz[i] = _rc.z
+    up[i] = _rc.y - terrainHeight(_rc.x, _rc.z)
+  }
+  for (let k = 0; k < edges.length; k += 2) {
+    const a = edges[k]
+    const b = edges[k + 1]
+    fn(wx[a], wz[a], up[a], wx[b], wz[b], up[b], wy[a], wy[b])
+  }
+}
+
+/** 岩が地面からいちばん高く出ている高さ（m）。辺の途中も本当の地面で測る（段々の地面の角にかかる岩のため） */
+export function rockRise(geo: THREE.BufferGeometry, m: THREE.Matrix4): number {
+  let rise = -Infinity
+  forEachEdge(geo, m, (x0, z0, up0, x1, z1, up1, y0, y1) => {
+    rise = Math.max(rise, up0, up1)
+    for (const f of [0.25, 0.5, 0.75]) {
+      const x = x0 + (x1 - x0) * f
+      const z = z0 + (z1 - z0) * f
+      rise = Math.max(rise, y0 + (y1 - y0) * f - terrainHeight(x, z))
+    }
+  })
+  return rise
+}
+
+/** 体の高さ（足もとから）。岩がこれより低く出ている所は、つまずかずに上を歩ける */
+const ROCK_STEP = 0.45
+/**
+ * 岩の当たり判定の円。地面から ROCK_STEP より高く出ている所を、岩の中心からの水平の距離で覆う。
+ * 何も出ていなければ null（低い石は上を歩ける）。主人公が岩にめり込まないように、形から測る
+ */
+export function rockCollider(geo: THREE.BufferGeometry, m: THREE.Matrix4): Collider | null {
+  const cx = m.elements[12]
+  const cz = m.elements[14]
+  let r = 0
+  // 辺のうち地面から ROCK_STEP より出ている区間の両端（中心からの距離は区間の端でいちばん遠い）
+  const reach = (x: number, z: number) => {
+    r = Math.max(r, Math.hypot(x - cx, z - cz))
+  }
+  forEachEdge(geo, m, (x0, z0, up0, x1, z1, up1) => {
+    const in0 = up0 > ROCK_STEP
+    const in1 = up1 > ROCK_STEP
+    if (in0) reach(x0, z0)
+    if (in1) reach(x1, z1)
+    if (in0 !== in1) {
+      const f = (ROCK_STEP - up0) / (up1 - up0)
+      reach(x0 + (x1 - x0) * f, z0 + (z1 - z0) * f)
+    }
+  })
+  return r > 0 ? { x: cx, z: cz, r: r + 0.05 } : null
+}
+
 /** 映り込みの描画から外すレイヤー（草や光の粒）。メインカメラでは有効にする */
 export const NO_REFLECT_LAYER = 1
 
@@ -211,8 +323,9 @@ function createRocks(rand: () => number, group: THREE.Group, colliders: Collider
     _s.set(sx, p.s * (0.6 + rand() * 0.5), sz)
     _m.compose(_p, _q, _s)
     rocks.setMatrixAt(i, _m)
-    // 小石は当たり判定なし。十二面体の外接半径は1なので少し内側を取る
-    if (p.s >= 0.9) colliders.push({ x: p.x, z: p.z, r: Math.max(sx, sz) * 0.8 })
+    // 当たり判定は形から測る（地面から低くしか出ていない小石はなし）
+    const c = rockCollider(geo, _m)
+    if (c) colliders.push(c)
     _c.copy(rockA).lerp(rockB, rand())
     rocks.setColorAt(i, _c)
   })
@@ -351,77 +464,170 @@ interface RangeOptions {
   name: string
 }
 
-/** 山並みの輪。外側の層ほど高く、色は麓から峰へ。gap と峠のところは地面の下まで下げる */
+/** ほかのワールドの歩ける円からの距離に対する山の高さの上限（高さ / 距離）。円の縁の少し外から見上げて約 31° まで */
+const RANGE_CLEAR_SLOPE = 0.6
+/** 上の上限を測り始める、円の縁から外への距離（m）。円の外の歩ける地面に山の裾をかけない */
+const RANGE_CLEAR_MARGIN = 25
+/** 尾根の幅（内の麓から峰まで、m）は高さに合わせる。外の麓も峰から同じ幅。ワールドのあいだの狭い所に並ぶので急な峰にする */
+function rangeWidth(h: number): number {
+  return Math.min(22, Math.max(6, h * 0.55))
+}
+/** 山並みの断面の行: 内の麓・内の肩・峰・外の肩・外の麓 */
+const RANGE_ROWS = 5
+const RANGE_PEAK_ROW = 2
+
+/**
+ * 切れ目の重み（1 = そのまま、0 = 地面の下）を、輪に沿ってならす。
+ * 切れ目に挟まれて残った短いかけら（数区間だけの細い峰）は消し、ぼかして山の端をなだらかに下げる
+ */
+function smoothKeep(keep: Float32Array, n: number): void {
+  // ① 短いかけらを消す（輪なので、切れている所から一周たどる）
+  let start = -1
+  for (let i = 0; i < n; i++) if (keep[i] <= 0.15) start = i
+  if (start >= 0) {
+    let run: number[] = []
+    for (let k = 1; k <= n; k++) {
+      const i = (start + k) % n
+      if (keep[i] > 0.15) run.push(i)
+      else {
+        if (run.length > 0 && run.length < 8) for (const j of run) keep[j] = 0
+        run = []
+      }
+    }
+  }
+  // ② ぼかす（±3 区間を 2 回）。下げる向きにだけ使う（切った所を持ち上げて、となりのワールドの縁に低い裾を残さない）
+  const raw = keep.slice()
+  const tmp = new Float32Array(n)
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < n; i++) {
+      let sum = 0
+      for (let k = -3; k <= 3; k++) sum += keep[(i + k + n) % n]
+      tmp[i] = sum / 7
+    }
+    keep.set(tmp)
+  }
+  for (let i = 0; i < n; i++) keep[i] = Math.min(keep[i], raw[i])
+}
+
+/**
+ * 山並みの輪。外側の層ほど高く、色は麓から峰へ。gap と峠のところは地面の下まで下げる。
+ * 断面は内と外の両側に裾のある尾根（幅は高さに合わせる）で、どの向きから見ても板や針に見えない。
+ * 高さは頂点ごとの地面からはかり（高原や丘の上でも裾が埋まり、宙に浮かない）、
+ * ほかのワールドの歩ける円に近い所ほど低くする（となりのワールドから見上げる壁や尖塔にしない）。
+ * 内の麓は層の半径（いままでの峰の位置）のすぐ内側に置くので、歩ける範囲は狭くならない
+ */
 function createRange(group: THREE.Group, o: RangeOptions): void {
   const ridgeNoise = new Simplex2D(WORLD_SEED + 77)
   const colFoot = new THREE.Color()
   const colPeak = new THREE.Color()
+  const own = REGIONS.find((r) => Math.abs(r.x - o.cx) < 1 && Math.abs(r.z - o.cz) < 1)
+  const others = REGIONS.filter((r) => r !== own)
+  /** その場所で山が立ってよい高さ（ほかのワールドの歩ける円に近いほど低い） */
+  const clearCap = (x: number, z: number) => {
+    let cap = Infinity
+    for (const r of others) cap = Math.min(cap, (Math.hypot(x - r.x, z - r.z) - r.walk - RANGE_CLEAR_MARGIN) * RANGE_CLEAR_SLOPE)
+    return Math.max(0, cap)
+  }
 
   for (const L of o.layers) {
+    const n = L.segs
     const positions: number[] = []
     const colors: number[] = []
     const indices: number[] = []
-    const rows = 3
+    /** 頂点ごとの地面の高さ（歩ける範囲の計算で使い回す） */
+    const grounds: number[] = []
     colFoot.set(L.foot)
     colPeak.set(L.peak)
 
     // 周期的な稜線: 角度を円周上の点にしてノイズを引くと、一周でつながる
     const ridge = (a: number, k: number, off: number) => ridgeNoise.noise(Math.cos(a) * k + off, Math.sin(a) * k + off)
-    for (let i = 0; i <= L.segs; i++) {
-      const a = (i / L.segs) * Math.PI * 2
+    const heights = new Float32Array(n)
+    const keep = new Float32Array(n)
+    const sharps = new Float32Array(n)
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2
+      const ca = Math.cos(a)
+      const sa = Math.sin(a)
       const broad = ridge(a, 2.2, L.seed) * 0.5 + 0.5
       const sharp = 1 - Math.abs(ridge(a, 7, L.seed + 11))
       const fine = ridge(a, 19, L.seed + 23) * 0.5
-      const height = o.islands
+      sharps[i] = sharp
+      heights[i] = o.islands
         ? L.h * (broad * 1.7 - 0.62) + L.spread * (sharp * 0.8 + fine * 0.4 - 0.5)
         : L.h * (0.45 + 0.55 * broad) + L.spread * (sharp * 0.8 + fine * 0.4)
       // 切れ目: 開けておく向きと峠では、山を地面の下まで下げる
-      let keep = 1
+      let k = 1
       if (o.gap) {
         const da = Math.abs(Math.atan2(Math.sin(a - o.gap.angle), Math.cos(a - o.gap.angle)))
-        keep = Math.min(keep, smoothstep(o.gap.half, o.gap.half + 0.35, da))
+        k = Math.min(k, smoothstep(o.gap.half, o.gap.half + 0.35, da))
       }
+      // 麓から峰までの帯で測る（尾根の外へはみ出す裾は、下で頂点ごとに高さを抑える）
+      const ax = o.cx + ca * (L.r - 3)
+      const az = o.cz + sa * (L.r - 3)
+      const bx = o.cx + ca * (L.r + 14)
+      const bz = o.cz + sa * (L.r + 14)
+      const mx = o.cx + ca * L.r
+      const mz = o.cz + sa * L.r
       if (o.cutPasses) {
-        const mx = o.cx + Math.cos(a) * L.r
-        const mz = o.cz + Math.sin(a) * L.r
-        keep = Math.min(keep, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxis(mx, mz)))
-        // 外側の層はほかのワールドの歩ける円の中を横切る。円（＋余白）にかかる所も地面の下まで下げる。
-        // 麓から峰（稜線のゆれ込み）までの帯で測る
-        const ca = Math.cos(a)
-        const sa = Math.sin(a)
-        for (const r of OUTER_REGIONS) {
-          const d = distToSegment(r.x, r.z, o.cx + ca * (L.r - 3), o.cz + sa * (L.r - 3), o.cx + ca * (L.r + 14), o.cz + sa * (L.r + 14))
-          keep = Math.min(keep, smoothstep(r.walk + 8, r.walk + 36, d))
-        }
+        k = Math.min(k, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxis(mx, mz)))
+        // 外側の層はほかのワールドの歩ける円の中を横切る。円（＋余白）にかかる所も地面の下まで下げる
+        for (const r of OUTER_REGIONS) k = Math.min(k, smoothstep(r.walk + 8, r.walk + 36, distToSegment(r.x, r.z, ax, az, bx, bz)))
       }
       if (o.avoid) {
-        const ca = Math.cos(a)
-        const sa = Math.sin(a)
         for (const r of o.avoid) {
-          const d = distToSegment(r.x, r.z, o.cx + ca * (L.r - 3), o.cz + sa * (L.r - 3), o.cx + ca * (L.r + 14), o.cz + sa * (L.r + 14))
           // サバンナの輪より広めにあける（となりのワールドの山が歩ける円のすぐ外に壁のように立たないように）
-          keep = Math.min(keep, smoothstep(r.walk + 20, r.walk + 62, d))
-          const mx = o.cx + ca * L.r
-          const mz = o.cz + sa * L.r
-          keep = Math.min(keep, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxisOf(r, mx, mz)))
+          k = Math.min(k, smoothstep(r.walk + 20, r.walk + 62, distToSegment(r.x, r.z, ax, az, bx, bz)))
+          k = Math.min(k, smoothstep(PASS_HALF_WIDTH + 14, PASS_HALF_WIDTH + 44, distToPassAxisOf(r, mx, mz)))
         }
       }
-      // 行0: 麓（外側・低い）、行1: 肩、行2: 峰
-      const ys = [-4, height * (0.42 + 0.12 * ridge(a, 5, L.seed + 31)), height].map((y, row) => (row === 0 ? y : -6 + (y + 6) * keep))
-      const rs = [L.r + 14, L.r + 5, L.r]
-      for (let row = 0; row < rows; row++) {
-        const rr = rs[row] + (row === 2 ? ridge(a, 13, L.seed + 41) * 3 : 0)
-        positions.push(o.cx + Math.cos(a) * rr, ys[row], o.cz + Math.sin(a) * rr)
-        const t = row === 0 ? 0 : row === 1 ? 0.45 : 0.85 + 0.15 * sharp
-        _c.copy(colFoot).lerp(colPeak, t)
+      keep[i] = k
+    }
+    smoothKeep(keep, n)
+
+    for (let i = 0; i <= n; i++) {
+      const j = i % n
+      const a = (j / n) * Math.PI * 2
+      const ca = Math.cos(a)
+      const sa = Math.sin(a)
+      let H = heights[j] * keep[j]
+      const jitter = ridge(a, 13, L.seed + 41) * 3
+      // ほかのワールドの歩ける円に近いほど低く（峰の位置で測る。峰の位置が高さで変わるので 2 回）
+      if (H > 0) {
+        for (let it = 0; it < 2; it++) {
+          const w = rangeWidth(H)
+          const rp = L.r - 2 + w + jitter
+          const px = o.cx + ca * rp
+          const pz = o.cz + sa * rp
+          H = Math.min(H, clearCap(px, pz))
+        }
+      }
+      const w = rangeWidth(Math.max(0, H))
+      const rp = L.r - 2 + w + jitter
+      const shoulder = 0.42 + 0.12 * ridge(a, 5, L.seed + 31)
+      const rs = [L.r - 2, L.r - 2 + w * 0.5, rp, rp + w * 0.5, rp + w]
+      const ups = [null, H * (shoulder + 0.08), H, H * shoulder, null]
+      const tone = [0, 0.45, 0.85 + 0.15 * sharps[j], 0.45, 0]
+      for (let row = 0; row < RANGE_ROWS; row++) {
+        const x = o.cx + ca * rs[row]
+        const z = o.cz + sa * rs[row]
+        const g = terrainHeight(x, z)
+        grounds.push(g)
+        const b = o.islands ? Math.max(g, 0) : g
+        // 肩もほかのワールドの円に近い所は低く（尾根の外へはみ出す裾を、となりの歩ける地面にかけない）
+        const u = ups[row]
+        const up = u === null ? null : u > 0 ? Math.min(u, clearCap(x, z)) : u
+        // 水の世界の島は、海の上では海面の少し下を麓にする（海底から積まない）。麓は地面の 4m 下。低い所（切れ目で沈めた所）は地面の下へ沈める（谷で頂点のあいだの面が地上に出ないように）
+        const y = up === null ? b - 4 : b + (up >= 4 ? up : Math.max(-6, up * 2 - 4))
+        positions.push(x, y, z)
+        _c.copy(colFoot).lerp(colPeak, tone[row])
         colors.push(_c.r, _c.g, _c.b)
       }
     }
-    for (let i = 0; i < L.segs; i++) {
-      for (let row = 0; row < rows - 1; row++) {
-        const a0 = i * rows + row
+    for (let i = 0; i < n; i++) {
+      for (let row = 0; row < RANGE_ROWS - 1; row++) {
+        const a0 = i * RANGE_ROWS + row
         const a1 = a0 + 1
-        const b0 = (i + 1) * rows + row
+        const b0 = (i + 1) * RANGE_ROWS + row
         const b1 = b0 + 1
         indices.push(a0, b0, a1, a1, b0, b1)
       }
@@ -431,6 +637,9 @@ function createRange(group: THREE.Group, o: RangeOptions): void {
     geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
     geo.setIndex(indices)
     geo.computeVertexNormals()
+    geo.userData.rows = RANGE_ROWS
+    geo.userData.grounds = grounds
+    geo.userData.peakRow = RANGE_PEAK_ROW
     const mesh = new THREE.Mesh(geo, toonMaterial({ vertexColors: true, side: THREE.DoubleSide }))
     mesh.frustumCulled = false
     mesh.name = `${o.name}-${L.r}`
@@ -458,11 +667,26 @@ function measureReach(group: THREE.Group): void {
   group.traverse((o) => {
     if (!(o instanceof THREE.Mesh) || !o.name.startsWith('mountains')) return
     const pos = o.geometry.getAttribute('position')
+    const rows = (o.geometry.userData.rows as number | undefined) ?? 1
+    const grounds = o.geometry.userData.grounds as number[] | undefined
+    const above = new Uint8Array(pos.count)
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i)
-      const y = pos.getY(i)
       const z = pos.getZ(i)
-      if (y > terrainHeight(x, z) + 1) peaks.push(x, z)
+      if (pos.getY(i) > (grounds ? grounds[i] : terrainHeight(x, z)) + 1) {
+        above[i] = 1
+        peaks.push(x, z)
+      }
+    }
+    // 断面の行のあいだ（裾の斜面）で、地面の上に出るところも測る（片方の頂点だけが地面の上に出ている辺）
+    for (let i = 0; i < pos.count; i++) {
+      if (i % rows === rows - 1 || above[i] === above[i + 1]) continue
+      for (let t = 0.2; t < 0.99; t += 0.2) {
+        const sx = pos.getX(i) + (pos.getX(i + 1) - pos.getX(i)) * t
+        const sy = pos.getY(i) + (pos.getY(i + 1) - pos.getY(i)) * t
+        const sz = pos.getZ(i) + (pos.getZ(i + 1) - pos.getZ(i)) * t
+        if (sy > terrainHeight(sx, sz) + 1) peaks.push(sx, sz)
+      }
     }
   })
   for (const r of REGIONS) {
@@ -853,6 +1077,8 @@ function createTermiteMounds(rand: () => number, group: THREE.Group, colliders: 
     mesh.setMatrixAt(n, _m)
     mesh.setColorAt(n, _c)
     n++
+    // 当たり判定は本体と脇の塔の形から測る
+    const body = rockCollider(geo, _m)
     const sa = rand() * Math.PI * 2
     const sx = x + Math.cos(sa) * w * 0.7
     const sz = z + Math.sin(sa) * w * 0.7
@@ -862,7 +1088,9 @@ function createTermiteMounds(rand: () => number, group: THREE.Group, colliders: 
     mesh.setMatrixAt(n, _m)
     mesh.setColorAt(n, _c)
     n++
-    colliders.push({ x, z, r: w * 0.85 })
+    const side = rockCollider(geo, _m)
+    colliders.push(body ?? { x, z, r: w * 0.85 })
+    if (side) colliders.push(side)
     placed++
   }
   mesh.count = n

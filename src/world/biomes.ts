@@ -3,6 +3,7 @@ import { mulberry32 } from './noise'
 import { WORLD_SEED } from './layout'
 import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
+import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
 import { CREEK, GOAT_ROCKS, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
@@ -31,6 +32,19 @@ const _c = new THREE.Color()
  * 木の上で暮らす子（ビントロング・キンカジュー・ナマケモノ）はこの枝に置く（residents.ts）
  */
 export const JUNGLE_PERCH = { dx: 7, dz: -9, height: 2.7, length: 6.2, radius: 0.24 }
+
+/** ヤギの岩場の板が地面から出てよい高さ（m）。これより低ければ主人公は板の上を歩いて見える */
+const GOAT_SLAB_RISE = 0.3
+
+/** 円の外へ歩ける範囲（props.ts の REACH_EXTRA_OUTER）＋少し。ここまでの木と岩には当たり判定を付ける */
+const REACH_BAND = 40
+
+/** 岩の当たり判定を形から付ける（歩ける範囲の外の岩は付けない） */
+function addRock(colliders: Collider[], r: Region, geo: THREE.BufferGeometry, m: THREE.Matrix4): void {
+  if (Math.hypot(m.elements[12] - r.x, m.elements[14] - r.z) > r.walk + REACH_BAND) return
+  const c = rockCollider(geo, m)
+  if (c) colliders.push(c)
+}
 
 function region(key: RegionKey): Region {
   return OUTER_REGIONS.find((r) => r.key === key) as Region
@@ -108,7 +122,7 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
       _m.compose(_p.set(t.x, cy + ch * 0.42, t.z), _q, _s.set(w * 0.62, ch * 0.6, w * 0.62))
       caps.setMatrixAt(i * 3 + k, _m)
     }
-    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
   })
   finish(trunks, cones, caps)
   group.add(trunks, cones, caps)
@@ -124,9 +138,10 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
     _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
     _m.compose(_p.set(p.x, y, p.z), _q, _s.set(s * 1.3, s * 0.8, s))
     rockMesh.setMatrixAt(i, _m)
+    addRock(colliders, r, rockGeo, _m)
     _m.compose(_p.set(p.x, y + s * 0.35, p.z), _q, _s.set(s * 1.15, s * 0.5, s * 0.9))
     snowMesh.setMatrixAt(i, _m)
-    if (s > 1.1) colliders.push({ x: p.x, z: p.z, r: s * 0.9 })
+    addRock(colliders, r, rockGeo, _m)
   })
   finish(rockMesh, snowMesh)
   group.add(rockMesh, snowMesh)
@@ -165,7 +180,7 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
       blobs.setMatrixAt(i * BLOBS + b, _m)
       blobs.setColorAt(i * BLOBS + b, _c.copy(leafA).lerp(leafB, rand()))
     }
-    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: 0.55 * s })
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: 0.55 * s })
   })
   finish(trunks, blobs)
   group.add(trunks, blobs)
@@ -301,7 +316,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
       blobs.setMatrixAt(i * BLOBS + b, _m)
       blobs.setColorAt(i * BLOBS + b, _c.copy(gumA).lerp(gumB, rand()))
     }
-    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: 0.4 * s })
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: 0.4 * s })
   })
   finish(trunks, blobs)
   group.add(trunks, blobs)
@@ -314,7 +329,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
     _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
     _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) - s * 0.3, p.z), _q, _s.set(s * 1.4, s * 0.7, s))
     rockMesh.setMatrixAt(i, _m)
-    if (s > 1.1) colliders.push({ x: p.x, z: p.z, r: s })
+    addRock(colliders, r, blobGeo, _m)
   })
   finish(rockMesh)
   group.add(rockMesh)
@@ -344,7 +359,16 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   mono.castShadow = true
   mono.receiveShadow = true
   group.add(mono)
-  colliders.push({ x: mx - 20, z: mz, r: 12 }, { x: mx, z: mz, r: 15 }, { x: mx + 20, z: mz, r: 12 })
+  // 当たり判定: 横長の楕円を、5m おきの円で覆う（端の地面から出ている所まで）
+  {
+    const ax = 34 * Math.sqrt(1 - (3.45 / 13) ** 2)
+    const az = 15 * Math.sqrt(1 - (3.45 / 13) ** 2)
+    const half = (x: number) => az * Math.sqrt(Math.max(0, 1 - (x / ax) ** 2))
+    for (let dx = -30; dx <= 30; dx += 5) {
+      const h = Math.max(half(dx - 2.5), half(dx + 2.5))
+      colliders.push({ x: mx + dx, z: mz, r: Math.hypot(h, 2.5) + 0.3 })
+    }
+  }
 }
 
 /**
@@ -501,7 +525,7 @@ function createWater(rand: () => number, group: THREE.Group, colliders: Collider
     _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) - p.s * 0.3, p.z), _q, _s.set(p.s * 1.3, p.s * 0.75, p.s))
     rocks.setMatrixAt(i, _m)
     rocks.setColorAt(i, _c.copy(rockA).lerp(rockB, rand()))
-    if (p.s > 0.8 && Math.hypot(p.x - r.x, p.z - r.z) < r.walk + 2) colliders.push({ x: p.x, z: p.z, r: p.s * 1.1 })
+    addRock(colliders, r, rockGeo, _m)
   })
   finish(rocks)
   group.add(rocks)
@@ -679,7 +703,12 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
     barn.add(m)
   }
   group.add(barn)
-  colliders.push({ x: bx, z: bz, r: 6.5 })
+  // 当たり判定: 横長の箱（12m × 9m）を、長い向きに並べた 2 つの円で覆う（角まで）
+  {
+    const ux = Math.cos(barn.rotation.y)
+    const uz = -Math.sin(barn.rotation.y)
+    for (const k of [-3, 3]) colliders.push({ x: bx + ux * k, z: bz + uz * k, r: Math.hypot(3, 4.5) + 0.1 })
+  }
 
   // 干し草のロール: 納屋のまわりと放牧場の外に
   const bales: Array<{ x: number; z: number }> = []
@@ -727,7 +756,7 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
       blobs.setMatrixAt(i * BLOBS + b, _m)
       blobs.setColorAt(i * BLOBS + b, _c.copy(leafA).lerp(leafB, rand()))
     }
-    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
   })
   finish(trunks, blobs)
   group.add(trunks, blobs)
@@ -756,7 +785,8 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
     const gz = r.z + GOAT_ROCKS.dz
     const stone = toonMaterial({ color: '#9c948e' })
     // 岩の板: 段ごとに平たい岩を半分埋めて並べ、のっぺりした丘ではなく、ごつごつした岩場に見せる。
-    // 板の上面は地面の高さのすぐ上（約 0.2m）なので、上を歩ける（当たり判定なし）。ヤギは板の上に立つよう少し持ち上げる（residents.ts）。縁にはごろごろした岩
+    // 板の上面は、板の下でいちばん低い地面のすぐ上（0.3m まで）に収めるので、段の縁にかかる板でも上を歩ける（当たり判定なし。主人公がめり込まない）。
+    // ヤギは板の上に立つよう少し持ち上げる（residents.ts）。縁にはごろごろした岩
     const slabs: Array<{ x: number; z: number; s: number; flat: number }> = []
     const rings: Array<[number, number]> = [
       [0.0, 2],
@@ -781,12 +811,21 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
       const a = GOAT_ROCKS.gate + (k % 2 ? 0.08 : -0.08)
       slabs.push({ x: gx + Math.cos(a) * d, z: gz + Math.sin(a) * d, s: 1.05, flat: 0.28 })
     }
-    const slabMesh = instanced(new THREE.IcosahedronGeometry(1, 0), toonMaterial(), slabs.length)
+    const slabGeo = new THREE.IcosahedronGeometry(1, 0)
+    const slabMesh = instanced(slabGeo, toonMaterial(), slabs.length)
     const rockA = new THREE.Color('#9e968f')
     const rockB = new THREE.Color('#bdb5ab')
     slabs.forEach((b, i) => {
       _q.setFromEuler(_e.set((rand() - 0.5) * 0.25, rand() * 3, (rand() - 0.5) * 0.25))
-      _m.compose(_p.set(b.x, terrainHeight(b.x, b.z) - b.s * b.flat * 0.72, b.z), _q, _s.set(b.s * 1.4, b.s * b.flat, b.s * 1.2))
+      _p.set(b.x, terrainHeight(b.x, b.z) - b.s * b.flat * 0.72, b.z)
+      // 段の縁にかかって下の段から高く出る板は、少し小さくして段の上に収め、それでも出る分だけ沈める
+      let rise = Infinity
+      for (const k of [1, 0.85, 0.7]) {
+        _m.compose(_p, _q, _s.set(b.s * 1.4 * k, b.s * b.flat, b.s * 1.2 * k))
+        rise = rockRise(slabGeo, _m)
+        if (rise <= GOAT_SLAB_RISE) break
+      }
+      if (rise > GOAT_SLAB_RISE) _m.compose(_p.setY(_p.y - (rise - GOAT_SLAB_RISE)), _q, _s)
       slabMesh.setMatrixAt(i, _m)
       slabMesh.setColorAt(i, _c.copy(rockA).lerp(rockB, rand()))
     })
@@ -1056,6 +1095,8 @@ function createSky(rand: () => number, group: THREE.Group, colliders: Collider[]
       b.rotation.set(rand(), rand(), rand())
       b.castShadow = true
       group.add(b)
+      b.updateMatrix()
+      addRock(colliders, r, b.geometry, b.matrix)
     }
     colliders.push({ x: v.x, z: v.z, r: SKY_VULTURE_ROCK.r * 0.9 })
   }
@@ -1085,10 +1126,11 @@ function createSky(rand: () => number, group: THREE.Group, colliders: Collider[]
       _m.compose(_p.set(sp.x + (rand() - 0.5) * 0.3 * w, y, sp.z + (rand() - 0.5) * 0.3 * w), _q, _s.set(w, h * 1.15, w))
       spireMesh.setMatrixAt(i * SEG + k, _m)
       spireMesh.setColorAt(i * SEG + k, spireCols[k])
+      // いちばん下の太い段の形で当たり判定を測る
+      if (k === 0) addRock(colliders, r, spireGeo, _m)
       y += h
       w *= 0.8
     }
-    if (Math.hypot(sp.x - r.x, sp.z - r.z) < r.walk + 40) colliders.push({ x: sp.x, z: sp.z, r: sp.w * 0.9 })
   })
   finish(spireMesh)
   group.add(spireMesh)
@@ -1147,7 +1189,7 @@ function createSky(rand: () => number, group: THREE.Group, colliders: Collider[]
       crowns.setMatrixAt(i * 2 + k, _m)
       crowns.setColorAt(i * 2 + k, _c.copy(leafA).lerp(leafB, rand()))
     }
-    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: (t.shade ? 0.8 : 0.5) * s })
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: (t.shade ? 0.8 : 0.5) * s })
   })
   finish(trunks, crowns)
   group.add(trunks, crowns)
@@ -1161,7 +1203,7 @@ function createSky(rand: () => number, group: THREE.Group, colliders: Collider[]
     _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
     _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) + s * 0.2, p.z), _q, _s.set(s * 1.2, s * 0.7, s))
     rockMesh.setMatrixAt(i, _m)
-    if (s > 0.9) colliders.push({ x: p.x, z: p.z, r: s })
+    addRock(colliders, r, rockGeo, _m)
   })
   finish(rockMesh)
   group.add(rockMesh)

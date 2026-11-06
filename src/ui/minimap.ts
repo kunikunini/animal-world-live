@@ -39,9 +39,17 @@ export interface MapBox {
   maxZ: number
 }
 
+/** 広げた地図の見る所: 中心（世界座標）、縮尺（キャンバスの px / m）、回転（rad。正で時計回り。0 で北が上） */
+export interface FreeView {
+  cx: number
+  cz: number
+  k: number
+  rot: number
+}
+
 export interface MapRenderer {
-  width: number
-  height: number
+  readonly width: number
+  readonly height: number
   draw: (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => void
   /** キャンバス座標 → 世界座標。窓の外や海なら null */
   toWorld: (mx: number, my: number) => { x: number; z: number } | null
@@ -57,11 +65,22 @@ export interface MapRenderer {
   baseAt: (mx: number, my: number) => string | null
   /** 地図の中を歩いている主人公（拠点への移動の途中）。null でいつもの位置 */
   setTraveler: (p: { x: number; z: number; heading: number } | null) => void
+  /** 広げた地図だけ: キャンバスの大きさ（px）と、CSS の 1px がキャンバスの何 px か */
+  resize: (w: number, h: number, dpr: number) => void
+  /** 広げた地図だけ: 見る所を変える */
+  setFreeView: (v: FreeView) => void
+  /** 広げた地図だけ: 大陸の全体（box）がちょうど収まる縮尺 */
+  fitScale: () => number
+  /** 広げた地図だけ: 地形の描き直しを待っている（動きをへらす時も、もう 1 コマ描く） */
+  needsFrame: () => boolean
+  setReduceMotion: (on: boolean) => void
+  /** 世界座標 → キャンバス座標（回転も含む） */
+  toScreen: (x: number, z: number) => [number, number]
 }
 
 /** 広げた地図の拠点（マリオ 3 のワールドマップのパネル）と道 */
 export interface MapOverlay {
-  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string }>
+  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string; to?: string }>
   /** 名前の札を出すワールド（いまいるワールド。ほかのワールドの拠点は記号のパネルだけにして、大陸の地図を札だらけにしない） */
   labelWorld: string
   /** x1, z1, x2, z2, 動物の拠点への道か（動物を隠している時は描かない） */
@@ -493,11 +512,16 @@ function pillWidth(ctx: CanvasRenderingContext2D, text: string, u: number): numb
   return ctx.measureText(text).width + 12 * u
 }
 
-export function createMapRenderer(options: { width: number; height?: number; labels: boolean; baseAlpha?: number; box?: MapBox }): MapRenderer {
-  const width = options.width
-  const height = options.height ?? options.width
+export function createMapRenderer(options: { width: number; height?: number; labels: boolean; baseAlpha?: number; box?: MapBox; free?: boolean }): MapRenderer {
+  let width = options.width
+  let height = options.height ?? options.width
   const box = options.box ?? null
   const round = !box
+  // 広げた地図: 指でずらす・拡大・回す（Google マップのように）。地形は見る所が落ち着いたら描き直し、動かしている間は前の絵を動かす
+  const free = !!options.free && !!box
+  let rot = 0
+  let cr = 1
+  let sr = 0
   const c = width / 2
   // 世界座標 → キャンバス: px = (x - ox) * k
   let k = 1
@@ -507,6 +531,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
   let vz = 0
   let viewR = MINIMAP_RADIUS
   const fit = () => {
+    if (free) return
     if (box) {
       k = width / (box.maxX - box.minX)
       ox = box.minX
@@ -520,19 +545,27 @@ export function createMapRenderer(options: { width: number; height?: number; lab
   fit()
   const px = (x: number) => (x - ox) * k
   const py = (z: number) => (z - oz) * k
-  const u = width / 280 // 280px を基準にした線や点の倍率
+  let u = width / 280 // 280px を基準にした線や点の倍率（広げた地図は CSS の 1px 分）
+  /** 世界座標 → キャンバス（回転も含む）。回さない地図では (px, py) と同じ */
+  const S = (x: number, z: number): [number, number] => {
+    const X = px(x) - width / 2
+    const Y = py(z) - height / 2
+    return [width / 2 + X * cr - Y * sr, height / 2 + X * sr + Y * cr]
+  }
 
   // --- 動かない部分（見る範囲が変わった時だけ描き直す。初めて描く時まで作らない） ---
   const base = document.createElement('canvas')
   base.width = width
   base.height = height
-  const b = base.getContext('2d') as CanvasRenderingContext2D
+  let b = base.getContext('2d') as CanvasRenderingContext2D
   let dirty = true
+  /** 平らなもの（海岸・地面・道・水）は回転した座標で、立っているもの（山・木・波）はまっすぐのまま回転後の位置に描く */
+  const flatT = () => b.setTransform(cr, sr, -sr, cr, width / 2 - cr * (width / 2) + sr * (height / 2), height / 2 - sr * (width / 2) - cr * (height / 2))
+  const upT = () => b.setTransform(1, 0, 0, 1, 0, 0)
 
   /** 見えている範囲（世界座標）。少し広めにとり、範囲外の印は描かない */
   const visible = (x: number, z: number, margin: number) => {
-    const sx = px(x)
-    const sy = py(z)
+    const [sx, sy] = S(x, z)
     return sx > -margin && sx < width + margin && sy > -margin && sy < height + margin
   }
 
@@ -550,9 +583,9 @@ export function createMapRenderer(options: { width: number; height?: number; lab
   }
 
   const drawPeak = (p: Peak) => {
-    const x = px(p.x)
-    const y = py(p.z)
-    const h = p.h * k
+    const [x, y] = S(p.x, p.z)
+    // 寄っても山の印は大きくなりすぎない（地形が隠れないように）
+    const h = Math.min(p.h * k, 40 * u)
     const w = h * 0.92
     b.lineJoin = 'round'
     b.strokeStyle = 'rgba(60, 40, 28, 0.32)'
@@ -643,8 +676,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
   }
 
   const drawTree = (tr: { x: number; z: number; key: RegionKey; s: number }) => {
-    const x = px(tr.x)
-    const y = py(tr.z)
+    const [x, y] = S(tr.x, tr.z)
     const s = Math.max(2 * u, 4.6 * k) * tr.s
     if (tr.key === 'north') {
       // トウヒ: 細い三角
@@ -721,6 +753,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
 
   const drawBase = () => {
     dirty = false
+    upT()
     b.clearRect(0, 0, width, height)
     b.save()
     if (round) {
@@ -741,8 +774,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     b.lineCap = 'round'
     for (const w of WAVES) {
       if (!visible(w.x, w.z, 20 * u)) continue
-      const x = px(w.x)
-      const y = py(w.z)
+      const [x, y] = S(w.x, w.z)
       const s = 5 * u * w.s
       b.beginPath()
       b.moveTo(x - s * 1.6, y)
@@ -752,6 +784,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     }
 
     // 浅瀬: 海岸のまわりの明るい帯
+    flatT()
     coastPath()
     b.strokeStyle = 'rgba(180, 224, 241, 0.55)'
     b.lineWidth = 34 * k
@@ -798,18 +831,22 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.setLineDash([])
     }
 
-    // 山脈: 麓の影の帯 → 山の印
+    // 山脈: 麓の影の帯 → 山の印（立っているので回しても上向き）
+    upT()
     for (const p of PEAKS) {
       if (!visible(p.x, p.z, p.h * k * 2)) continue
+      const [x, y] = S(p.x, p.z)
+      const ph = Math.min(p.h * k, 40 * u)
       b.fillStyle = 'rgba(90, 60, 40, 0.12)'
       b.beginPath()
-      b.ellipse(px(p.x), py(p.z), p.h * k * 1.05, p.h * k * 0.32, 0, 0, Math.PI * 2)
+      b.ellipse(x, y, ph * 1.05, ph * 0.32, 0, 0, Math.PI * 2)
       b.fill()
     }
     for (const p of PEAKS) if (visible(p.x, p.z, p.h * k * 2)) drawPeak(p)
 
     // ほかのワールドの森
     for (const tr of TREES) if (visible(tr.x, tr.z, 10 * u)) drawTree(tr)
+    flatT()
 
     // 水場
     b.fillStyle = C.water
@@ -918,6 +955,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     b.stroke()
     b.restore()
 
+    upT()
     if (round) {
       // 縁と「N」
       b.strokeStyle = 'rgba(255, 255, 255, 0.7)'
@@ -930,7 +968,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.textAlign = 'center'
       b.textBaseline = 'top'
       b.fillText('N', c, 8 * u)
-    } else {
+    } else if (!free) {
       drawCompass()
     }
   }
@@ -1032,6 +1070,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     return boxes
   }
   const draw = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
+    if (free) return drawFree(ctx, player, lions)
     if (dirty) drawBase()
     ctx.clearRect(0, 0, width, height)
     // 地形（動かない部分）だけ透かす。自分と動物の印は不透明のまま
@@ -1148,21 +1187,469 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     }
   }
 
+
+  // ---------------------------------------------------------------------------
+  // 広げた地図（free）: 見る所・地形の絵の使い回し・印と文字
+  // ---------------------------------------------------------------------------
+  interface Frame {
+    ox: number
+    oz: number
+    k: number
+    rot: number
+    w: number
+    h: number
+  }
+  let reduceMotion = false
+  /** 地形の絵（base）を描いた時の見る所。見る所が変わっても、落ち着くまではこの絵を動かして使う */
+  let detail: Frame | null = null
+  let viewAt = 0
+  /** 大陸のまわりの海まで入れた、全体の絵（動かしている間に端が欠けないように下に敷く） */
+  let ov: { canvas: HTMLCanvasElement; frame: Frame } | null = null
+  /** 押せる印（描いた所） */
+  let hits: Array<{ id: string; x: number; y: number }> = []
+  const cur = (): Frame => ({ ox, oz, k, rot, w: width, h: height })
+  const sameFrame = (f: Frame | null) => !!f && f.ox === ox && f.oz === oz && f.k === k && f.rot === rot && f.w === width && f.h === height
+  const fitScale = () => (box ? Math.min(width / (box.maxX - box.minX), height / (box.maxZ - box.minZ)) : k)
+  const setFree = (v: FreeView) => {
+    k = v.k
+    rot = v.rot
+    cr = Math.cos(rot)
+    sr = Math.sin(rot)
+    ox = v.cx - width / (2 * k)
+    oz = v.cz - height / (2 * k)
+    viewAt = performance.now()
+  }
+  const fitView = () => {
+    if (!box) return
+    setFree({ cx: (box.minX + box.maxX) / 2, cz: (box.minZ + box.maxZ) / 2, k: fitScale(), rot: 0 })
+  }
+  /** 見る所 f で、地形を target に描く */
+  const renderAt = (f: Frame, target: HTMLCanvasElement, uu: number) => {
+    const keep = { ox, oz, k, rot, cr, sr, width, height, u, b }
+    if (target.width !== f.w) target.width = f.w
+    if (target.height !== f.h) target.height = f.h
+    ox = f.ox
+    oz = f.oz
+    k = f.k
+    rot = f.rot
+    cr = Math.cos(rot)
+    sr = Math.sin(rot)
+    width = f.w
+    height = f.h
+    u = uu
+    b = target.getContext('2d') as CanvasRenderingContext2D
+    drawBase()
+    ;({ ox, oz, k, rot, cr, sr, width, height, u, b } = keep)
+  }
+  const renderOverview = () => {
+    if (!box) return
+    const m = 220
+    const bw = box.maxX - box.minX + m * 2
+    const bh = box.maxZ - box.minZ + m * 2
+    const W = 1400
+    const kk = W / bw
+    const f: Frame = { ox: box.minX - m, oz: box.minZ - m, k: kk, rot: 0, w: W, h: Math.round(bh * kk) }
+    const canvas = ov?.canvas ?? document.createElement('canvas')
+    // 全体を見た時に、印が画面で同じくらいの大きさになるように
+    renderAt(f, canvas, (u * kk) / Math.max(1e-6, fitScale()))
+    ov = { canvas, frame: f }
+  }
+  /** 絵 img（見る所 F で描いたもの）を、いまの見る所に合わせて置く */
+  const blit = (ctx: CanvasRenderingContext2D, img: HTMLCanvasElement, F: Frame) => {
+    const sc = k / F.k
+    const dr = rot - F.rot
+    const a = sc * Math.cos(dr)
+    const bb = sc * Math.sin(dr)
+    const dx = F.ox + F.w / (2 * F.k) - (ox + width / (2 * k))
+    const dz = F.oz + F.h / (2 * F.k) - (oz + height / (2 * k))
+    const tx = width / 2 + k * (cr * dx - sr * dz) - (a * (F.w / 2) - bb * (F.h / 2))
+    const ty = height / 2 + k * (sr * dx + cr * dz) - (bb * (F.w / 2) + a * (F.h / 2))
+    ctx.setTransform(a, bb, -bb, a, tx, ty)
+    ctx.drawImage(img, 0, 0)
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+  }
+
+  /** 縁どりの文字。置けたら箱を返す（重なる時は出さない） */
+  const textAt = (
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    o: { size: number; weight?: number; color?: string; halo?: string; haloW?: number; align?: CanvasTextAlign; avoid: Box[]; force?: boolean; font?: string },
+  ): Box | null => {
+    ctx.font = `${o.weight ?? 800} ${Math.round(o.size * u)}px ${o.font ?? FONT}`
+    const w = ctx.measureText(text).width
+    const h = o.size * u * 1.15
+    const align = o.align ?? 'center'
+    const l = align === 'left' ? x : align === 'right' ? x - w : x - w / 2
+    const bx: Box = { l: l - 2 * u, t: y - h / 2, r: l + w + 2 * u, b: y + h / 2 }
+    if (bx.r < 0 || bx.l > width || bx.b < 0 || bx.t > height) return null
+    if (!o.force && o.avoid.some((p) => overlaps(bx, p))) return null
+    ctx.textAlign = align
+    ctx.textBaseline = 'middle'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = o.halo ?? 'rgba(255, 255, 255, 0.95)'
+    ctx.lineWidth = (o.haloW ?? 3.2) * u
+    ctx.strokeText(text, x, y)
+    ctx.fillStyle = o.color ?? C.ink
+    ctx.fillText(text, x, y)
+    return bx
+  }
+
+  /** 観察スポット: 金色の星。まわりで小さな光がまたたく */
+  const drawStar = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number, tm: number, seed: number) => {
+    ctx.save()
+    ctx.shadowColor = 'rgba(255, 200, 40, 0.9)'
+    ctx.shadowBlur = 8 * u
+    ctx.fillStyle = '#ffcf2e'
+    ctx.strokeStyle = '#fff'
+    ctx.lineWidth = 2 * u
+    ctx.beginPath()
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5
+      const rr = i % 2 ? r * 0.46 : r
+      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr)
+    }
+    ctx.closePath()
+    ctx.fill()
+    ctx.shadowBlur = 0
+    ctx.stroke()
+    ctx.restore()
+    // またたき: 3 つの小さな十字の光（動きをへらす時は止めて薄く）
+    for (let i = 0; i < 3; i++) {
+      const ph = seed * 1.7 + i * 2.1
+      const a = reduceMotion ? 0.55 : 0.5 + 0.5 * Math.sin(tm * 3.2 + ph)
+      if (a < 0.08) continue
+      const ang = ph * 2.4
+      const d = r * (1.45 + 0.25 * i)
+      const sx = x + Math.cos(ang) * d
+      const sy = y + Math.sin(ang) * d * 0.8
+      const s = (2.2 + i * 0.6) * u * (0.6 + 0.4 * a)
+      ctx.fillStyle = `rgba(255, 246, 200, ${a.toFixed(3)})`
+      ctx.beginPath()
+      ctx.moveTo(sx, sy - s * 1.6)
+      ctx.quadraticCurveTo(sx, sy, sx + s * 1.6, sy)
+      ctx.quadraticCurveTo(sx, sy, sx, sy + s * 1.6)
+      ctx.quadraticCurveTo(sx, sy, sx - s * 1.6, sy)
+      ctx.quadraticCurveTo(sx, sy, sx, sy - s * 1.6)
+      ctx.fill()
+    }
+  }
+
+  /** 拠点の印（看板のような形）。箱を返す */
+  const drawBaseIcon = (ctx: CanvasRenderingContext2D, bs: MapOverlay['bases'][number], x: number, y: number, tm: number, on: boolean, seed: number): Box => {
+    if (on) {
+      const pr = (14 + (reduceMotion ? 0 : Math.sin(tm * 5) * 2)) * u
+      ctx.strokeStyle = '#ffd21f'
+      ctx.lineWidth = 3 * u
+      ctx.beginPath()
+      ctx.arc(x, y, pr, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+    if (bs.kind === 'spot') {
+      drawStar(ctx, x, y, 9 * u, tm, seed)
+      return { l: x - 9 * u, t: y - 9 * u, r: x + 9 * u, b: y + 9 * u }
+    }
+    if (bs.kind === 'entry') {
+      // スタート: 赤い旗
+      ctx.fillStyle = 'rgba(40, 26, 12, 0.3)'
+      ctx.beginPath()
+      ctx.ellipse(x, y + 1 * u, 5 * u, 2 * u, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.strokeStyle = '#5e3a1c'
+      ctx.lineWidth = 2 * u
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.moveTo(x, y + 1 * u)
+      ctx.lineTo(x, y - 16 * u)
+      ctx.stroke()
+      const wave = reduceMotion ? 0 : Math.sin(tm * 4 + seed) * 1.2 * u
+      ctx.fillStyle = '#e0432a'
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 1.5 * u
+      ctx.beginPath()
+      ctx.moveTo(x, y - 16 * u)
+      ctx.quadraticCurveTo(x + 6 * u, y - 16 * u + wave, x + 12 * u, y - 12 * u)
+      ctx.quadraticCurveTo(x + 6 * u, y - 8 * u - wave, x, y - 8 * u)
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+      return { l: x - 3 * u, t: y - 17 * u, r: x + 13 * u, b: y + 3 * u }
+    }
+    if (bs.kind === 'pass') {
+      // 峠: 木の道しるべ（行き先の方を向いた矢印）
+      const dest = bs.to ? (bs.to === 'africa' ? { x: 0, z: 0 } : OUTER_REGIONS.find((r) => r.key === bs.to)) : null
+      let ang = 0
+      if (dest) {
+        const [dx, dy] = S(dest.x, dest.z)
+        ang = Math.atan2(dy - y, dx - x)
+      }
+      ctx.fillStyle = '#8a5a32'
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 1.8 * u
+      roundRect(ctx, x - 7 * u, y - 7 * u, 14 * u, 14 * u, 4 * u)
+      ctx.fill()
+      ctx.stroke()
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.rotate(ang)
+      ctx.fillStyle = '#fff1cf'
+      ctx.beginPath()
+      ctx.moveTo(4.5 * u, 0)
+      ctx.lineTo(-0.5 * u, -4 * u)
+      ctx.lineTo(-0.5 * u, -1.6 * u)
+      ctx.lineTo(-4.5 * u, -1.6 * u)
+      ctx.lineTo(-4.5 * u, 1.6 * u)
+      ctx.lineTo(-0.5 * u, 1.6 * u)
+      ctx.lineTo(-0.5 * u, 4 * u)
+      ctx.closePath()
+      ctx.fill()
+      ctx.restore()
+      return { l: x - 7 * u, t: y - 7 * u, r: x + 7 * u, b: y + 7 * u }
+    }
+    // 動物: 緑の丸に足あと（ともだちはピンクにハート）
+    const r = 7 * u
+    ctx.fillStyle = bs.friend ? '#f0508a' : '#3f9a4a'
+    ctx.strokeStyle = '#fff'
+    ctx.lineWidth = 2 * u
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+    ctx.fillStyle = '#fff'
+    if (bs.friend) {
+      ctx.font = `900 ${Math.round(9 * u)}px ${FONT}`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('♥', x, y + 0.5 * u)
+    } else {
+      ctx.beginPath()
+      ctx.ellipse(x, y + 1.6 * u, 2.4 * u, 2 * u, 0, 0, Math.PI * 2)
+      for (const [tx, ty] of [[-2.8, -1.4], [-1, -3.2], [1, -3.2], [2.8, -1.4]]) {
+        ctx.moveTo(x + tx * u + 1 * u, y + ty * u)
+        ctx.arc(x + tx * u, y + ty * u, 1 * u, 0, Math.PI * 2)
+      }
+      ctx.fill()
+    }
+    return { l: x - r, t: y - r, r: x + r, b: y + r }
+  }
+
+  /** 自分: 青い点に白い縁、ゆっくり広がる輪、向いている方の光の扇（Google マップの現在地のように） */
+  const drawYou = (ctx: CanvasRenderingContext2D, p: MapPlayer, tm: number): Box => {
+    const [x, y] = S(p.x, p.z)
+    // 向き: 回していない地図で (sin h, cos h)。地図の回転を足す
+    const vx = Math.sin(p.heading)
+    const vy = Math.cos(p.heading)
+    const ang = Math.atan2(vx * sr + vy * cr, vx * cr - vy * sr)
+    const beam = ctx.createRadialGradient(x, y, 4 * u, x, y, 40 * u)
+    beam.addColorStop(0, 'rgba(31, 122, 255, 0.7)')
+    beam.addColorStop(1, 'rgba(31, 122, 255, 0)')
+    ctx.fillStyle = beam
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.arc(x, y, 40 * u, ang - 0.5, ang + 0.5)
+    ctx.closePath()
+    ctx.fill()
+    const pulse = reduceMotion ? 0.5 : (tm * 0.8) % 1
+    ctx.fillStyle = `rgba(31, 122, 255, ${(0.28 * (1 - pulse)).toFixed(3)})`
+    ctx.beginPath()
+    ctx.arc(x, y, (10 + 16 * pulse) * u, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'
+    ctx.beginPath()
+    ctx.arc(x, y + 1 * u, 9.5 * u, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#fff'
+    ctx.beginPath()
+    ctx.arc(x, y, 9 * u, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#1f7aff'
+    ctx.beginPath()
+    ctx.arc(x, y, 6.5 * u, 0, Math.PI * 2)
+    ctx.fill()
+    return { l: x - 11 * u, t: y - 11 * u, r: x + 11 * u, b: y + 11 * u }
+  }
+
+  const drawFree = (ctx: CanvasRenderingContext2D, player: MapPlayer, lions: MinimapMarker[]) => {
+    const now = performance.now()
+    if (!ov) renderOverview()
+    // 地形: 見る所が落ち着いたら、いまの見る所で描き直す。動かしている間は前の絵を動かす（端は全体の絵）
+    if (!sameFrame(detail) && (!detail || now - viewAt > 140)) {
+      renderAt(cur(), base, u)
+      detail = cur()
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    if (sameFrame(detail)) ctx.drawImage(base, 0, 0)
+    else {
+      ctx.fillStyle = C.sea
+      ctx.fillRect(0, 0, width, height)
+      ctx.imageSmoothingEnabled = true
+      if (ov) blit(ctx, ov.canvas, ov.frame)
+      if (detail) blit(ctx, base, detail)
+    }
+    const tm = now / 1000
+    const zl = k / Math.max(1e-6, fitScale())
+    if (!showMarkers) lions = []
+    if (traveler) player = traveler
+    hits = []
+    const placed: Box[] = []
+
+    // 道: 拠点をつなぐ点線（地図の上の小道）
+    if (overlay) {
+      ctx.lineCap = 'round'
+      for (const [lw, col] of [[5, 'rgba(90, 62, 32, 0.42)'], [2.6, '#fff1cf']] as Array<[number, string]>) {
+        ctx.strokeStyle = col
+        ctx.lineWidth = lw * u
+        ctx.setLineDash(col === '#fff1cf' ? [1 * u, 4.5 * u] : [])
+        ctx.beginPath()
+        for (const [x1, z1, x2, z2, animal] of overlay.roads) {
+          if (animal && !showMarkers) continue
+          const [a1, b1] = S(x1, z1)
+          const [a2, b2] = S(x2, z2)
+          ctx.moveTo(a1, b1)
+          ctx.lineTo(a2, b2)
+        }
+        ctx.stroke()
+      }
+      ctx.setLineDash([])
+    }
+
+    // 出会った動物の点（動物を出している時）
+    for (const l of lions) {
+      const [x, y] = S(l.x, l.z)
+      if (x < -10 * u || x > width + 10 * u || y < -10 * u || y > height + 10 * u) continue
+      const r = (l.active ? 4.6 : 3.6) * u
+      ctx.fillStyle = l.active ? C.lionActive : C.lion
+      ctx.strokeStyle = C.lionEdge
+      ctx.lineWidth = 1.3 * u
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+      if (l.friend) textAt(ctx, '♥', x + r + 2 * u, y - r - 2 * u, { size: 10, weight: 900, color: '#f0508a', haloW: 2.5, avoid: [], force: true })
+    }
+
+    // 拠点（峠は少し寄った時から。押そうとしている先はいつも）
+    if (overlay) {
+      let seed = 0
+      for (const bs of overlay.bases) {
+        seed++
+        if (bs.kind === 'animal' && !showMarkers) continue
+        const on = overlay.target === bs.id
+        if (bs.kind === 'pass' && zl < 1.5 && !on) continue
+        const [x, y] = S(bs.x, bs.z)
+        if (x < -20 * u || x > width + 20 * u || y < -20 * u || y > height + 20 * u) continue
+        placed.push(drawBaseIcon(ctx, bs, x, y, tm, on, seed))
+        hits.push({ id: bs.id, x, y })
+      }
+    }
+    const youBox = drawYou(ctx, player, tm)
+    placed.push(youBox)
+
+    // 文字は大事な順に。重なる文字は出さない（寄ると出てくる）
+    // 1) ワールドの名前（いつも。大きく）。よけるのは自分の印と、ほかのワールドの名前だけ（小さな印の上には重ねてよい）
+    const worldBoxes: Box[] = [youBox]
+    for (const r of REGIONS) {
+      const name = r.key === 'africa' ? t('catSavanna') : (getWorld(r.key)?.name[getLang()] ?? r.key)
+      const [lx, lz] = REGION_LABEL_AT[r.key]
+      const [x, y] = S(lx, lz)
+      const size = Math.min(19, 14 + (zl - 1) * 2.2)
+      const o = { size, weight: 900, color: '#3b2614', halo: 'rgba(255, 250, 236, 0.92)', haloW: 4.4, avoid: worldBoxes }
+      const d = size * 1.3 * u
+      // ワールドの名前はいつも出す。印に重なる時は上下左右へ少しずらし、それでもだめならそのまま
+      let bx: Box | null = null
+      for (const [ox2, oy2] of [[0, 0], [0, d], [0, -d], [d * 2, 0], [-d * 2, 0], [0, d * 2]]) {
+        bx = textAt(ctx, name, x + ox2, y + oy2, o)
+        if (bx) break
+      }
+      if (!bx) bx = textAt(ctx, name, x, y, { ...o, force: true })
+      if (bx) {
+        placed.push(bx)
+        worldBoxes.push(bx)
+      }
+    }
+    const small = { size: 11.5, weight: 800, color: '#2b1d12', haloW: 3.2 }
+    const nameNear = (text: string, x: number, y: number, off: number) =>
+      textAt(ctx, text, x + off, y, { ...small, align: 'left', avoid: placed }) ?? textAt(ctx, text, x - off, y, { ...small, align: 'right', avoid: placed })
+    // 2) 拠点の名前（いまのワールドは少し寄ったら、ほかのワールドはもっと寄ったら）
+    const baseNames = new Set<string>()
+    if (overlay)
+      for (const bs of overlay.bases) {
+        if (bs.kind === 'spot' || bs.kind === 'pass' || !bs.label) continue
+        if (bs.kind === 'animal' && !showMarkers) continue
+        if (zl < (bs.world === overlay.labelWorld ? 1.6 : 2.6)) continue
+        const [x, y] = S(bs.x, bs.z)
+        const bx = nameNear(bs.label, x, y, 11 * u)
+        if (bx) {
+          placed.push(bx)
+          baseNames.add(bs.label)
+        }
+      }
+    // 3) 場所の名前（水場・コピエ・ヤギの岩場）
+    if (zl >= 2.2) {
+      // 場所の真ん中に置けなければ、その場所の縁の下に
+      const place = (text: string, x: number, z: number, r: number) => {
+        const [sx, sy] = S(x, z)
+        const o = { ...small, color: '#5a4030', avoid: placed }
+        const bx = textAt(ctx, text, sx, sy, o) ?? textAt(ctx, text, sx, sy + r * k + 9 * u, o) ?? textAt(ctx, text, sx, sy - r * k - 9 * u, o)
+        if (bx) placed.push(bx)
+      }
+      place(t('waterhole'), WATERHOLE.x, WATERHOLE.z, WATERHOLE.radius)
+      place(t('kopje'), KOPJE.x, KOPJE.z, KOPJE.radius)
+      const farm = OUTER_REGIONS.find((r) => r.key === 'partner')
+      if (farm) place(t('goatRocks'), farm.x + GOAT_ROCKS.dx, farm.z + GOAT_ROCKS.dz, GOAT_ROCKS.radius)
+    }
+    // 4) 出会った動物の種の名前（動物を出していて、寄った時）
+    if (showNames && zl >= 2.6)
+      for (const g of speciesGroups(lions)) {
+        if (baseNames.has(g.name)) continue
+        const [x, y] = S(g.x, g.z)
+        const bx = nameNear(g.name, x, y, 7 * u)
+        if (bx) placed.push(bx)
+      }
+  }
+
   const toWorld = (mx: number, my: number) => {
     if (round && Math.hypot(mx - c, my - c) > c - 3 * u) return null
-    const x = ox + mx / k
-    const z = oz + my / k
+    // 回転をもどす
+    const X = mx - width / 2
+    const Y = my - height / 2
+    const x = ox + (width / 2 + X * cr + Y * sr) / k
+    const z = oz + (height / 2 - X * sr + Y * cr) / k
     // 海をタップしても歩かない
     if (!isLand(x, z)) return null
     return { x, z }
   }
 
   return {
-    width,
-    height,
+    get width() {
+      return width
+    },
+    get height() {
+      return height
+    },
     draw,
     toWorld,
     setView,
+    toScreen: S,
+    resize: (w, h, dpr) => {
+      if (!free) return
+      if (w === width && h === height && u === dpr) return
+      width = w
+      height = h
+      u = dpr
+      detail = null
+      fitView()
+    },
+    setFreeView: (v) => {
+      if (!free) return
+      setFree(v)
+    },
+    fitScale,
+    needsFrame: () => free && !sameFrame(detail),
+    setReduceMotion: (on) => {
+      reduceMotion = on
+    },
     setNames: (on) => {
       showNames = on
     },
@@ -1176,6 +1663,19 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       traveler = p
     },
     baseAt: (mx, my) => {
+      if (free) {
+        // 描いた印の中から（拡大の段階で出ていない印は押せない）
+        let best: string | null = null
+        let bd = 22 * u
+        for (const h of hits) {
+          const d = Math.hypot(h.x - mx, h.y - my)
+          if (d < bd) {
+            bd = d
+            best = h.id
+          }
+        }
+        return best
+      }
       if (!overlay) return null
       let best: string | null = null
       let bd = 16 * u

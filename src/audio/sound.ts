@@ -1,7 +1,8 @@
 /**
  * BGM・環境音・効果音。Web Audio の 1 つの AudioContext に、BGM／環境音／効果音の 3 つの音量（GainNode）を置く。
- * - 自動再生の制限があるので、最初のユーザー操作（pointerdown / keydown）まで何も鳴らさない。
- *   それまでに頼まれた曲は覚えておき、操作の直後に流し始める
+ * - 自動再生の制限があるので、最初のユーザー操作（pointerdown / keydown / touchend）まで何も鳴らさない。
+ *   それまでに頼まれた曲は先に読み込んでデコードまで済ませておき、操作の瞬間に流し始める。
+ *   ブラウザが自動再生を許している時（AudioContext が最初から動いている時）は、操作を待たずに流す
  * - BGM と環境音はループ。切り替えはクロスフェード。デコードした曲は少しだけ持ち（iPhone のメモリ対策）、古いものは捨てる
  * - 音源が無い・読めない・AudioContext が作れない時は、黙って無音のまま続ける（操作は止めない）
  * - 音量とミュートは BGM（曲）・まわりの音（環境音）・効果音で別々。「動きをへらす」とは独立。この端末に覚える
@@ -140,6 +141,36 @@ let failed = false
 let seBus: GainNode | null = null
 let master: GainNode | null = null
 let suspendTimer = 0
+/** おはなしの「とまる」で止めている（画面が戻っても勝手に鳴らさない） */
+let pausedByApp = false
+/** 画面が隠れる・一時停止の時に、全体の音量を下げきるまでの秒数 */
+const HIDE_FADE = 0.03
+
+/** 全体の音量を、いまの値から sec 秒で to へ */
+function rampMaster(to: number, sec: number): void {
+  if (!ctx || !master) return
+  const now = ctx.currentTime
+  master.gain.cancelScheduledValues(now)
+  master.gain.setValueAtTime(master.gain.value, now)
+  master.gain.linearRampToValueAtTime(to, now + sec)
+}
+
+/** 全体の音量を HIDE_FADE 秒で 0 にしてから AudioContext を止める（止める時にまだ still() なら） */
+function fadeOutAndSuspend(still: () => boolean): void {
+  if (!ctx || !master) return
+  rampMaster(0, HIDE_FADE)
+  window.clearTimeout(suspendTimer)
+  suspendTimer = window.setTimeout(
+    () => {
+      try {
+        if (still() && ctx?.state === 'running') void ctx.suspend()
+      } catch {
+        // 続ける
+      }
+    },
+    HIDE_FADE * 1000 + 30,
+  )
+}
 /** 観察モニター（収録映像）を見ている間は BGM を下げる */
 let duck = 1
 let bgmBase: BgmKey | null = null
@@ -187,7 +218,10 @@ function ensureContext(): AudioContext | null {
       failed = true
       return null
     }
-    ctx = new AC()
+    // index.html が先に作った AudioContext があれば引き継ぐ（本体が届く前のタップで、もう動いていることがある）
+    const w = window as unknown as { __awlAudio?: AudioContext }
+    ctx = w.__awlAudio ?? new AC()
+    w.__awlAudio = ctx
     bgm.bus = ctx.createGain()
     amb.bus = ctx.createGain()
     seBus = ctx.createGain()
@@ -351,7 +385,16 @@ function playTrack(layer: Layer, list: string[], index: number, buf: AudioBuffer
 }
 
 async function syncLayer(layer: Layer): Promise<void> {
-  if (!unlocked || !ctx) return
+  // 最初の操作の前: 鳴らせないので、曲の読み込みと変換（デコード）だけ先に済ませておく。
+  // 操作の直後に読み始めると、ホームの曲（約 0.9MB）が届くまでスマホの回線では数秒鳴らなかった
+  if (!unlocked) {
+    if (layer.want && ensureContext()) {
+      void loadLoop(layer.want)
+      void getLoopLengths()
+    }
+    return
+  }
+  if (!ctx) return
   const want = layer.want
   if (want === layer.key) return
   stopLayer(layer)
@@ -495,35 +538,40 @@ export const sound = {
     window.addEventListener('pointerdown', unlock, true)
     window.addEventListener('keydown', unlock, true)
     window.addEventListener('touchend', unlock, true)
-    // 画面が隠れた時（スマホのロック・アプリの切り替え）: いきなり止めると波形が途中で切れて「ブチッ」と鳴るので、
-    // 全体の音量を 0.12 秒で 0 にしてから止める。戻った時は再開して、0.3 秒で元の音量へ
+    // ブラウザが自動再生を許していれば（PC の Chrome でよく開くサイトなど）、AudioContext は最初から動いている。
+    // その時は操作を待たずに鳴らす。許していなければ止まったままなので、最初の操作を待つ（曲の読み込みは先に進める）
+    // 本体が届く前にタップされていた時（index.html で許可を取った時）も同じ。あとから動き出した時も拾う
+    const ac = ensureContext()
+    if (ac && ac.state === 'running') queueMicrotask(unlock)
+    ac?.addEventListener('statechange', () => {
+      if (ac.state === 'running' && !unlocked) unlock()
+      // 止まった時（自分で止めた時も、iPhone がスリープ・電話などで止めた "interrupted" も）は全体の音量を 0 にしておき、
+      // 動き出した時は 0 から上げる（止まる前の音のかけらが再開の瞬間にいきなり鳴らないように）
+      if (!unlocked || !master) return
+      if (ac.state !== 'running') {
+        master.gain.cancelScheduledValues(ac.currentTime)
+        master.gain.setValueAtTime(0, ac.currentTime)
+      } else if (!document.hidden && !pausedByApp) {
+        rampMaster(1, 0.3)
+      }
+    })
+    // 画面が隠れた時（スマホのロック・スリープ・アプリの切り替え）: いきなり止めると波形が途中で切れて「ブチッ」と鳴る。
+    // iPhone はスリープの直後にページを止めるので、フェードが終わる前に止められると、鳴っていた音のかけらが「ブチーン」と残る。
+    // 全体の音量を 0.03 秒で 0 にし（音楽ならこの長さでもプツッとはしない）、すぐ止める。戻った時は再開して、0.3 秒で元の音量へ
     const onHide = () => {
       if (!ctx || !unlocked || !master) return
-      const now = ctx.currentTime
-      master.gain.cancelScheduledValues(now)
-      master.gain.setValueAtTime(master.gain.value, now)
-      master.gain.linearRampToValueAtTime(0, now + 0.12)
-      window.clearTimeout(suspendTimer)
-      suspendTimer = window.setTimeout(() => {
-        try {
-          if (document.hidden) void ctx?.suspend()
-        } catch {
-          // 続ける
-        }
-      }, 160)
+      fadeOutAndSuspend(() => document.hidden)
     }
     const onShow = () => {
       if (!ctx || !unlocked || !master) return
       window.clearTimeout(suspendTimer)
+      if (pausedByApp) return
       try {
         void ctx.resume()
       } catch {
         // 続ける
       }
-      const now = ctx.currentTime
-      master.gain.cancelScheduledValues(now)
-      master.gain.setValueAtTime(master.gain.value, now)
-      master.gain.linearRampToValueAtTime(1, now + 0.3)
+      rampMaster(1, 0.3)
     }
     document.addEventListener('visibilitychange', () => (document.hidden ? onHide() : onShow()))
     // iPhone の Safari はロックの時に pagehide だけ来ることがある
@@ -598,8 +646,13 @@ export const sound = {
   /** 一時停止（おはなし）: 音の全部を止めて、続ける時に同じ所から鳴らす（AudioContext を止める） */
   setPaused(on: boolean): void {
     if (!ctx) return
-    if (on && ctx.state === 'running') void ctx.suspend()
-    else if (!on && ctx.state === 'suspended') void ctx.resume()
+    pausedByApp = on
+    // 止める時も 0.03 秒で音量を下げてから（いきなり止めると「ブチッ」と鳴る）。続ける時は statechange で 0 から上げる
+    if (on) fadeOutAndSuspend(() => pausedByApp || document.hidden)
+    else if (ctx.state !== 'running') {
+      window.clearTimeout(suspendTimer)
+      if (!document.hidden) void ctx.resume()
+    }
   },
   /** 物語の間の曲（ループしない 1 本）。ホームの曲は止め、終わったら戻す */
   setStoryBgm(on: boolean): void {
