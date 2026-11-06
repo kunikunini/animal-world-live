@@ -299,9 +299,16 @@ export function createWaterfolk(options: WaterfolkOptions): Lion {
   // 気質: ペンギンはせわしなく首を振り、ペリカンはゆったり、カワウソはきょろきょろ
   const tempo = options.kind === 'penguin' ? { breath: 2.8, look: 0.45, lookRate: 0.5 } : options.kind === 'pelican' ? { breath: 1.6, look: 0.3, lookRate: 0.18 } : { breath: 3.2, look: 0.4, lookRate: 0.42 }
 
+  // 動かす部分。生成モデルに差し替えたら（swapModel）、モデルと首・尾の入れ物に向け直す
+  let animBody: THREE.Object3D = built.body
+  let animNeck: THREE.Object3D = built.neck
+  let animTail: THREE.Object3D | undefined = built.tail
+  let animFlaps: THREE.Object3D[] = built.flaps
+  let swapped = false
+
   const update = (time: number, dt: number, player: THREE.Vector3) => {
     const breath = reduceMotion ? 0 : Math.sin(time * tempo.breath + phase) * 0.02
-    built.body.scale.set(1, 1 + breath, 1)
+    animBody.scale.set(1, 1 + breath, 1)
     headTarget.copy(player)
     group.worldToLocal(headTarget)
     const dist = Math.hypot(headTarget.x, headTarget.z)
@@ -310,12 +317,17 @@ export function createWaterfolk(options: WaterfolkOptions): Lion {
     else if (!reduceMotion) wantYaw = Math.sin(time * tempo.lookRate + phase) * tempo.look
     const quick = time - noticeTime < 1.2 ? 2.4 : 1
     const k = reduceMotion ? 1 : Math.min(1, dt * 2 * quick)
-    built.neck.rotation.y += (wantYaw - built.neck.rotation.y) * k
-    if (reduceMotion) return
+    animNeck.rotation.y += (wantYaw - animNeck.rotation.y) * k
+    if (reduceMotion) {
+      if (swapped) animBody.rotation.z = 0
+      return
+    }
+    // 生成モデルのペンギンは歩かないので、その場で左右にゆっくり体を揺らす（よちよちの重心移動）
+    if (swapped && options.kind === 'penguin') animBody.rotation.z = Math.sin(time * 1.6 + phase) * 0.045
     // 気づいた直後: ペンギンはひれを少し広げ、カワウソは尾を振る
     const lift = Math.max(0, 1 - (time - noticeTime) / 1.4)
-    for (const f of built.flaps) f.rotation.z = (f.userData.side as number) * (0.05 + lift * 0.55 * Math.abs(Math.sin((time - noticeTime) * 9)))
-    if (built.tail) built.tail.rotation.y = Math.sin(time * 1.1 + phase) * (0.1 + lift * 0.35)
+    for (const f of animFlaps) f.rotation.z = (f.userData.side as number) * (0.05 + lift * 0.55 * Math.abs(Math.sin((time - noticeTime) * 9)))
+    if (animTail) animTail.rotation.y = Math.sin(time * 1.1 + phase) * (0.1 + lift * 0.35)
   }
 
   return {
@@ -327,13 +339,27 @@ export function createWaterfolk(options: WaterfolkOptions): Lion {
     update,
     setReduceMotion: (on) => {
       reduceMotion = on
-      if (on) for (const f of built.flaps) f.rotation.z = 0
+      if (on) for (const f of animFlaps) f.rotation.z = 0
     },
     notice: (time) => {
       noticeTime = time
     },
-    swapModel: () => {
-      // 水の世界の子は差し替えの実験の対象外
+    swapModel: (model, parts) => {
+      // 生成モデル（Meshy）に差し替える。プリミティブの体と首は隠し、呼吸・首・尾の微アニメは渡された入れ物に書く（ひれは止める）
+      built.body.visible = false
+      built.neck.visible = false
+      model.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) {
+          o.castShadow = true
+          o.receiveShadow = true
+        }
+      })
+      group.add(model)
+      animBody = model
+      animNeck = parts.neck ?? new THREE.Object3D()
+      animTail = parts.tail
+      animFlaps = []
+      swapped = true
     },
   }
 }

@@ -29,6 +29,16 @@ public/models/*
 !public/models/tiger-tigger.glb
 !public/models/zebra-gran.glb
 !public/models/capybara-shizuka.glb
+!public/models/husky-ginga.glb
+!public/models/hyena-peter.glb
+!public/models/tapir-yumeko.glb
+!public/models/mara-kabosu.glb
+!public/models/wolf-fen.glb
+!public/models/pony-mei.glb
+!public/models/penguin-rinrin.glb
+!public/models/otter-haruto.glb
+!public/models/meerkat-tora.glb
+!public/models/squirrel-monkey-teru.glb
 !public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）

@@ -1,6 +1,6 @@
 # public/models の出所
 
-ワールドのサバンナにいるライオン 5 頭と、プレイヤーの姿（主人公の子ども 6 人。ホームで 1 人を選ぶ）、ほかのワールドの動物 3 体（ジャングルのベンガルトラ「ティガー」・サバンナのグラントシマウマ「グラン」・南半球のカピバラ「しずか」）の 3D モデル。ほかの造形（世界・風景の生き物・ほかのワールドの動物）はすべてコードで生成している。
+ワールドのサバンナにいるライオン 5 頭と、プレイヤーの姿（主人公の子ども 6 人。ホームで 1 人を選ぶ）、ほかのワールドの動物 3 体（ジャングルのベンガルトラ「ティガー」・サバンナのグラントシマウマ「グラン」・南半球のカピバラ「しずか」）と、第 2 弾の 10 体（フェン・銀牙・ピーター・ゆめこ・かぼす・めい・リンリン・ハルト・虎・テル）の 3D モデル。動物の生成モデルは合わせて 18 体で、どれも Meshy の Pro プランで生成し、ライセンス設定は「プライベート」。第 2 弾の入力の絵は、ゆめことテルだけが個体の写真（テルは収録映像のコマ）を参照し、ほかの 8 体は種の特徴から描いた。ほかの造形（世界・風景の生き物・ほかのワールドの動物）はすべてコードで生成している。
 
 ## ライオン 5 頭（`lion-*.glb`）
 
@@ -80,6 +80,126 @@
 - **読み込み時の扱い**: ティガーと同じ読み込み。姿勢の補正は後ろ脚 0.7・背骨 0.98・尾 1・前脚 0.9＋接地。尾が無いので、リグが付けた尾の骨は動かさない。`?capybara=primitive` でプリミティブ版（伏せ）に戻る
 - 個人情報は含まない。施設の未公表情報も含まない
 
+## シベリアンハスキー（`husky-ginga.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `husky-ginga.glb` | 銀牙（シベリアンハスキー、北の世界） | 種の特徴から画像生成したクレイ風の側面の絵（銀牙の写真は無い） | 10,027 | 8,924 | 309,268 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定（スマートトポロジー・ポリゴン数 10000・テクスチャ 2K）・四足リグ・「歩く」・最適化はティガーと同じ（3.57 MB → 309.3 KB）
+- **入力画像**: 銀牙の写真が無いので、犬種の典型的な特徴（灰色〜銀灰色と白の毛、顔のマスク、淡い青い目、巻いた尾）を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。銀牙本人の毛色や目の色に似せたものではない。絵は実験ブランチの `experiments/animals-2/husky/inputs/husky-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（ティガーと同じ。所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.75・背骨 0.9・尾 0.5・前脚 0.7＋接地。名簿の全個体を置いた main では、種の群れの場所にこの子のプリミティブ版がいるので、読めた時はそれを取り除いて自分の場所に置く（読めなければプリミティブ版のまま。`?husky=primitive` でプリミティブ版）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ブチハイエナ（`hyena-peter.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `hyena-peter.glb` | ピーター（ブチハイエナ、サバンナ） | 種の特徴から画像生成したクレイ風の側面の絵（ピーターの写真は無い） | 9,236 | 8,483 | 311,756 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（4.20 MB → 311.8 KB）
+- **入力画像**: ピーターの写真が無いので、ブチハイエナの種の特徴を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。施設のハイエナの収録映像はあるが、どの子が映っているか確かめられていないので使っていない。ピーター本人に似せたものではない。絵は実験ブランチの `experiments/animals-2/hyena/inputs/hyena-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8＋接地。名簿の全個体を置いた main では、種の群れの場所にこの子のプリミティブ版がいるので、読めた時はそれを取り除いて自分の場所に置く（読めなければプリミティブ版のまま。`?hyena=primitive` でプリミティブ版）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## アメリカバク（`tapir-yumeko.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `tapir-yumeko.glb` | ゆめこ（アメリカバク、ジャングル南米） | ゆめこのクレイ版（写真を参照して画像生成した側面の絵） | 9,728 | 7,403 | 209,392 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（3.33 MB → 209.4 KB）
+- **入力画像**: くにから受け取ったゆめこの写真（施設で撮影。しずかと並んだもの）と収録映像の 1 コマを参照画像として渡し、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵（2 枚目を採用）。写真は伏せ気味の横向きなので、脚・後ろ半身・反対側は推測で生成している。写真はリポジトリに入れていない。絵は実験ブランチの `experiments/animals-2/tapir/inputs/yumeko-side-clay-v2.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.95・背骨 0.9・尾 1・前脚 0.8＋接地。尾はごく短いので、リグが付けた尾の骨は動かさない。色の画像が暗くジャングルの光で写真より黒く沈むので、色を 2.5 倍に明るくする（`?tapirBright=<数>` で試せる）。名簿の全個体を置いた main では、種の群れの場所にこの子のプリミティブ版がいるので、読めた時はそれを取り除いて自分の場所に置く（読めなければプリミティブ版のまま。`?tapir=primitive` でプリミティブ版）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## マーラ（`mara-kabosu.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `mara-kabosu.glb` | かぼす（マーラ、南半球） | 種の特徴から画像生成したクレイ風の側面の絵（かぼすの写真は無い） | 9,629 | 7,673 | 275,132 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（3.72 MB → 275.1 KB）
+- **入力画像**: かぼすの写真が無いので、マーラの種の特徴を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。施設の収録映像にマーラは映っているが、どの子か確かめられていないので使っていない。かぼす本人に似せたものではない。絵は実験ブランチの `experiments/animals-2/mara/inputs/mara-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.95・背骨 0.8・尾 1・前脚 0.7＋接地。尾はごく短いので、リグが付けた尾の骨は動かさない。`?mara=primitive` でプリミティブ版（伏せ）に戻る
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ホッキョクオオカミ（`wolf-fen.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `wolf-fen.glb` | フェン（ホッキョクオオカミ、北の世界） | 種の特徴から画像生成したクレイ風の側面の絵（フェンの写真は無い） | 9,947 | 9,541 | 337,300 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（4.14 MB → 337.3 KB）。1 回目の生成モデルはリグの頂点の重みが崩れていたので使わず、尾を後ろ脚から離した絵に直して 1 回だけ生成し直した
+- **入力画像**: フェンの写真が無いので、ホッキョクオオカミの種の特徴を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵（2 枚目を採用）。フェン本人に似せたものではない。絵は実験ブランチの `experiments/animals-2/wolf/inputs/fen-side-clay-v2.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.85＋接地。`?wolf=primitive` でプリミティブ版（伏せ）に戻る
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ポニー（`pony-mei.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `pony-mei.glb` | めい（ポニー、ふれあいワールド） | 種の特徴から画像生成したクレイ風の側面の絵（毛色は施設のポニーの映像を参考。めい本人かは未確認） | 10,047 | 8,418 | 303,604 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（3.67 MB → 303.6 KB）
+- **入力画像**: めいの写真が無いので、ポニーの特徴を文章にし、施設のポニーの収録映像の 1 コマ（白〜クリーム色のポニー。めいかは確かめていない）を毛色の参考に渡して、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。めい本人に似せたものではない。映像のコマはリポジトリに入れていない。絵は実験ブランチの `experiments/animals-2/pony/inputs/mei-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8＋接地。`?pony=primitive` でプリミティブ版に戻る
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ケープペンギン（`penguin-rinrin.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `penguin-rinrin.glb` | リンリン（ケープペンギン、水の世界） | 種の特徴から画像生成したクレイ風のななめ前の絵（リンリンの写真は無い） | 10,024 | 7,918 | 244,552 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定と最適化はティガーと同じ（3.96 MB → 244.6 KB）。リグは Meshy のヒューマノイド（Mixamo 名の骨）。歩かせるとペンギンの歩き方にならないので、アニメは使わず、骨は首を向けるのにだけ使う
+- **入力画像**: リンリンの写真が無いので、ケープペンギンの種の特徴を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の全身の絵。リンリン本人に似せたものではない。絵は実験ブランチの `experiments/animals-2/penguin/inputs/rinrin-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材（ティガーと同じ）。歩かず、その場で呼吸・首・左右の揺れだけ。大きさはプリミティブ版の高さにそろえる。`?penguin=primitive` でプリミティブ版に戻る
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## コツメカワウソ（`otter-haruto.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `otter-haruto.glb` | ハルト（コツメカワウソ、水の世界） | 種の特徴から画像生成したクレイ風の側面の絵（ハルトの写真は無い） | 8,556 | 7,482 | 247,288 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（3.66 MB → 247.3 KB）
+- **入力画像**: ハルトの写真が無いので、コツメカワウソの種の特徴を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。ハルト本人に似せたものではない。絵は実験ブランチの `experiments/animals-2/otter/inputs/haruto-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95＋接地。`?otter=primitive` でプリミティブ版（伏せ）に戻る
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ミーアキャット（`meerkat-tora.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `meerkat-tora.glb` | 虎（ミーアキャット、サバンナ） | 種の特徴から画像生成したクレイ風の側面の絵（虎の写真は無い） | 9,568 | 7,681 | 254,448 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（3.77 MB → 254.4 KB）
+- **入力画像**: 虎の写真が無いので、ミーアキャットの種の特徴を文章にして、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。虎本人に似せたものではない。絵は実験ブランチの `experiments/animals-2/meerkat/inputs/tora-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65＋接地。名簿の全個体を置いた main では、種の群れの場所にこの子のプリミティブ版がいるので、読めた時はそれを取り除いて自分の場所に置く（読めなければプリミティブ版のまま。`?meerkat=primitive` でプリミティブ版）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## コモンリスザル（`squirrel-monkey-teru.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `squirrel-monkey-teru.glb` | テル（コモンリスザル、ジャングル南米） | テルのクレイ版（テルの収録映像のコマを参照して画像生成した側面の絵） | 9,817 | 7,450 | 264,760 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はティガーと同じ（4.05 MB → 264.8 KB）
+- **入力画像**: 施設に 1 頭だけのコモンリスザル（テル）の収録映像（2026-11-04、アプリもテルの映像として出しているもの）の 3 コマを参照画像として渡し、期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。映像は座った・かがんだ姿なので、四足で歩く立ち姿・脚の長さ・尾の持ち方は推測で生成している。映像のコマはリポジトリに入れていない。絵は実験ブランチの `experiments/animals-2/squirrel-monkey/inputs/teru-side-clay.jpg` に JPEG の写しだけ置く
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: ティガーと同じ（トゥーン素材）。姿勢の補正は後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95＋接地。名簿の全個体を置いた main では、種の群れの場所にこの子のプリミティブ版がいるので、読めた時はそれを取り除いて自分の場所に置く（読めなければプリミティブ版のまま。`?squirrelMonkey=primitive` でプリミティブ版）
+- 個人情報は含まない。施設の未公表情報も含まない
+
 ## Source of `public/models` (English)
 
-Five lion models generated with [Meshy](https://www.meshy.ai) Image to 3D (Pro plan, 2026-11-05) from clay-style reference pictures of each lion that were prepared during the hackathon. Rigged with Meshy's quadruped rig and its "Walk" animation, then optimized with gltf-transform 4.5.1 (meshopt, 1024px WebP textures). Generated with the license setting "Private": models generated on Meshy's paid plans are owned by the user with no restriction on publication or commercial use (checked against Meshy's help/terms on 2026-11-05). The six player characters (`hero-boy.glb` = the curly-haired boy in a yellow hoodie, plus `hero-teal.glb`, `hero-pink.glb`, `hero-bluecap.glb`, `hero-purple.glb`, `hero-braids.glb`) were generated the same way (Meshy Image to 3D, Pro plan, 2026-11-05, license setting "Private", owned by us) from the front view of each child's character sheet prepared during the hackathon, rigged with Meshy's humanoid rig with its "Walk" and "Run" clips, and optimized with the same settings (335–383 KB, about 10,000 triangles each). They have no idle or jump clip. The player picks one on the home screen ("Who will explore?") and only that model is loaded. For the girl with braids, the vertex weights were rewritten before optimization: weights on her nine braid bones (hanging from Spine2, not animated) were moved to the head bone so her hat stays on her head while moving (`experiments/heroes/tools/move-weights-to-head.py` on the `exp/heroes` branch). The Bengal tiger Tigger in the jungle (`tiger-tigger.glb`, 335,916 B, 9,452 triangles, 2026-11-05), the Grant's zebra Gran in the savanna (`zebra-gran.glb`, 341,856 B, 8,670 triangles, 2026-11-06) and the capybara Shizuka in the southern-hemisphere world (`capybara-shizuka.glb`, 252,352 B, 9,802 triangles, 2026-11-06) were generated the same way (Meshy Image to 3D, Pro plan, license setting "Private", owned by us, quadruped rig with the "Walk" clip, same optimization) from clay-style side views prepared during the hackathon with a photo of each animal as the reference. Shizuka's first version was made from a written description of her photo because the photo file had not reached us; it was replaced by the version made with the photo itself as the reference. Everything else in the world is generated by code. No personal information is included.
+Five lion models generated with [Meshy](https://www.meshy.ai) Image to 3D (Pro plan, 2026-11-05) from clay-style reference pictures of each lion that were prepared during the hackathon. Rigged with Meshy's quadruped rig and its "Walk" animation, then optimized with gltf-transform 4.5.1 (meshopt, 1024px WebP textures). Generated with the license setting "Private": models generated on Meshy's paid plans are owned by the user with no restriction on publication or commercial use (checked against Meshy's help/terms on 2026-11-05). The six player characters (`hero-boy.glb` = the curly-haired boy in a yellow hoodie, plus `hero-teal.glb`, `hero-pink.glb`, `hero-bluecap.glb`, `hero-purple.glb`, `hero-braids.glb`) were generated the same way (Meshy Image to 3D, Pro plan, 2026-11-05, license setting "Private", owned by us) from the front view of each child's character sheet prepared during the hackathon, rigged with Meshy's humanoid rig with its "Walk" and "Run" clips, and optimized with the same settings (335–383 KB, about 10,000 triangles each). They have no idle or jump clip. The player picks one on the home screen ("Who will explore?") and only that model is loaded. For the girl with braids, the vertex weights were rewritten before optimization: weights on her nine braid bones (hanging from Spine2, not animated) were moved to the head bone so her hat stays on her head while moving (`experiments/heroes/tools/move-weights-to-head.py` on the `exp/heroes` branch). The Bengal tiger Tigger in the jungle (`tiger-tigger.glb`, 335,916 B, 9,452 triangles, 2026-11-05), the Grant's zebra Gran in the savanna (`zebra-gran.glb`, 341,856 B, 8,670 triangles, 2026-11-06) and the capybara Shizuka in the southern-hemisphere world (`capybara-shizuka.glb`, 252,352 B, 9,802 triangles, 2026-11-06) were generated the same way (Meshy Image to 3D, Pro plan, license setting "Private", owned by us, quadruped rig with the "Walk" clip, same optimization) from clay-style side views prepared during the hackathon with a photo of each animal as the reference. Shizuka's first version was made from a written description of her photo because the photo file had not reached us; it was replaced by the version made with the photo itself as the reference. Everything else in the world is generated by code. No personal information is included. The Siberian husky Ginga in the northern world (`husky-ginga.glb`, 309,268 B, 10,027 triangles, 2026-11-06) was generated the same way, but from a clay-style side view drawn from typical breed features, because there is no photo of Ginga; it is not a likeness of Ginga's own coat or eye color. The spotted hyena Peter in the savanna (`hyena-peter.glb`, 311,756 B, 9,236 triangles, 2026-11-06) was made the same way from typical species features (no photo of Peter; the facility's hyena video does not identify which hyena is shown, so it was not used). The lowland tapir Yumeko in the jungle (`tapir-yumeko.glb`, 209,392 B, 9,728 triangles, 2026-11-06) was made the same way with a photo of Yumeko and a frame of her recorded video as the reference. The mara Kabosu in the southern-hemisphere world (`mara-kabosu.glb`, 275,132 B, 9,629 triangles, 2026-11-06) was made the same way from typical species features (no photo of Kabosu) and replaces the primitive mara figure (`?mara=primitive` switches back). The arctic wolf Fen in the northern world (`wolf-fen.glb`, 337,300 B, 9,947 triangles, 2026-11-06) was made the same way from typical species features (no photo of Fen) and replaces the primitive wolf figure (`?wolf=primitive` switches back); the first generation was discarded because its rig weights were broken, and the model was generated once more from a revised picture with the tail held away from the hind legs. The pony Mei in the petting world (`pony-mei.glb`, 303,604 B, 10,047 triangles, 2026-11-06) was made the same way from typical pony features, with the coat color taken from a frame of the facility's pony video (it is not confirmed that the pony in the video is Mei), and replaces the primitive pony (`?pony=primitive` switches back). The Cape penguin Rinrin in the water world (`penguin-rinrin.glb`, 244,552 B, 10,024 triangles, 2026-11-06) was made the same way from typical species features (no photo of Rinrin), rigged with Meshy's humanoid rig; its walk clip does not look like a penguin, so it does not walk and only breathes, turns its head and sways in place. It replaces the primitive penguin (`?penguin=primitive` switches back). The small-clawed otter Haruto in the water world (`otter-haruto.glb`, 247,288 B, 8,556 triangles, 2026-11-06) was made the same way from typical species features (no photo of Haruto) and replaces the primitive otter (`?otter=primitive` switches back). The meerkat Tora in the savanna (`meerkat-tora.glb`, 254,448 B, 9,568 triangles, 2026-11-06) was made the same way from typical species features (no photo of Tora); there was no primitive meerkat, so it is added only when the model loads (`?meerkat=off` leaves it out). The common squirrel monkey Teru in the jungle (`squirrel-monkey-teru.glb`, 264,760 B, 9,817 triangles, 2026-11-06) was made the same way with frames of Teru's recorded video (Teru is the only squirrel monkey at the facility) as the reference; there was no primitive squirrel monkey, so Teru is added only when the model loads (`?squirrelMonkey=off` leaves Teru out).
