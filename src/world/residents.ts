@@ -11,7 +11,12 @@ import type { FarmKind } from './farmfolk'
 import { GOAT_ROCKS, farmPens, terrainHeight } from './terrain'
 import type { WaterfolkKind } from './waterfolk'
 import { JUNGLE_PERCH, skyPerches } from './biomes'
-import { createSkyfolk } from './skyfolk'
+import { createSkyfolk, mergeStatic } from './skyfolk'
+import { createWildfolk } from './wildfolk'
+import type { WildKind } from './wildfolk'
+import type { Collider } from './props'
+import { KOPJE, LIONS, WATERHOLE } from './layout'
+import { isWalkable } from './regions'
 import type { SkyKind, SkyLook } from './skyfolk'
 import { OUTER_REGIONS } from './regions'
 
@@ -220,8 +225,141 @@ function createSkyResidents(out: Lion[]): void {
   }
 }
 
+/**
+ * 名簿のうち、上の表でまだ置いていない子（2026-11-06、全個体を置く）。種ごとに集まる場所（anchor、ワールドの中心からのずれ。
+ * サバンナは原点から）と広がり（spread）を決め、残りの子を名簿の並びで、木や岩の当たり判定・ほかの子・観察スポットを避けた空き地へ置く。
+ * 向きはワールドの中心（観察スポット）の方。形は既存の目印（オオカミ・キツネ・クマ・カンガルーなど。ハスキー・ギンギツネ・アカカンガルー・
+ * ミーアキャット・ウッドチャックは毛色だけ変えた近い形）と、wildfolk.ts の新しい目印。ギープは形の手がかりが無いので、ここでも置かない
+ */
+type Make = (at: { id: string; x: number; z: number; yaw: number; size: number }) => Lion
+const lionLike = (species: NonNullable<LionOptions['species']>, coat?: string): Make => (at) => createLion({ ...at, species, coat })
+const upright = (variant: UprightVariant, coat?: string): Make => (at) => createKangaroo({ ...at, variant, coat })
+const wild = (kind: WildKind): Make => (at) => createWildfolk({ ...at, kind })
+interface Extra {
+  species: string
+  region: 'africa' | 'north' | 'jungle' | 'south' | 'water' | 'partner'
+  at: [number, number]
+  spread: number
+  size: number
+  make: Make
+}
+const EXTRA: Extra[] = [
+  // サバンナ（原点から）: スポーンからコピエへの道のそばにミーアキャットの群れ、西の草原にハイエナ、水場の南にカメ
+  { species: 'ミーアキャット', region: 'africa', at: [14, 52], spread: 2.6, size: 0.38, make: upright('prairie', '#cdb48e') },
+  { species: 'ブチハイエナ', region: 'africa', at: [-44, 28], spread: 3, size: 1.1, make: wild('hyena') },
+  { species: 'ラーテル', region: 'africa', at: [30, 50], spread: 1, size: 1.1, make: wild('ratel') },
+  { species: 'スナネコ', region: 'africa', at: [-30, 52], spread: 1, size: 1.3, make: wild('sandcat') },
+  { species: 'アルダブラゾウガメ', region: 'africa', at: [58, 14], spread: 1, size: 1.6, make: wild('aldabra') },
+  { species: 'ケヅメリクガメ', region: 'africa', at: [63, 19], spread: 2.4, size: 1.0, make: wild('sulcata') },
+  { species: 'パンケーキリクガメ', region: 'africa', at: [54, 19], spread: 1.2, size: 0.6, make: wild('pancake') },
+  // ジャングル
+  { species: 'ワオキツネザル', region: 'jungle', at: [-8, 12], spread: 4, size: 0.4, make: upright('lemur') },
+  { species: 'キンカジュー', region: 'jungle', at: [11, -5], spread: 4, size: 0.36, make: lionLike('kinkajou') },
+  { species: 'ビントロング', region: 'jungle', at: [10, -13], spread: 2, size: 0.48, make: lionLike('binturong') },
+  { species: 'アカハナグマ', region: 'jungle', at: [-11, -4], spread: 3.5, size: 1.2, make: wild('coati') },
+  { species: 'アメリカバク', region: 'jungle', at: [-3, -13], spread: 1, size: 1.0, make: wild('tapir') },
+  { species: 'コモンリスザル', region: 'jungle', at: [13, 4], spread: 1, size: 1.8, make: wild('squirrelmonkey') },
+  { species: 'コモンマーモセット', region: 'jungle', at: [14, 8], spread: 1, size: 1.9, make: wild('marmoset') },
+  { species: 'スローロリス', region: 'jungle', at: [15, 0], spread: 1, size: 1.9, make: wild('loris') },
+  { species: 'シャムワニ', region: 'jungle', at: [-15, 6], spread: 1, size: 1.3, make: wild('croc') },
+  { species: 'メガネカイマン', region: 'jungle', at: [-15, 11], spread: 1, size: 1.0, make: wild('caiman') },
+  { species: 'ビルマニシキヘビ', region: 'jungle', at: [6, 15], spread: 2.5, size: 1.2, make: wild('python') },
+  // 北の世界
+  { species: 'ホッキョクオオカミ', region: 'north', at: [0, -12], spread: 6, size: 0.82, make: lionLike('wolf') },
+  { species: 'シベリアンハスキー', region: 'north', at: [-8, 10], spread: 4, size: 0.74, make: lionLike('wolf', '#8a929e') },
+  { species: 'ツキノワグマ', region: 'north', at: [14, 3], spread: 1, size: 0.95, make: lionLike('bear') },
+  { species: 'ギンギツネ', region: 'north', at: [-14, 5], spread: 1, size: 0.55, make: lionLike('fox', '#4a4a54') },
+  { species: 'ホンドタヌキ', region: 'north', at: [-9, -12], spread: 1, size: 1.2, make: wild('tanuki') },
+  { species: 'ウッドチャック', region: 'north', at: [10, 11], spread: 1, size: 0.5, make: upright('prairie', '#86643f') },
+  { species: 'プレーリードッグ', region: 'north', at: [5.6, 10.8], spread: 1, size: 0.32, make: upright('prairie') },
+  { species: 'ヤマアラシ', region: 'north', at: [12, -8], spread: 1, size: 1.2, make: wild('porcupine') },
+  { species: 'アメリカビーバー', region: 'north', at: [15, -4], spread: 1, size: 1.2, make: wild('beaver') },
+  { species: 'ニホンザル', region: 'north', at: [-3, 14], spread: 1, size: 1.5, make: wild('macaque') },
+  // 南半球
+  { species: 'オオカンガルー', region: 'south', at: [2, 12], spread: 5, size: 0.95, make: upright('kangaroo') },
+  { species: 'アカカンガルー', region: 'south', at: [8, 14], spread: 1, size: 1.0, make: upright('kangaroo', '#b8643c') },
+  { species: 'パルマワラビー', region: 'south', at: [13, 9], spread: 3, size: 0.6, make: upright('wallaby') },
+  { species: 'カピバラ', region: 'south', at: [-13, 7], spread: 1, size: 0.76, make: lionLike('capybara') },
+  { species: 'マーラ', region: 'south', at: [-9, 16], spread: 3, size: 0.49, make: lionLike('mara') },
+  // 水の世界: 潟のふちのペリカンのそば
+  { species: 'モモイロペリカン', region: 'water', at: [8, -6.5], spread: 1.5, size: 1.1, make: (at) => createWaterfolk({ ...at, kind: 'pelican' }) },
+]
+
+/** EXTRA の子を、当たり判定を避けた空き地へ置く */
+function createExtraResidents(out: Lion[], colliders: Collider[]): void {
+  const placedIds = new Set(out.map((l) => l.id))
+  for (const l of LIONS) placedIds.add(l.id)
+  // 置いた子（と、サバンナのライオン・グラン）の場所と半径
+  const bodies: Array<{ x: number; z: number; r: number }> = out.map((l) => ({ x: l.position.x, z: l.position.z, r: l.collider.r }))
+  for (const l of LIONS) bodies.push({ x: l.x, z: l.z, r: 1.4 })
+  bodies.push({ x: -22, z: 14, r: 2 })
+  const free = (x: number, z: number, r: number, cx: number, cz: number, africa: boolean) => {
+    if (!isWalkable(x, z)) return false
+    if (africa) {
+      if (Math.hypot(x - KOPJE.x, z - KOPJE.z) < KOPJE.radius + 3) return false
+      if (Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) < WATERHOLE.radius + 1.5) return false
+    } else if (Math.hypot(x - cx, z - cz) < 4) return false
+    for (const c of colliders) if (Math.hypot(x - c.x, z - c.z) < c.r + r + 0.4) return false
+    for (const b of bodies) if (Math.hypot(x - b.x, z - b.z) < b.r + r + 0.35) return false
+    return true
+  }
+  for (const e of EXTRA) {
+    const region = e.region === 'africa' ? { x: 0, z: 0 } : OUTER_REGIONS.find((g) => g.key === e.region)
+    if (!region) continue
+    const left = ANIMALS.filter((a) => a.species === e.species && !placedIds.has(a.id))
+    const ax = region.x + e.at[0]
+    const az = region.z + e.at[1]
+    const r = Math.max(0.3, 0.45 * e.size)
+    left.forEach((animal, i) => {
+      // 金角で広げていき、空いた所が見つかるまで少しずつ外へ
+      let x = ax
+      let z = az
+      for (let k = 0; k < 80; k++) {
+        const n = i + k * left.length
+        const rr = e.spread * Math.sqrt((n + 0.5) / Math.max(1, left.length)) * (k > 0 ? 1 + k * 0.08 : 1)
+        const a = n * 2.39996
+        x = ax + Math.cos(a) * rr
+        z = az + Math.sin(a) * rr
+        if (free(x, z, r, region.x, region.z, e.region === 'africa')) break
+      }
+      const cx = e.region === 'africa' ? 0 : region.x
+      const cz = e.region === 'africa' ? 30 : region.z
+      const yaw = Math.atan2(cx - x, cz - z) + Math.sin(i * 1.7) * 0.5
+      const lion = e.make({ id: animal.id, x, z, yaw, size: e.size })
+      // 描く回数を抑える（1 頭 40 個ほどの部品を数個に）
+      mergeStatic(lion.group)
+      out.push(lion)
+      placedIds.add(animal.id)
+      bodies.push({ x, z, r: lion.collider.r })
+    })
+  }
+  // ふれあいワールド: 岩場が込み合うので、残りのヤギ 4 頭は岩場の入り口の前の草地に
+  const partner = OUTER_REGIONS.find((g) => g.key === 'partner')
+  if (partner) {
+    const goats = ANIMALS.filter((a) => a.species === 'ヤギ' && !placedIds.has(a.id))
+    const gx = partner.x + GOAT_ROCKS.dx + Math.cos(GOAT_ROCKS.gate) * (GOAT_ROCKS.radius + 3.5)
+    const gz = partner.z + GOAT_ROCKS.dz + Math.sin(GOAT_ROCKS.gate) * (GOAT_ROCKS.radius + 3.5)
+    goats.forEach((animal, i) => {
+      let x = gx
+      let z = gz
+      for (let k = 0; k < 60; k++) {
+        const rr = 2.2 * Math.sqrt(i + 0.5 + k * goats.length) * 0.7
+        const a = (i + k * goats.length) * 2.39996
+        x = gx + Math.cos(a) * rr
+        z = gz + Math.sin(a) * rr
+        if (free(x, z, 0.5, partner.x, partner.z, false)) break
+      }
+      const goat = createFarmfolk({ id: animal.id, kind: 'goat', x, z, yaw: Math.atan2(partner.x - x, partner.z - z) + Math.sin(i * 2.1) * 0.6, size: 1.05 })
+      mergeStatic(goat.group)
+      out.push(goat)
+      placedIds.add(animal.id)
+      bodies.push({ x, z, r: 0.5 })
+    })
+  }
+}
+
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
-export function createResidents(): Lion[] {
+export function createResidents(colliders: Collider[] = []): Lion[] {
   const out: Lion[] = []
   for (const r of RESIDENTS) {
     const animal = r.name
@@ -257,6 +395,9 @@ export function createResidents(): Lion[] {
   }
   createFarmResidents(out)
   createSkyResidents(out)
+  createExtraResidents(out, colliders)
+  // 描く回数を抑える: 動かない部品をまとめる（首・尾・体のまとまりと名前のある耳は残すので、動きと生成モデルへの差し替えはそのまま）
+  for (const lion of out) mergeStatic(lion.group)
   // 小さい子は影の読み取りのずれ（normalBias 1.8m）で体がまだらに暗くなるので、影は受けず落とすだけにする
   for (const lion of out) {
     if (lion.group.scale.x >= 0.75) continue

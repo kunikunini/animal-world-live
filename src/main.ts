@@ -225,7 +225,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   // 様式化ライオン。当たり判定も岩と同じ配列に入れる
   // ほかのワールドで会える子（トラ・オオカミ）も同じ伏せの体で作り、出会いの仕組みに乗せる
-  const lions = [...LIONS.map((l) => createLion(l)), ...createResidents()]
+  const lions = [...LIONS.map((l) => createLion(l)), ...createResidents(props.colliders)]
   for (const lion of lions) {
     vividToon(lion.group)
     scene.add(lion.group)

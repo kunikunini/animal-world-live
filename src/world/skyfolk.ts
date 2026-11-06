@@ -284,7 +284,7 @@ const _rel = new THREE.Matrix4()
  * root の下の部品を root から見た形に焼き、材質の色を頂点の色にして、光を受けるものと受けないもの（目）の 2 つに。
  * keep（翼・尾のように動かす部分）の下はまとめない
  */
-function flatten(root: THREE.Object3D, keep: THREE.Object3D[]): void {
+export function flatten(root: THREE.Object3D, keep: THREE.Object3D[]): void {
   _inv.copy(root.matrixWorld).invert()
   const lit: THREE.BufferGeometry[] = []
   const unlit: THREE.BufferGeometry[] = []
@@ -314,6 +314,60 @@ function flatten(root: THREE.Object3D, keep: THREE.Object3D[]): void {
     root.add(mesh)
   }
   if (unlit.length) root.add(new THREE.Mesh(mergeGeometries(unlit), unlitVC))
+}
+
+/**
+ * どの組み方の目印にも使える軽量化: 各ノードの直下の「子を持たない・名前の無い」部品を、そのノードから見た形に焼いて 1 つにまとめる。
+ * 首・尾などの動かすノード自体は残すので大きな動きはそのまま。名前のある部品（耳など、名前で探して動かすもの）はまとめない
+ */
+export function mergeStatic(root: THREE.Object3D): void {
+  root.updateMatrixWorld(true)
+  const visit = (node: THREE.Object3D) => {
+    for (const c of [...node.children]) visit(c)
+    // 名前の無い部品の下にぶら下がった部品（目のハイライトなど）は、見た目の位置のままこのノードの直下へ移してからまとめる
+    for (const c of [...node.children]) {
+      if (!(c as THREE.Mesh).isMesh || c.name || !c.children.length) continue
+      const subs: THREE.Object3D[] = []
+      c.traverse((d) => {
+        if (d !== c) subs.push(d)
+      })
+      if (subs.every((d) => (d as THREE.Mesh).isMesh && !d.name)) for (const d of subs) node.attach(d)
+    }
+    const leaves = node.children.filter((c) => {
+      const m = c as THREE.Mesh
+      if (!m.isMesh || c.children.length || c.name || (m as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return false
+      const mm = m.material as THREE.Material
+      return !mm.transparent && (mm.type === 'MeshToonMaterial' || mm.type === 'MeshBasicMaterial') && !(mm as THREE.MeshToonMaterial).vertexColors
+    }) as THREE.Mesh[]
+    if (leaves.length < 2) return
+    _inv.copy(node.matrixWorld).invert()
+    for (const unlitPass of [false, true]) {
+      const list = leaves.filter((m) => ((m.material as THREE.Material).type === 'MeshBasicMaterial') === unlitPass)
+      if (list.length < 2) continue
+      const geos: THREE.BufferGeometry[] = []
+      for (const m of list) {
+        let g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()
+        for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'uv') g.deleteAttribute(k)
+        if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2))
+        g.applyMatrix4(_rel.multiplyMatrices(_inv, m.matrixWorld))
+        const col = (m.material as THREE.MeshBasicMaterial).color
+        const n = g.attributes.position.count
+        const arr = new Float32Array(n * 3)
+        for (let i = 0; i < n; i++) col.toArray(arr, i * 3)
+        g.setAttribute('color', new THREE.BufferAttribute(arr, 3))
+        g.clearGroups()
+        geos.push(g)
+      }
+      const merged = mergeGeometries(geos)
+      if (!merged) continue
+      const mesh = new THREE.Mesh(merged, unlitPass ? unlitVC : litVC)
+      mesh.castShadow = list.some((m) => m.castShadow)
+      mesh.receiveShadow = list.every((m) => m.receiveShadow)
+      for (const m of list) node.remove(m)
+      node.add(mesh)
+    }
+  }
+  visit(root)
 }
 
 export function createSkyfolk(options: SkyfolkOptions): Lion {
