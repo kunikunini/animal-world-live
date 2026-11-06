@@ -310,7 +310,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true } },
-      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
+      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロは夜間バッチの生成モデル）。
       // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
       // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
       // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
@@ -356,7 +356,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ウーピーで振って背骨だけ 1 に上げた（後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8 で腰 99.2〜101.6%）
       // ハイエナの群れのプリミティブ版（wildfolk）は差し替え口が無いので、その子の場所・向き・体の長さで入れ替える（replaceHost）
       { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
-      // マロ: 南半球の西のカピバラ 2 頭のうち中心に近い方（しずかの隣）。コピー方式でしずかの値（後ろ脚 0.7・背骨 0.98・尾 1・前脚 0.9）を流用。尾の骨は動かさない
+      // マロ: 南半球の西のカピバラ 2 頭のうち中心に近い方（しずかの隣）。しずかの値（0.7／0.98／1／0.9）の流用は腰の下限 98.9% で届かず、背骨だけ 1 に上げた
+      // （後ろ脚 0.7・背骨 1・尾 1・前脚 0.9 で腰 99.3〜101.9%）。尾は無い子なので尾の骨は動かさない（noTail）
       { key: 'capybaraMaro', species: 'カピバラ', name: 'マロ', file: 'capybara-maro', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
     ]
     for (const r of AI_RESIDENTS) {
