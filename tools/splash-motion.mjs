@@ -142,6 +142,16 @@ kf.push(keyframes('sp-slam-ray', 0.4, (tt) => {
   return `opacity: 1; transform: translateX(${T(120 + 50 * q)}) scaleY(${n4(1 - q)});`
 }))
 
+// ---- Motion Prompt #001 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#001 ----
+// ポップイン: スコップの吹き出し（音を鳴らすのにタップが要る時だけ出す。src/ui/splash.ts が is-wait を付ける）。
+// 拡大率 0→1 を ばね 1 − e^(−6.5t)·cos(15t)（最大およそ 1.26 まで行き過ぎる）、
+// 同時に傾き −0.35rad → 0 を ばね 1 − e^(−6t)·cos(11t) で戻す。見本の 0.28 秒の待ちは、ロゴのあとなので 0 に
+kf.push(keyframes('sp-bub-in', 1.2, (t) => {
+  const sc = spring(t, 15, 6.5)
+  const rot = (1 - spring(t, 11, 6)) * -0.35
+  return `transform: rotate(${n4((rot * 180) / Math.PI)}deg) scale(${n4(sc)});`
+}))
+
 // ---- 線・粒の向き（見本の角度をそのまま） ----
 const RAYS = []
 const DOTS = []
@@ -251,13 +261,64 @@ ${WORDS.filter((w) => w.anim).map((w, wi) => [...w.w].map((_, i) => `.sp-w${wi +
 .sp-live .sp-sray i { position: absolute; left: 0; top: ${T(-3.5)}; width: ${T(26)}; height: ${T(7)}; border-radius: ${T(3.5)}; background: var(--sp-red); opacity: 0; animation: sp-slam-ray 0.4s linear ${n4(LIV + HIT)}s both; }
 ${SLAM_RAYS.map((r, i) => `.sp-sray:nth-of-type(${i + 1}) { transform: rotate(${n4(r.deg)}deg) scaleX(${n4(r.k)}); }`).join('\n')}
 /* 消える時: 少し大きくなりながら、ふわっと */
+/* スコップの吹き出し「画面を タップして はじめよう！」。縦長の画面は頭の上、横長の画面は右どなり */
+.sp-bubble {
+  left: 50%;
+  bottom: calc(100% + var(--fs0) * 0.55);
+  z-index: 2;
+  width: max-content;
+  max-width: 88vw;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.sp-bubble > div {
+  position: relative;
+  padding: 0.5em 0.95em 0.55em;
+  border: 0.16em solid var(--sp-navy);
+  border-radius: 1.1em;
+  background: #fff;
+  box-shadow: 0 0.16em 0 var(--sp-navy);
+  font-family: 'Hiragino Maru Gothic ProN', 'Zen Maru Gothic', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--fs0) * 0.5);
+  line-height: 1.45;
+  text-align: center;
+  color: var(--sp-navy);
+  white-space: nowrap;
+  transform: scale(0);
+  transform-origin: 50% 120%;
+}
+.sp-bubble rt { font-size: 0.5em; font-weight: 700; }
+.sp-bubble b { color: var(--sp-red); }
+/* しっぽ（ふちの紺の三角に、白い三角を重ねる） */
+.sp-bubble > div::before,
+.sp-bubble > div::after { content: ''; position: absolute; left: 50%; top: 100%; border-style: solid; border-color: transparent; }
+.sp-bubble > div::before { margin-left: -0.62em; border-width: 0.8em 0.62em 0; border-top-color: var(--sp-navy); }
+.sp-bubble > div::after { margin-left: -0.4em; margin-top: -0.06em; border-width: 0.55em 0.4em 0; border-top-color: #fff; }
+.sp-bubble .sp-en { display: none; }
+html:lang(en) .sp-bubble .sp-en { display: inline; }
+html:lang(en) .sp-bubble .sp-ja { display: none; }
+.splash.is-wait .sp-bubble > div { animation: sp-bub-in 1.2s linear both, sp-bob 1.6s ease-in-out 1.2s infinite; }
+.splash.is-wait { cursor: pointer; }
+@media (min-aspect-ratio: 4/3) {
+  .sp-bubble { left: calc(100% + var(--fs0) * 0.3); bottom: auto; top: 4%; translate: 0 0; }
+  .sp-bubble > div { transform-origin: -10% 70%; }
+  .sp-bubble > div::before,
+  .sp-bubble > div::after { left: auto; right: 100%; top: 62%; border-color: transparent; }
+  .sp-bubble > div::before { margin: -0.62em 0 0; border-width: 0.62em 0.8em 0.62em 0; border-right-color: var(--sp-navy); }
+  .sp-bubble > div::after { margin: -0.4em -0.06em 0 0; border-width: 0.4em 0.55em 0.4em 0; border-right-color: #fff; }
+}
+/* 吹き出しを待っている間は、JS が動かない時の保険（7 秒で消える）を止める */
+.splash.is-wait { animation: none; }
 .splash.is-out { opacity: 0; visibility: hidden; }
 .splash.is-out .sp-stage { scale: 1.06; transition: scale 0.6s ease; }
 /* 動きをへらす: 見本の動きはやめて、フェードだけ */
 .splash.is-still * { animation: none !important; }
 .splash.is-still .sp-stage, .splash.is-still .splash-logo { animation: sp-fade 0.5s ease both !important; }
 .splash.is-still.is-out .sp-stage { scale: 1; }
+.splash.is-still.is-wait .sp-bubble > div { transform: none; animation: sp-fade 0.4s ease both !important; }
 @keyframes sp-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes sp-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 @keyframes sp-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sp-auto { to { opacity: 0; visibility: hidden; } }
 /* スプラッシュが出ている間は、ホームのボタンの出てくる動きを止めておく（消えてから「ぽん」と出る） */
@@ -270,6 +331,7 @@ export const HTML = `<div class="sp-stage">
         <div class="sp-burst"><i class="sp-ring o"></i><i class="sp-ring i"></i><span class="sp-rays">${RAYS.map(() => '<b class="sp-ray"><i></i></b>').join('')}</span><span class="sp-dots">${DOTS.map(() => '<b class="sp-dot"><i></i></b>').join('')}</span></div>
         <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></div></div></div></div>
         <i class="sp-line"></i>
+        <div class="sp-bubble"><div><span class="sp-ja"><ruby>画面<rt>がめん</rt></ruby>を <b>タップ</b>して<br />はじめよう！</span><span class="sp-en"><b>Tap</b> the screen<br />to start!</span></div></div>
       </div>
       <div class="splash-logo">${(() => {
         const word = (w, wi) => `<span class="sp-word sp-w${wi + 1}">${[...w.w].map((c) => `<i>${c}</i>`).join('')}</span>`

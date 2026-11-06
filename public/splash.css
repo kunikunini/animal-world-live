@@ -120,13 +120,64 @@
 .sp-sray:nth-of-type(7) { transform: rotate(-61.3074deg) scaleX(0.5586); }
 .sp-sray:nth-of-type(8) { transform: rotate(-13.7945deg) scaleX(1.1586); }
 /* 消える時: 少し大きくなりながら、ふわっと */
+/* スコップの吹き出し「画面を タップして はじめよう！」。縦長の画面は頭の上、横長の画面は右どなり */
+.sp-bubble {
+  left: 50%;
+  bottom: calc(100% + var(--fs0) * 0.55);
+  z-index: 2;
+  width: max-content;
+  max-width: 88vw;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.sp-bubble > div {
+  position: relative;
+  padding: 0.5em 0.95em 0.55em;
+  border: 0.16em solid var(--sp-navy);
+  border-radius: 1.1em;
+  background: #fff;
+  box-shadow: 0 0.16em 0 var(--sp-navy);
+  font-family: 'Hiragino Maru Gothic ProN', 'Zen Maru Gothic', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--fs0) * 0.5);
+  line-height: 1.45;
+  text-align: center;
+  color: var(--sp-navy);
+  white-space: nowrap;
+  transform: scale(0);
+  transform-origin: 50% 120%;
+}
+.sp-bubble rt { font-size: 0.5em; font-weight: 700; }
+.sp-bubble b { color: var(--sp-red); }
+/* しっぽ（ふちの紺の三角に、白い三角を重ねる） */
+.sp-bubble > div::before,
+.sp-bubble > div::after { content: ''; position: absolute; left: 50%; top: 100%; border-style: solid; border-color: transparent; }
+.sp-bubble > div::before { margin-left: -0.62em; border-width: 0.8em 0.62em 0; border-top-color: var(--sp-navy); }
+.sp-bubble > div::after { margin-left: -0.4em; margin-top: -0.06em; border-width: 0.55em 0.4em 0; border-top-color: #fff; }
+.sp-bubble .sp-en { display: none; }
+html:lang(en) .sp-bubble .sp-en { display: inline; }
+html:lang(en) .sp-bubble .sp-ja { display: none; }
+.splash.is-wait .sp-bubble > div { animation: sp-bub-in 1.2s linear both, sp-bob 1.6s ease-in-out 1.2s infinite; }
+.splash.is-wait { cursor: pointer; }
+@media (min-aspect-ratio: 4/3) {
+  .sp-bubble { left: calc(100% + var(--fs0) * 0.3); bottom: auto; top: 4%; translate: 0 0; }
+  .sp-bubble > div { transform-origin: -10% 70%; }
+  .sp-bubble > div::before,
+  .sp-bubble > div::after { left: auto; right: 100%; top: 62%; border-color: transparent; }
+  .sp-bubble > div::before { margin: -0.62em 0 0; border-width: 0.62em 0.8em 0.62em 0; border-right-color: var(--sp-navy); }
+  .sp-bubble > div::after { margin: -0.4em -0.06em 0 0; border-width: 0.4em 0.55em 0.4em 0; border-right-color: #fff; }
+}
+/* 吹き出しを待っている間は、JS が動かない時の保険（7 秒で消える）を止める */
+.splash.is-wait { animation: none; }
 .splash.is-out { opacity: 0; visibility: hidden; }
 .splash.is-out .sp-stage { scale: 1.06; transition: scale 0.6s ease; }
 /* 動きをへらす: 見本の動きはやめて、フェードだけ */
 .splash.is-still * { animation: none !important; }
 .splash.is-still .sp-stage, .splash.is-still .splash-logo { animation: sp-fade 0.5s ease both !important; }
 .splash.is-still.is-out .sp-stage { scale: 1; }
+.splash.is-still.is-wait .sp-bubble > div { transform: none; animation: sp-fade 0.4s ease both !important; }
 @keyframes sp-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes sp-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 @keyframes sp-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sp-auto { to { opacity: 0; visibility: hidden; } }
 /* スプラッシュが出ている間は、ホームのボタンの出てくる動きを止めておく（消えてから「ぽん」と出る） */
@@ -680,4 +731,79 @@
   66.6667% { opacity: 1; transform: translateX(calc(var(--fs) * 1.9108)) scaleY(0.037); }
   70.8333% { opacity: 0; }
   100% { opacity: 0; }
+}
+@keyframes sp-bub-in {
+  0% { transform: rotate(-20.0535deg) scale(0); }
+  1.3889% { transform: rotate(-17.8411deg) scale(0.1306); }
+  2.7778% { transform: rotate(-15.3271deg) scale(0.2934); }
+  4.1667% { transform: rotate(-12.6651deg) scale(0.4713); }
+  5.5556% { transform: rotate(-9.9869deg) scale(0.6497); }
+  6.9444% { transform: rotate(-7.4009deg) scale(0.8166); }
+  8.3333% { transform: rotate(-4.9921deg) scale(0.9631); }
+  9.7222% { transform: rotate(-2.8234deg) scale(1.0835); }
+  11.1111% { transform: rotate(-0.9366deg) scale(1.1749); }
+  12.5% { transform: rotate(0.6451deg) scale(1.2369); }
+  13.8889% { transform: rotate(1.9146deg) scale(1.2712); }
+  15.2778% { transform: rotate(2.8787deg) scale(1.2807); }
+  16.6667% { transform: rotate(3.5545deg) scale(1.2698); }
+  18.0556% { transform: rotate(3.9679deg) scale(1.2431); }
+  19.4444% { transform: rotate(4.1501deg) scale(1.2055); }
+  20.8333% { transform: rotate(4.1358deg) scale(1.1616); }
+  22.2222% { transform: rotate(3.9613deg) scale(1.1155); }
+  23.6111% { transform: rotate(3.6623deg) scale(1.0707); }
+  25% { transform: rotate(3.2733deg) scale(1.03); }
+  26.3889% { transform: rotate(2.8259deg) scale(0.9952); }
+  27.7778% { transform: rotate(2.3483deg) scale(0.9675); }
+  29.1667% { transform: rotate(1.8648deg) scale(0.9474); }
+  30.5556% { transform: rotate(1.3955deg) scale(0.9346); }
+  31.9444% { transform: rotate(0.9563deg) scale(0.9287); }
+  33.3333% { transform: rotate(0.5591deg) scale(0.9287); }
+  34.7222% { transform: rotate(0.2118deg) scale(0.9334); }
+  36.1111% { transform: rotate(-0.0808deg) scale(0.9416); }
+  37.5% { transform: rotate(-0.3172deg) scale(0.9521); }
+  38.8889% { transform: rotate(-0.4983deg) scale(0.9637); }
+  40.2778% { transform: rotate(-0.6269deg) scale(0.9755); }
+  41.6667% { transform: rotate(-0.7075deg) scale(0.9866); }
+  43.0556% { transform: rotate(-0.7457deg) scale(0.9964); }
+  44.4444% { transform: rotate(-0.7475deg) scale(1.0045); }
+  45.8333% { transform: rotate(-0.7196deg) scale(1.0108); }
+  47.2222% { transform: rotate(-0.6684deg) scale(1.0151); }
+  48.6111% { transform: rotate(-0.6002deg) scale(1.0176); }
+  50% { transform: rotate(-0.5207deg) scale(1.0184); }
+  51.3889% { transform: rotate(-0.4351deg) scale(1.0179); }
+  52.7778% { transform: rotate(-0.3478deg) scale(1.0163); }
+  54.1667% { transform: rotate(-0.2627deg) scale(1.0139); }
+  55.5556% { transform: rotate(-0.1827deg) scale(1.011); }
+  56.9444% { transform: rotate(-0.11deg) scale(1.008); }
+  58.3333% { transform: rotate(-0.0461deg) scale(1.005); }
+  59.7222% { transform: rotate(0.008deg) scale(1.0023); }
+  61.1111% { transform: rotate(0.052deg) scale(1); }
+  62.5% { transform: rotate(0.0859deg) scale(0.9981); }
+  63.8889% { transform: rotate(0.1104deg) scale(0.9967); }
+  65.2778% { transform: rotate(0.126deg) scale(0.9958); }
+  66.6667% { transform: rotate(0.1339deg) scale(0.9953); }
+  68.0556% { transform: rotate(0.135deg) scale(0.9953); }
+  69.4444% { transform: rotate(0.1306deg) scale(0.9956); }
+  70.8333% { transform: rotate(0.1219deg) scale(0.9961); }
+  72.2222% { transform: rotate(0.11deg) scale(0.9968); }
+  73.6111% { transform: rotate(0.0959deg) scale(0.9975); }
+  75% { transform: rotate(0.0805deg) scale(0.9983); }
+  76.3889% { transform: rotate(0.0648deg) scale(0.999); }
+  77.7778% { transform: rotate(0.0494deg) scale(0.9997); }
+  79.1667% { transform: rotate(0.0348deg) scale(1.0002); }
+  80.5556% { transform: rotate(0.0215deg) scale(1.0007); }
+  81.9444% { transform: rotate(0.0098deg) scale(1.001); }
+  83.3333% { transform: rotate(-0.0002deg) scale(1.0011); }
+  84.7222% { transform: rotate(-0.0084deg) scale(1.0012); }
+  86.1111% { transform: rotate(-0.0148deg) scale(1.0012); }
+  87.5% { transform: rotate(-0.0194deg) scale(1.0011); }
+  88.8889% { transform: rotate(-0.0224deg) scale(1.0009); }
+  90.2778% { transform: rotate(-0.024deg) scale(1.0007); }
+  91.6667% { transform: rotate(-0.0244deg) scale(1.0006); }
+  93.0556% { transform: rotate(-0.0237deg) scale(1.0004); }
+  94.4444% { transform: rotate(-0.0222deg) scale(1.0002); }
+  95.8333% { transform: rotate(-0.0201deg) scale(1); }
+  97.2222% { transform: rotate(-0.0176deg) scale(0.9999); }
+  98.6111% { transform: rotate(-0.0149deg) scale(0.9998); }
+  100% { transform: rotate(-0.0121deg) scale(0.9997); }
 }

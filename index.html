@@ -59,6 +59,7 @@
         <div class="sp-burst"><i class="sp-ring o"></i><i class="sp-ring i"></i><span class="sp-rays"><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b></span><span class="sp-dots"><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b></span></div>
         <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></div></div></div></div>
         <i class="sp-line"></i>
+        <div class="sp-bubble"><div><span class="sp-ja"><ruby>画面<rt>がめん</rt></ruby>を <b>タップ</b>して<br />はじめよう！</span><span class="sp-en"><b>Tap</b> the screen<br />to start!</span></div></div>
       </div>
       <div class="splash-logo"><span class="sp-row"><span class="sp-word sp-w1"><i>A</i><i>N</i><i>I</i><i>M</i><i>A</i><i>L</i></span><span class="sp-word sp-w2"><i>W</i><i>O</i><i>R</i><i>L</i><i>D</i></span></span><span class="sp-live"><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><span class="sp-word sp-w3"><i>L</i><i>I</i><i>V</i><i>E</i></span></span></div>
       <!-- splash:end -->
@@ -73,7 +74,7 @@
         if (m === '1' || (m !== '0' && matchMedia('(prefers-reduced-motion: reduce)').matches)) document.getElementById('splash').classList.add('is-still')
       } catch (e) {}
       // JS（本体）が動かない時の保険: 7 秒で消えたらホームの動きも動かす
-      setTimeout(function () { document.documentElement.classList.remove('is-splash') }, 7600)
+      setTimeout(function () { if (!window.__awlSplashJs) document.documentElement.classList.remove('is-splash') }, 7600)
       // 音の許可: ブラウザは最初の操作まで音を出させない。本体（JS、約 1MB）が届く前のタップでも許可を取れるよう、
       // ここで操作を待って AudioContext を動かしておく（src/audio/sound.ts が同じ AudioContext を引き継ぐ）。
       // iPhone は touchend の中でないと動かないので、動くまで操作のたびに試す
