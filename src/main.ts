@@ -34,6 +34,7 @@ import { createMapView } from './ui/map'
 import { createJoystick } from './ui/joystick'
 import { createHome } from './ui/home'
 import { createStory } from './ui/story'
+import { hideSplash } from './ui/splash'
 import { createIris } from './ui/iris'
 import { REGION_AMB, REGION_BGM, sound } from './audio/sound'
 import { createSettings } from './ui/settings'
@@ -1639,6 +1640,9 @@ function main(): void {
       world = null
     }
   }
+  // 立ち上げの画面（スプラッシュ）が出ている間に組み立てる（約 2 秒止まるのを、ホームが出たあとにしない）。
+  // スプラッシュが先に消えた時（ホームの絵が 4 秒で届かない等）は、下の後回しの準備で組み立てる
+  hideSplash(prewarm)
   const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => void }).requestIdleCallback
   window.setTimeout(() => {
     if (idle) idle(prewarm, { timeout: 1500 })
