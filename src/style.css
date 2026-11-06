@@ -1254,9 +1254,11 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   font-family: var(--font-home);
 }
 .sound-panel[hidden] { display: none; }
-/* 札の幅は一番長い札（まわりの音／Ambience）に合わせ、つまみの左端をそろえる */
-.sound-panel { grid-template-columns: max-content minmax(90px, 1fr); column-gap: 10px; }
+/* 札の幅は一番長い札（まわりの音／Ambience）に合わせ、つまみの左端をそろえる。いちばん上の「音声」は横いっぱい */
+.snd-detail { display: grid; grid-template-columns: max-content minmax(90px, 1fr); gap: 6px 10px; transition: opacity 0.2s; }
 .snd-row { display: contents; }
+.snd-toggle.snd-master { min-height: 48px; font-size: 16px; }
+.snd-toggle.snd-master .ico { width: 24px; height: 24px; }
 .snd-toggle {
   width: 100%;
   min-height: 44px;
@@ -1312,6 +1314,97 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   width: 28px;
   height: 28px;
 }
+
+/* ダッシュ: ジャンプの真上に同じ大きさ。走っている間は緑の輪、息切れ中は薄く押せない */
+.hud-dash {
+  position: absolute;
+  right: calc(20px + var(--safe-right));
+  bottom: calc(24px + 56px + 12px + var(--safe-bottom));
+  width: 56px;
+  height: 56px;
+  touch-action: none;
+  transition: box-shadow 0.15s, opacity 0.2s;
+}
+.hud-dash.is-on {
+  background: #eaf8dc;
+  box-shadow: 0 0 0 4px var(--leaf), var(--shadow-card);
+}
+.hud-dash.is-tired {
+  opacity: 0.5;
+  cursor: default;
+}
+.hud-dash:active,
+.hud-jump:active {
+  transform: scale(0.94);
+}
+/* ボタンの中の人形の絵（読めない時は下の記号が見える） */
+.hud-dash > *,
+.hud-jump > * {
+  grid-area: 1 / 1;
+}
+.hud-dash img,
+.hud-jump img {
+  width: 74%;
+  height: 74%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.hud-img-fallback {
+  width: 26px;
+  height: 26px;
+  opacity: 0.35;
+}
+
+/* がんばりゲージ: 主人公の頭の右に出る丸いゲージ（位置は stamina.ts が毎フレーム置く） */
+.stamina {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  pointer-events: none;
+  z-index: 5;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+.stamina[hidden] {
+  display: none;
+}
+.stamina svg {
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+.stamina circle {
+  fill: none;
+  stroke-width: 7;
+}
+.stamina .st-bg {
+  fill: rgba(255, 255, 255, 0.85);
+  stroke: rgba(31, 42, 68, 0.62);
+}
+.stamina .st-fg {
+  stroke: #5fd24a;
+  stroke-linecap: round;
+  transition: stroke 0.2s;
+}
+.stamina.is-low .st-fg {
+  stroke: #ff8a2c;
+}
+.stamina.is-tired .st-fg {
+  stroke: #e94b4b;
+}
+/* 息切れで立ち止まっている間はゲージが小さく震える */
+.stamina.is-resting svg {
+  animation: st-pant 0.32s ease-in-out infinite;
+}
+@keyframes st-pant {
+  0%, 100% { scale: 1; }
+  50% { scale: 0.9; }
+}
+body.is-reduce-motion .stamina.is-resting svg { animation: none; }
 
 .hud-nav {
   position: absolute;
@@ -1623,6 +1716,7 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   .hud-sound { --snd-size: 56px; left: calc(16px + 56px + 10px + var(--safe-left)); top: calc(16px + 92px + 14px + var(--safe-top)); }
   .sound-panel { top: calc(16px + 92px + 14px + 56px + 10px + var(--safe-top)); }
   .hud-jump { width: 64px; height: 64px; bottom: calc(28px + var(--safe-bottom)); }
+  .hud-dash { width: 64px; height: 64px; bottom: calc(28px + 64px + 14px + var(--safe-bottom)); }
   .stick { bottom: calc(24px + var(--safe-bottom)); }
   .hud-book { min-height: 48px; font-size: 16px; }
   /* 通知は地図の下の段。双眼鏡と音のボタンの右に寄せる（重ならない） */
@@ -1663,8 +1757,10 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
   /* 横向きは高さが無いので、板はボタンの右に出す */
   .sound-panel { left: calc(12px + 48px + 10px + 48px + 10px + var(--safe-left)); top: calc(12px + var(--safe-top)); gap: 2px; padding: 6px 10px; }
   .sound-panel .snd-toggle { min-height: 38px; }
+  .sound-panel .snd-detail { gap: 2px 10px; }
   .sound-panel .vol { height: 30px; }
   .hud-jump { width: 56px; height: 56px; right: calc(16px + var(--safe-right)); bottom: calc(22px + var(--safe-bottom)); }
+  .hud-dash { width: 56px; height: 56px; right: calc(16px + var(--safe-right)); bottom: calc(22px + 56px + 10px + var(--safe-bottom)); }
   .hud-nav { top: calc(10px + var(--safe-top)); right: calc(12px + var(--safe-right)); }
   .hud-book { min-height: 40px; font-size: 14px; padding: 0 14px 0 10px; }
   .hud-nav .icon-btn { width: 40px; height: 40px; }
@@ -1935,6 +2031,79 @@ body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .e
 .switch:focus-visible {
   outline: 3px solid var(--sky);
   outline-offset: 2px;
+}
+
+/* 音声: 大きなオン・オフの行と、その下の「くわしく設定」。開くと BGM・まわりの音・効果音 */
+.set-sound {
+  display: grid;
+  gap: 8px;
+}
+.set-row-master {
+  min-height: 84px;
+}
+.set-row-master > .ico {
+  width: 32px;
+  height: 32px;
+}
+.set-row-master .set-text strong {
+  font-size: 20px;
+}
+.switch.switch-lg {
+  width: 68px;
+  height: 40px;
+  border-radius: 20px;
+}
+.switch.switch-lg::after {
+  top: 4px;
+  left: 4px;
+  width: 32px;
+  height: 32px;
+}
+.switch.switch-lg:checked::after {
+  transform: translateX(28px);
+}
+.set-more {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 14px 0 18px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+  color: var(--sky);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.set-more .ico {
+  width: 18px;
+  height: 18px;
+  rotate: -90deg;
+  transition: rotate 0.2s;
+}
+.set-more[aria-expanded="true"] .ico {
+  rotate: 90deg;
+}
+.set-more:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
+}
+.set-sound-detail {
+  display: grid;
+  gap: 10px;
+  transition: opacity 0.2s;
+}
+.set-sound-detail[hidden] {
+  display: none;
+}
+/* 「音声」がオフの間は薄く（さわるとオンに戻る） */
+.set-sound-detail.is-off,
+.snd-detail.is-off {
+  opacity: 0.45;
 }
 
 .note-small {

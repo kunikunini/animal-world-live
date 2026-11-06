@@ -53,6 +53,7 @@
       <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
       <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></symbol>
+      <symbol id="i-dash" viewBox="0 0 24 24"><path d="M5 12h8M3 8h6M4 16h6" /><path d="M13 6l6 6-6 6" /></symbol>
       <symbol id="i-jump" viewBox="0 0 24 24"><path d="M12 19V6M6.5 11.5L12 6l5.5 5.5" /><path d="M6 20h12" opacity=".5" /></symbol>
       <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13.5 14-14 .5 9-5 14-13 14z" /><path d="M5 19c3-4 6-6.5 9.5-8.5" /></symbol>
       <symbol id="i-stick" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><circle cx="13.5" cy="10.5" r="3" fill="currentColor" stroke="none" /></symbol>
@@ -240,29 +241,40 @@
               <input id="sensitivity" class="vol" type="range" min="10" max="100" step="5" aria-labelledby="sens-label" />
             </span>
           </div>
-          <div class="set-row set-row-vol" role="group" aria-labelledby="vol-bgm-label">
-            <svg class="ico"><use href="#i-music" /></svg>
-            <span class="set-text"><strong id="vol-bgm-label" data-i18n="bgmVolume">BGM</strong><small data-i18n="bgmVolumeDesc">ワールドごとの曲</small></span>
-            <span class="vol-ctl">
-              <input id="vol-bgm" class="vol" type="range" min="0" max="100" step="5" data-vol="bgm" aria-labelledby="vol-bgm-label" />
-              <button id="mute-bgm" class="vol-mute" type="button" data-mute="bgm" aria-pressed="false" aria-label="BGM を消す" title="BGM を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
-            </span>
-          </div>
-          <div class="set-row set-row-vol" role="group" aria-labelledby="vol-amb-label">
-            <svg class="ico"><use href="#i-leaf" /></svg>
-            <span class="set-text"><strong id="vol-amb-label" data-i18n="ambVolume">まわりの音</strong><small data-i18n="ambVolumeDesc">風や鳥・水などの音</small></span>
-            <span class="vol-ctl">
-              <input id="vol-amb" class="vol" type="range" min="0" max="100" step="5" data-vol="amb" aria-labelledby="vol-amb-label" />
-              <button id="mute-amb" class="vol-mute" type="button" data-mute="amb" aria-pressed="false" aria-label="まわりの音を消す" title="まわりの音を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
-            </span>
-          </div>
-          <div class="set-row set-row-vol" role="group" aria-labelledby="vol-se-label">
-            <svg class="ico"><use href="#i-sound" /></svg>
-            <span class="set-text"><strong id="vol-se-label" data-i18n="seVolume">効果音</strong><small data-i18n="seVolumeDesc">足音・ボタン・お知らせなど</small></span>
-            <span class="vol-ctl">
-              <input id="vol-se" class="vol" type="range" min="0" max="100" step="5" data-vol="se" aria-labelledby="vol-se-label" />
-              <button id="mute-se" class="vol-mute" type="button" data-mute="se" aria-pressed="false" aria-label="効果音を消す" title="効果音を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
-            </span>
+          <!-- 音声: まず大きなオン・オフ（オフで全部の音が消える）。「くわしく」で BGM・まわりの音・効果音を開く -->
+          <div class="set-sound">
+            <label class="set-row set-row-master">
+              <svg class="ico"><use href="#i-sound" /></svg>
+              <span class="set-text"><strong data-i18n="soundAll">音声</strong><small data-i18n="soundAllDesc">オフにすると、すべての音が消えます</small></span>
+              <input id="sound-master" class="switch switch-lg" type="checkbox" role="switch" data-sound-master />
+            </label>
+            <button id="sound-more" class="set-more" type="button" aria-expanded="false" aria-controls="sound-detail"><span data-i18n="soundMore">くわしく設定</span><svg class="ico"><use href="#i-back" /></svg></button>
+            <div id="sound-detail" class="set-sound-detail" data-sound-detail hidden>
+            <div class="set-row set-row-vol" role="group" aria-labelledby="vol-bgm-label">
+              <svg class="ico"><use href="#i-music" /></svg>
+              <span class="set-text"><strong id="vol-bgm-label" data-i18n="bgmVolume">BGM</strong><small data-i18n="bgmVolumeDesc">ワールドごとの曲</small></span>
+              <span class="vol-ctl">
+                <input id="vol-bgm" class="vol" type="range" min="0" max="100" step="5" data-vol="bgm" aria-labelledby="vol-bgm-label" />
+                <button id="mute-bgm" class="vol-mute" type="button" data-mute="bgm" aria-pressed="false" aria-label="BGM を消す" title="BGM を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
+              </span>
+            </div>
+            <div class="set-row set-row-vol" role="group" aria-labelledby="vol-amb-label">
+              <svg class="ico"><use href="#i-leaf" /></svg>
+              <span class="set-text"><strong id="vol-amb-label" data-i18n="ambVolume">まわりの音</strong><small data-i18n="ambVolumeDesc">風や鳥・水などの音</small></span>
+              <span class="vol-ctl">
+                <input id="vol-amb" class="vol" type="range" min="0" max="100" step="5" data-vol="amb" aria-labelledby="vol-amb-label" />
+                <button id="mute-amb" class="vol-mute" type="button" data-mute="amb" aria-pressed="false" aria-label="まわりの音を消す" title="まわりの音を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
+              </span>
+            </div>
+            <div class="set-row set-row-vol" role="group" aria-labelledby="vol-se-label">
+              <svg class="ico"><use href="#i-sound" /></svg>
+              <span class="set-text"><strong id="vol-se-label" data-i18n="seVolume">効果音</strong><small data-i18n="seVolumeDesc">足音・ボタン・お知らせなど</small></span>
+              <span class="vol-ctl">
+                <input id="vol-se" class="vol" type="range" min="0" max="100" step="5" data-vol="se" aria-labelledby="vol-se-label" />
+                <button id="mute-se" class="vol-mute" type="button" data-mute="se" aria-pressed="false" aria-label="効果音を消す" title="効果音を消す"><svg class="ico"><use data-swap href="#i-sound" /></svg></button>
+              </span>
+            </div>
+            </div>
           </div>
           <div class="set-row set-row-lang" role="group" aria-labelledby="friend-sound-label">
             <svg class="ico"><use href="#i-heart" /></svg>
@@ -375,6 +387,8 @@
       <!-- 音: 双眼鏡の右。押すと BGM・まわりの音・効果音のオン・オフと音量の板が開く。絵は生成画像（artwork/ui-sound、出所は README） -->
       <button id="hud-sound" class="icon-btn hud-sound" type="button" aria-expanded="false" aria-controls="sound-panel" aria-label="音の設定" data-i18n-aria="soundPanel" title="音の設定" data-i18n-title="soundPanel"><svg class="ico hud-sound-fallback" aria-hidden="true"><use href="#i-sound" /></svg><img src="/ui/sound-on.webp" alt="" width="160" height="160" draggable="false" /></button>
       <div id="sound-panel" class="sound-panel" hidden role="group" aria-label="音の設定" data-i18n-aria="soundPanel">
+        <button class="snd-toggle snd-master" type="button" data-sound-master aria-pressed="true"><svg class="ico"><use href="#i-sound" /></svg><span data-i18n="soundAll">音声</span><i class="snd-state" aria-hidden="true"></i></button>
+        <div class="snd-detail" data-sound-detail>
         <div class="snd-row">
           <button class="snd-toggle" type="button" data-mute="bgm" aria-pressed="false"><svg class="ico"><use href="#i-music" /></svg><span data-i18n="bgmVolume">BGM</span><i class="snd-state" aria-hidden="true"></i></button>
           <input class="vol" type="range" min="0" max="100" step="5" data-vol="bgm" aria-label="BGM" data-i18n-aria="bgmVolume" />
@@ -387,8 +401,13 @@
           <button class="snd-toggle" type="button" data-mute="se" aria-pressed="false"><svg class="ico"><use href="#i-sound" /></svg><span data-i18n="seVolume">効果音</span><i class="snd-state" aria-hidden="true"></i></button>
           <input class="vol" type="range" min="0" max="100" step="5" data-vol="se" aria-label="効果音" data-i18n-aria="seVolume" />
         </div>
+        </div>
       </div>
-      <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" data-i18n-aria="jump" title="ジャンプ" data-i18n-title="jump"><svg class="ico"><use href="#i-jump" /></svg></button>
+      <!-- ダッシュ（ジャンプの上）とジャンプ。絵は生成画像の人形のシルエット（artwork/ui-move、出所は README）。読めない時は下の記号が見える -->
+      <button id="dash" class="icon-btn hud-dash" type="button" aria-pressed="false" aria-label="ダッシュ" data-i18n-aria="dash" title="ダッシュ" data-i18n-title="dash"><svg class="ico hud-img-fallback" aria-hidden="true"><use href="#i-dash" /></svg><img src="/ui/dash.webp" alt="" width="160" height="160" draggable="false" /></button>
+      <button id="jump" class="icon-btn hud-jump" type="button" aria-label="ジャンプ" data-i18n-aria="jump" title="ジャンプ" data-i18n-title="jump"><svg class="ico hud-img-fallback" aria-hidden="true"><use href="#i-jump" /></svg><img src="/ui/jump.webp" alt="" width="160" height="160" draggable="false" /></button>
+      <!-- がんばりゲージ: 主人公の頭の右。走ると減り、空になると息切れ -->
+      <div id="stamina" class="stamina" hidden aria-hidden="true"><svg viewBox="0 0 40 40"><circle class="st-bg" cx="20" cy="20" r="15" /><circle class="st-fg" cx="20" cy="20" r="15" /></svg></div>
       <div id="fps" class="fps" hidden></div>
     </div>
 

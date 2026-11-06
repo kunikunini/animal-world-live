@@ -92,11 +92,12 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     posterFace.innerHTML = current ? faceMarkup(current) : ''
   }
 
-  /** まず音声付きで再生し、拒否されたらミュートで再生して「音を出す」を見せる */
+  /** まず音声付きで再生し（「音声」がオフなら音なし）、拒否されたらミュートで再生して「音を出す」を見せる */
   const play = async (seq: number) => {
     unmuteBtn.hidden = true
     try {
-      video.muted = false
+      // 設定の「音声」がオフの時は、映像も音なしで流す（映像の操作から音を出すことはできる）
+      video.muted = !sound.soundOn
       await video.play()
       if (seq !== loadSeq) return
       poster.hidden = true

@@ -49,6 +49,7 @@ import { createEncounterStore } from './data/encounters'
 import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 import { createSoundPanel } from './ui/soundControls'
+import { createStaminaUi } from './ui/stamina'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -439,6 +440,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   hud.onJump(() => player.jump())
 
+  // ダッシュ（ジャンプの上のボタン、PC は Shift）と、主人公の頭の右のがんばりゲージ
+  const staminaUi = createStaminaUi()
+  staminaUi.onDash((on) => player.setDash(on))
+  player.onDashEnd(() => staminaUi.setDashOn(false))
+  player.onExhaust(() => sound.say('breath'))
+  const staminaProj = new THREE.Vector3()
+
   // 左下の半透明スティック（スマホ）。細かい移動用。タップ移動と併用できる。?stick=1 で PC でも出す
   const joystick = createJoystick()
   joystick.onChange((x, z) => player.setStick(x, z))
@@ -490,6 +498,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen() || introOn
     player.setInputEnabled(!blocked && !paused)
     joystick.setEnabled(!blocked && !paused)
+    staminaUi.setEnabled(!blocked && !paused)
     hud.setOverlayOpen(blocked)
     if (!blocked && !paused) canvas.focus()
   }
@@ -585,7 +594,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const safe = { top: 72, bottom: 190 }
   const measureSafe = () => {
     let reserve = 0
-    for (const el of [stickEl, jumpEl, spotBtnEl]) {
+    for (const el of [stickEl, jumpEl, document.getElementById('dash'), spotBtnEl]) {
       if (!el || el.hidden) continue
       const r = el.getBoundingClientRect()
       // スマホでは観察スポットへが地図の下（上側）にあるので、下の余白には数えない
@@ -1118,6 +1127,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       heroSpeed += (speed - heroSpeed) * Math.min(1, dt * 12)
       heroPrev.copy(p)
       hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z)))
+    }
+    {
+      // がんばりゲージは主人公の頭の高さ（1.4m）の右に
+      staminaProj.copy(player.object.position).setY(player.object.position.y + 1.4).project(camera)
+      const vis = staminaProj.z < 1 && Math.abs(staminaProj.x) < 0.95 && Math.abs(staminaProj.y) < 0.95
+      staminaUi.update(dt, player.stamina(), vis ? { x: ((staminaProj.x + 1) / 2) * window.innerWidth, y: ((1 - staminaProj.y) / 2) * window.innerHeight } : null)
     }
     props.update(time)
     sea.update(time)
