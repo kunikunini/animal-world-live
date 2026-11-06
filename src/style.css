@@ -781,7 +781,8 @@ button {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 0.55em);
-  transform: translateX(-50%);
+  /* 寄せは translate で（transform は「ぽん」と出る動きが使うので、ここに書くと動いている間だけ右にずれる） */
+  translate: -50% 0;
   min-height: 1.9em;
   padding: 0 0.95em;
   gap: 0.32em;
@@ -822,7 +823,7 @@ button {
   .home .home-story-btn {
     left: calc(100% + 0.6em);
     bottom: 50%;
-    transform: translateY(50%);
+    translate: 0 50%;
   }
 }
 
