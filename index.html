@@ -33,54 +33,11 @@
     <!-- おはなしの最後のロゴ（ANIMAL WORLD LIVE）だけ: 太くて丸い Baloo 2 -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&text=ANIMLWORDVE&display=swap" />
     <link rel="stylesheet" href="/src/style.css" />
-    <!-- 立ち上げの画面（スプラッシュ）: JS より先に出すので、見た目はここに直接書く。アイコンと同じ黄色の地に双眼鏡とロゴ。
+    <!-- 立ち上げの画面（スプラッシュ）: JS より先に出す。アイコンと同じ黄色の地に、双眼鏡のスコップとロゴ。
+         見た目と動きは public/splash.css（tools/splash-motion.mjs が書き出す）。
          消すのは src/ui/splash.ts（ホームの絵が読めたら）。JS が動かない時も 7 秒で CSS だけで消える -->
     <link rel="preload" as="image" type="image/webp" href="/splash-bino.webp" />
-    <style>
-      .splash {
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: clamp(6px, 2vmin, 18px);
-        background: #fbcd03;
-        transition: opacity 0.6s ease, visibility 0s linear 0.6s;
-        animation: splash-auto 0.6s ease 7s forwards;
-      }
-      .splash-bino {
-        width: clamp(170px, min(56vw, 40vh), 330px);
-        height: auto;
-        filter: drop-shadow(0 0.6vmin 1.2vmin rgba(120, 70, 0, 0.25));
-        animation: splash-in 1s cubic-bezier(0.2, 0.9, 0.3, 1) both, splash-float 2.6s ease-in-out 1s infinite;
-      }
-      .splash-logo {
-        font-family: 'Baloo 2', 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', system-ui, sans-serif;
-        font-weight: 800;
-        font-size: clamp(26px, 8.6vmin, 60px);
-        line-height: 1;
-        letter-spacing: 0.01em;
-        white-space: nowrap;
-        color: #fff;
-        -webkit-text-stroke: 0.18em #1f2a44;
-        paint-order: stroke fill;
-        text-shadow: 0 0.1em 0 #1f2a44;
-        animation: splash-in 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s both;
-      }
-      .splash.is-out { opacity: 0; visibility: hidden; }
-      .splash.is-out .splash-bino { scale: 1.06; transition: scale 0.6s ease; }
-      .splash.is-still .splash-bino,
-      .splash.is-still .splash-logo { animation: splash-fade 0.5s ease both; }
-      .splash.is-still.is-out .splash-bino { scale: 1; }
-      @keyframes splash-in { from { opacity: 0; transform: translateY(12px) scale(0.86); } to { opacity: 1; transform: none; } }
-      @keyframes splash-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
-      @keyframes splash-fade { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes splash-auto { to { opacity: 0; visibility: hidden; } }
-      /* スプラッシュが出ている間は、ホームのボタンの出てくる動きを止めておく（消えてから「ぽん」と出る） */
-      .is-splash .home, .is-splash .home * { animation-play-state: paused !important; }
-    </style>
+    <link rel="stylesheet" href="/splash.css" />
     <!-- ホームのキービジュアル: 画面の縦横比に合う 1 枚だけを先に読む（CSS の切り替えと同じ境目） -->
     <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-portrait.webp" media="(max-aspect-ratio: 13/20)" />
     <link rel="preload" as="image" type="image/webp" href="/home/kv-tablet-portrait.webp" media="(min-aspect-ratio: 13/20) and (max-aspect-ratio: 1/1)" />
@@ -97,12 +54,20 @@
   </head>
   <body>
     <div id="splash" class="splash" aria-hidden="true">
-      <img class="splash-bino" src="/splash-bino.webp" alt="" width="400" height="310" decoding="async" />
-      <span class="splash-logo">ANIMAL WORLD LIVE</span>
+      <!-- splash:begin -->
+      <div class="sp-stage">
+        <div class="sp-burst"><i class="sp-ring o"></i><i class="sp-ring i"></i><span class="sp-rays"><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b><b class="sp-ray"><i></i></b></span><span class="sp-dots"><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b><b class="sp-dot"><i></i></b></span></div>
+        <div class="sp-clip"><div class="sp-float"><div class="sp-rise"><div class="sp-pop"><img src="/splash-bino.webp" alt="" width="400" height="310" decoding="async" /></div></div></div></div>
+        <i class="sp-line"></i>
+      </div>
+      <div class="splash-logo"><span class="sp-word sp-w1"><i>A</i><i>N</i><i>I</i><i>M</i><i>A</i><i>L</i></span><span class="sp-word sp-w2"><i>W</i><i>O</i><i>R</i><i>L</i><i>D</i></span><span class="sp-word sp-w3"><i>L</i><i>I</i><i>V</i><i>E</i><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b></span></div>
+      <!-- splash:end -->
     </div>
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
       document.documentElement.classList.add('is-splash')
+      // 動きが始まった時刻（消すのは、動きを見せ終えてから。src/ui/splash.ts）
+      window.__awlSplashT0 = performance.now()
       try {
         var m = localStorage.getItem('awl.reduceMotion')
         if (m === '1' || (m !== '0' && matchMedia('(prefers-reduced-motion: reduce)').matches)) document.getElementById('splash').classList.add('is-still')

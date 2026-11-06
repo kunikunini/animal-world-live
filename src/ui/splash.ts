@@ -1,8 +1,9 @@
 // 立ち上げの画面（スプラッシュ、見た目は index.html に直接書いてある）を消す。
 // ホームの絵（画面に合う 1 枚）とロゴの字が届いたら、スプラッシュの裏で重い準備（ワールドの組み立て）を済ませてから、ふわっと消す。
-// 早くても 1.6 秒は見せ、遅くても 4 秒で消す（届かなくてもホームは動く。白い画面で待たせない）。タップでもすぐ消える
-const MIN_MS = 1600
-const MAX_MS = 4000
+// 動き（public/splash.css、スコップが出てロゴが決まるまで）を見せ終えてから消す。遅くても 4.5 秒で消す
+// （届かなくてもホームは動く。白い画面で待たせない）。タップでもすぐ消える
+const SHOW_MS = 3300 // tools/splash-motion.mjs の SHOW_MS と同じ
+const MAX_MS = 4500
 
 function kvLoaded(): Promise<void> {
   const home = document.getElementById('home')
@@ -32,7 +33,8 @@ export function hideSplash(behind?: () => void): void {
     root.classList.remove('is-splash')
     setTimeout(() => el.remove(), 700)
   }
-  const min = el.classList.contains('is-still') ? 900 : MIN_MS
+  const t0 = (window as unknown as { __awlSplashT0?: number }).__awlSplashT0 ?? 0
+  const min = t0 + (el.classList.contains('is-still') ? 900 : SHOW_MS)
   const fonts = document.fonts?.ready.then(() => undefined) ?? Promise.resolve()
   void Promise.all([kvLoaded(), fonts]).then(() => {
     if (done) return
