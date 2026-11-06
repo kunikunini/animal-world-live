@@ -10,7 +10,7 @@ import type { RegionKey } from './regions'
  * - spot: 観察スポット
  * - pass: 峠（となりのワールドへの出口）。着く先は、となりのワールドの入口
  * - animal: 代表的な動物のいる場所。動物は歩き回るので、場所は開いた時・着いた時の個体の位置（animalId）で決める
- * 道は、拠点どうしをまっすぐ結ぶ。ワールドの中はスポットを中心に放射状、サバンナの峠と各ワールドの入口は峠の道でつながる
+ * 道は、拠点どうしをまっすぐ結ぶ。ワールドの中は入口とスポットから放射状（動物の拠点は近い方から）、サバンナの峠と各ワールドの入口は峠の道でつながる
  */
 export type BaseKind = 'entry' | 'spot' | 'pass' | 'animal'
 
@@ -130,7 +130,11 @@ export function mapBases(): { bases: MapBase[]; roads: MapRoad[] } {
     const at = lion ?? fixed[a.species] ?? { x: c.x + 10, z: c.z + 10 }
     const id = `${a.world}:animal:${animal.id}`
     bases.push({ id, world: a.world, kind: 'animal', x: at.x, z: at.z, animalId: animal.id, species: a.species })
-    roads.push({ a: `${a.world}:spot`, b: id })
+    // 入口とスポットのうち近い方とつなぐ（スタートのそばの群れへ行くのに、コピエの上まで回り道しない）
+    const hub = [bases.find((b) => b.id === `${a.world}:entry`), bases.find((b) => b.id === `${a.world}:spot`)]
+      .filter((b): b is MapBase => !!b)
+      .reduce((best, b) => (Math.hypot(b.x - at.x, b.z - at.z) < Math.hypot(best.x - at.x, best.z - at.z) ? b : best))
+    roads.push({ a: hub.id, b: id })
   }
   cache = { bases, roads }
   return cache
