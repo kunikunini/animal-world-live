@@ -168,11 +168,13 @@ function writeSeen(): void {
   }
 }
 
+export type StoryEnd = 'end' | 'skip'
+
 export interface StoryView {
   /** まだ見ていない（または ?story=1）なら true */
   shouldShow: () => boolean
-  /** 最後まで見るか、とばすかで解決する */
-  play: () => Promise<void>
+  /** 最後まで見たら 'end'、「とばす」・Esc なら 'skip' で解決する */
+  play: () => Promise<StoryEnd>
   setReduceMotion: (on: boolean) => void
 }
 
@@ -186,7 +188,7 @@ export function createStory(): StoryView {
   const forced = new URLSearchParams(location.search).get('story') === '1'
 
   let index = -1
-  let resolveDone: (() => void) | null = null
+  let resolveDone: ((how: StoryEnd) => void) | null = null
   let reduceMotion = false
   let timer = 0
   const cues: number[] = []
@@ -336,7 +338,7 @@ export function createStory(): StoryView {
     if (!last) timer = window.setTimeout(() => advance(), p.hold)
   }
 
-  const finish = () => {
+  const finish = (how: StoryEnd) => {
     clearCues()
     writeSeen()
     root.classList.remove('is-last')
@@ -347,23 +349,23 @@ export function createStory(): StoryView {
     })
     const done = resolveDone
     resolveDone = null
-    if (done) done()
+    if (done) done(how)
   }
 
   const advance = () => {
     if (!resolveDone) return
     if (index < PANELS.length - 1) show(index + 1)
-    else finish()
+    else finish('end')
   }
 
   nextBtn.addEventListener('click', advance)
   frame.addEventListener('click', () => {
     if (index < PANELS.length - 1) advance()
   })
-  skipBtn.addEventListener('click', finish)
+  skipBtn.addEventListener('click', () => finish('skip'))
   window.addEventListener('keydown', (e) => {
     if (!resolveDone) return
-    if (e.key === 'Escape') finish()
+    if (e.key === 'Escape') finish('skip')
     else if (e.key === 'ArrowRight' || e.key === ' ') {
       // ボタンに焦点がある時の Space はボタン自身の click に任せる（二重に進めない）
       if (e.key === ' ' && document.activeElement instanceof HTMLButtonElement) return
@@ -385,7 +387,7 @@ export function createStory(): StoryView {
       root.classList.toggle('is-still', on)
     },
     play: () =>
-      new Promise<void>((resolve) => {
+      new Promise<StoryEnd>((resolve) => {
         preload()
         resolveDone = resolve
         index = -1

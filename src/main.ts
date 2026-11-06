@@ -1603,6 +1603,18 @@ function main(): void {
   shell.home.onEnter(() => {
     void enterWorld()
   })
+  // 物語をみる: ホームの上で紙芝居を流し、最後の「のぞいてみる」まで見たら「だれで冒険する？」へ（とばした時はホームのまま）
+  shell.home.onStory(async () => {
+    if (busy) return
+    busy = true
+    let how: 'end' | 'skip' = 'skip'
+    try {
+      how = await shell.story.play()
+    } finally {
+      busy = false
+    }
+    if (how === 'end' && webgl) shell.home.openPick()
+  })
   // だれで冒険する？: 保存して、組み立て済みのワールドなら主人公を替える（まだなら組み立てる時に読む）
   shell.home.onHero((id) => {
     setHeroId(id)

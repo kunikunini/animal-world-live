@@ -776,6 +776,56 @@ button {
   }
 }
 
+/* 物語をみる: 「のぞいてみる」の上の小さな青いボタン（背景は透明、帽子の女の子 2 人の間の岩の上） */
+.home .home-story-btn {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.55em);
+  transform: translateX(-50%);
+  min-height: 1.9em;
+  padding: 0 0.95em;
+  gap: 0.32em;
+  /* 青い字と絵に、白いふち。地は透けるが、双眼鏡（青）の上でも読めるよう少しだけ白をかける */
+  border: 0.11em solid #fff;
+  border-radius: 999px;
+  font-family: var(--font-home);
+  font-size: 0.6em;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  color: var(--h-blue);
+  background: rgba(255, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0.1em 0 rgba(31, 42, 68, 0.18), 0 0.3em 0.8em rgba(31, 42, 68, 0.2);
+  text-shadow: 0 0 0.3em #fff, 0 0 0.5em #fff;
+  animation: home-pop 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s backwards;
+}
+
+.home .home-story-btn .ico {
+  width: 1.1em;
+  height: 1.1em;
+  filter: drop-shadow(0 0 0.2em #fff);
+}
+
+.home .home-story-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.home .home-story-btn:focus-visible {
+  outline: 0.14em solid #fff;
+  outline-offset: 0.12em;
+}
+
+/* 横にしたスマホ（低い横長）: 「のぞいてみる」のすぐ上は双眼鏡（青）なので、ボタンは右どなりに */
+@media (min-aspect-ratio: 3/2) and (max-height: 540px) {
+  .home .home-story-btn {
+    left: calc(100% + 0.6em);
+    bottom: 50%;
+    transform: translateY(50%);
+  }
+}
+
 /* ボタンの動き: 出てくる時にぽんと出る。「のぞいてみる」はふわふわ浮き、光が走り、まわりに輪が広がり、角がきらめく。
    「ともだち帳」は上から降りてきて、本がときどきぱらっとめくれる。動きをへらす時は止める */
 .home .home-enter {
@@ -902,7 +952,7 @@ button {
 }
 
 /* 動きをへらす: 双眼鏡・ボタンの動きを止める（レンズの入れ替わりは、ゆっくり色が変わるだけなので残す） */
-.home.is-still :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
+.home.is-still :is(.home-bino, .home-enter, .home-story-btn, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
 .home.is-still .home-cta::before,
 .home.is-still .home-enter::after,
 .home.is-still .badge-dot::after {
@@ -914,7 +964,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
+  .home :is(.home-bino, .home-enter, .home-story-btn, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
   .home .home-cta::before,
   .home .home-enter::after,
   .home .badge-dot::after {

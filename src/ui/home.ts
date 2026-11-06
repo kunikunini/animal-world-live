@@ -19,6 +19,10 @@ export interface HomeView {
   onEnter: (fn: () => void) => void
   /** 「ともだち帳」 */
   onBook: (fn: () => void) => void
+  /** 「物語をみる」（紙芝居のオープニングをもう一度） */
+  onStory: (fn: () => void) => void
+  /** 「だれで冒険する？」を開く（物語を最後まで見たあとに、そのまま冒険へ） */
+  openPick: () => void
   setReduceMotion: (on: boolean) => void
   /** WebGL が無い時: 入口を無効にして案内を出す */
   showFallback: () => void
@@ -31,6 +35,7 @@ export function createHome(store: FriendBookStore): HomeView {
   const scope = document.getElementById('home-scope') as HTMLButtonElement
   const enterBtn = document.getElementById('enter') as HTMLButtonElement
   const bookBtn = document.getElementById('entry-book') as HTMLButtonElement
+  const storyBtn = document.getElementById('home-story') as HTMLButtonElement
   const newDot = document.getElementById('home-new-dot') as HTMLElement
   const fallback = document.getElementById('fallback') as HTMLElement
   const fallbackBook = document.getElementById('fallback-book') as HTMLButtonElement
@@ -39,6 +44,7 @@ export function createHome(store: FriendBookStore): HomeView {
   let reduceMotion = false
   const enterListeners: Array<() => void> = []
   const bookListeners: Array<() => void> = []
+  const storyListeners: Array<() => void> = []
 
   const enter = () => enterListeners.forEach((fn) => fn())
   const openBook = () => {
@@ -56,6 +62,7 @@ export function createHome(store: FriendBookStore): HomeView {
   store.onChange(syncDot)
   bookBtn.addEventListener('click', openBook)
   fallbackBook.addEventListener('click', openBook)
+  storyBtn.addEventListener('click', () => storyListeners.forEach((fn) => fn()))
 
   // だれで冒険する？
   const pickBox = document.getElementById('home-pick') as HTMLElement
@@ -162,6 +169,13 @@ export function createHome(store: FriendBookStore): HomeView {
       root.hidden = true
     },
     isOpen: () => open,
+    onStory: (fn) => {
+      storyListeners.push(fn)
+    },
+    openPick: () => {
+      if (!open) return
+      openPick()
+    },
     onEnter: (fn) => {
       enterListeners.push(fn)
     },
