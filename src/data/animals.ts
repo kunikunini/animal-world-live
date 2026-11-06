@@ -1,6 +1,7 @@
 import raw from './animals.json'
 import rosterRaw from './roster.json'
 import { videoForSpecies } from './videos'
+import photosRaw from './photos.json'
 import type { VideoSubject } from './videos'
 import type { WorldKey } from './worlds'
 
@@ -101,6 +102,10 @@ const rosterAnimals: Animal[] = rosterRows.map((r) => {
 })
 
 const lions: Animal[] = data.animals.map((a) => ({ ...a, world: 'africa', subArea: '', representative: true }))
+
+/** 顔の写真（tools/photos-import.mjs が書く。id → public/faces の画像）。無い子は自作の顔のまま */
+const PHOTOS = (photosRaw as { photos: Record<string, string> }).photos
+for (const a of [...lions, ...rosterAnimals]) if (PHOTOS[a.id]) a.photo = PHOTOS[a.id]
 
 export const ANIMALS: readonly Animal[] = [...lions, ...rosterAnimals]
 
