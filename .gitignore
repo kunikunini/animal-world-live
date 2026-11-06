@@ -51,6 +51,7 @@ public/models/*
 !public/models/pony-sakura.glb
 !public/models/mara-lychee.glb
 !public/models/ratel-winnie.glb
+!public/models/prairie-cookie.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
