@@ -49,6 +49,7 @@ public/models/*
 !public/models/mara-lime.glb
 !public/models/mara-lemon.glb
 !public/models/pony-sakura.glb
+!public/models/mara-lychee.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/

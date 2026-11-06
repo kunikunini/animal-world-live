@@ -372,6 +372,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // レモン: 南半球のマーラ 5 頭のうちレモン。ゆずの値（1／0.8／1／0.7）の流用だけで腰 99.8〜100.5%。尾の骨は動かさない（noTail）
       { key: 'maraLemon', species: 'マーラ', name: 'レモン', file: 'mara-lemon', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
       // サクラ: ふれあいワールドの放牧場のポニー 3 頭のうちサクラ。コピー方式できのこの値（後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9）を流用
+      // ライチ: 南半球のマーラ 5 頭のうちライチ。コピー方式でゆずの値（後ろ脚 1・背骨 0.8・尾 1・前脚 0.7）を流用。尾の骨は動かさない（noTail）
+      { key: 'maraLychee', species: 'マーラ', name: 'ライチ', file: 'mara-lychee', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
       { key: 'ponySakura', species: 'ポニー', name: 'サクラ', file: 'pony-sakura', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
