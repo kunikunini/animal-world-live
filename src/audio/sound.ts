@@ -503,9 +503,10 @@ export const REGION_BGM: Record<string, BgmKey> = {
   south: 'south',
   water: 'water',
   partner: 'partner',
+  sky: 'sky',
 }
 
-/** ワールドの判定から環境音へ（ふれあいワールドの環境音はまだ無い） */
+/** ワールドの判定から環境音へ（ふれあいワールド・空の世界の環境音はまだ無い） */
 export const REGION_AMB: Record<string, AmbKey> = {
   africa: 'savanna',
   jungle: 'jungle',

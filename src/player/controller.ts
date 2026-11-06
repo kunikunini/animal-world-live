@@ -107,7 +107,7 @@ function createMarker(): THREE.Mesh {
   return m
 }
 
-/** 世界の端より外には出ない（6 つのワールドと、そのあいだの峠の道は歩ける。水場・潟・小川にも入れる） */
+/** 世界の端より外には出ない（7 つのワールドと、そのあいだの峠の道は歩ける。水場・潟・小川にも入れる） */
 function clampToWorld(p: THREE.Vector3): void {
   clampToWalkable(p)
 }

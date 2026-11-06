@@ -4,7 +4,7 @@ import { WORLD_SEED } from './layout'
 import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import type { Collider } from './props'
-import { CREEK, GOAT_ROCKS, LAGOON, SEA_LEVEL, creekDist, farmPathDist, farmPens, lagoonDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 
 /**
@@ -880,6 +880,311 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
   colliders.push({ x: tx, z: tz, r: 1.2 })
 }
 
+/**
+ * 空の世界の止まり木。鳥はこの上に置く（residents.ts）。中心からの向きは、峠（原点）の向きを 0 として測る。
+ * ・タカ・ハヤブサ: 峠から入って右手の、T 字の止まり木の杭（フライト場）
+ * ・フクロウ: 広場の奥（峠と反対の側）の、2 列の弧に並べた丸太の止まり木
+ * ・インコ・オウム: 峠から入って左手の、横枝を張った止まり木の木
+ * ・コンドル: インコの木の奥の大きな岩の上
+ * y は止まり木の上面の世界の高さ、face は広場（中心）を向く向き
+ */
+export interface SkyPerch {
+  x: number
+  y: number
+  z: number
+  face: number
+}
+const SKY_HAWK_POSTS = 6
+const SKY_OWL_ROWS: Array<{ d: number; n: number; h: [number, number] }> = [
+  { d: 15.5, n: 12, h: [0.45, 0.62] },
+  { d: 20.5, n: 12, h: [0.8, 1.0] },
+]
+/** インコの木: 中心からの向き（峠からの角度）と距離、横枝の高さ・張り出しの向き・長さ */
+const SKY_PARROT_TREE = { a: -0.95, d: 16, branches: [[1.7, 0.4, 2.2], [2.3, 2.4, 2.0], [2.9, -1.2, 2.3], [3.5, 1.4, 1.7], [4.1, -2.6, 1.5]] as Array<[number, number, number]> }
+const SKY_VULTURE_ROCK = { a: -1.7, d: 23, h: 1.5, r: 1.6 }
+let skyPerchCache: { hawk: SkyPerch[]; owl: SkyPerch[]; parrot: SkyPerch[]; vulture: SkyPerch[] } | null = null
+export function skyPerches(): { hawk: SkyPerch[]; owl: SkyPerch[]; parrot: SkyPerch[]; vulture: SkyPerch[] } {
+  if (skyPerchCache) return skyPerchCache
+  const r = region('sky')
+  const a0 = Math.atan2(-r.z, -r.x)
+  const face = (x: number, z: number) => Math.atan2(r.x - x, r.z - z)
+  const hawk: SkyPerch[] = []
+  for (let i = 0; i < SKY_HAWK_POSTS; i++) {
+    const a = a0 + 0.62 + i * 0.19
+    const d = 17 + (i % 2) * 3.5
+    const x = r.x + Math.cos(a) * d
+    const z = r.z + Math.sin(a) * d
+    hawk.push({ x, z, y: terrainHeight(x, z) + 1.0 + (i % 3) * 0.15, face: face(x, z) })
+  }
+  const owl: SkyPerch[] = []
+  SKY_OWL_ROWS.forEach((row, ri) => {
+    for (let i = 0; i < row.n; i++) {
+      // 後ろの列は半分ずらして、前の列の子に隠れないように
+      const a = a0 + Math.PI + ((i + ri * 0.5) / (row.n - 1) - 0.5 - ri * 0.02) * 1.9
+      const x = r.x + Math.cos(a) * row.d
+      const z = r.z + Math.sin(a) * row.d
+      owl.push({ x, z, y: terrainHeight(x, z) + row.h[i % 2], face: face(x, z) })
+    }
+  })
+  const ta = a0 + SKY_PARROT_TREE.a
+  const tx = r.x + Math.cos(ta) * SKY_PARROT_TREE.d
+  const tz = r.z + Math.sin(ta) * SKY_PARROT_TREE.d
+  const ty = terrainHeight(tx, tz)
+  const parrot: SkyPerch[] = []
+  for (const [h, dir, len] of SKY_PARROT_TREE.branches) {
+    // 枝の先寄りと中ほどに 1 羽ずつ（低い 3 本は 2 羽、上の 2 本は 1 羽）
+    const n = h < 3 ? 2 : 1
+    for (let k = 0; k < n; k++) {
+      const t = n === 1 ? 0.7 : 0.45 + k * 0.4
+      const x = tx + Math.cos(dir) * len * t
+      const z = tz + Math.sin(dir) * len * t
+      parrot.push({ x, z, y: ty + h + 0.08, face: face(x, z) })
+    }
+  }
+  const va = a0 + SKY_VULTURE_ROCK.a
+  const vx = r.x + Math.cos(va) * SKY_VULTURE_ROCK.d
+  const vz = r.z + Math.sin(va) * SKY_VULTURE_ROCK.d
+  const vulture: SkyPerch[] = [{ x: vx, z: vz, y: terrainHeight(vx, vz) + SKY_VULTURE_ROCK.h, face: face(vx, vz) }]
+  skyPerchCache = { hawk, owl, parrot, vulture }
+  return skyPerchCache
+}
+
+/** 空の世界: 鳥の止まり木（杭・丸太・木・岩）、高原の岩の塔、旗、高原の木と花。乱数は別の列 */
+function createSky(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
+  const r = region('sky')
+  const a0 = Math.atan2(-r.z, -r.x)
+  const perches = skyPerches()
+  const wood = toonMaterial({ color: '#8a5e3a' })
+  const woodDark = toonMaterial({ color: '#6a4628' })
+  const onPath = (x: number, z: number, margin: number) => skyPathDist(x - r.x, z - r.z) < 3 + margin
+
+  // タカの止まり木: 杭の上に、草を巻いたような T 字の横木
+  const postGeo = new THREE.CylinderGeometry(0.07, 0.09, 1, 6)
+  postGeo.translate(0, 0.5, 0)
+  const barGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.7, 8)
+  barGeo.rotateZ(Math.PI / 2)
+  const hawkPosts = instanced(postGeo, woodDark, perches.hawk.length)
+  const hawkBars = instanced(barGeo, toonMaterial({ color: '#c8a46a' }), perches.hawk.length)
+  perches.hawk.forEach((p, i) => {
+    const g = terrainHeight(p.x, p.z)
+    _m.compose(_p.set(p.x, g - 0.05, p.z), _q.identity(), _s.set(1, p.y - 0.07 - g + 0.05, 1))
+    hawkPosts.setMatrixAt(i, _m)
+    // 横木は広場の方を向く鳥の左右に渡す
+    _q.setFromEuler(_e.set(0, p.face, 0))
+    _m.compose(_p.set(p.x, p.y - 0.07, p.z), _q, _s.set(1, 1, 1))
+    hawkBars.setMatrixAt(i, _m)
+    colliders.push({ x: p.x, z: p.z, r: 0.35 })
+  })
+  finish(hawkPosts, hawkBars)
+  group.add(hawkPosts, hawkBars)
+
+  // フクロウの止まり木: 切り株のような太い丸太。上面に鳥が立つ
+  const logGeo = new THREE.CylinderGeometry(0.22, 0.26, 1, 9)
+  logGeo.translate(0, 0.5, 0)
+  const logTopGeo = new THREE.CylinderGeometry(0.21, 0.21, 0.03, 9)
+  const logs = instanced(logGeo, wood, perches.owl.length)
+  const logTops = instanced(logTopGeo, toonMaterial({ color: '#d9b98a' }), perches.owl.length, false)
+  perches.owl.forEach((p, i) => {
+    const g = terrainHeight(p.x, p.z)
+    _q.setFromEuler(_e.set(0, rand() * Math.PI, 0))
+    _m.compose(_p.set(p.x, g - 0.1, p.z), _q, _s.set(1, p.y - g + 0.1, 1))
+    logs.setMatrixAt(i, _m)
+    _m.compose(_p.set(p.x, p.y + 0.005, p.z), _q, _s.set(1, 1, 1))
+    logTops.setMatrixAt(i, _m)
+    colliders.push({ x: p.x, z: p.z, r: 0.4 })
+  })
+  finish(logs, logTops)
+  group.add(logs, logTops)
+
+  // フクロウの止まり木の奥の、日陰をつくる大きな木（木陰が好きなフクロウの居場所に見えるように）
+  const shadeTrees: Array<{ x: number; z: number; s: number }> = []
+  for (let i = 0; i < 4; i++) {
+    const a = a0 + Math.PI + (i / 3 - 0.5) * 1.6
+    const d = 27 + (i % 2) * 2
+    shadeTrees.push({ x: r.x + Math.cos(a) * d, z: r.z + Math.sin(a) * d, s: 1.1 + rand() * 0.3 })
+  }
+
+  // インコの木: 枝を張った白っぽい枯れ木の止まり木
+  const ta = a0 + SKY_PARROT_TREE.a
+  const tx = r.x + Math.cos(ta) * SKY_PARROT_TREE.d
+  const tz = r.z + Math.sin(ta) * SKY_PARROT_TREE.d
+  const ty = terrainHeight(tx, tz)
+  {
+    const bark = toonMaterial({ color: '#cbb89a' })
+    const tree = new THREE.Group()
+    tree.position.set(tx, ty, tz)
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 4.6, 8), bark)
+    trunk.position.y = 2.3
+    trunk.castShadow = true
+    tree.add(trunk)
+    for (const [h, dir, len] of SKY_PARROT_TREE.branches) {
+      const geo = new THREE.CylinderGeometry(0.05, 0.08, len, 6)
+      geo.translate(0, len / 2, 0)
+      geo.rotateZ(-Math.PI / 2)
+      const b = new THREE.Mesh(geo, bark)
+      b.position.y = h
+      b.rotation.y = -dir
+      b.castShadow = true
+      tree.add(b)
+    }
+    group.add(tree)
+    colliders.push({ x: tx, z: tz, r: 0.5 })
+    // 根もとの餌台（木の箱）
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.8), wood)
+    box.position.set(tx + Math.cos(ta + 1.4) * 1.2, ty + 0.25, tz + Math.sin(ta + 1.4) * 1.2)
+    box.castShadow = true
+    group.add(box)
+  }
+
+  // コンドルの岩: 平らな頂の大きな岩
+  {
+    const v = perches.vulture[0]
+    const g = terrainHeight(v.x, v.z)
+    const stoneMat = toonMaterial({ color: '#a29cae' })
+    // 平らな頂の岩と、根もとに寄りかかる岩 2 つ（ごつごつした岩場に見せる）
+    const rock = new THREE.Mesh(new THREE.CylinderGeometry(SKY_VULTURE_ROCK.r * 0.62, SKY_VULTURE_ROCK.r, v.y - g + 0.3, 6), stoneMat)
+    rock.position.set(v.x, g + (v.y - g) / 2 - 0.15, v.z)
+    rock.rotation.set((rand() - 0.5) * 0.08, rand() * Math.PI, (rand() - 0.5) * 0.08)
+    rock.castShadow = true
+    rock.receiveShadow = true
+    group.add(rock)
+    for (let k = 0; k < 2; k++) {
+      const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8 + k * 0.2, 0), stoneMat)
+      const ba = rand() * Math.PI * 2
+      b.position.set(v.x + Math.cos(ba) * SKY_VULTURE_ROCK.r, g + 0.3, v.z + Math.sin(ba) * SKY_VULTURE_ROCK.r)
+      b.scale.set(1.2, 0.8, 1)
+      b.rotation.set(rand(), rand(), rand())
+      b.castShadow = true
+      group.add(b)
+    }
+    colliders.push({ x: v.x, z: v.z, r: SKY_VULTURE_ROCK.r * 0.9 })
+  }
+
+  // 高原の岩の塔: 細く高い岩の柱を、少しずつ細く重ねる（麓はうす紫 → 灰 → 頂はクリーム色）。峠の向きはあける
+  const spires: Array<{ x: number; z: number; h: number; w: number }> = []
+  let guard = 0
+  while (spires.length < (mobile ? 5 : 7) && guard++ < 200) {
+    const a = a0 + 0.9 + rand() * (Math.PI * 2 - 1.8)
+    const d = 52 + rand() * 40
+    const x = r.x + Math.cos(a) * d
+    const z = r.z + Math.sin(a) * d
+    if (spires.some((p) => Math.hypot(p.x - x, p.z - z) < 22)) continue
+    spires.push({ x, z, h: 10 + rand() * 12, w: 2.2 + rand() * 1.8 })
+  }
+  const spireGeo = new THREE.CylinderGeometry(0.66, 1, 1, 6)
+  spireGeo.translate(0, 0.5, 0)
+  const SEG = 5
+  const spireMesh = instanced(spireGeo, toonMaterial(), spires.length * SEG)
+  const spireCols = ['#a6a4d2', '#b6b2d8', '#c8c2da', '#ddd4d2', '#f2e8d2'].map((c) => new THREE.Color(c))
+  spires.forEach((sp, i) => {
+    let y = terrainHeight(sp.x, sp.z) - 1
+    let w = sp.w
+    for (let k = 0; k < SEG; k++) {
+      const h = (sp.h / SEG) * (1.25 - k * 0.1)
+      _q.setFromEuler(_e.set((rand() - 0.5) * 0.08, rand() * Math.PI, (rand() - 0.5) * 0.08))
+      _m.compose(_p.set(sp.x + (rand() - 0.5) * 0.3 * w, y, sp.z + (rand() - 0.5) * 0.3 * w), _q, _s.set(w, h * 1.15, w))
+      spireMesh.setMatrixAt(i * SEG + k, _m)
+      spireMesh.setColorAt(i * SEG + k, spireCols[k])
+      y += h
+      w *= 0.8
+    }
+    if (Math.hypot(sp.x - r.x, sp.z - r.z) < r.walk + 40) colliders.push({ x: sp.x, z: sp.z, r: sp.w * 0.9 })
+  })
+  finish(spireMesh)
+  group.add(spireMesh)
+
+  // フライトの輪にそって、色とりどりの旗（風の強い高原らしさ）。峠からの道はあける
+  const flagPoles: Array<{ x: number; z: number; a: number }> = []
+  for (let i = 0; i < 10; i++) {
+    const a = a0 + 0.35 + (i / 10) * (Math.PI * 2 - 0.7)
+    flagPoles.push({ x: r.x + Math.cos(a) * (SKY_RING + 3.2), z: r.z + Math.sin(a) * (SKY_RING + 3.2), a })
+  }
+  const poleGeo = new THREE.CylinderGeometry(0.05, 0.06, 3.4, 5)
+  poleGeo.translate(0, 1.7, 0)
+  const flagGeo = new THREE.BufferGeometry()
+  flagGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -0.7, 0, 1.2, -0.35, 0], 3))
+  flagGeo.computeVertexNormals()
+  const poles = instanced(poleGeo, toonMaterial({ color: '#f6f1e6' }), flagPoles.length)
+  const flags = instanced(flagGeo, toonMaterial({ side: THREE.DoubleSide }), flagPoles.length, false)
+  const flagColors = ['#e8322a', '#f4c242', '#2f9be0', '#6fc04a', '#f26a9b'].map((c) => new THREE.Color(c))
+  flagPoles.forEach((f, i) => {
+    const g = terrainHeight(f.x, f.z)
+    _m.compose(_p.set(f.x, g - 0.05, f.z), _q.identity(), _s.set(1, 1, 1))
+    poles.setMatrixAt(i, _m)
+    // 旗は風下（北東）へなびかせる
+    _q.setFromEuler(_e.set(0, -0.8, 0))
+    _m.compose(_p.set(f.x, g + 3.3, f.z), _q, _s.set(1, 1, 1))
+    flags.setMatrixAt(i, _m)
+    flags.setColorAt(i, flagColors[i % flagColors.length])
+    colliders.push({ x: f.x, z: f.z, r: 0.25 })
+  })
+  finish(poles, flags)
+  group.add(poles, flags)
+
+  // 高原の木: 細い幹に、上へとがった濃い緑の葉（高い所の針葉樹）。日陰の大木も同じ作りで太く
+  const trees = scatter(rand, r, mobile ? 40 : 60, { min: 40, max: r.walk + 36, clearing: 38, path: 10 }).filter(
+    (p) => !onPath(p.x, p.z, 2) && !spires.some((sp) => Math.hypot(sp.x - p.x, sp.z - p.z) < sp.w + 3),
+  )
+  const all = [...trees.map((t) => ({ ...t, s: 0.8 + rand() * 0.5, shade: false })), ...shadeTrees.map((t) => ({ ...t, shade: true }))]
+  const trunkGeo = new THREE.CylinderGeometry(0.18, 0.3, 1, 6)
+  trunkGeo.translate(0, 0.5, 0)
+  const crownGeo = new THREE.IcosahedronGeometry(1, 1)
+  const trunks = instanced(trunkGeo, toonMaterial({ color: '#6a4a30' }), all.length)
+  const crowns = instanced(crownGeo, toonMaterial(), all.length * 2)
+  const leafA = new THREE.Color('#3f9a4e')
+  const leafB = new THREE.Color('#6cc05a')
+  all.forEach((t, i) => {
+    const y = terrainHeight(t.x, t.z)
+    const s = t.s
+    const h = (t.shade ? 4.2 : 3 + rand() * 1.5) * s
+    _q.setFromEuler(_e.set(0, rand() * Math.PI * 2, 0))
+    _m.compose(_p.set(t.x, y - 0.2, t.z), _q, _s.set(s * (t.shade ? 1.5 : 1), h, s * (t.shade ? 1.5 : 1)))
+    trunks.setMatrixAt(i, _m)
+    for (let k = 0; k < 2; k++) {
+      const cw = (t.shade ? 3.4 - k * 0.8 : 1.6 - k * 0.4) * s
+      const ch = (t.shade ? 2.4 : 2.6) * s
+      _m.compose(_p.set(t.x, y + h + k * ch * 0.6, t.z), _q, _s.set(cw, ch * (t.shade ? 0.8 : 1.1), cw))
+      crowns.setMatrixAt(i * 2 + k, _m)
+      crowns.setColorAt(i * 2 + k, _c.copy(leafA).lerp(leafB, rand()))
+    }
+    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + 3) colliders.push({ x: t.x, z: t.z, r: (t.shade ? 0.8 : 0.5) * s })
+  })
+  finish(trunks, crowns)
+  group.add(trunks, crowns)
+
+  // 岩: 高原にころがる、うす紫がかった灰色の岩
+  const rocks = scatter(rand, r, 36, { min: 32, max: r.walk + 24, clearing: 30, path: 7 }).filter((p) => !onPath(p.x, p.z, 1))
+  const rockGeo = new THREE.IcosahedronGeometry(1, 0)
+  const rockMesh = instanced(rockGeo, toonMaterial({ color: '#a29cae' }), rocks.length)
+  rocks.forEach((p, i) => {
+    const s = 0.5 + rand() * 1.1
+    _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
+    _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) + s * 0.2, p.z), _q, _s.set(s * 1.2, s * 0.7, s))
+    rockMesh.setMatrixAt(i, _m)
+    if (s > 0.9) colliders.push({ x: p.x, z: p.z, r: s })
+  })
+  finish(rockMesh)
+  group.add(rockMesh)
+
+  // 花: 高原の小さな花の群れ（うす紫・白・黄・青）。当たり判定なし
+  const flowerSpots: Array<{ x: number; z: number }> = []
+  const clumps = scatter(rand, r, mobile ? 50 : 80, { min: 12, max: r.walk + 10, clearing: 12, path: 4 })
+  for (const c of clumps) {
+    if (onPath(c.x, c.z, 1)) continue
+    for (let k = 0; k < 9; k++) flowerSpots.push({ x: c.x + (rand() - 0.5) * 3.2, z: c.z + (rand() - 0.5) * 3.2 })
+  }
+  const flowerGeo = new THREE.IcosahedronGeometry(0.13, 0)
+  const flowerMesh = instanced(flowerGeo, toonMaterial(), flowerSpots.length, false)
+  const flowerColors = ['#c9b4f4', '#ffffff', '#ffe066', '#8fc4ff'].map((c) => new THREE.Color(c))
+  flowerSpots.forEach((f, i) => {
+    _m.compose(_p.set(f.x, terrainHeight(f.x, f.z) + 0.16, f.z), _q.identity(), _s.set(1, 0.7, 1))
+    flowerMesh.setMatrixAt(i, _m)
+    flowerMesh.setColorAt(i, flowerColors[Math.floor(rand() * flowerColors.length)])
+  })
+  finish(flowerMesh)
+  group.add(flowerMesh)
+}
+
 export function createBiomeProps(options: { mobile: boolean; colliders: Collider[] }): BiomeProps {
   const group = new THREE.Group()
   group.name = 'biome-props'
@@ -890,5 +1195,6 @@ export function createBiomeProps(options: { mobile: boolean; colliders: Collider
   // 水の世界は後から足したので別の乱数の列（ほかのワールドの並びを変えない）
   createWater(mulberry32(WORLD_SEED + 509), group, options.colliders, options.mobile)
   createPartner(mulberry32(WORLD_SEED + 521), group, options.colliders, options.mobile)
+  createSky(mulberry32(WORLD_SEED + 547), group, options.colliders, options.mobile)
   return { group }
 }

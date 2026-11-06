@@ -2,14 +2,15 @@ import { smoothstep } from './noise'
 import { KOPJE, SPOT, WALK_RADIUS } from './layout'
 
 /**
- * 地続きの 6 つのワールド（D-30 の 7 つのうち、3D にするもの）。
+ * 地続きの 7 つのワールド（D-30 の 7 つすべて）。
  * サバンナは原点のまま（コピエ・水場・ライオンは動かさない）。
  * 北の世界はコピエの奥（-z）、ジャングルは西（-x）、南半球はスタート地点の後ろ（+z）、水の世界は東（+x）、
- * ふれあいワールドは南西（ジャングルと南半球のあいだ。北東・南東は水の世界の海なので空いていた南西へ）。
+ * ふれあいワールドは南西（ジャングルと南半球のあいだ。北東・南東は水の世界の海なので空いていた南西へ）、
+ * 空の世界は北西（北の世界とジャングルのあいだ。ふれあいワールドと同じ距離のななめ）。
  * サバンナを囲む山脈には、各ワールドへの道の幅だけ峠を切る。
  * 地図は北が上なので、名前と向きが一致する。
  */
-export type RegionKey = 'africa' | 'north' | 'jungle' | 'south' | 'water' | 'partner'
+export type RegionKey = 'africa' | 'north' | 'jungle' | 'south' | 'water' | 'partner' | 'sky'
 
 export interface Region {
   key: RegionKey
@@ -35,6 +36,8 @@ export const OUTER_REGIONS: readonly Region[] = [
   { key: 'water', x: OUTER_DIST, z: 0, walk: OUTER_WALK },
   // ななめの向きは、となりのワールド（ジャングル・南半球）と歩ける円が重ならないよう少し遠く（中心どうし約 259m）
   { key: 'partner', x: -PARTNER_DIST / Math.SQRT2, z: PARTNER_DIST / Math.SQRT2, walk: OUTER_WALK },
+  // 空の世界: 北西のななめ（北の世界・ジャングルとの中心どうしも約 259m）。鳥たちの高原
+  { key: 'sky', x: -PARTNER_DIST / Math.SQRT2, z: -PARTNER_DIST / Math.SQRT2, walk: OUTER_WALK },
 ]
 
 export const REGIONS: readonly Region[] = [SAVANNA, ...OUTER_REGIONS]
@@ -268,11 +271,12 @@ export interface BiomeWeights {
   south: number
   water: number
   partner: number
+  sky: number
 }
 
 /** 重みを入れる空の入れ物 */
 export function emptyWeights(): BiomeWeights {
-  return { africa: 1, north: 0, jungle: 0, south: 0, water: 0, partner: 0 }
+  return { africa: 1, north: 0, jungle: 0, south: 0, water: 0, partner: 0, sky: 0 }
 }
 
 /**
@@ -311,7 +315,7 @@ export function biomeAt(x: number, z: number, out: BiomeWeights): BiomeWeights {
 
 type OuterKey = Exclude<RegionKey, 'africa'>
 /** サバンナ以外のワールドの名前（重みの欄の並び） */
-export const OUTER_KEYS: readonly OuterKey[] = ['north', 'jungle', 'south', 'water', 'partner']
+export const OUTER_KEYS: readonly OuterKey[] = ['north', 'jungle', 'south', 'water', 'partner', 'sky']
 /** すべてのワールドの名前（重みの欄の並び） */
 export const REGION_KEYS: readonly RegionKey[] = ['africa', ...OUTER_KEYS]
 

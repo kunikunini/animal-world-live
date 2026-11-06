@@ -536,7 +536,7 @@ function createMountains(group: THREE.Group): void {
   }
 }
 
-type OuterLookKey = 'north' | 'jungle' | 'south' | 'water' | 'partner'
+type OuterLookKey = 'north' | 'jungle' | 'south' | 'water' | 'partner' | 'sky'
 /** ほかのワールドの山並みの色と高さ */
 const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
   // 北: 青い麓に白い雪の峰
@@ -568,6 +568,12 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
     { r: 150, h: 14, spread: 5, foot: '#5fae4a', peak: '#9ad86a' },
     { r: 188, h: 22, spread: 8, foot: '#72b85e', peak: '#b2e282' },
     { r: 230, h: 32, spread: 11, foot: '#94c890', peak: '#cdeab4' },
+  ],
+  // 空の世界: 高原（地面が約 10m 高い）を囲む、低めのとがった岩の峰（空を広く見せる）。麓はうす紫、日の当たる頂はクリーム色。北の世界の雪の峰と見分けがつく色
+  sky: [
+    { r: 150, h: 22, spread: 10, foot: '#a4a2d4', peak: '#f6ead2' },
+    { r: 188, h: 32, spread: 14, foot: '#b2b2dc', peak: '#faf0de' },
+    { r: 230, h: 46, spread: 18, foot: '#c4c6e8', peak: '#fdf8ee' },
   ],
 }
 

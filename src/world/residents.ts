@@ -10,7 +10,9 @@ import { createFarmfolk } from './farmfolk'
 import type { FarmKind } from './farmfolk'
 import { GOAT_ROCKS, farmPens, terrainHeight } from './terrain'
 import type { WaterfolkKind } from './waterfolk'
-import { JUNGLE_PERCH } from './biomes'
+import { JUNGLE_PERCH, skyPerches } from './biomes'
+import { createSkyfolk } from './skyfolk'
+import type { SkyKind, SkyLook } from './skyfolk'
 import { OUTER_REGIONS } from './regions'
 
 /**
@@ -157,6 +159,67 @@ function createFarmResidents(out: Lion[]): void {
   }
 }
 
+/**
+ * 空の世界の鳥（名簿の 27 種 39 羽すべて）。種ごとに組み方（kind）・色（look）・大きさを決め、
+ * 止まり木の列（biomes.ts の skyPerches）に名簿の並びで順に置く。小さい種は見つけやすいよう本物より大きめ。
+ * 色は種の目印で、個体の羽色の再現ではない
+ */
+interface SkySpecies {
+  kind: SkyKind
+  perch: 'hawk' | 'owl' | 'parrot' | 'vulture'
+  size: number
+  look: SkyLook
+}
+const BEAK_DARK = '#3a3438'
+const BEAK_PALE = '#e8dcc4'
+const SKY_SPECIES: Record<string, SkySpecies> = {
+  // インコ・オウム
+  ベニコンゴウインコ: { kind: 'parrot', perch: 'parrot', size: 1.35, look: { body: '#d8342c', belly: '#d8342c', wing: '#2f8a4a', accent: '#2a64c8', tail: '#c8302a', face: '#f4ece4', beak: BEAK_PALE, longTail: true } },
+  ヒメコンゴウインコ: { kind: 'parrot', perch: 'parrot', size: 1.0, look: { body: '#3faa4a', belly: '#5cbc5a', wing: '#2f9442', accent: '#d8342c', face: '#f4ece4', beak: BEAK_DARK, longTail: true } },
+  タイハクオウム: { kind: 'parrot', perch: 'parrot', size: 1.2, look: { body: '#f6f4ee', belly: '#ffffff', crest: '#ffffff', beak: BEAK_DARK } },
+  キバタン: { kind: 'parrot', perch: 'parrot', size: 1.2, look: { body: '#f6f4ee', belly: '#ffffff', crest: '#ffd84a', beak: BEAK_DARK } },
+  ヨウム: { kind: 'parrot', perch: 'parrot', size: 1.05, look: { body: '#8c9096', belly: '#a2a6ac', wing: '#7a7e84', tail: '#d8342c', face: '#dcdee2', beak: BEAK_DARK } },
+  オカメインコ: { kind: 'parrot', perch: 'parrot', size: 0.85, look: { body: '#8c8c92', belly: '#9a9aa0', wing: '#7c7c82', accent: '#f4f2ec', head: '#f4dc6a', crest: '#f4dc6a', cheek: '#f08a3a', beak: '#9a9aa0', longTail: true } },
+  // フクロウ（耳のような羽角があるのはミミズク・コノハズク）
+  メンフクロウ: { kind: 'owl', perch: 'owl', size: 1.15, look: { body: '#d8ae72', belly: '#f6efe2', face: '#fbf8f2', rim: '#c89a62', beak: BEAK_PALE } },
+  アカアシモリフクロウ: { kind: 'owl', perch: 'owl', size: 1.1, look: { body: '#7a5236', belly: '#c89a6e', face: '#b88a5e', rim: '#5a3a24', beak: '#e8c860' } },
+  モリフクロウ: { kind: 'owl', perch: 'owl', size: 1.05, look: { body: '#8a5e3a', belly: '#c8a072', face: '#c49a6c', rim: '#6a4428', beak: BEAK_PALE } },
+  ナンベイヒナフクロウ: { kind: 'owl', perch: 'owl', size: 0.95, look: { body: '#6a4a32', belly: '#d8bc94', face: '#a8805a', rim: '#4a3020', beak: BEAK_PALE } },
+  オオフクロウ: { kind: 'owl', perch: 'owl', size: 1.3, look: { body: '#5e4030', belly: '#d8b88a', face: '#c8a272', rim: '#3e2a1e', beak: BEAK_PALE } },
+  ウラルフクロウ: { kind: 'owl', perch: 'owl', size: 1.2, look: { body: '#bcb4a6', belly: '#e8e2d6', face: '#e4ded2', rim: '#8a8274', beak: '#e8c860' } },
+  ベンガルワシミミズク: { kind: 'owl', perch: 'owl', size: 1.4, look: { body: '#a07a52', belly: '#e2c89c', face: '#c8a676', rim: '#5a3e28', iris: '#ff9a1f', beak: BEAK_DARK, tufts: true } },
+  ユーラシアワシミミズク: { kind: 'owl', perch: 'owl', size: 1.5, look: { body: '#9a6e44', belly: '#dcb684', face: '#c09a6a', rim: '#4a3220', iris: '#ff8a1a', beak: BEAK_DARK, tufts: true } },
+  ワシミミズク: { kind: 'owl', perch: 'owl', size: 1.4, look: { body: '#8a6a4a', belly: '#e6d4b6', face: '#c8915a', rim: '#3e2c1e', iris: '#ffd030', beak: BEAK_DARK, tufts: true } },
+  クロワシミミズク: { kind: 'owl', perch: 'owl', size: 1.45, look: { body: '#b4aca0', belly: '#ece6dc', face: '#e6e0d6', rim: '#5a524a', beak: BEAK_PALE, tufts: true } },
+  'ベンガル×ワシミミズク': { kind: 'owl', perch: 'owl', size: 1.4, look: { body: '#946e48', belly: '#e0c294', face: '#c4a070', rim: '#4e3624', iris: '#ff9a1f', beak: BEAK_DARK, tufts: true } },
+  アビシニアンワシミミズク: { kind: 'owl', perch: 'owl', size: 1.25, look: { body: '#7a5a40', belly: '#d6bc98', face: '#bc9c78', rim: '#4a3424', iris: '#f08a2a', beak: BEAK_DARK, tufts: true } },
+  アフリカワシミミズク: { kind: 'owl', perch: 'owl', size: 1.15, look: { body: '#a0907e', belly: '#e8dccb', face: '#d8ccbc', rim: '#5a4a3c', iris: '#ffd030', beak: BEAK_DARK, tufts: true } },
+  アフリカオオコノハズク: { kind: 'owl', perch: 'owl', size: 0.95, look: { body: '#9c9690', belly: '#e0dcd6', face: '#fbfaf6', rim: '#26242a', iris: '#ff8a1a', beak: BEAK_PALE, tufts: true } },
+  インドオオコノハズク: { kind: 'owl', perch: 'owl', size: 0.9, look: { body: '#a08262', belly: '#d8c4a4', face: '#c8b08c', rim: '#5a4430', iris: '#e87a2a', beak: BEAK_PALE, tufts: true } },
+  スピックスコノハズク: { kind: 'owl', perch: 'owl', size: 0.85, look: { body: '#8a7a68', belly: '#d6ccbc', face: '#c4b8a6', rim: '#3e3428', iris: '#ffd030', beak: BEAK_PALE, tufts: true } },
+  コキンメフクロウ: { kind: 'owl', perch: 'owl', size: 0.85, look: { body: '#8a6e52', belly: '#e6d8c2', face: '#d8c8b0', rim: '#6a5038', iris: '#ffd84a', beak: '#c8b878' } },
+  // タカ・ハヤブサ
+  ハリスホーク: { kind: 'hawk', perch: 'hawk', size: 1.3, look: { body: '#3e2a20', belly: '#4a3226', accent: '#a04a24', tail: '#2e2018', iris: '#4a2a14', beak: BEAK_DARK } },
+  ワシノスリ: { kind: 'hawk', perch: 'hawk', size: 1.5, look: { body: '#3c4048', belly: '#ece8e0', wing: '#5a5e68', tail: '#3a3c42', head: '#3c4048', beak: BEAK_DARK } },
+  ラナーハヤブサ: { kind: 'hawk', perch: 'hawk', size: 1.1, look: { body: '#7a7e88', belly: '#f0e2ca', wing: '#6a6e78', head: '#c47a4a', face: '#3a3438', beak: '#3a4a6a' } },
+  // コンドル
+  ヒメコンドル: { kind: 'vulture', perch: 'vulture', size: 1.5, look: { body: '#2e2622', belly: '#3a302a', wing: '#2a2420', accent: '#8a8078', head: '#c8443a', beak: BEAK_PALE } },
+}
+
+function createSkyResidents(out: Lion[]): void {
+  const perches = skyPerches()
+  const used = { hawk: 0, owl: 0, parrot: 0, vulture: 0 }
+  for (const animal of ANIMALS) {
+    if (animal.world !== 'sky') continue
+    const sp = SKY_SPECIES[animal.species]
+    if (!sp) continue
+    const p = perches[sp.perch][used[sp.perch]++]
+    if (!p) continue
+    // 止まり木の上で見つけやすいよう、どの種も 1.4 倍（水の世界のペンギンと同じくらいの見え方）
+    out.push(createSkyfolk({ id: animal.id, kind: sp.kind, look: sp.look, x: p.x, y: p.y, z: p.z, yaw: p.face, size: sp.size * 1.4 }))
+  }
+}
+
 /** ほかのワールドの子を作る。返す形はライオンと同じなので、出会い・ピン・地図にそのまま乗る */
 export function createResidents(): Lion[] {
   const out: Lion[] = []
@@ -193,6 +256,7 @@ export function createResidents(): Lion[] {
     )
   }
   createFarmResidents(out)
+  createSkyResidents(out)
   // 小さい子は影の読み取りのずれ（normalBias 1.8m）で体がまだらに暗くなるので、影は受けず落とすだけにする
   for (const lion of out) {
     if (lion.group.scale.x >= 0.75) continue

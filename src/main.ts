@@ -576,6 +576,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     water: new THREE.Color('#c4e6f4'),
     // ふれあいワールド: 春の牧場のやわらかい明るい霞（少し黄緑がかった白）
     partner: new THREE.Color('#e2efd8'),
+    // 空の世界: 雲に近い高原の澄んだ明るい青白（遠くの岩の峰が空に溶ける）
+    sky: new THREE.Color('#d8e6fb'),
   }
   // 明るさもワールドごと。サバンナは明るく、照り返しを紫から乾いた草の色へ（影が濁らない）。
   // さらにトップの絵に寄せて、日なたと影の差をはっきり（日差しを強く、照り返しを弱く）、空を深い青に、霞を遠くへ。
@@ -741,6 +743,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sunGlow: new THREE.Color('#fff0cc'),
       sunDisc: 4.0,
       sunHalo: 1.3,
+    },
+    // 空の世界: 高い所の深い青空と強い日差し、照り返しは高原の明るい草。霞は遠く（澄んだ空気）
+    sky: {
+      exposure: 0.98,
+      sky: new THREE.Color('#d0e2ff'),
+      ground: new THREE.Color('#a8cf7a'),
+      intensity: 0.7,
+      sun: 2.35,
+      top: new THREE.Color('#1f5fd8'),
+      horizon: new THREE.Color('#a8d4fa'),
+      near: 140,
+      far: 560,
+      gradeSat: 1.06,
+      gradeContrast: 1.05,
+      sunElev: 24,
+      sunGlow: new THREE.Color('#fff4d6'),
+      sunDisc: 4.2,
+      sunHalo: 1.5,
     },
   }
   const lightTarget: Light = { ...baseLight() }
