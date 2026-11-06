@@ -315,9 +315,15 @@ export function createFarmfolk(options: FarmfolkOptions): Lion {
   // 気質: 犬はしっぽをよく振り、ポニーとヒツジはゆったり、ヤギとブタはきょろきょろ
   const tempo = dog ? { breath: 3.2, look: 0.4, rate: 0.45, wag: 6 } : kind === 'pony' || kind === 'sheep' ? { breath: 1.8, look: 0.25, rate: 0.2, wag: 1.2 } : { breath: 2.6, look: 0.45, rate: 0.5, wag: 2.5 }
 
+  // 動かす部分。生成モデルに差し替えたら（swapModel）、モデルと首・尾の入れ物に向け直す
+  let animBody: THREE.Object3D = body
+  let animNeck: THREE.Object3D = neck
+  let animTail: THREE.Object3D = tail
+  let animEars: THREE.Object3D[] = ears
+
   const update = (time: number, dt: number, player: THREE.Vector3) => {
     const breath = reduceMotion ? 0 : Math.sin(time * tempo.breath + phase) * 0.018
-    body.scale.set(1, 1 + breath, 1)
+    animBody.scale.set(1, 1 + breath, 1)
     headTarget.copy(player)
     group.worldToLocal(headTarget)
     const dist = Math.hypot(headTarget.x, headTarget.z)
@@ -326,11 +332,11 @@ export function createFarmfolk(options: FarmfolkOptions): Lion {
     else if (!reduceMotion) wantYaw = Math.sin(time * tempo.rate + phase) * tempo.look
     const quick = time - noticeTime < 1.2 ? 2.4 : 1
     const k = reduceMotion ? 1 : Math.min(1, dt * 2 * quick)
-    neck.rotation.y += (wantYaw - neck.rotation.y) * k
+    animNeck.rotation.y += (wantYaw - animNeck.rotation.y) * k
     if (reduceMotion) return
     // 尾: 犬は気づいた直後に大きく振る
     const lift = Math.max(0, 1 - (time - noticeTime) / 1.6)
-    tail.rotation.y = Math.sin(time * tempo.wag + phase) * (dog ? 0.25 + lift * 0.4 : 0.08 + lift * 0.2)
+    animTail.rotation.y = Math.sin(time * tempo.wag + phase) * (dog ? 0.25 + lift * 0.4 : 0.08 + lift * 0.2)
     // 耳のぴくり
     earTimer -= dt
     if (earTimer <= 0) {
@@ -340,9 +346,9 @@ export function createFarmfolk(options: FarmfolkOptions): Lion {
     }
     if (earFlick > 0) {
       earFlick -= dt
-      const ear = ears[flickSide]
+      const ear = animEars[flickSide]
       if (ear) ear.rotation.y = Math.sin(((0.3 - earFlick) / 0.3) * Math.PI) * 0.5
-    } else ears.forEach((e) => (e.rotation.y = 0))
+    } else animEars.forEach((e) => (e.rotation.y = 0))
   }
 
   return {
@@ -354,14 +360,27 @@ export function createFarmfolk(options: FarmfolkOptions): Lion {
     update,
     setReduceMotion: (on) => {
       reduceMotion = on
-      if (on) tail.rotation.y = 0
+      if (on) animTail.rotation.y = 0
     },
     notice: (time) => {
       noticeTime = time
       earTimer = 0
     },
-    swapModel: () => {
-      // ふれあいワールドの子は差し替えの実験の対象外
+    swapModel: (model, parts) => {
+      // 生成モデル（Meshy）に差し替える。プリミティブの体と首は隠し、呼吸・首・尾の微アニメは渡された入れ物に書く
+      body.visible = false
+      neck.visible = false
+      model.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) {
+          o.castShadow = true
+          o.receiveShadow = true
+        }
+      })
+      group.add(model)
+      animBody = model
+      animNeck = parts.neck ?? new THREE.Object3D()
+      animTail = parts.tail ?? new THREE.Object3D()
+      animEars = parts.ears ?? []
     },
   }
 }

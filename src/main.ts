@@ -318,6 +318,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
       { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true, walk: { speed: 0.7, radius: 2.0, idle: [6, 14] } },
+      // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
+      // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
+      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true }, walk: { speed: 0.7, radius: 2.0, idle: [8, 16] } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
