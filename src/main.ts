@@ -385,6 +385,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'foxDaichan', species: 'キタキツネ', name: 'だいちゃん', file: 'fox-daichan', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'binturongBin', species: 'ビントロング', name: 'ビン', file: 'binturong-bin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'binturongBasil', species: 'ビントロング', name: 'バジル', file: 'binturong-basil', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'bearGorou', species: 'ツキノワグマ', name: 'ゴロウ', file: 'bear-gorou', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
