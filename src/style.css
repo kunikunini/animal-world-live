@@ -5037,6 +5037,29 @@ body.is-scoping .toast { display: none; }
   76% { transform: scale(1.18); }
   100% { opacity: 1; transform: none; filter: none; }
 }
+/* スマホ（指で操作する端末）: ぼかし（filter）を使わない。画面いっぱいの WebGL を 2.2 倍に寄せながらぼかすと、
+   iPhone が大きな作業用メモリを取り、ページごと読み直されることがあった。寄る動きと色はそのまま */
+@media (pointer: coarse) {
+  body.is-scoping #world { animation-name: sc-zoom-lite; }
+  body.is-unscoping #world { animation-name: sc-world-back-lite; }
+  .catalog.is-scope-in .cat-scroll { animation-name: sc-cat-lite; }
+}
+@keyframes sc-zoom-lite {
+  0%, 8% { transform: scale(1); }
+  32% { transform: scale(1.55); }
+  40% { transform: scale(1.5); }
+  55% { transform: scale(1.62); }
+  58% { transform: scale(1.6); }
+  76% { transform: scale(1.75); }
+  100% { transform: scale(2.2); }
+}
+@keyframes sc-world-back-lite { from { transform: scale(1.4); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes sc-cat-lite {
+  0%, 56% { opacity: 0; transform: scale(1.35); }
+  68% { opacity: 1; transform: scale(1.18); }
+  76% { transform: scale(1.18); }
+  100% { opacity: 1; transform: none; }
+}
 .catalog.is-scope-in :is(.cat-top, .cat-chips, .cat-sec) { animation: sc-rise 0.65s cubic-bezier(0.2, 0.9, 0.25, 1.12) both; }
 .catalog.is-scope-in .cat-top { animation-delay: 2.45s; }
 .catalog.is-scope-in .cat-chips { animation-delay: 2.5s; }

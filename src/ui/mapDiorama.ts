@@ -106,7 +106,7 @@ const TREE_STYLE: Record<RegionKey, { leaf: number; shape: 'flat' | 'ball' | 'co
 }
 
 export function createDiorama(wrap: HTMLElement): Diorama {
-  const canvas = document.createElement('canvas')
+  let canvas = document.createElement('canvas')
   canvas.className = 'map-3d-canvas'
   const overlay = document.createElement('div')
   overlay.className = 'map-3d-overlay'
@@ -840,6 +840,36 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       },
       heroUrl: () => heroUrl,
     }
+  /**
+   * 閉じたら GPU のメモリを返す（iPhone で地図のあとにスコープを開くと、メモリが足りずにページが読み直されていた）。
+   * ワールドの模型と描画の WebGL を捨て、次に開く時に作り直す
+   */
+  const release = () => {
+    for (const g of worlds.values()) {
+      scene.remove(g)
+      g.traverse((o) => {
+        const m = o as THREE.Mesh
+        m.geometry?.dispose()
+        const mat = m.material as THREE.Material | THREE.Material[] | undefined
+        if (Array.isArray(mat)) mat.forEach((x) => x.dispose())
+        else mat?.dispose()
+      })
+    }
+    worlds.clear()
+    current = null
+    state = null
+    pending = []
+    if (renderer) {
+      renderer.dispose()
+      renderer.forceContextLoss()
+      renderer = null
+      // 失った WebGL の canvas は使い直せないので、新しい canvas に替える
+      const fresh = document.createElement('canvas')
+      fresh.className = canvas.className
+      canvas.replaceWith(fresh)
+      canvas = fresh
+    }
+  }
   return {
     set: (s, colliders) => {
       const worldChanged = !state || state.world !== s.world
@@ -870,6 +900,11 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     },
     setVisible: (on) => {
       if (on === visible) return true
+      if (!on) {
+        visible = false
+        release()
+        return true
+      }
       if (on && !renderer) {
         try {
           renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })

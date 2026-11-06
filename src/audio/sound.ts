@@ -35,6 +35,8 @@ const VOICE_VARIANTS: Record<VoiceLine, string[]> = {
   find: ['find'],
   friend: ['friend-1', 'friend-2'],
 }
+/** 主人公ごとに使わないファイル（黄色い子の「えいっ！」は生成の声が潰れていたので、「やっ！」だけにする） */
+const VOICE_SKIP: Record<string, string[]> = { yellow: ['jump-1'] }
 /** セリフごとの大きさ（息づかいは小さく） */
 const VOICE_GAIN: Record<VoiceLine, number> = { start: 1, jump: 0.8, land: 0.8, breath: 0.4, find: 0.9, friend: 1 }
 /** ふつうのジャンプの高さ（約 2.5 m）より大きく落ちた時だけ、着地の声 */
@@ -495,7 +497,9 @@ let lastBreath = 0
 
 function sayNow(line: VoiceLine): void {
   if (!unlocked || !ctx || !seBus || seOff()) return
-  const variants = VOICE_VARIANTS[line]
+  const skip = VOICE_SKIP[voiceHero] ?? []
+  const all = VOICE_VARIANTS[line]
+  const variants = all.filter((v) => !skip.includes(v)).length ? all.filter((v) => !skip.includes(v)) : all
   const turn = voiceTurn[line] ?? 0
   voiceTurn[line] = turn + 1
   const file = `vo-${voiceHero}-${variants[turn % variants.length]}.mp3`

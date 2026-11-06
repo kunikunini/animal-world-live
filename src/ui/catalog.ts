@@ -79,6 +79,9 @@ const WORLD_ART: Partial<Record<WorldKey, string>> = {
     '<path d="M0 132V92l40-44 30 30 46-58 50 62 30-26 36 36V132z" fill="#2f5f96"/><path d="M116 20l-18 24 10-4 8 8 8-8 10 4zM40 48l-12 14 7-3 5 5 5-5 7 3z" fill="#fff"/><path d="M0 132v-22q58-12 116-6t116-4V132z" fill="#e9f4fb"/><path d="M180 112l10-28 10 28zM196 116l8-22 8 22z" fill="#1f4f3a"/>',
 }
 
+/** 一覧の小さな絵は 640×360 の縮小版（1280×720 の表紙を何枚も並べると、iPhone でメモリを使いすぎる） */
+const thumb = (poster: string) => poster.replace(/_poster\.jpg$/, '_poster-sm.jpg')
+
 export function createCatalog(store: FriendBookStore): CatalogView {
   const root = document.getElementById('catalog') as HTMLElement
   let open = false
@@ -246,7 +249,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowPopular'),
       `<div class="cat-row cat-row-rank">${
         main
-          ? `<button type="button" class="cat-rank" data-watch="${esc(main.id)}" aria-label="${esc(featuredTitle())}"><img src="${esc(FEATURED.poster)}" alt="" /></button>`
+          ? `<button type="button" class="cat-rank" data-watch="${esc(main.id)}" aria-label="${esc(featuredTitle())}"><img src="${esc(thumb(FEATURED.poster))}" alt="" /></button>`
           : ''
       }${times(4, () => `<div class="cat-rank cat-rank-sil" aria-hidden="true"><div class="cat-sil">${PLAY}</div></div>`)}</div>`,
     )
@@ -258,7 +261,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       const w = first.world ? getWorld(first.world) : undefined
       const place = first.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb"><img src="${esc(v.poster)}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const recs = section(
@@ -266,7 +269,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowRecs'),
       `<div class="cat-row">${
         main
-          ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb"><img src="${esc(FEATURED.poster)}" alt="" /><span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
+          ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb"><img src="${esc(thumb(FEATURED.poster))}" alt="" /><span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
           : ''
       }${recCards.join('')}${times(
         Math.max(0, 3 - recCards.length),
