@@ -133,10 +133,7 @@
 .sp-bubble > div {
   position: relative;
   padding: 0.5em 0.95em 0.55em;
-  border: 0.16em solid var(--sp-navy);
-  border-radius: 1.1em;
-  background: #fff;
-  box-shadow: 0 0.16em 0 var(--sp-navy);
+  isolation: isolate;
   font-family: 'Hiragino Maru Gothic ProN', 'Zen Maru Gothic', system-ui, sans-serif;
   font-weight: 800;
   font-size: calc(var(--fs0) * 0.5);
@@ -149,23 +146,44 @@
 }
 .sp-bubble rt { font-size: 0.5em; font-weight: 700; }
 .sp-bubble b { color: var(--sp-red); }
-/* しっぽ（ふちの紺の三角に、白い三角を重ねる） */
-.sp-bubble > div::before,
-.sp-bubble > div::after { content: ''; position: absolute; left: 50%; top: 100%; border-style: solid; border-color: transparent; }
-.sp-bubble > div::before { margin-left: -0.62em; border-width: 0.8em 0.62em 0; border-top-color: var(--sp-navy); }
-.sp-bubble > div::after { margin-left: -0.4em; margin-top: -0.06em; border-width: 0.55em 0.4em 0; border-top-color: #fff; }
+/* 地とふちは別の層。地（白・しっぽごと）だけを半透明にし、紺のふちは透かさない */
+.sp-bub-bg, .sp-bub-line { position: absolute; inset: 0; z-index: -1; border: 0.16em solid; border-radius: 1.1em; }
+.sp-bub-bg { border-color: #fff; background: #fff; opacity: 0.62; }
+.sp-bub-line { border-color: var(--sp-navy); }
+.sp-bub-bg::after, .sp-bubble > div::after { content: ''; position: absolute; z-index: -1; left: 50%; top: 100%; width: 1.24em; height: 0.8em; margin-left: -0.62em; }
+/* ふちのしっぽは、ふちの層（口を切り抜いている）の外に出るので、吹き出しの本体に付ける。位置は地の層のしっぽと同じ（ふちの内側から） */
+.sp-bubble > div::after { top: calc(100% - 0.16em); }
+/* しっぽ: 地は三角、ふちは三角の 2 辺だけ（V の形）。ふちの下の辺は、しっぽの口のところだけ切る */
+.sp-bub-bg::after { background: #fff; clip-path: polygon(0 0, 50% 100%, 100% 0); }
+.sp-bubble > div::after { background: var(--sp-navy); clip-path: polygon(0 0, 50% 100%, 100% 0, 0.976em 0, 50% 0.49em, 0.264em 0); }
+.sp-bub-line {
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 0.2em) no-repeat, linear-gradient(to right, #000 calc(50% - 0.38em), transparent 0 calc(50% + 0.38em), #000 0) bottom / 100% 0.2em no-repeat;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 0.2em) no-repeat, linear-gradient(to right, #000 calc(50% - 0.38em), transparent 0 calc(50% + 0.38em), #000 0) bottom / 100% 0.2em no-repeat;
+}
+/* 脈打つ時に広がる白い輪 */
+.sp-bub-ring { position: absolute; inset: 0; z-index: -2; border: 0.14em solid #fff; border-radius: 1.1em; opacity: 0; }
+/* 字は 1 つずつ（出る時と、波で跳ねる時） */
+.sp-bubble i { display: inline-block; font-style: normal; transform-origin: 50% 100%; }
 .sp-bubble .sp-en { display: none; }
 html:lang(en) .sp-bubble .sp-en { display: inline; }
 html:lang(en) .sp-bubble .sp-ja { display: none; }
-.splash.is-wait .sp-bubble > div { animation: sp-bub-in 1.2s linear both, sp-bob 1.6s ease-in-out 1.2s infinite; }
+.splash.is-wait .sp-bubble > div { animation: sp-bub-in 1.2s linear both, sp-bub-beat 2.35s linear 1.7s infinite; }
+.splash.is-wait .sp-bubble i { animation: sp-ch-in 0.5s linear calc(0.16s + var(--i) * 0.045s) both, sp-ch-wave 2.35s linear calc(2.475s + var(--i) * 0.06s) infinite; }
+.splash.is-wait .sp-bub-ring { animation: sp-bub-ring 2.35s linear 1.86s infinite; }
+.splash.is-wait .sp-bub-ring + .sp-bub-ring { border-width: 0.1em; animation-delay: 2.1s; }
+.splash.is-wait .sp-pop { transform-origin: 50% 100%; animation: sp-scop-hop 2.35s linear 1.3s infinite; }
 .splash.is-wait { cursor: pointer; }
 @media (min-aspect-ratio: 4/3) {
   .sp-bubble { left: calc(100% + var(--fs0) * 0.3); bottom: auto; top: 4%; translate: 0 0; }
   .sp-bubble > div { transform-origin: -10% 70%; }
-  .sp-bubble > div::before,
-  .sp-bubble > div::after { left: auto; right: 100%; top: 62%; border-color: transparent; }
-  .sp-bubble > div::before { margin: -0.62em 0 0; border-width: 0.62em 0.8em 0.62em 0; border-right-color: var(--sp-navy); }
-  .sp-bubble > div::after { margin: -0.4em -0.06em 0 0; border-width: 0.4em 0.55em 0.4em 0; border-right-color: #fff; }
+  .sp-bub-bg::after, .sp-bubble > div::after { left: auto; right: 100%; top: 62%; width: 0.8em; height: 1.24em; margin: -0.62em 0 0; }
+  .sp-bubble > div::after { right: calc(100% - 0.16em); top: calc(0.16em + (100% - 0.32em) * 0.62); }
+  .sp-bub-bg::after { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+  .sp-bubble > div::after { clip-path: polygon(100% 0, 0 50%, 100% 100%, 100% 0.976em, 0.31em 50%, 100% 0.264em); }
+  .sp-bub-line {
+    -webkit-mask: linear-gradient(#000 0 0) right / calc(100% - 0.2em) 100% no-repeat, linear-gradient(#000 calc(62% - 0.38em), transparent 0 calc(62% + 0.38em), #000 0) left / 0.2em 100% no-repeat;
+    mask: linear-gradient(#000 0 0) right / calc(100% - 0.2em) 100% no-repeat, linear-gradient(#000 calc(62% - 0.38em), transparent 0 calc(62% + 0.38em), #000 0) left / 0.2em 100% no-repeat;
+  }
 }
 /* 吹き出しを待っている間は、JS が動かない時の保険（7 秒で消える）を止める */
 .splash.is-wait { animation: none; }
@@ -177,7 +195,6 @@ html:lang(en) .sp-bubble .sp-ja { display: none; }
 .splash.is-still.is-out .sp-stage { scale: 1; }
 .splash.is-still.is-wait .sp-bubble > div { transform: none; animation: sp-fade 0.4s ease both !important; }
 @keyframes sp-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
-@keyframes sp-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 @keyframes sp-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sp-auto { to { opacity: 0; visibility: hidden; } }
 /* スプラッシュが出ている間は、ホームのボタンの出てくる動きを止めておく（消えてから「ぽん」と出る） */
@@ -806,4 +823,205 @@ html:lang(en) .sp-bubble .sp-ja { display: none; }
   97.2222% { transform: rotate(-0.0176deg) scale(0.9999); }
   98.6111% { transform: rotate(-0.0149deg) scale(0.9998); }
   100% { transform: rotate(-0.0121deg) scale(0.9997); }
+}
+@keyframes sp-ch-in {
+  0% { opacity: 0; transform: scale(0); }
+  3.3333% { opacity: 0.1389; transform: scale(0.1777); }
+  6.6667% { opacity: 0.2778; transform: scale(0.338); }
+  10% { opacity: 0.4167; transform: scale(0.4816); }
+  13.3333% { opacity: 0.5556; transform: scale(0.6094); }
+  16.6667% { opacity: 0.6944; transform: scale(0.7222); }
+  20% { opacity: 0.8333; transform: scale(0.8208); }
+  23.3333% { opacity: 0.9722; transform: scale(0.906); }
+  26.6667% { opacity: 1; transform: scale(0.9785); }
+  30% { opacity: 1; transform: scale(1.0392); }
+  33.3333% { opacity: 1; transform: scale(1.0889); }
+  36.6667% { opacity: 1; transform: scale(1.1284); }
+  40% { opacity: 1; transform: scale(1.1584); }
+  43.3333% { opacity: 1; transform: scale(1.1798); }
+  46.6667% { opacity: 1; transform: scale(1.1934); }
+  50% { opacity: 1; transform: scale(1.2); }
+  53.3333% { opacity: 1; transform: scale(1.2004); }
+  56.6667% { opacity: 1; transform: scale(1.1953); }
+  60% { opacity: 1; transform: scale(1.1856); }
+  63.3333% { opacity: 1; transform: scale(1.1721); }
+  66.6667% { opacity: 1; transform: scale(1.1556); }
+  70% { opacity: 1; transform: scale(1.1368); }
+  73.3333% { opacity: 1; transform: scale(1.1166); }
+  76.6667% { opacity: 1; transform: scale(1.0958); }
+  80% { opacity: 1; transform: scale(1.0752); }
+  83.3333% { opacity: 1; transform: scale(1.0556); }
+  86.6667% { opacity: 1; transform: scale(1.0377); }
+  90% { opacity: 1; transform: scale(1.0224); }
+  93.3333% { opacity: 1; transform: scale(1.0105); }
+  96.6667% { opacity: 1; transform: scale(1.0028); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes sp-ch-wave {
+  0% { translate: 0 0em; }
+  0.7092% { translate: 0 -0.0418em; }
+  1.4184% { translate: 0 -0.0828em; }
+  2.1277% { translate: 0 -0.1225em; }
+  2.8369% { translate: 0 -0.16em; }
+  3.5461% { translate: 0 -0.1948em; }
+  4.2553% { translate: 0 -0.2263em; }
+  4.9645% { translate: 0 -0.2539em; }
+  5.6738% { translate: 0 -0.2771em; }
+  6.383% { translate: 0 -0.2956em; }
+  7.0922% { translate: 0 -0.3091em; }
+  7.8014% { translate: 0 -0.3173em; }
+  8.5106% { translate: 0 -0.32em; }
+  9.2199% { translate: 0 -0.3173em; }
+  9.9291% { translate: 0 -0.3091em; }
+  10.6383% { translate: 0 -0.2956em; }
+  11.3475% { translate: 0 -0.2771em; }
+  12.0567% { translate: 0 -0.2539em; }
+  12.766% { translate: 0 -0.2263em; }
+  13.4752% { translate: 0 -0.1948em; }
+  14.1844% { translate: 0 -0.16em; }
+  14.8936% { translate: 0 -0.1225em; }
+  15.6028% { translate: 0 -0.0828em; }
+  16.3121% { translate: 0 -0.0418em; }
+  17.0213% { translate: 0 0em; }
+  100% { translate: 0 0em; }
+}
+@keyframes sp-bub-beat {
+  0% { scale: 1; }
+  0.7092% { scale: 1; }
+  1.4184% { scale: 1.0001; }
+  2.1277% { scale: 1.0003; }
+  2.8369% { scale: 1.001; }
+  3.5461% { scale: 1.0028; }
+  4.2553% { scale: 1.0066; }
+  4.9645% { scale: 1.0135; }
+  5.6738% { scale: 1.0244; }
+  6.383% { scale: 1.0387; }
+  7.0922% { scale: 1.0538; }
+  7.8014% { scale: 1.0655; }
+  8.5106% { scale: 1.07; }
+  9.2199% { scale: 1.0655; }
+  9.9291% { scale: 1.0538; }
+  10.6383% { scale: 1.0388; }
+  11.3475% { scale: 1.0245; }
+  12.0567% { scale: 1.0138; }
+  12.766% { scale: 1.0073; }
+  13.4752% { scale: 1.0046; }
+  14.1844% { scale: 1.005; }
+  14.8936% { scale: 1.008; }
+  15.6028% { scale: 1.0134; }
+  16.3121% { scale: 1.0208; }
+  17.0213% { scale: 1.0289; }
+  17.7305% { scale: 1.0358; }
+  18.4397% { scale: 1.0396; }
+  19.1489% { scale: 1.0392; }
+  19.8582% { scale: 1.0346; }
+  20.5674% { scale: 1.0273; }
+  21.2766% { scale: 1.0192; }
+  21.9858% { scale: 1.0121; }
+  22.695% { scale: 1.0068; }
+  23.4043% { scale: 1.0034; }
+  24.1135% { scale: 1.0015; }
+  24.8227% { scale: 1.0006; }
+  25.5319% { scale: 1.0002; }
+  26.2411% { scale: 1.0001; }
+  26.9504% { scale: 1; }
+  100% { scale: 1; }
+}
+@keyframes sp-bub-ring {
+  0% { opacity: 0; }
+  0.7092% { opacity: 0.7344; transform: scale(1.0135); }
+  1.4184% { opacity: 0.7188; transform: scale(1.0264); }
+  2.1277% { opacity: 0.7031; transform: scale(1.0387); }
+  2.8369% { opacity: 0.6875; transform: scale(1.0505); }
+  3.5461% { opacity: 0.6719; transform: scale(1.0618); }
+  4.2553% { opacity: 0.6563; transform: scale(1.0726); }
+  4.9645% { opacity: 0.6406; transform: scale(1.0829); }
+  5.6738% { opacity: 0.625; transform: scale(1.0927); }
+  6.383% { opacity: 0.6094; transform: scale(1.102); }
+  7.0922% { opacity: 0.5938; transform: scale(1.1108); }
+  7.8014% { opacity: 0.5781; transform: scale(1.1192); }
+  8.5106% { opacity: 0.5625; transform: scale(1.1272); }
+  9.2199% { opacity: 0.5469; transform: scale(1.1347); }
+  9.9291% { opacity: 0.5313; transform: scale(1.1418); }
+  10.6383% { opacity: 0.5156; transform: scale(1.1485); }
+  11.3475% { opacity: 0.5; transform: scale(1.1548); }
+  12.0567% { opacity: 0.4844; transform: scale(1.1607); }
+  12.766% { opacity: 0.4688; transform: scale(1.1663); }
+  13.4752% { opacity: 0.4531; transform: scale(1.1715); }
+  14.1844% { opacity: 0.4375; transform: scale(1.1763); }
+  14.8936% { opacity: 0.4219; transform: scale(1.1808); }
+  15.6028% { opacity: 0.4063; transform: scale(1.185); }
+  16.3121% { opacity: 0.3906; transform: scale(1.1889); }
+  17.0213% { opacity: 0.375; transform: scale(1.1925); }
+  17.7305% { opacity: 0.3594; transform: scale(1.1958); }
+  18.4397% { opacity: 0.3438; transform: scale(1.1988); }
+  19.1489% { opacity: 0.3281; transform: scale(1.2016); }
+  19.8582% { opacity: 0.3125; transform: scale(1.2041); }
+  20.5674% { opacity: 0.2969; transform: scale(1.2064); }
+  21.2766% { opacity: 0.2813; transform: scale(1.2084); }
+  21.9858% { opacity: 0.2656; transform: scale(1.2102); }
+  22.695% { opacity: 0.25; transform: scale(1.2119); }
+  23.4043% { opacity: 0.2344; transform: scale(1.2133); }
+  24.1135% { opacity: 0.2188; transform: scale(1.2145); }
+  24.8227% { opacity: 0.2031; transform: scale(1.2156); }
+  25.5319% { opacity: 0.1875; transform: scale(1.2166); }
+  26.2411% { opacity: 0.1719; transform: scale(1.2174); }
+  26.9504% { opacity: 0.1563; transform: scale(1.218); }
+  27.6596% { opacity: 0.1406; transform: scale(1.2185); }
+  28.3688% { opacity: 0.125; transform: scale(1.219); }
+  29.078% { opacity: 0.1094; transform: scale(1.2193); }
+  29.7872% { opacity: 0.0938; transform: scale(1.2196); }
+  30.4965% { opacity: 0.0781; transform: scale(1.2198); }
+  31.2057% { opacity: 0.0625; transform: scale(1.2199); }
+  31.9149% { opacity: 0.0469; transform: scale(1.2199); }
+  32.6241% { opacity: 0.0312; transform: scale(1.22); }
+  33.3333% { opacity: 0.0156; transform: scale(1.22); }
+  34.0426% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes sp-scop-hop {
+  0% { translate: 0 calc(var(--bw) * 0); scale: 1 1; }
+  0.7092% { translate: 0 calc(var(--bw) * 0); scale: 1.0531 0.9496; }
+  1.4184% { translate: 0 calc(var(--bw) * 0); scale: 1.0871 0.9198; }
+  2.1277% { translate: 0 calc(var(--bw) * 0); scale: 1.1046 0.9053; }
+  2.8369% { translate: 0 calc(var(--bw) * 0); scale: 1.1105 0.9005; }
+  3.5461% { translate: 0 calc(var(--bw) * -0.0031); scale: 0.9292 1.0763; }
+  4.2553% { translate: 0 calc(var(--bw) * -0.0181); scale: 0.9441 1.0593; }
+  4.9645% { translate: 0 calc(var(--bw) * -0.0319); scale: 0.957 1.045; }
+  5.6738% { translate: 0 calc(var(--bw) * -0.0443); scale: 0.9679 1.0332; }
+  6.383% { translate: 0 calc(var(--bw) * -0.0556); scale: 0.9768 1.0237; }
+  7.0922% { translate: 0 calc(var(--bw) * -0.0655); scale: 0.9841 1.0162; }
+  7.8014% { translate: 0 calc(var(--bw) * -0.0742); scale: 0.9896 1.0105; }
+  8.5106% { translate: 0 calc(var(--bw) * -0.0816); scale: 0.9937 1.0063; }
+  9.2199% { translate: 0 calc(var(--bw) * -0.0878); scale: 0.9966 1.0034; }
+  9.9291% { translate: 0 calc(var(--bw) * -0.0927); scale: 0.9984 1.0016; }
+  10.6383% { translate: 0 calc(var(--bw) * -0.0964); scale: 0.9994 1.0006; }
+  11.3475% { translate: 0 calc(var(--bw) * -0.0988); scale: 0.9999 1.0001; }
+  12.0567% { translate: 0 calc(var(--bw) * -0.0999); scale: 1 1; }
+  12.766% { translate: 0 calc(var(--bw) * -0.0998); scale: 1 1; }
+  13.4752% { translate: 0 calc(var(--bw) * -0.0984); scale: 0.9998 1.0002; }
+  14.1844% { translate: 0 calc(var(--bw) * -0.0957); scale: 0.9993 1.0007; }
+  14.8936% { translate: 0 calc(var(--bw) * -0.0918); scale: 0.9981 1.0019; }
+  15.6028% { translate: 0 calc(var(--bw) * -0.0867); scale: 0.9961 1.0039; }
+  16.3121% { translate: 0 calc(var(--bw) * -0.0802); scale: 0.993 1.007; }
+  17.0213% { translate: 0 calc(var(--bw) * -0.0726); scale: 0.9886 1.0115; }
+  17.7305% { translate: 0 calc(var(--bw) * -0.0636); scale: 0.9827 1.0176; }
+  18.4397% { translate: 0 calc(var(--bw) * -0.0534); scale: 0.9752 1.0254; }
+  19.1489% { translate: 0 calc(var(--bw) * -0.042); scale: 0.9658 1.0354; }
+  19.8582% { translate: 0 calc(var(--bw) * -0.0292); scale: 0.9545 1.0476; }
+  20.5674% { translate: 0 calc(var(--bw) * -0.0152); scale: 0.9412 1.0624; }
+  21.2766% { translate: 0 calc(var(--bw) * 0); scale: 1 1; }
+  21.9858% { translate: 0 calc(var(--bw) * 0); scale: 1.049 0.9533; }
+  22.695% { translate: 0 calc(var(--bw) * 0); scale: 1.0746 0.9306; }
+  23.4043% { translate: 0 calc(var(--bw) * 0); scale: 1.0596 0.9438; }
+  24.1135% { translate: 0 calc(var(--bw) * 0); scale: 1.0465 0.9556; }
+  24.8227% { translate: 0 calc(var(--bw) * 0); scale: 1.0352 0.966; }
+  25.5319% { translate: 0 calc(var(--bw) * 0); scale: 1.0256 0.975; }
+  26.2411% { translate: 0 calc(var(--bw) * 0); scale: 1.0177 0.9826; }
+  26.9504% { translate: 0 calc(var(--bw) * 0); scale: 1.0112 0.9889; }
+  27.6596% { translate: 0 calc(var(--bw) * 0); scale: 1.0063 0.9938; }
+  28.3688% { translate: 0 calc(var(--bw) * 0); scale: 1.0028 0.9972; }
+  29.078% { translate: 0 calc(var(--bw) * 0); scale: 1.0007 0.9993; }
+  29.7872% { translate: 0 calc(var(--bw) * 0); scale: 1 1; }
+  100% { translate: 0 calc(var(--bw) * 0); scale: 1 1; }
 }
