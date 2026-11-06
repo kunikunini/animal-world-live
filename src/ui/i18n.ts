@@ -162,7 +162,7 @@ const DICT = {
   reduceMotion: { ja: '動きをへらす', en: 'Reduce motion' },
   reduceMotionDesc: { ja: '画面の揺れ・アニメーションを少なくします', en: 'Less camera sway and animation' },
   sensitivity: { ja: '操作の感度', en: 'Control sensitivity' },
-  sensitivityDesc: { ja: 'スティックと、ドラッグで見回す速さ', en: 'Speed of the stick and of looking around by dragging' },
+  sensitivityDesc: { ja: 'ドラッグで見回す速さと、スティックを少し倒した時の速さ', en: 'Looking around by dragging, and speed when the stick is tilted a little' },
   bgmVolume: { ja: 'BGM', en: 'Music' },
   bgmVolumeDesc: { ja: 'ワールドごとの曲', en: 'Music for each world' },
   ambVolume: { ja: 'まわりの音', en: 'Ambience' },

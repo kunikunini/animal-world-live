@@ -27,8 +27,11 @@ export interface HeroModel {
   clipNames: string[]
   /** 骨の名前と親（報告用） */
   bones: Array<{ name: string; parent: string | null }>
-  /** speed: 水平の速さ（m/s）、air: 足元の地面からの高さ（m、地面にいれば 0） */
-  update: (dt: number, speed: number, air: number) => void
+  /**
+   * speed: 水平の速さ（m/s）、air: 足元の地面からの高さ（m、地面にいれば 0）。
+   * 戻り値: このコマで足が地面に着いたか（足音をアニメの足の動きに合わせて鳴らすため）
+   */
+  update: (dt: number, speed: number, air: number) => boolean
   move: () => HeroMove
   /** 歩行・走行のクリップの、そのまま再生した時の地面の速さ（m/s、大きさをそろえた後） */
   natural: { walk: number; run: number }
@@ -49,7 +52,7 @@ const STOP_BELOW = 0.2
 const CYCLE_MIN = 0.6
 /** 11/6 にくにの「歩く見た目をもう少しゆっくり」で 1.7 → 1.2（進む速さは変えないので、そのぶん足が少し滑る） */
 const CYCLE_MAX = 1.2
-/** ふだんのいちばん速い歩き（m/s）。これより速いダッシュの時だけ、足の運びの上限を速さに比例して上げる */
+/** ふだんのいちばん速い歩き（m/s）。これより速いダッシュの時だけ、足の運びの上限を速さの平方根に比例して上げる（比例だと 2.4 倍のダッシュで 1 秒に 9 歩とせわしない） */
 const WALK_TOP = 6.5
 
 /**
@@ -248,6 +251,41 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
   const natural = { walk: measure(walk), run: measure(run) }
   mixer.setTime(0)
 
+  // 足が地面に着く瞬間（1 周のうちの位置 0..1）。左右それぞれ、足の高さが下から 2 割の所を下へまたぐ所
+  const rightFoot = find('mixamorigRightFoot') ?? find('mixamorig:RightFoot')
+  const contactsOf = (action: THREE.AnimationAction | null): number[] => {
+    if (!action) return []
+    const clip = action.getClip()
+    const n = 72
+    const out: number[] = []
+    action.play()
+    for (const f of [foot, rightFoot]) {
+      if (!f) continue
+      const ys: number[] = []
+      const v = new THREE.Vector3()
+      for (let i = 0; i < n; i++) {
+        mixer.setTime((clip.duration * i) / n)
+        wrap.updateMatrixWorld(true)
+        f.getWorldPosition(v)
+        ys.push(v.y)
+      }
+      const lo = Math.min(...ys)
+      const thr = lo + (Math.max(...ys) - lo) * 0.2
+      for (let i = 0; i < n; i++) {
+        const prev = ys[(i + n - 1) % n]
+        if (prev > thr && ys[i] <= thr) out.push(i / n)
+      }
+    }
+    action.stop()
+    mixer.setTime(0)
+    return out.sort((a, b) => a - b)
+  }
+  // 足の骨が無い時は、1 周に 2 歩として半分ずつ
+  const contacts = {
+    walk: walk && foot ? contactsOf(walk) : [0, 0.5],
+    run: run && foot ? contactsOf(run) : [0, 0.5],
+  }
+
   // ジャンプのクリップが無い時の代わり: 走りの、両足がいちばん高いコマ（宙に浮いている形）で止める
   let flightTime = 0
   if (!jump && run && foot) {
@@ -290,8 +328,9 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
   const _n = new THREE.Vector3()
   const _up = new THREE.Vector3(0, 1, 0)
 
-  const update = (dt: number, speed: number, air: number) => {
+  const update = (dt: number, speed: number, air: number): boolean => {
     const airborne = air > 0.05
+    let stepped = false
     if (shadow) {
       // 足元の地面に沿わせる（斜面では傾ける）。跳ぶと小さく薄く
       wrap.getWorldPosition(_w)
@@ -325,9 +364,17 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
       const nat = natural.walk * (1 - runK) + natural.run * runK
       const walkDur = walk?.getClip().duration ?? 1
       const runDur = run?.getClip().duration ?? 1
-      const cycles = nat > 0 ? THREE.MathUtils.clamp(speed / nat, CYCLE_MIN, CYCLE_MAX * Math.max(1, speed / WALK_TOP)) : 1 // 1 周を何倍の速さで回すか
+      const cycles = nat > 0 ? THREE.MathUtils.clamp(speed / nat, CYCLE_MIN, CYCLE_MAX * Math.sqrt(Math.max(1, speed / WALK_TOP))) : 1 // 1 周を何倍の速さで回すか
       const dur = walkDur * (1 - runK) + runDur * runK
+      const prev = phase
       phase = (phase + (dt * cycles) / dur) % 1
+      // 主に見えているほう（歩きか走り）の、足が着く所をまたいだら 1 歩
+      if (!airborne) {
+        const wrapped = phase < prev
+        for (const c of runK >= 0.5 ? contacts.run : contacts.walk) {
+          if (wrapped ? c > prev || c <= phase : c > prev && c <= phase) stepped = true
+        }
+      }
     }
     if (walk) {
       walk.time = phase * walk.getClip().duration
@@ -354,6 +401,7 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
     }
     wasAir = airborne
     mixer.update(dt)
+    return stepped
   }
 
   const dispose = () => {

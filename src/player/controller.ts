@@ -26,8 +26,8 @@ export interface PlayerController {
   /** バーチャルスティック。カメラ基準の (x, z)、長さ 0〜1。倒した量で速さが変わる。(0, 0) で離した状態 */
   setStick: (x: number, z: number) => void
   /**
-   * 操作の感度（0〜1。1 が 11/6 までの速さ、既定 0.5）。スティックの速さ、ドラッグで見回す速さ、
-   * 歩いている時にカメラが背後へ回り込む速さにかける。タップ移動と WASD の歩く速さは変えない
+   * 操作の感度（0〜1。1 が 11/6 までの速さ、既定 0.5）。ドラッグで見回す速さと、歩いている時にカメラが背後へ回り込む速さにかける。
+   * スティックは少し倒した時の速さだけ（低いほどゆっくり出る）。いちばん倒した時・タップ移動・WASD の歩く速さは変えない
    */
   setSensitivity: (s: number) => void
   /**
@@ -63,7 +63,7 @@ export interface PlayerController {
 
 const WALK_SPEED = 6.5
 /** ダッシュ: 歩きの何倍か、満タンから空になるまで（秒）、空から満タンに戻るまで（秒、息切れ中は遅い）、息切れで立ち止まる時間（秒） */
-const DASH_MULT = 1.6
+const DASH_MULT = 2.4
 const STAMINA_DRAIN_S = 4.5
 const STAMINA_REFILL_S = 3
 const STAMINA_REFILL_TIRED_S = 4.5
@@ -399,7 +399,8 @@ export function createPlayer(
       if (mag > 0.12) {
         kx = stickX
         kz = stickZ
-        throttle = Math.min(1, (mag - 0.12) / 0.75 + 0.25) * sensitivity
+        // 感度は「少し倒した時の速さ」だけに効かせる（いちばん倒せばいつも歩きの速さ）。11/6 までは速さそのものに掛けていて、既定で半分の速さになっていた
+        throttle = Math.pow(Math.min(1, (mag - 0.12) / 0.75 + 0.25), 2 - sensitivity)
       }
     }
 

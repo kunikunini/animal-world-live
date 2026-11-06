@@ -360,10 +360,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
   const stepBiome = emptyWeights()
-  player.onStep((x, z) => {
+  const playStep = (x: number, z: number) => {
     sound.play(biomeAt(x, z, stepBiome).north > 0.5 ? 'step-snow' : 'step-grass')
     // 歩き続けている時だけ、ときどき主人公の息づかい
     sound.walkStep()
+  }
+  // 主人公のモデルがある時は、モデルの足が地面に着く瞬間に鳴らす（下の hero.update）。これは読めなかった時の、いままでの姿の足音
+  let heroSteps = false
+  player.onStep((x, z) => {
+    if (!heroSteps) playStep(x, z)
   })
   player.onJump(() => {
     sound.play('jump')
@@ -417,6 +422,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
     hero = next
     heroId = id
+    heroSteps = !!next
     figure.visible = !next
     if (next) {
       player.object.add(next.root)
@@ -1134,7 +1140,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const speed = dt > 0 && moved < 2 ? moved / dt : 0
       heroSpeed += (speed - heroSpeed) * Math.min(1, dt * 12)
       heroPrev.copy(p)
-      hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z)))
+      if (hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z))) && heroSpeed > 1) playStep(p.x, p.z)
     }
     {
       // がんばりゲージは主人公の頭の高さ（1.4m）の右に
