@@ -362,10 +362,29 @@ async function syncLayer(layer: Layer): Promise<void> {
   else playTrack(layer, list, 0, buf, lengths, FADE_S)
 }
 
+// 物語（紙芝居）の間だけ: ループしない 1 本の曲（bgm-story.mp3）を鳴らし、ホームの曲は止めておく
+let storyOn = false
+let storySrc: AudioBufferSourceNode | null = null
+let storyGain: GainNode | null = null
+
 function syncBgm(): void {
-  const key = bgmOverride ?? bgmBase
+  const key = storyOn ? null : (bgmOverride ?? bgmBase)
   bgm.want = key ? `bgm-${key}.mp3` : null
   void syncLayer(bgm)
+}
+
+// ナレーション（物語）: 主人公の声とは別に 1 本だけ。新しいのを始めたら前のは止める
+let narrSrc: AudioBufferSourceNode | null = null
+
+function stopNarration(): void {
+  if (narrSrc) {
+    try {
+      narrSrc.stop()
+    } catch {
+      // すでに止まっている
+    }
+    narrSrc = null
+  }
 }
 
 /** 最初のユーザー操作で呼ぶ。iOS はこの中で鳴らさないと解放されないので、無音を 1 回鳴らす */
@@ -515,6 +534,74 @@ export const sound = {
   setDuck(on: boolean): void {
     duck = on ? 0.3 : 1
     applyVolumes()
+  },
+
+  /** 物語のナレーション（public/audio/vo-story-<name>.mp3）。効果音の音量とミュートに入る */
+  narrate(name: string): void {
+    stopNarration()
+    if (!unlocked || !ctx || !seBus || seOff()) return
+    const file = `vo-story-${name}.mp3`
+    let p = shots.get(file)
+    if (!p) {
+      p = fetchBuffer(file)
+      shots.set(file, p)
+    }
+    void p.then((buf) => {
+      if (!buf || !ctx || !seBus) return
+      stopNarration()
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(seBus)
+      src.onended = () => {
+        if (narrSrc === src) narrSrc = null
+      }
+      narrSrc = src
+      src.start()
+      logPlayed(file)
+    })
+  },
+  stopNarration(): void {
+    stopNarration()
+  },
+  /** 物語の間の曲（ループしない 1 本）。ホームの曲は止め、終わったら戻す */
+  setStoryBgm(on: boolean): void {
+    if (storyOn === on) return
+    storyOn = on
+    syncBgm()
+    if (!on) {
+      if (storySrc && storyGain && ctx) fadeOut(storySrc, storyGain, FADE_S)
+      storySrc = null
+      storyGain = null
+      return
+    }
+    if (!unlocked || !ctx || !bgm.bus) return
+    const file = 'bgm-story.mp3'
+    let p = shots.get(file)
+    if (!p) {
+      p = fetchBuffer(file)
+      shots.set(file, p)
+    }
+    void p.then((buf) => {
+      if (!buf || !ctx || !bgm.bus || !storyOn || storySrc) return
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      const g = ctx.createGain()
+      const now = ctx.currentTime
+      g.gain.setValueAtTime(0, now)
+      g.gain.linearRampToValueAtTime(1, now + 1.2)
+      src.connect(g)
+      g.connect(bgm.bus)
+      src.onended = () => {
+        if (storySrc === src) {
+          storySrc = null
+          storyGain = null
+        }
+      }
+      storySrc = src
+      storyGain = g
+      src.start()
+      logPlayed(file)
+    })
   },
 
   /** 声の主（選んだ主人公の id） */

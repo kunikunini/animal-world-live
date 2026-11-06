@@ -776,6 +776,56 @@ button {
   }
 }
 
+/* 物語をみる: 「のぞいてみる」の上の小さな青いボタン（背景は透明、帽子の女の子 2 人の間の岩の上） */
+.home .home-story-btn {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.55em);
+  transform: translateX(-50%);
+  min-height: 1.9em;
+  padding: 0 0.95em;
+  gap: 0.32em;
+  /* 青い字と絵に、白いふち。地は透けるが、双眼鏡（青）の上でも読めるよう少しだけ白をかける */
+  border: 0.11em solid #fff;
+  border-radius: 999px;
+  font-family: var(--font-home);
+  font-size: 0.6em;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  color: var(--h-blue);
+  background: rgba(255, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0.1em 0 rgba(31, 42, 68, 0.18), 0 0.3em 0.8em rgba(31, 42, 68, 0.2);
+  text-shadow: 0 0 0.3em #fff, 0 0 0.5em #fff;
+  animation: home-pop 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s backwards;
+}
+
+.home .home-story-btn .ico {
+  width: 1.1em;
+  height: 1.1em;
+  filter: drop-shadow(0 0 0.2em #fff);
+}
+
+.home .home-story-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.home .home-story-btn:focus-visible {
+  outline: 0.14em solid #fff;
+  outline-offset: 0.12em;
+}
+
+/* 横にしたスマホ（低い横長）: 「のぞいてみる」のすぐ上は双眼鏡（青）なので、ボタンは右どなりに */
+@media (min-aspect-ratio: 3/2) and (max-height: 540px) {
+  .home .home-story-btn {
+    left: calc(100% + 0.6em);
+    bottom: 50%;
+    transform: translateY(50%);
+  }
+}
+
 /* ボタンの動き: 出てくる時にぽんと出る。「のぞいてみる」はふわふわ浮き、光が走り、まわりに輪が広がり、角がきらめく。
    「ともだち帳」は上から降りてきて、本がときどきぱらっとめくれる。動きをへらす時は止める */
 .home .home-enter {
@@ -902,7 +952,7 @@ button {
 }
 
 /* 動きをへらす: 双眼鏡・ボタンの動きを止める（レンズの入れ替わりは、ゆっくり色が変わるだけなので残す） */
-.home.is-still :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
+.home.is-still :is(.home-bino, .home-enter, .home-story-btn, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
 .home.is-still .home-cta::before,
 .home.is-still .home-enter::after,
 .home.is-still .badge-dot::after {
@@ -914,7 +964,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home :is(.home-bino, .home-enter, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
+  .home :is(.home-bino, .home-enter, .home-story-btn, .home-spark, .home-corner > *, .home-book .ico, .home-pick),
   .home .home-cta::before,
   .home .home-enter::after,
   .home .badge-dot::after {
@@ -1042,19 +1092,18 @@ button {
   overflow: hidden;
 }
 
-/* 前のコマは上にあって、右へ引き抜かれる */
-.story-card.is-pulled {
-  z-index: 2;
-  animation: st-pull 0.62s cubic-bezier(0.55, 0, 0.85, 0.45) forwards;
+/* 次のコマは上に重なって、ゆっくり溶けて現れる（少し大きい所から落ち着く）。7 つのワールドは速く */
+.story-card.is-enter {
+  animation: st-dissolve 0.85s ease-out both;
 }
 
-.story-card.is-pulled-quick {
-  z-index: 2;
-  animation: st-pull 0.42s cubic-bezier(0.55, 0, 0.85, 0.45) forwards;
+.story-card.is-enter-quick {
+  animation: st-dissolve 0.45s ease-out both;
 }
 
-@keyframes st-pull {
-  to { transform: translateX(110%) rotate(1.5deg); }
+@keyframes st-dissolve {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: none; }
 }
 
 .story-img {
@@ -1497,14 +1546,15 @@ button {
 }
 
 .st-logo {
-  font-family: 'Zen Maru Gothic', var(--font-home);
-  font-weight: 900;
-  font-size: clamp(20px, 7.4cqw, 54px);
+  /* 太くて丸い Baloo 2（Google Fonts、ロゴの字だけ読み込む）。読めない時は Zen Maru Gothic */
+  font-family: 'Baloo 2', 'Zen Maru Gothic', var(--font-home);
+  font-weight: 800;
+  font-size: clamp(22px, 8.2cqw, 60px);
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: #ffd233;
   text-align: center;
-  -webkit-text-stroke: 0.1em #1f2a44;
+  -webkit-text-stroke: 0.08em #1f2a44;
   paint-order: stroke fill;
   text-shadow: 0 0.12em 0 #1f2a44, 0 0.25em 0.3em rgba(0, 0, 0, 0.35);
   opacity: 0;
@@ -1516,12 +1566,12 @@ button {
 
 /* 動きをへらす: カメラの寄りと引き抜きをやめて、フェードだけ */
 .story.is-still .story-img { animation: none; }
-.story.is-still .story-card.is-pulled,
-.story.is-still .story-card.is-pulled-quick { animation: st-fade 0.3s ease forwards; }
+.story.is-still .story-card.is-enter,
+.story.is-still .story-card.is-enter-quick { animation: st-fade-in 0.3s ease both; }
 .story.is-still :is(.st-star, .st-cta, .st-book-heart, .btn-hero, .st-burst i) { animation: none; }
 .story.is-still .st-world { animation: none; }
 
-@keyframes st-fade { to { opacity: 0; } }
+@keyframes st-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* スマホ横: 枠を左、言葉とボタンを右に */
 @media (max-height: 520px) and (orientation: landscape) {

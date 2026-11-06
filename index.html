@@ -30,6 +30,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&text=ANIMALWORDVETakelo%E3%81%AE%E3%81%9E%E3%81%84%E3%81%A6%E3%81%BF%E3%82%8B&display=swap" />
+    <!-- おはなしの最後のロゴ（ANIMAL WORLD LIVE）だけ: 太くて丸い Baloo 2 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&text=ANIMLWORDVE&display=swap" />
     <link rel="stylesheet" href="/src/style.css" />
     <!-- ホームのキービジュアル: 画面の縦横比に合う 1 枚だけを先に読む（CSS の切り替えと同じ境目） -->
     <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-portrait.webp" media="(max-aspect-ratio: 13/20)" />
@@ -113,6 +115,8 @@
       </div>
 
       <div class="home-cta">
+        <!-- おはなし（紙芝居のオープニング）をいつでも見られる小さなボタン。「のぞいてみる」の上、帽子の女の子 2 人の間 -->
+        <button id="home-story" class="btn home-story-btn" type="button"><svg class="ico"><use href="#i-film" /></svg><span data-i18n="storyWatch">物語をみる</span></button>
         <svg class="home-spark l" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><g stroke="#ffc531" stroke-width="8"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g><g stroke="#fff6cf" stroke-width="3.5"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g></g></svg>
         <svg class="home-spark r" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><g stroke="#ffc531" stroke-width="8"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g><g stroke="#fff6cf" stroke-width="3.5"><path d="M27 5l2 10M9 12l8 7M4 28h11" /></g></g></svg>
         <button id="enter" class="btn home-enter" type="button" aria-label="アニマルワールドに入る" data-i18n-aria="enterWorld"><svg class="ico ico-fill"><use href="#i-bino" /></svg><span data-i18n="peek">のぞいてみる</span></button>
