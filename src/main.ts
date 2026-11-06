@@ -363,6 +363,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'maraYuzu', species: 'マーラ', name: 'ゆず', file: 'mara-yuzu', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
       // きのこ: ふれあいワールドの放牧場のポニー 3 頭のうちきのこ。めいの値（0.95／0.9／0.5／0.8）の流用は腰 98.5〜105.2% で外れ、1／0.9／0.5／0.9 に（腰 99.9〜101.6%）
       { key: 'ponyKinoko', species: 'ポニー', name: 'きのこ', file: 'pony-kinoko', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      // アンバー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 3 番目。ウーピーの値（0.9／1／0.5／0.8）の流用だけで腰 99.6〜103.0%。群れのプリミティブ版（wildfolk）と replaceHost で入れ替える
+      { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
