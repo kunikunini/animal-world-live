@@ -63,6 +63,8 @@ const KEY = {
   ambVol: 'awl.vol.amb',
   ambMute: 'awl.mute.amb',
   seMute: 'awl.mute.se',
+  /** 「音声」: オフにするとすべての音が消える（3 つの系統の値はそのまま残る） */
+  allMute: 'awl.mute.all',
   friend: 'awl.friendSound',
 }
 
@@ -117,6 +119,7 @@ const state = {
   bgmMute: bgmMute0,
   ambMute: ambMuteStr === null ? bgmMute0 : ambMuteStr === '1',
   seMute: readStr(KEY.seMute) === '1',
+  allMute: readStr(KEY.allMute) === '1',
   friend: (readStr(KEY.friend) === 'new' ? 'new' : 'chime') as FriendSound,
 }
 
@@ -148,14 +151,19 @@ function curve(v: number): number {
   return v * v
 }
 
+/** 効果音を鳴らさない時（効果音がオフか、「音声」がオフ） */
+function seOff(): boolean {
+  return state.allMute || state.seMute
+}
+
 function applyVolumes(): void {
   if (!ctx) return
   const now = ctx.currentTime
-  const b = state.bgmMute ? 0 : curve(state.bgmVol) * duck
-  const a = state.ambMute ? 0 : curve(state.ambVol) * duck
+  const b = state.allMute || state.bgmMute ? 0 : curve(state.bgmVol) * duck
+  const a = state.allMute || state.ambMute ? 0 : curve(state.ambVol) * duck
   bgm.bus?.gain.setTargetAtTime(b * 0.75, now, 0.08)
   amb.bus?.gain.setTargetAtTime(a * 0.55, now, 0.08)
-  seBus?.gain.setTargetAtTime(state.seMute ? 0 : curve(state.seVol), now, 0.03)
+  seBus?.gain.setTargetAtTime(seOff() ? 0 : curve(state.seVol), now, 0.03)
 }
 
 function ensureContext(): AudioContext | null {
@@ -363,7 +371,7 @@ function unlock(): void {
 let pendingTap = 0
 
 function playShot(file: string, rate = 1, gain = 1): void {
-  if (!unlocked || !ctx || !seBus || state.seMute) return
+  if (!unlocked || !ctx || !seBus || seOff()) return
   let p = shots.get(file)
   if (!p) {
     p = fetchBuffer(file)
@@ -396,7 +404,7 @@ let lastWalkStep = 0
 let lastBreath = 0
 
 function sayNow(line: VoiceLine): void {
-  if (!unlocked || !ctx || !seBus || state.seMute) return
+  if (!unlocked || !ctx || !seBus || seOff()) return
   const variants = VOICE_VARIANTS[line]
   const turn = voiceTurn[line] ?? 0
   voiceTurn[line] = turn + 1
@@ -536,7 +544,7 @@ export const sound = {
       }
       case 'friend':
         if (state.friend === 'chime') {
-          if (unlocked && ctx && seBus && !state.seMute) {
+          if (unlocked && ctx && seBus && !seOff()) {
             playFriendChime(ctx, seBus)
             logPlayed('chime')
           }
@@ -583,6 +591,16 @@ export const sound = {
   setSeMuted(on: boolean): void {
     state.seMute = on
     write(KEY.seMute, on ? '1' : '0')
+    applyVolumes()
+    listeners.forEach((fn) => fn())
+  },
+  /** 「音声」（すべての音）がオンか */
+  get soundOn() {
+    return !state.allMute
+  },
+  setSoundOn(on: boolean): void {
+    state.allMute = !on
+    write(KEY.allMute, on ? '0' : '1')
     applyVolumes()
     listeners.forEach((fn) => fn())
   },

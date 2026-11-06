@@ -47,7 +47,10 @@ const RUN_FULL = 3.0
 const STOP_BELOW = 0.2
 /** 足の運びの速さの倍率の範囲（これを超える速さでは足が地面を少し滑る。脚が速く回りすぎて見えないようにする） */
 const CYCLE_MIN = 0.6
-const CYCLE_MAX = 1.7
+/** 11/6 にくにの「歩く見た目をもう少しゆっくり」で 1.7 → 1.2（進む速さは変えないので、そのぶん足が少し滑る） */
+const CYCLE_MAX = 1.2
+/** ふだんのいちばん速い歩き（m/s）。これより速いダッシュの時だけ、足の運びの上限を速さに比例して上げる */
+const WALK_TOP = 6.5
 
 /**
  * 地面と見分けやすくする工夫（追従カメラの遠景で、黄色の服がサバンナの金の草原に溶けるため。服の色は変えない）
@@ -322,7 +325,7 @@ export async function loadHero(url: string, opts: HeroOptions): Promise<HeroMode
       const nat = natural.walk * (1 - runK) + natural.run * runK
       const walkDur = walk?.getClip().duration ?? 1
       const runDur = run?.getClip().duration ?? 1
-      const cycles = nat > 0 ? THREE.MathUtils.clamp(speed / nat, CYCLE_MIN, CYCLE_MAX) : 1 // 1 周を何倍の速さで回すか
+      const cycles = nat > 0 ? THREE.MathUtils.clamp(speed / nat, CYCLE_MIN, CYCLE_MAX * Math.max(1, speed / WALK_TOP)) : 1 // 1 周を何倍の速さで回すか
       const dur = walkDur * (1 - runK) + runDur * runK
       phase = (phase + (dt * cycles) / dur) % 1
     }

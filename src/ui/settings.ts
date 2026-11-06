@@ -3,7 +3,7 @@
  * 「動きをへらす」は前と同じ保存キーを使う（ワールドの HUD にあった時の選択を引き継ぐ）。
  * 保存が無ければ端末の「視差効果を減らす」に従う。
  */
-import { getLang, onLangChange, setLang, type Lang } from './i18n'
+import { getLang, onLangChange, setLang, t, type Lang } from './i18n'
 import { sound, type FriendSound } from '../audio/sound'
 import { setViewOpen } from './transition'
 import { bindSoundControls } from './soundControls'
@@ -99,6 +99,21 @@ export function createSettings(): Settings {
 
   // 音: BGM・まわりの音・効果音の音量とオン・オフ（HUD の音の板と同じつまみ）。ともだちになる音の聴きくらべ
   bindSoundControls(root)
+  // 「くわしく設定」で 3 つのつまみを開け閉めする（閉じた状態から始める）
+  const moreBtn = document.getElementById('sound-more') as HTMLButtonElement
+  const detail = document.getElementById('sound-detail') as HTMLElement
+  const moreLabel = moreBtn.querySelector('span') as HTMLElement
+  const syncMore = () => {
+    const open = !detail.hidden
+    moreBtn.setAttribute('aria-expanded', String(open))
+    moreLabel.dataset.i18n = open ? 'soundLess' : 'soundMore'
+    moreLabel.textContent = t(open ? 'soundLess' : 'soundMore')
+  }
+  moreBtn.addEventListener('click', () => {
+    detail.hidden = !detail.hidden
+    syncMore()
+  })
+  onLangChange(syncMore)
   const friendBtns = [...root.querySelectorAll<HTMLButtonElement>('button[data-friend-sound]')]
   const syncFriend = () => {
     for (const b of friendBtns) b.setAttribute('aria-pressed', String(b.dataset.friendSound === sound.friendSound))

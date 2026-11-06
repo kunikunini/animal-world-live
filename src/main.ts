@@ -49,6 +49,7 @@ import { createEncounterStore } from './data/encounters'
 import { ANIMALS, getAnimal, type Animal } from './data/animals'
 import { applyView, viewNames } from './debug/views'
 import { createSoundPanel } from './ui/soundControls'
+import { createStaminaUi } from './ui/stamina'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -151,6 +152,7 @@ function createShell() {
     home.setReduceMotion(on)
     iris.setReduceMotion(on)
     hud.setReduceMotion(on)
+    story.setReduceMotion(on)
     // 画面の出入りは CSS の transition。動きをへらす時はフェードだけにする
     document.body.classList.toggle('is-reduce-motion', on)
   }
@@ -373,15 +375,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   })
   scene.add(player.object)
   const guideProj = new THREE.Vector3()
-  // あそびかたツアーの「いっしょに行く」: ライリーの手前（4m）まで歩く
-  guide.onWalkTo(() => {
+  // あそびかたツアーの「いっしょに行く」・照らしたライリーを押した時: ライリーの手前（2.5m）まで歩く
+  guide.onWalkTo((target) => {
+    // 照らした観察スポットを押した時は「観察スポットへ」と同じ道で歩く
+    if (target === 'spot') {
+      // 着いていればスコープを開く（「スコープをのぞく」と同じ）。まだならスポットまで歩く
+      if (arrived) void openScope()
+      else player.goTo(here.route)
+      return
+    }
     const riley = lions.find((l) => l.id === 'riley')
     if (!riley) return
     const p = player.object.position
     const dx = p.x - riley.position.x
     const dz = p.z - riley.position.z
     const d = Math.hypot(dx, dz) || 1
-    player.goTo(routeTo({ x: p.x, z: p.z }, { x: riley.position.x + (dx / d) * 4, z: riley.position.z + (dz / d) * 4 }))
+    player.goTo(routeTo({ x: p.x, z: p.z }, { x: riley.position.x + (dx / d) * 2.5, z: riley.position.z + (dz / d) * 2.5 }))
   })
   let walkX = player.object.position.x
   let walkZ = player.object.position.z
@@ -439,6 +448,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   hud.onJump(() => player.jump())
 
+  // ダッシュ（ジャンプの上のボタン、PC は Shift）と、主人公の頭の右のがんばりゲージ
+  const staminaUi = createStaminaUi()
+  staminaUi.onDash((on) => player.setDash(on))
+  player.onDashEnd(() => staminaUi.setDashOn(false))
+  player.onExhaust(() => sound.say('breath'))
+  const staminaProj = new THREE.Vector3()
+
   // 左下の半透明スティック（スマホ）。細かい移動用。タップ移動と併用できる。?stick=1 で PC でも出す
   const joystick = createJoystick()
   joystick.onChange((x, z) => player.setStick(x, z))
@@ -490,6 +506,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen() || introOn
     player.setInputEnabled(!blocked && !paused)
     joystick.setEnabled(!blocked && !paused)
+    staminaUi.setEnabled(!blocked && !paused)
     hud.setOverlayOpen(blocked)
     if (!blocked && !paused) canvas.focus()
   }
@@ -585,7 +602,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const safe = { top: 72, bottom: 190 }
   const measureSafe = () => {
     let reserve = 0
-    for (const el of [stickEl, jumpEl, spotBtnEl]) {
+    for (const el of [stickEl, jumpEl, document.getElementById('dash'), spotBtnEl]) {
       if (!el || el.hidden) continue
       const r = el.getBoundingClientRect()
       // スマホでは観察スポットへが地図の下（上側）にあるので、下の余白には数えない
@@ -1119,6 +1136,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       heroPrev.copy(p)
       hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z)))
     }
+    {
+      // がんばりゲージは主人公の頭の高さ（1.4m）の右に
+      staminaProj.copy(player.object.position).setY(player.object.position.y + 1.4).project(camera)
+      const vis = staminaProj.z < 1 && Math.abs(staminaProj.x) < 0.95 && Math.abs(staminaProj.y) < 0.95
+      staminaUi.update(dt, player.stamina(), vis ? { x: ((staminaProj.x + 1) / 2) * window.innerWidth, y: ((1 - staminaProj.y) / 2) * window.innerHeight } : null)
+    }
     props.update(time)
     sea.update(time)
     atmosphere.update(time, dt, camera.position)
@@ -1329,6 +1352,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         met.mark(lion.id)
         // 「〇〇のそばに来ました」の通知は出さない（頭の上の名前の札で分かる）
         guide.reach('near')
+        if (lion.id === 'riley') guide.reach('nearRiley')
       }
     }
 

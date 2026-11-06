@@ -30,6 +30,18 @@ export interface PlayerController {
    * 歩いている時にカメラが背後へ回り込む速さにかける。タップ移動と WASD の歩く速さは変えない
    */
   setSensitivity: (s: number) => void
+  /**
+   * ダッシュ。on の間（スティック・キー・タップ移動のどれで歩いていても）速く走り、がんばりゲージが減る。
+   * ゲージが空になると息切れして少しのあいだ立ち止まり、満タンに戻るまではダッシュできない。
+   * 止まって 0.4 秒たつと自分でオフに戻る
+   */
+  setDash: (on: boolean) => void
+  /** がんばりゲージ（0〜1）・走っているか・息切れ中か・息切れで立ち止まっているか（UI の表示用） */
+  stamina: () => { value: number; dashing: boolean; exhausted: boolean; resting: boolean }
+  /** ダッシュが自分でオフに戻った時（止まった・息切れ）。ボタンの見た目を戻すため */
+  onDashEnd: (fn: () => void) => void
+  /** 息切れした瞬間（音・表示用） */
+  onExhaust: (fn: () => void) => void
   /** 開発用: 位置と向きを即座に変える（スクリーンショットの定点） */
   teleport: (x: number, z: number, heading?: number, camYaw?: number) => void
   /** 開発用: 追従カメラを止めて固定の位置・注視点にする。null で戻す */
@@ -50,6 +62,14 @@ export interface PlayerController {
 }
 
 const WALK_SPEED = 6.5
+/** ダッシュ: 歩きの何倍か、満タンから空になるまで（秒）、空から満タンに戻るまで（秒、息切れ中は遅い）、息切れで立ち止まる時間（秒） */
+const DASH_MULT = 1.6
+const STAMINA_DRAIN_S = 4.5
+const STAMINA_REFILL_S = 3
+const STAMINA_REFILL_TIRED_S = 4.5
+const EXHAUST_REST_S = 1.8
+/** 見た目の足の運び（歩きの揺れと足音）の速さ。11/6 にくにの「もう少しゆっくり」で 9 → 6.3 に（進む速さは変えない） */
+const STEP_RATE = 6.3
 const TURN_SPEED = 9
 /** カメラの距離（ホイールで変えられる範囲） */
 const CAM_DISTANCE = 9.0
@@ -264,6 +284,21 @@ export function createPlayer(
   let lastY = 0
   let dragging = false
   let sensitivity = 0.5
+  // ダッシュとがんばりゲージ
+  let dashOn = false
+  let dashKey = false
+  let stamina = 1
+  let exhausted = false
+  let restT = 0
+  let dashing = false
+  let idleT = 0
+  const dashEndListeners: Array<() => void> = []
+  const exhaustListeners: Array<() => void> = []
+  const endDash = () => {
+    if (!dashOn) return
+    dashOn = false
+    dashEndListeners.forEach((fn) => fn())
+  }
 
   const onPointerDown = (e: PointerEvent) => {
     if (!inputEnabled || pointerId !== null) return
@@ -319,14 +354,25 @@ export function createPlayer(
       e.preventDefault()
       return
     }
+    // PC: Shift を押している間ダッシュ
+    if (e.key === 'Shift') {
+      dashKey = true
+      return
+    }
     const k = e.key.toLowerCase()
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
       keys.add(k)
       e.preventDefault()
     }
   }
-  const onKeyUp = (e: KeyboardEvent) => keys.delete(e.key.toLowerCase())
-  const onBlur = () => keys.clear()
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (e.key === 'Shift') dashKey = false
+    keys.delete(e.key.toLowerCase())
+  }
+  const onBlur = () => {
+    keys.clear()
+    dashKey = false
+  }
 
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
@@ -357,6 +403,38 @@ export function createPlayer(
       }
     }
 
+    // 息切れで立ち止まっている間は動かない（タップの行き先も消してある）
+    if (restT > 0) {
+      restT -= dt
+      kx = 0
+      kz = 0
+    }
+    const wantsMove = kx !== 0 || kz !== 0 || waypoints.length > 0
+    // ダッシュ: ボタン（またはShift）がオンで、歩こうとしていて、息切れしていない時
+    dashing = (dashOn || dashKey) && wantsMove && !exhausted
+    if (dashing) {
+      stamina -= dt / STAMINA_DRAIN_S
+      if (stamina <= 0) {
+        stamina = 0
+        dashing = false
+        exhausted = true
+        restT = EXHAUST_REST_S
+        waypoints = []
+        marker.visible = false
+        endDash()
+        kx = 0
+        kz = 0
+        exhaustListeners.forEach((fn) => fn())
+      }
+    } else {
+      stamina = Math.min(1, stamina + dt / (exhausted ? STAMINA_REFILL_TIRED_S : STAMINA_REFILL_S))
+      if (exhausted && stamina >= 1) exhausted = false
+    }
+    // 止まって少したったらダッシュのボタンを戻す
+    idleT = wantsMove ? 0 : idleT + dt
+    if (idleT > 0.4) endDash()
+    const speedMul = dashing ? DASH_MULT : 1
+
     _prev.copy(object.position)
     let moving = false
     let wanted = 0
@@ -371,7 +449,7 @@ export function createPlayer(
       const sin = Math.sin(camYaw)
       const cos = Math.cos(camYaw)
       _dir.set(kx * cos + kz * sin, 0, -kx * sin + kz * cos)
-      wanted = WALK_SPEED * dt * throttle
+      wanted = WALK_SPEED * speedMul * dt * throttle
       _target.copy(object.position).addScaledVector(_dir, wanted)
       object.position.x = _target.x
       object.position.z = _target.z
@@ -389,7 +467,7 @@ export function createPlayer(
         slideSign = 0
       } else {
         _dir.divideScalar(dist)
-        wanted = Math.min(dist, WALK_SPEED * dt)
+        wanted = Math.min(dist, WALK_SPEED * speedMul * dt)
         object.position.addScaledVector(_dir, wanted)
         moving = true
       }
@@ -472,7 +550,7 @@ export function createPlayer(
       let diff = want - heading
       diff = Math.atan2(Math.sin(diff), Math.cos(diff))
       heading += diff * Math.min(1, TURN_SPEED * dt)
-      walkPhase += dt * 9
+      walkPhase += dt * STEP_RATE * speedMul
       // 足音: 揺れが底に来るたび（sin の 0 をまたぐたび）に 1 歩。空中と、ほとんど進んでいない時は鳴らさない
       const n = Math.floor(walkPhase / Math.PI)
       const actual = Math.hypot(object.position.x - _prev.x, object.position.z - _prev.z)
@@ -540,6 +618,8 @@ export function createPlayer(
         pointerId = null
         stickX = 0
         stickZ = 0
+        dashKey = false
+        endDash()
       }
     },
     setStick: (x, z) => {
@@ -552,6 +632,18 @@ export function createPlayer(
     },
     setSensitivity: (s) => {
       sensitivity = Math.min(1, Math.max(0.1, s))
+    },
+    setDash: (on) => {
+      if (on && (!inputEnabled || exhausted)) return
+      dashOn = on
+      if (on) idleT = 0
+    },
+    stamina: () => ({ value: stamina, dashing, exhausted, resting: restT > 0 }),
+    onDashEnd: (fn) => {
+      dashEndListeners.push(fn)
+    },
+    onExhaust: (fn) => {
+      exhaustListeners.push(fn)
     },
     jump,
     onStep: (fn) => {
