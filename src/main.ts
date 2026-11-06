@@ -394,6 +394,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'kinkajouCoco', species: 'キンカジュー', name: 'ココ', file: 'kinkajou-coco', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'prairieTanpopo', species: 'プレーリードッグ', name: 'たんぽぽ', file: 'prairie-tanpopo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'goatShiki', species: 'ヤギ', name: 'シキ', file: 'goat-shiki', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatTwotone', species: 'ヤギ', name: 'ツートン', file: 'goat-twotone', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
