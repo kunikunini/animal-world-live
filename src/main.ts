@@ -306,6 +306,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 体の長さ（鼻先〜尾の先）1.4 m は実物の成犬の目安。接地だけだと腰が 86〜89% の忍び足。
       // 後ろ脚 0.75・背骨 0.9・尾 0.5・前脚 0.7 で腰 99.1〜101.3%（銀牙で測って決めた値）
       { key: 'husky', species: 'シベリアンハスキー', name: '銀牙', file: 'husky-ginga', posture: { hind: 0.75, spine: 0.9, tail: 0.5, front: 0.7, ground: true }, walk: { speed: 0.9, radius: 3.0, idle: [5, 12] }, place: { x: -5, z: -291, yaw: 0.3, length: 1.4 } },
+      // ピーター: サバンナの道（スタート → スポット）の右手の草原。グラン（道の左手）と道をはさんだ向かい、ライリー（40, 5）から 22 m。プリミティブ版は無いので新しく置く。
+      // 体の長さ 1.7 m は実物の成獣の目安。接地だけだと腰 80〜83%。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8 で腰 99.1〜102.3%（ピーターで測って決めた値）
+      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.8, ground: true }, walk: { speed: 0.8, radius: 3.0, idle: [6, 14] }, place: { x: 18, z: 4, yaw: -0.6, length: 1.7 } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
