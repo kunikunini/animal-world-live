@@ -51,6 +51,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const badge = document.getElementById('observe-badge') as HTMLElement
   const placeholderNote = document.getElementById('observe-placeholder') as HTMLElement
   const groupNote = document.getElementById('observe-group-note') as HTMLElement
+  const badgeStaff = document.getElementById('observe-badge-staff') as HTMLElement
   const video = document.getElementById('observe-video') as HTMLVideoElement
   const poster = document.getElementById('observe-poster') as HTMLElement
   const posterFace = document.getElementById('observe-poster-face') as HTMLElement
@@ -122,6 +123,11 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     const resolved = resolveVideoSource(animal.video)
     const seq = ++loadSeq
     badge.hidden = !resolved
+    badgeStaff.hidden = !(resolved && animal.video.staff)
+    // 縦長の映像: 左右に、表紙（左右をぼかして 16:9 にした物）を敷いて中央に出す。2 本目の <video> は使わない（スマホのメモリ）
+    const portrait = !!resolved && animal.video.portrait === true && !!resolved.poster
+    video.classList.toggle('is-portrait', portrait)
+    video.style.backgroundImage = portrait ? `url("${resolved.poster}")` : ''
     placeholderNote.hidden = !(resolved?.placeholder ?? false)
     // 種のみんなの映像: この子が映っているとは言わない
     const group = resolved ? animal.videoGroup : undefined

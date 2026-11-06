@@ -48,6 +48,8 @@ All animal footage in this prototype is **recorded footage**, shot at Hokkaido A
 - 2026-11-03: the lion family (Angie with the twins Claire and Carla)
 - 2026-11-04: a spotted hyena; a South American tapir with a capybara; great white pelicans with kangaroos and a mara; ponies; a common squirrel monkey (listed in `src/data/videos.json`)
 
+- Filmed by staff (shown in the "Filmed by staff" shelf of the Animal Scope and on that animal's monitor, newest first): the woodchuck ファス. The filming date is not in the file, so no date is shown, and this video is not covered by the "shot during the hackathon" statement above. The animal is set only when the file name exactly matches a name on the register; the filmer's name is not shown. The delivery version keeps the original size (portrait 450×800, not upscaled) with metadata removed; on the monitor a portrait video is shown in the middle over a blurred copy of its poster.
+
 The species of each 2026-11-04 video come from the names of the original files. Which animal is on camera has not been checked, so for a species with several animals the same video is shown for each of them and the monitor says so. If only one animal of that species lives at the facility, the video is shown as that animal's.
 
 The delivery versions are 720p, H.264/AAC, converted from HLG to SDR. The original files are not in this repository. `public/media/` holds the poster images and the lion family video; the 2026-11-04 videos are kept out of the repository to keep it small and are served from R2. On the published site a video appears once it has been uploaded to R2 (`onR2` in `src/data/videos.json`); until then it appears only on the development server.
@@ -157,6 +159,8 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 
 - 2026-11-03：ライオンの親子（アンジーと、ふたごのクレア・カーラ）
 - 2026-11-04：ブチハイエナ、アメリカバクとカピバラ、モモイロペリカンとカンガルーとマーラ、ポニー、コモンリスザル（一覧は `src/data/videos.json`）
+
+- スタッフ撮影（アニマルスコープの「スタッフ撮影」の棚と、その子のモニターに出す。新しい順）：ウッドチャックのファス。撮影日はファイルに無いので出しておらず、上の「ハッカソン期間中に収録」には含みません。どの子の映像かは、ファイル名が名簿の個体名と完全一致した時だけ決めています。撮影した人の名前は出しません。配信用の版は元の大きさのまま（縦 450×800、拡大しない）でメタデータを消しています。縦長の映像は、モニターで左右にぼかした表紙を敷いて中央に出します。
 
 2026-11-04 の映像の種は、収録した元ファイルの名前から取っています。どの個体が映っているかは確かめていないので、同じ種が複数いる時はその子たちみんなに同じ映像を出し、モニターにそう書いています。施設にその種が 1 頭だけの時は、その子の映像として出しています。
 

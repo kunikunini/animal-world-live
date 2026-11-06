@@ -4,7 +4,7 @@ import { checkLetter } from '../data/letterFilter'
 import type { Letter, LetterStore } from '../data/letters'
 import { LETTER_MAX } from '../data/letters'
 import type { Notice, NoticeStore } from '../data/notices'
-import { SPECIES_VIDEOS } from '../data/videos'
+import { getVideo } from '../data/videos'
 import { getWorld } from '../data/worlds'
 import { formatMetDate } from '../data/friends'
 import { faceMarkup } from './faces'
@@ -96,9 +96,9 @@ export function createChatView({ letters, notices, read, friendSince }: ChatDeps
 
   const videoCard = (a: Animal): string => {
     if (!a.video.url) return ''
-    const sv = a.videoId ? SPECIES_VIDEOS.find((v) => v.id === a.videoId) : undefined
+    const sv = a.videoId ? getVideo(a.videoId) : undefined
     const lines: string[] = []
-    if (sv) lines.push(`${esc(t('videoRecordedOn', { date: formatYmd(sv.recordedOn) }))} ・ ${esc(sv.duration)}`)
+    if (sv) lines.push(sv.recordedOn ? `${esc(t('videoRecordedOn', { date: formatYmd(sv.recordedOn) }))} ・ ${esc(sv.duration)}` : esc(sv.duration))
     if (a.videoGroup) {
       const label = a.videoGroup.label ? a.videoGroup.label[getLang()] : a.videoGroup.species.map(speciesName).join(getLang() === 'en' ? ' & ' : '・')
       lines.push(esc(t('videoGroupNote', { label })))

@@ -1,6 +1,6 @@
 import raw from './animals.json'
 import rosterRaw from './roster.json'
-import { videoForSpecies } from './videos'
+import { staffVideosFor, videoForSpecies } from './videos'
 import photosRaw from './photos.json'
 import type { VideoSubject } from './videos'
 import type { WorldKey } from './worlds'
@@ -18,6 +18,10 @@ export interface VideoSource {
   poster: string
   /** true のときは仮映像（自作プレースホルダ）。UI に「仮映像」と出す */
   placeholder?: boolean
+  /** スタッフが撮った映像。モニターに「スタッフ撮影」と出す */
+  staff?: boolean
+  /** 縦長の映像。左右にぼかした背景を敷いて中央に出す */
+  portrait?: boolean
 }
 
 export interface Animal {
@@ -43,7 +47,7 @@ export interface Animal {
   subArea?: string
   /** 3D の出会いと実写を先に作る代表の種か（D-32） */
   representative?: boolean
-  /** 種の映像（videos.json）の id。ライオンは無し */
+  /** 映像（videos.json）の id。種の映像かスタッフ撮影。ライオンは無し */
   videoId?: string
   /**
    * 映像がその種のみんなのもので、この子が映っているかは確かめていない時のまとまり。
@@ -76,7 +80,9 @@ const rosterRows = (rosterRaw as { animals: RosterRow[] }).animals
  * 収録映像のバッジも出さない。
  */
 const rosterAnimals: Animal[] = rosterRows.map((r) => {
-  const found = videoForSpecies(r.species)
+  // その子と名前で決まったスタッフ撮影の映像があれば、種の映像より先に出す（この子が映っていると言える）
+  const staff = staffVideosFor(r.id)[0]
+  const found = staff ? null : videoForSpecies(r.species)
   // 映像のまとまり（例: カンガルー 2 種）に何頭いるか。1 頭ならその子の映像と言える
   const groupSize = found ? rosterRows.filter((x) => found.subject.species.includes(x.species)).length : 0
   return {
@@ -90,13 +96,15 @@ const rosterAnimals: Animal[] = rosterRows.map((r) => {
     identifyingMarks: '',
     keeperComment: '',
     status: 'ready',
-    video: found
-      ? { source: 'recorded', url: found.video.url, fallbackUrl: found.video.fallbackUrl, poster: found.video.poster }
-      : { source: 'recorded', url: '', poster: '' },
+    video: staff
+      ? { source: 'recorded', url: staff.url, fallbackUrl: staff.fallbackUrl, poster: staff.poster, staff: true, portrait: staff.portrait }
+      : found
+        ? { source: 'recorded', url: found.video.url, fallbackUrl: found.video.fallbackUrl, poster: found.video.poster }
+        : { source: 'recorded', url: '', poster: '' },
     world: r.world,
     subArea: r.subArea,
     representative: r.representative,
-    videoId: found?.video.id,
+    videoId: staff?.id ?? found?.video.id,
     videoGroup: found && groupSize > 1 ? found.subject : undefined,
   }
 })

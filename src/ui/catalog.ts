@@ -1,6 +1,6 @@
 import type { Animal } from '../data/animals'
 import { animalsInVideo, animalsInWorld, getAnimal } from '../data/animals'
-import { SPECIES_VIDEOS, videoForSpecies } from '../data/videos'
+import { SPECIES_VIDEOS, STAFF_VIDEOS, videoForSpecies } from '../data/videos'
 import { WORLDS, getWorld } from '../data/worlds'
 import type { WorldInfo, WorldKey } from '../data/worlds'
 import type { FriendBookStore } from '../data/friends'
@@ -13,7 +13,7 @@ import { hideView, showView } from './transition'
 /**
  * アニマルスコープ（動画一覧）。どのワールドの観察スポットでも、スコープをのぞくと同じ一覧が開く。
  * いまある映像は実物、まだ無い枠（ライブ・ほかのワールド・ほかの動物・動物園）は形だけのシルエットで、押せない。
- * 段の並びは「ライブ → 注目 → ともだち → ワールド → どうぶつ → おすすめ → すべての動画 → 動物園」。
+ * 段の並びは「ライブ → 注目 → ともだち → ワールド → どうぶつ → おすすめ → すべての動画 → スタッフ撮影 → 動物園」。
  * 「ワールド」の段から、開いているワールド（D-36）の動物の一覧へ入れる（サバンナも同じ）。一覧は同じ画面の中で切り替える。
  */
 export interface CatalogView {
@@ -125,7 +125,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
                 return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
               })
               .join('')
-            const film = videoForSpecies(sp)
+            const film = videoForSpecies(sp) || inSub.some((a) => a.species === sp && a.video.staff)
               ? `<span class="wp-has-video"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('catHasVideo')}</span>`
               : ''
             return `<div class="wp-species"><h3 class="wp-species-h">${esc(speciesName(sp))}${film}</h3><div class="wp-grid">${faces}</div></div>`
@@ -278,6 +278,18 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       )}</div>`,
     )
 
+    // スタッフ撮影（新しい順）。縦長の映像も同じ形のカード（表紙は 16:9 に切り抜いてある）。順位や人気の飾りは付けない
+    const staffCards = STAFF_VIDEOS.flatMap((v) => {
+      const a = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
+      if (!a) return []
+      const w = a.world ? getWorld(a.world) : undefined
+      const place = a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
+      return [
+        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(animalName(a))}（${esc(speciesName(a.species))}）</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+      ]
+    })
+    const staff = staffCards.length ? section('staff', meta('catRowStaff'), `<div class="cat-row">${staffCards.join('')}</div>`) : ''
+
     const zoos = section(
       'zoos',
       meta('catRowZoos'),
@@ -298,7 +310,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <nav class="cat-chips cat-row" aria-label="${meta('catCategories')}">
           ${chip('all', 'catAll', true)}${chip('live', 'catLive', false, true)}${chip('worlds', 'catWorlds')}${chip('animals', 'catAnimals')}${chip('zoos', 'catZoos')}
         </nav>
-        ${live}${hero}${friendsRow}${worlds}${animals}${popular}${recs}${zoos}
+        ${live}${hero}${friendsRow}${worlds}${animals}${popular}${recs}${staff}${zoos}
       </div>`
   }
 

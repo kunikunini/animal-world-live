@@ -3515,6 +3515,13 @@ button.bk-tab:hover {
   background: #1c1410;
 }
 
+/* 縦長の映像（スタッフ撮影）: 左右に、左右をぼかした 16:9 の表紙を高さいっぱいで敷く。表紙のくっきりした中央は映像の幅と同じなので、映像に隠れる */
+.observe-video.is-portrait {
+  background-position: center;
+  background-size: auto 100%;
+  background-repeat: no-repeat;
+}
+
 .m-back {
   position: absolute;
   left: 12px;
