@@ -371,6 +371,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 夜間バッチ 2（11/7）。姿勢の補正値は各子で測って決めた値（LOG）
       // ラーテル・プレーリードッグ・ワオキツネザルの群れのプリミティブ版（wildfolk・直立の形）は差し替え口が無いので replaceHost
       { key: 'ratelWinnie', species: 'ラーテル', name: 'ウィニー', file: 'ratel-winnie', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'otterMinato', species: 'コツメカワウソ', name: 'ミナト', file: 'otter-minato', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
