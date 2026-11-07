@@ -72,6 +72,7 @@ public/models/*
 !public/models/kinkajou-villa.glb
 !public/models/lemur-momo.glb
 !public/models/lemur-george.glb
+!public/models/lemur-luna.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/

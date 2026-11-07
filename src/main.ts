@@ -399,6 +399,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'kinkajouVilla', species: 'キンカジュー', name: 'ヴィラ', file: 'kinkajou-villa', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'lemurMomo', species: 'ワオキツネザル', name: 'モモ', file: 'lemur-momo', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'lemurGeorge', species: 'ワオキツネザル', name: 'ジョージ', file: 'lemur-george', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'lemurLuna', species: 'ワオキツネザル', name: 'ルナ', file: 'lemur-luna', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
