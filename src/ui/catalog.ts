@@ -51,13 +51,10 @@ const FEATURED: VideoItem = {
   duration: '3:01',
 }
 
-const SAVANNA_IMAGE = '/home/peek.jpg'
 
 const PAW =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="15.5" rx="4.6" ry="3.8"/><circle cx="6.5" cy="10" r="2"/><circle cx="10" cy="6.8" r="2"/><circle cx="14" cy="6.8" r="2"/><circle cx="17.5" cy="10" r="2"/></svg>'
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>'
-const ZOO =
-  '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10l9-6 9 6M5 10v9h14v-9M10 19v-5h4v5"/></svg>'
 const CHECK =
   '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
 const LOGO =
@@ -67,21 +64,20 @@ const times = (n: number, fn: (i: number) => string) => Array.from({ length: n }
 
 const worldName = (w: WorldInfo) => w.name[getLang()]
 
-/** ワールドのカードの絵（自作 SVG。地形の雰囲気だけ） */
-const WORLD_ART: Partial<Record<WorldKey, string>> = {
-  jungle:
-    '<path d="M0 132V96q30-18 58-4t62-6 62 2 50-6V132z" fill="#0f5a37"/><path d="M28 104c-4-26 6-48 22-60-10 18-12 38-8 60z" fill="#1f8a4f"/><path d="M40 52c14-10 34-10 46 0-16-2-30 0-46 0zM40 52c-14-8-30-6-40 4 14-4 26-4 40-4zM40 52c4-14 18-22 32-22-14 6-24 14-32 22z" fill="#7ad17f"/><path d="M182 108c-2-30 8-52 24-64-12 20-14 42-10 64z" fill="#1f8a4f"/><path d="M196 46c12-12 30-14 36-8-12 0-24 4-36 8zM196 46c-12-10-30-8-36 0 12-2 24-2 36 0z" fill="#7ad17f"/>',
-  south:
-    '<circle cx="178" cy="40" r="20" fill="#ffe08a"/><path d="M0 132v-30q60-10 116-6t116 2V132z" fill="#8f3720"/><path d="M58 98q6-26 40-28t52 8q10 10 16 20z" fill="#c95d36"/><path d="M70 92q14-14 34-14" stroke="#e98a5a" stroke-width="3" fill="none" stroke-linecap="round"/>',
-  partner:
-    '<circle cx="186" cy="32" r="15" fill="#fff1b8"/><path d="M0 132V96q40-22 92-10t82-6 58 6V132z" fill="#5fae4a"/><path d="M0 132v-22q60-12 116-4t116-6V132z" fill="#8fd052"/><path d="M132 98V70l22-16 22 16v28z" fill="#c8402f"/><path d="M128 72l26-20 26 20" stroke="#6a4a3a" stroke-width="5" fill="none" stroke-linejoin="round"/><path d="M146 98V82h16v16z" fill="#f6f1e6"/><path d="M20 112h86M20 104h86" stroke="#f3e2c4" stroke-width="3"/><path d="M24 116v-18M46 116v-18M68 116v-18M90 116v-18" stroke="#b07a48" stroke-width="4" stroke-linecap="round"/>',
-  water:
-    '<circle cx="182" cy="34" r="16" fill="#fff4c2"/><path d="M118 92q14-26 34-26t30 26z" fill="#3f9a5a"/><path d="M128 92q10-16 24-16" stroke="#7ccf7a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M0 132V92q29-8 58 0t58 0 58 0 58 0V132z" fill="#1d6fa6"/><path d="M0 106q29-8 58 0t58 0 58 0 58 0" stroke="#bfefff" stroke-width="3" fill="none"/><path d="M0 132v-12q40-10 80-2t72-6 80 4V132z" fill="#f4dc9c"/><path d="M40 112c0-10 4-16 9-16s9 6 9 16z" fill="#23252b"/><path d="M45 112c0-7 2-11 4-11s4 4 4 11z" fill="#f7f6f2"/><circle cx="49" cy="93" r="5" fill="#23252b"/>',
-  sky:
-    '<circle cx="40" cy="30" r="15" fill="#fff4c8"/><path d="M150 40q4-14 18-12 6-10 18-4 14-2 14 12 10 2 8 10h-62q-6-4 4-6z" fill="#fff"/><path d="M16 66q2-10 14-9 6-8 16-2 10 0 10 9h-38z" fill="#fff" opacity=".9"/><path d="M0 132V96l22-40 14 28 18-52 22 58 14-18 18 28V132z" fill="#8a88c4"/><path d="M36 84l18-52 6 18-10 34zM22 56l6 14-6 4z" fill="#f4e4c8"/><path d="M0 132v-24q60-14 116-6t116-6V132z" fill="#a4d66a"/><path d="M168 132V82" stroke="#7a5431" stroke-width="5"/><path d="M154 82h28" stroke="#7a5431" stroke-width="5" stroke-linecap="round"/><ellipse cx="168" cy="70" rx="10" ry="12" fill="#9a7a5a"/><circle cx="168" cy="60" r="8" fill="#b08a64"/><circle cx="164.5" cy="60" r="3.2" fill="#ffd34a"/><circle cx="171.5" cy="60" r="3.2" fill="#ffd34a"/><circle cx="164.5" cy="60" r="1.5" fill="#1a1410"/><circle cx="171.5" cy="60" r="1.5" fill="#1a1410"/><path d="M162 53l-2-6 5 4zM174 53l2-6-5 4z" fill="#8a6a4a"/><path d="M112 30q8-6 14 0 6-6 14 0" stroke="#3a3550" stroke-width="3" fill="none" stroke-linecap="round"/>',
-  north:
-    '<path d="M0 132V92l40-44 30 30 46-58 50 62 30-26 36 36V132z" fill="#2f5f96"/><path d="M116 20l-18 24 10-4 8 8 8-8 10 4zM40 48l-12 14 7-3 5 5 5-5 7 3z" fill="#fff"/><path d="M0 132v-22q58-12 116-6t116-4V132z" fill="#e9f4fb"/><path d="M180 112l10-28 10 28zM196 116l8-22 8 22z" fill="#1f4f3a"/>',
-}
+/** ワールドのカードの絵: いまのワールドをゲームの中で撮った物（public/worlds/<key>.webp、640×360） */
+const worldImage = (key: WorldKey) => `/worlds/${key}.webp`
+
+/** 動物園からえらぶ: 架空の動物園の絵（public/zoos/、実在の動物園ではない）。参加する動物園は募集中 */
+const ZOO_ART = ['sea', 'forest', 'snow', 'grass']
+
+/** ライブの窓の下の名前（左から）。配信はまだ無いので、どの窓も「準備中」 */
+const LIVE_SPECIES: Array<{ ja: string; en: string }> = [
+  { ja: 'ライオン', en: 'Lion' },
+  { ja: 'アメリカバク', en: 'Lowland tapir' },
+  { ja: 'ブチハイエナ', en: 'Spotted hyena' },
+  { ja: 'ポニー', en: 'Pony' },
+  { ja: 'カンガルー', en: 'Kangaroo' },
+]
 
 /** いちばん上の大きな枠: 新着の映像を何本まで順に見せるか、1 本を何ミリ秒見せるか */
 const HERO_MAX = 5
@@ -668,7 +664,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
           <h1 class="cat-logo"><span>${esc(worldName(w))}</span></h1>
           <div class="cat-top-right"><button type="button" class="cat-icon-btn cat-top-fav" data-favs="1" aria-label="${meta('catFavs')}" title="${meta('catFavs')}"><svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg></button><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
-        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}">${w.key === 'africa' ? `<img class="cat-world-art" src="${SAVANNA_IMAGE}" alt="" style="object-fit:cover" />` : `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? ''}</svg>`}<span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
+        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}"><img class="cat-world-art" src="${worldImage(w.key)}" alt="" style="object-fit:cover" /><span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
         ${body}
       </div>`
   }
@@ -703,11 +699,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const live = section(
       'live',
       `<span class="cat-live-dot"></span>${meta('catRowLive')}`,
-      `<div class="cat-row">${times(
-        5,
-        () =>
-          `<div class="cat-live" aria-hidden="true"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-tag">LIVE</span></div><span class="cat-bar-sil" style="width:52px"></span></div>`,
-      )}</div>`,
+      `<div class="cat-row">${LIVE_SPECIES.map(
+        (sp) =>
+          `<div class="cat-live" role="img" aria-label="${esc(`${sp[getLang()]}（${t('pending')}）`)}"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-tag">${meta('pending')}</span></div><span class="cat-live-name">${esc(sp[getLang()])}</span></div>`,
+      ).join('')}</div>`,
     )
 
     // いちばん上: 新着の映像（アプリに足した新しい順）を最大 5 本、時間で切り替える。今の 1 本は音なしで流す（下の mountHero）
@@ -775,7 +770,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
     const worldCard = (w: WorldInfo) => {
       const style = `--w1:${w.colors[0]};--w2:${w.colors[1]}`
-      const art = `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? '<path d="M0 132V96q58-20 116-6t116-4V132z" fill="rgba(255,255,255,.28)"/>'}</svg>`
+      const art = `<img src="${worldImage(w.key)}" alt="" loading="lazy" />`
       if (!w.open)
         return `<div class="cat-world cat-world-soon" style="${style}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span><span class="cat-world-tag">${meta('catWorldSoon')}</span></div>`
       return `<button type="button" class="cat-world cat-world-open" style="${style}" data-world="${w.key}" aria-label="${esc(t('catWorldEnter', { world: worldName(w) }))}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span></button>`
@@ -783,7 +778,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const worlds = section(
       'worlds',
       meta('catRowWorlds'),
-      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${SAVANNA_IMAGE}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
+      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${worldImage('africa')}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
         .map(worldCard)
         .join('')}</div>`,
     )
@@ -856,10 +851,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const zoos = section(
       'zoos',
       meta('catRowZoos'),
-      `<div class="cat-row">${times(
-        4,
-        () => `<div class="cat-zoo" aria-hidden="true"><span class="cat-sil">${ZOO}</span><span class="cat-bar-sil" style="width:64%"></span></div>`,
-      )}</div>`,
+      `<div class="cat-row">${ZOO_ART.map(
+        (z) =>
+          `<div class="cat-zoo" role="img" aria-label="${meta('catZooWanted')}"><span class="cat-zoo-art"><img src="/zoos/${z}.webp" alt="" loading="lazy" /><span class="cat-world-tag">${meta('catZooWanted')}</span></span></div>`,
+      ).join('')}</div>`,
     )
 
     root.innerHTML = `
