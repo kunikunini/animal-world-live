@@ -15,6 +15,8 @@ public/media/*
 # ポスター（再生前の静止画）はすべて追跡する。2026-11-04 の種の映像（mp4）は R2 だけに置く
 !public/media/*_poster.jpg
 !public/media/*_poster-sm.jpg
+!public/media/*_poster-xs.jpg
+!public/media/*_poster-blur.jpg
 
 # ローカルの開発ツール設定
 .claude/

@@ -94,6 +94,15 @@ interface HeroSlide {
 
 /** 一覧の小さな絵は 640×360 の縮小版（1280×720 の表紙を何枚も並べると、iPhone でメモリを使いすぎる） */
 const thumb = (poster: string) => poster.replace(/_poster\.jpg$/, '_poster-sm.jpg')
+/**
+ * 段のカードの表紙。スマホのカードは幅 208px なので、その 2 倍の 416px の版（_poster-xs.jpg）を出す。
+ * 幅 768px 以上（カード 260px）だけ 640px の版。iPhone は画像を「幅×高さ×4 バイト」に広げて持つので、大きい版を出さない
+ */
+const cardImg = (poster: string) => {
+  const sm = esc(thumb(poster))
+  const xs = esc(poster.replace(/_poster\.jpg$/, '_poster-xs.jpg'))
+  return `<picture><source media="(min-width: 768px)" srcset="${sm}" /><img src="${xs}" alt="" loading="lazy" decoding="async" /></picture>`
+}
 
 export function createCatalog(store: FriendBookStore): CatalogView {
   const root = document.getElementById('catalog') as HTMLElement
@@ -189,6 +198,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const img = pane.querySelector<HTMLImageElement>('.cat-hero-img')
     if (!sl || !img) return Promise.resolve()
     pane.classList.toggle('is-portrait', sl.video.portrait)
+    // 縦長の映像の左右は、あらかじめぼかした小さい表紙（160×90）で埋める（大きな面を filter でぼかさない。iPhone のメモリ）
+    if (sl.video.portrait) pane.style.setProperty('--blur', `url("${sl.video.poster.replace(/_poster\.jpg$/, '_poster-blur.jpg')}")`)
+    else pane.style.removeProperty('--blur')
     if (img.getAttribute('src') !== sl.video.poster) img.src = sl.video.poster
     const done = img.decode ? img.decode().catch(() => undefined) : Promise.resolve()
     return Promise.race([done, new Promise<void>((r) => window.setTimeout(r, 700))])
@@ -595,7 +607,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   /** 横長の映像カード（数は出さない。👍・❤️ の状態はモニターと新着の枠のボタンで見る） */
   const videoCardHtml = (it: VidItem) =>
-    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
+    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb">${cardImg(it.poster)}<span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
 
   /** お気に入り（❤️ を押した映像、新しい順）の一覧 */
   const renderFavsPage = () => {
@@ -604,7 +616,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const cards = items
       .map(
         (it) =>
-          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
+          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
       )
       .join('')
     root.innerHTML = `
@@ -642,7 +654,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
               .filter((a) => a.species === sp)
               .map((a) => {
                 const has = store.has(a.id)
-                return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
+                return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img', true)}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
               })
               .join('')
             const film = videoForSpecies(sp) || inSub.some((a) => a.species === sp && a.video.staff)
@@ -664,12 +676,55 @@ export function createCatalog(store: FriendBookStore): CatalogView {
           <h1 class="cat-logo"><span>${esc(worldName(w))}</span></h1>
           <div class="cat-top-right"><button type="button" class="cat-icon-btn cat-top-fav" data-favs="1" aria-label="${meta('catFavs')}" title="${meta('catFavs')}"><svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg></button><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
-        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}"><img class="cat-world-art" src="${worldImage(w.key)}" alt="" style="object-fit:cover" /><span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
+        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}"><img class="cat-world-art" src="${worldImage(w.key)}" alt="" decoding="async" style="object-fit:cover" /><span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
         ${body}
       </div>`
   }
 
-  const render = () => {
+  /**
+   * 開いた瞬間に全部の段を組み上げない（iPhone で一覧を開いて約 1.2 秒でページごと読み直された、11/8 の実機の記録）。
+   * 開いた時は先頭（ライブ・新着の枠）だけ作り、残りの段はあとから足す: のぞく演出の時は一覧が見えはじめる少し前（1.5 秒目）、
+   * 演出なしの時は最初の 2 コマを描いたあと。足した段の「下から並ぶ」動きは、開いた時から数えた元の時刻に合わせる
+   */
+  let restHtml = ''
+  let restTimer = 0
+  let restRaf = 0
+  let openedAt = 0
+  const REST_AFTER_MS = 1500
+  const cancelRest = () => {
+    window.clearTimeout(restTimer)
+    cancelAnimationFrame(restRaf)
+    restTimer = 0
+    restRaf = 0
+  }
+  const flushRest = () => {
+    cancelRest()
+    const html = restHtml
+    restHtml = ''
+    const sc = scrollEl()
+    if (!html || !sc) return
+    const tpl = document.createElement('template')
+    tpl.innerHTML = html
+    const added = Array.from(tpl.content.children) as HTMLElement[]
+    sc.append(tpl.content)
+    if (root.classList.contains('is-scope-in')) {
+      const since = (performance.now() - openedAt) / 1000
+      for (const el of added) {
+        const d = parseFloat(getComputedStyle(el).animationDelay) || 0
+        el.style.animationDelay = `${(d - since).toFixed(2)}s`
+      }
+    }
+  }
+  const scheduleRest = (withScope: boolean) => {
+    cancelRest()
+    if (!restHtml) return
+    if (withScope) restTimer = window.setTimeout(flushRest, REST_AFTER_MS)
+    else restRaf = requestAnimationFrame(() => (restRaf = requestAnimationFrame(flushRest)))
+  }
+
+  const render = (staged = false) => {
+    cancelRest()
+    restHtml = ''
     // 描き直す前に、今の枠の映像を要素ごと手放す（外れた <video> が読み続けないように）
     dropHeroVideo()
     window.clearTimeout(heroTimer)
@@ -711,8 +766,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const hero = heroSlides.length
       ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero" aria-roledescription="carousel" aria-label="${meta('catNew')}">
-            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" /></div>
-            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" /></div>
+            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" decoding="async" /></div>
+            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" decoding="async" /></div>
             <!-- 映像の <video> は表紙を見せて落ち着いてから 1 本だけ作る（startHeroVideo） -->
             <div class="cat-hero-shade" aria-hidden="true"></div>
             <div class="cat-hero-corner">
@@ -741,7 +796,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       : main
         ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero">
-            <img class="cat-hero-img" src="${esc(FEATURED.poster)}" alt="" />
+            <img class="cat-hero-img" src="${esc(FEATURED.poster)}" alt="" decoding="async" />
             <div class="cat-hero-shade" aria-hidden="true"></div>
             <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}</span>
             <div class="cat-hero-text">
@@ -762,7 +817,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       `<div class="cat-row cat-row-faces">${friends
         .map(
           (a) =>
-            `<button type="button" class="cat-face" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span></button>`,
+            `<button type="button" class="cat-face" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}">${faceMarkup(a, 'cat-face-img', true)}<span>${esc(animalName(a))}</span></button>`,
         )
         .join('')}<button type="button" class="cat-face cat-face-add" data-back="1"><span class="cat-face-plus" aria-hidden="true">+</span><span>${meta('catMeet')}</span></button></div>`,
       `<button type="button" class="cat-h-link" data-book="1">${meta('book')} ›</button>`,
@@ -770,7 +825,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
     const worldCard = (w: WorldInfo) => {
       const style = `--w1:${w.colors[0]};--w2:${w.colors[1]}`
-      const art = `<img src="${worldImage(w.key)}" alt="" loading="lazy" />`
+      const art = `<img src="${worldImage(w.key)}" alt="" loading="lazy" decoding="async" />`
       if (!w.open)
         return `<div class="cat-world cat-world-soon" style="${style}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span><span class="cat-world-tag">${meta('catWorldSoon')}</span></div>`
       return `<button type="button" class="cat-world cat-world-open" style="${style}" data-world="${w.key}" aria-label="${esc(t('catWorldEnter', { world: worldName(w) }))}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span></button>`
@@ -778,7 +833,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const worlds = section(
       'worlds',
       meta('catRowWorlds'),
-      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${worldImage('africa')}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
+      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${worldImage('africa')}" alt="" decoding="async" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
         .map(worldCard)
         .join('')}</div>`,
     )
@@ -790,7 +845,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         const first = inVideo.find((a) => sub.species.includes(a.species))
         if (!first) return []
         const label = sub.label ? sub.label[getLang()] : speciesName(first.species)
-        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${faceMarkup(first, 'cat-face-img')}<span>${esc(label)}</span></button>`]
+        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${faceMarkup(first, 'cat-face-img', true)}<span>${esc(label)}</span></button>`]
       })
     })
     // 段が寂しくならないよう、5 つに満たない分は形だけのシルエット
@@ -800,7 +855,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowAnimals'),
       `<div class="cat-row cat-row-faces">${
         lion
-          ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}">${faceMarkup(lion, 'cat-face-img')}<span>${esc(speciesName(lion.species))}</span></button>`
+          ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}">${faceMarkup(lion, 'cat-face-img', true)}<span>${esc(speciesName(lion.species))}</span></button>`
           : ''
       }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
@@ -816,7 +871,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       const w = first.world ? getWorld(first.world) : undefined
       const place = first.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb">${cardImg(v.poster)}<span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const recs = section(
@@ -824,7 +879,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowRecs'),
       `<div class="cat-row">${
         main
-          ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb"><img src="${esc(thumb(FEATURED.poster))}" alt="" /><span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
+          ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb">${cardImg(FEATURED.poster)}<span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
           : ''
       }${recCards.join('')}${times(
         Math.max(0, 3 - recCards.length),
@@ -843,7 +898,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       const place = a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
       const title = named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()]
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb">${cardImg(v.poster)}<span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const staff = staffCards.length ? section('staff', meta('catRowStaff'), `<div class="cat-row">${staffCards.join('')}</div>`) : ''
@@ -853,7 +908,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowZoos'),
       `<div class="cat-row">${ZOO_ART.map(
         (z) =>
-          `<div class="cat-zoo" role="img" aria-label="${meta('catZooWanted')}"><span class="cat-zoo-art"><img src="/zoos/${z}.webp" alt="" loading="lazy" /><span class="cat-world-tag">${meta('catZooWanted')}</span></span></div>`,
+          `<div class="cat-zoo" role="img" aria-label="${meta('catZooWanted')}"><span class="cat-zoo-art"><img src="/zoos/${z}.webp" alt="" loading="lazy" decoding="async" /><span class="cat-world-tag">${meta('catZooWanted')}</span></span></div>`,
       ).join('')}</div>`,
     )
 
@@ -868,8 +923,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <nav class="cat-chips cat-row" aria-label="${meta('catCategories')}">
           ${chip('all', 'catAll', true)}${chip('live', 'catLive', false, true)}${chip('worlds', 'catWorlds')}${chip('animals', 'catAnimals')}${chip('zoos', 'catZoos')}
         </nav>
-        ${live}${hero}${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}
+        ${live}${hero}${staged ? '' : `${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}`}
       </div>`
+    if (staged) restHtml = `${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}`
     mountHero()
   }
 
@@ -935,6 +991,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     }
     const jump = target.dataset.jump
     if (jump) {
+      flushRest()
       root.querySelectorAll<HTMLElement>('.cat-chip').forEach((c) => {
         const on = c === target
         c.classList.toggle('is-on', on)
@@ -996,6 +1053,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   // 👍・❤️ が押された（ここでもモニターでもトークでも）: ボタンの状態と、おすすめの並び・お気に入りの一覧を直す（新着の枠は作り直さない）
   reactions.onChange(() => {
     if (!open) return
+    flushRest()
     if (page === 'favs') {
       const top = scrollEl()?.scrollTop ?? 0
       const focusedKey = (document.activeElement as HTMLElement | null)?.dataset?.reactKey
@@ -1025,7 +1083,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       heroPaused = false
       heroPlayed = false
       heroNotBefore = withScope ? performance.now() + SCOPE_MS : 0
-      render()
+      openedAt = performance.now()
+      render(!page)
+      scheduleRest(withScope)
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)
       if (withScope) {
@@ -1035,6 +1095,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       } else showView(root)
       scrollEl()?.focus({ preventScroll: true })
     } else {
+      cancelRest()
+      restHtml = ''
       root.classList.remove('is-scope-in')
       root.classList.add('is-leave')
       hideView(root, () => root.classList.remove('is-leave'))
@@ -1047,6 +1109,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     open: (withScope) => setOpen(true, withScope),
     settle: () => {
       root.classList.remove('is-scope-in')
+      flushRest()
       heroNotBefore = 0
     },
     close: () => setOpen(false),

@@ -4681,8 +4681,11 @@ html[lang='en'] .cat-live-sign > span { font-size: 9px; letter-spacing: 0; }
 .cat-hero.is-playing .cat-hero-video { opacity: 1; }
 /* 縦長の映像: 中央に縦のまま出し、うしろの表紙をぼかして左右を埋める（ぼかすのは流れている間だけ） */
 .cat-hero-video.is-portrait { object-fit: contain; object-position: 50% 50%; }
-.cat-hero-pane.is-portrait .cat-hero-img { object-position: 50% 50%; transition: filter 0.6s ease, transform 0.6s ease; }
-.cat-hero.is-playing .cat-hero-pane.is-portrait:not(.is-incoming) .cat-hero-img { filter: blur(18px) brightness(0.8); transform: scale(1.15); }
+.cat-hero-pane.is-portrait .cat-hero-img { object-position: 50% 50%; }
+/* ぼかしは filter ではなく、あらかじめぼかした小さい表紙（_poster-blur.jpg、fillPane が --blur に入れる）を敷いて、表紙を消す */
+.cat-hero-pane.is-portrait::before { content: ''; position: absolute; inset: 0; background: var(--blur, none) center / cover no-repeat, var(--c-card); }
+.cat-hero-pane.is-portrait .cat-hero-img { transition: opacity 0.6s ease; }
+.cat-hero.is-playing .cat-hero-pane.is-portrait:not(.is-incoming) .cat-hero-img { opacity: 0; }
 .cat-hero-dots { position: absolute; top: 12px; right: 12px; display: flex; gap: 2px; z-index: 2; }
 .cat-hero-dot { width: 26px; height: 26px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
 .cat-hero-dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.5); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); transition: width 0.3s ease, background 0.3s ease; }
@@ -6254,4 +6257,14 @@ body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
   font-weight: 700;
   color: #3d4f86;
   letter-spacing: 0;
+}
+
+/* スマホ（指で操作する端末）: 大きな面のぼかし（backdrop-filter・filter）をやめ、その分だけ地を濃くする。
+   iPhone はぼかす面ごとに大きな作業用メモリを取る（11/8、スコープの一覧を開くとページごと読み直された件）。ファイルの最後に置いて、元の指定より後で効かせる */
+@media (pointer: coarse) {
+  /* 画面いっぱいの面のぼかし（backdrop-filter・filter）もやめ、その分だけ地を濃くする */
+  .catalog.is-leave.is-out .cat-scroll { filter: none; }
+  :is(.observe, .sheet-wrap) { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(22, 30, 46, 0.72); }
+  .scop-msg { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(214, 232, 255); }
+  .coach-card::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(255, 253, 246); }
 }

@@ -80,6 +80,9 @@ for (const file of files) {
       src = tmp
     }
     execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', src, '-vf', "crop='min(iw,ih)':'min(iw,ih)',scale=480:480", '-map_metadata', '-1', '-c:v', 'libwebp', '-quality', '82', out])
+    // スコープの一覧などの小さい顔（表示 80px 前後）用に 256px の版も作る（public/faces/sm/）。元の 480px はそのまま
+    fs.mkdirSync('public/faces/sm', { recursive: true })
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', out, '-vf', 'scale=256:256', '-map_metadata', '-1', '-c:v', 'libwebp', '-quality', '80', `public/faces/sm/${a.id}.webp`])
     photos.photos[a.id] = `/faces/${a.id}.webp`
   }
   done.push(`${file} → ${a.species} ${a.name}（${a.id}）`)
