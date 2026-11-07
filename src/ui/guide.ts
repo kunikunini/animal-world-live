@@ -63,6 +63,10 @@ export interface Guide {
   /** 途中でやめる・終える。記録を付けて隠す */
   stop: () => void
   isActive: () => boolean
+  /** いまの段（動いていなければ null）。スコープ専用モードへ移る時に持っていく */
+  at: () => number | null
+  /** 持ってきた段から続ける（スコープ専用モードとの行き来で、ページが入れ替わった時） */
+  resume: (i: number) => void
   /** ワールドにいる間だけ出す（ホームでは隠す。進み具合は残す） */
   setInWorld: (on: boolean) => void
   /** 起きたことを伝える */
@@ -994,6 +998,19 @@ export function createGuide(): Guide {
     start,
     stop,
     isActive: () => active,
+    at: () => (active ? index : null),
+    resume: (i) => {
+      active = true
+      index = Math.min(Math.max(0, i), STEPS.length - 1)
+      furthest = index
+      frameSeen = false
+      textNow = ''
+      voiceStep = -1
+      voiceDelay = 0
+      // 説明に要る画面が開いていない段は go が先へ送る
+      go(index, 'act')
+      sync()
+    },
     setInWorld: (on) => {
       inWorld = on
       sync()

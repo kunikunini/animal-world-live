@@ -46,6 +46,8 @@ import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
+import { goScope, goWorld, isScopeMode, readHandoff, type ReturnSpot, type ScopeHandoff } from './scopeMode'
+import { dropSplash } from './ui/splash'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
 import { createRegionTitle } from './ui/regionTitle'
@@ -194,6 +196,8 @@ interface WorldHandle {
   heroReady: () => Promise<void>
   /** スタート地点（サバンナの南、コピエの方を向く）へ戻す。あそびかたツアーを設定から見返す時に使う */
   toStart: () => void
+  /** スコープ専用モードから戻った時: 前にいた場所と向きに立たせる */
+  placeAt: (x: number, z: number, heading: number) => void
 }
 
 /**
@@ -816,16 +820,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       if (animate) window.setTimeout(cueFind, 700)
       else cueFind()
     }
-    // 一覧を組む前に、3D の GPU の荷物を手放す（描画はこの時点で止まっている）
-    gpuRelease.release()
-    // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
-    catalog.open(animate)
-    if (animate) {
-      const { skipped } = await scope.play()
-      if (skipped) catalog.settle()
-    }
-    body.classList.remove('is-scoping')
-    if (catalog.isOpen()) body.classList.add('is-viewing')
+    // スコープ専用モードで起動し直す（11/8 最終対策）。3D のページの中では一覧を開かない。
+    // 戻り先（いまの位置と向き・ワールド）と、あそびかたツアーの段を持っていく
+    const back: ReturnSpot = { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y, region: here.key }
+    // 構えてピントが合うまで（約 1.9 秒）はここで見せる。とばした時・動きをへらす時はすぐ移る
+    if (animate) await Promise.race([scope.play(), new Promise((r) => window.setTimeout(r, 1900))])
+    goScope(back, guide.at())
   }
   catalog.onOpenChange((open) => {
     guide.reach(open ? 'scope' : 'scopeClose')
@@ -1926,6 +1926,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     toStart: () => {
       player.teleport(SPAWN.x, SPAWN.z, Math.PI)
     },
+    placeAt: (x, z, heading) => {
+      player.teleport(x, z, heading)
+    },
     pause: () => {
       paused = true
       player.setInputEnabled(false)
@@ -1994,9 +1997,41 @@ function nextFrames(n: number): Promise<void> {
   })
 }
 
+/**
+ * スコープ専用モード（?scope=1）: WebGL・3D シーン・動物モデル・テクスチャを一切作らず、アニマルスコープの画面だけを描く。
+ * 一覧を閉じたら（「ワールドにもどる」）通常起動に戻し、前にいた場所から続ける
+ */
+function startScopeMode(handoff: ScopeHandoff): void {
+  sound.setVoiceHero(getHeroId())
+  const region = (handoff.spot?.region ?? 'africa') as RegionKey
+  sound.setBgm(REGION_BGM[region] ?? 'savanna')
+  sound.setAmb(REGION_AMB[region] ?? null)
+  document.body.classList.add('scope-mode', 'is-viewing')
+  const shell = createShell()
+  shell.home.hide()
+  // あそびかたツアーの途中なら続きから（「スコープをのぞく」の段は、一覧が開いたことで次へ進む）
+  if (handoff.guide !== null) {
+    shell.guide.setInWorld(true)
+    shell.guide.resume(handoff.guide)
+  }
+  shell.catalog.onOpenChange((open) => {
+    if (open) return
+    shell.guide.reach('scopeClose')
+    goWorld(handoff.spot, shell.guide.at())
+  })
+  shell.catalog.open(false)
+  shell.guide.reach('scope')
+  dropSplash()
+}
+
 function main(): void {
   applyStatic()
   sound.init()
+  const handoff = readHandoff()
+  if (isScopeMode()) {
+    startScopeMode(handoff)
+    return
+  }
   sound.setBgm('home')
   sound.setVoiceHero(getHeroId())
   const canvas = document.getElementById('world') as HTMLCanvasElement
@@ -2086,6 +2121,40 @@ function main(): void {
     world?.setHero(id)
   })
 
+  // スコープ専用モードから戻った: ホームを通らず、前にいた場所からワールドを続ける（立ち上げの画面のうしろで組み立てる）
+  const returnToWorld = async (spot: ReturnSpot) => {
+    busy = true
+    try {
+      await nextFrames(2)
+      world = startWorld(canvas, shell)
+      world.placeAt(spot.x, spot.z, spot.heading)
+      await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
+      shell.home.hide()
+      document.body.classList.add('in-world')
+      // スコープを閉じた時と同じく、世界がぼけた寄りから戻ってくる
+      if (!document.body.classList.contains('is-reduce-motion')) {
+        document.body.classList.add('is-unscoping')
+        window.setTimeout(() => document.body.classList.remove('is-unscoping'), 650)
+      }
+      dropSplash()
+      canvas.focus()
+      if (handoff.guide !== null) shell.guide.resume(handoff.guide)
+      else shell.guide.autoStart(shell.store.list().length > 0)
+      shell.guide.setInWorld(true)
+    } catch (err) {
+      console.error(err)
+      world = null
+      document.body.classList.remove('in-world')
+      shell.home.show()
+      shell.home.showFallback()
+      dropSplash()
+    } finally {
+      busy = false
+    }
+  }
+  const returning = !!handoff.spot && webgl
+  if (returning && handoff.spot) void returnToWorld(handoff.spot)
+
   // ホームが表示されて落ち着いたら、裏でワールドを組み立てておく（ホームの絵が不透明で隠している）。
   // 失敗しても world は null のままにして、「のぞいてみる」の時にもう一度試し、だめなら案内を出す
   const prewarm = () => {
@@ -2099,12 +2168,14 @@ function main(): void {
   }
   // 立ち上げの画面（スプラッシュ）が出ている間に組み立てる（約 2 秒止まるのを、ホームが出たあとにしない）。
   // スプラッシュが先に消えた時（ホームの絵が 4 秒で届かない等）は、下の後回しの準備で組み立てる
-  hideSplash(prewarm)
-  const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => void }).requestIdleCallback
-  window.setTimeout(() => {
-    if (idle) idle(prewarm, { timeout: 1500 })
-    else prewarm()
-  }, 1200)
+  if (!returning) {
+    hideSplash(prewarm)
+    const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => void }).requestIdleCallback
+    window.setTimeout(() => {
+      if (idle) idle(prewarm, { timeout: 1500 })
+      else prewarm()
+    }, 1200)
+  }
   // 帳の出口: ワールドからならそのまま閉じて戻る。ホームからなら閉じてワールドへ入る
   shell.book.onGoWorld((from) => {
     shell.book.close()
