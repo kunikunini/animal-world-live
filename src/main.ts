@@ -347,7 +347,6 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 虎: サバンナのスタート（0, 72）からスポットへ向かう途中、左手 4.5 m の踏み分け道の上（−4.5, 43.5）。背の高い草の中だと体が隠れるので、草の生えない道に置き、
       // まわり 1 m だけ歩く。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.55 m（鼻先〜尾の先）は実物の成獣の目安。
       // 接地だけだと腰 81〜85%。後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65 で腰 99.6〜102.8%（虎で測って決めた値）
-      { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, place: { ...SAVANNA_MEERKAT, length: 0.55 } },
       // テル: ジャングルの中心の西、ゆめこ（南米）の北 13 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
       // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
       { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
@@ -406,7 +405,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'goatMifuyu', species: 'ヤギ', name: 'みふゆ', file: 'goat-mifuyu', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
       { key: 'goatBaum', species: 'ヤギ', name: 'バウム', file: 'goat-baum', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
       { key: 'lemurJupiter', species: 'ワオキツネザル', name: 'ジュピター', file: 'lemur-jupiter', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'lemurSpacey', species: 'ワオキツネザル', name: 'スペイシー', file: 'lemur-spacey', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'goatMachiko', species: 'ヤギ', name: 'まちこ', file: 'goat-machiko', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatNerine', species: 'ミーアキャット', name: 'ネリネ', file: 'meerkat-nerine', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatKai', species: 'ミーアキャット', name: 'かい', file: 'meerkat-kai', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatSou', species: 'ミーアキャット', name: 'そう', file: 'meerkat-sou', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
+      { key: 'meerkatBine', species: 'ミーアキャット', name: 'ビネ', file: 'meerkat-bine', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, replaceHost: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
