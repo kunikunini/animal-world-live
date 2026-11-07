@@ -32,7 +32,7 @@
 
 - **声づくり**: [ElevenLabs](https://elevenlabs.io) の Voice Design（API `POST /v1/text-to-voice/design`、モデル `eleven_ttv_v3`、2026-11-06）で、6 人それぞれ 1 回（3 案）作り、1 案を My Voices に登録した。ElevenLabs は子どもの声・子どもらしく作った声をボイスライブラリに載せられない決まりなので（公式ヘルプ）、声は「アニメで少年少女役を演じる、大人の声優のような声」として説明した。男の子 3 人（黄色・青緑・青い帽子）は少年役、女の子 3 人（ピンク・紫・三つ編み）は少女役で、性格ごとに声の調子を分けた
 - **どの案を使うか**: 声の高さを測って仮に選んだ（男の子は 3 案のうち低め、女の子は高め。3 人どうしが近くならないように）。最終判定はくに。候補 3 案は聴き比べのページにある
-- **セリフ**: Text to Speech（モデル `eleven_v4`、日本語、2026-11-06）。「冒険に出発だ！」（子を選んで出発する時）、ジャンプ「えいっ！」と「やっ！」（黄色・青い帽子。黄色の「えいっ！」は声が潰れていたので 11/7 から使っていない。ファイルは残している）／「ホイッ！」（ほか。はじめは「それっ！」だったが、くにが聴いて語尾が下がって聞こえたので言い換えた）、着地「っと！」（高い所から落ちた時だけ）、息づかい 2 種（5 秒以上歩き続けた時、6 秒おき）、「あっ、見つけた！」（動物と出会った時）、「よしっ！」「やったー！」（ともだちになるを押した時。動物が承諾したという言い方はしない）。ローカルの whisper で文字起こしして、セリフどおりか確かめた（「よっ！」「とうっ！」は別の音に、「ほいっ！」「ほっ！」は「はい！」「はっ！」に聞こえたので言い換えた）
+- **セリフ**: Text to Speech（モデル `eleven_v4`、日本語、2026-11-06）。「冒険に出発だ！」（子を選んで出発する時）、ジャンプ「えいっ！」と「やっ！」（黄色・青い帽子。黄色の「えいっ！」は声が潰れていたので 11/7 から使っていない。ファイルは残している）／「ホイッ！」（ほか。はじめは「それっ！」だったが、くにが聴いて語尾が下がって聞こえたので言い換えた）、着地「っと！」（高い所から落ちた時だけ）、息づかい 2 種（5 秒以上歩き続けた時、6 秒おき）、「あっ、見つけた！」（観察スポットからアニマルスコープに入る時と、あそびかたツアーでライリーに着いた時。11/7 までは動物と出会うたびに鳴らしていた）、「よしっ！」「やったー！」（ともだちになるを押した時。動物が承諾したという言い方はしない）。ローカルの whisper で文字起こしして、セリフどおりか確かめた（「よっ！」「とうっ！」は別の音に、「ほいっ！」「ほっ！」は「はい！」「はっ！」に聞こえたので言い換えた）
 - **編集**: 前後の無音を切り、最大音量を -3 dB にそろえて、モノラル 96 kbps。音量は効果音のつまみとミュートに入る
 - 6 人 × 9 種 = 54 本、合計 958,120 B
 
@@ -40,6 +40,20 @@
 
 - **ナレーション**: 黄色いジャケットの子の声（上の Voice Design の声）で、Text to Speech（モデル `eleven_v4`、日本語、2026-11-06）。9 本（箱が届く・青い双眼鏡・のぞくと・走る・ライリー・収録映像・きみがきめる・ともだち帳・7 つのワールド）。最後の「世界中の どうぶつたちと、ともだちになろう！」は 6 人全員の声で 1 本ずつ作り（計 6 本）、ffmpeg で 20〜60 ms ずつずらして 1 つに重ねた（`vo-story-finale.mp3`）。前後の無音を切り、最大音量を -3 dB にそろえて、モノラル 96 kbps。台本どおりに読めているかの文字起こしでの確認はまだ（ローカルの whisper はモデルの取得が証明書で止まり、API キーに文字起こしの権限が無かった）。日本語だけ（英語表示の時はナレーションなし）。「ともだち帳に…」（`vo-story-book.mp3`）は「帳」のイントネーションを直すため 11/6 に作り直した（台本の表記を「ともだちちょう」にして同じ声・同じモデルで 3 案を作り、聴いて 1 案を選んだ）。「あっ、見つけた！…」（`vo-story-meet.mp3`）はライリーがおとなの雌なので「ライオンの子」を取り、11/6 に同じ声・同じモデルで作り直した（約 30 クレジット）
 - **曲**: `bgm-story.mp3` はサバンナの曲（Suno、take A、元 204.7 s）をループに切る前の元の音源から、最初の 100 秒を切り出したもの（冒頭 1.5 秒フェードイン、95 秒から 5 秒フェードアウト、ステレオ 128 kbps、1,804,505 B）。おはなしの間だけ 1 回鳴らし、ループしない
+
+## あそびかたツアーのスコップの声（`vo-tour-*.mp3`）
+
+- **生成**: ElevenLabs の Text to Speech（モデル `eleven_v4`、日本語、2026-11-07）。声は ElevenLabs の「Ryu」（くにが選んだ）。ツアーでスコップが話す言葉（吹き出しの言葉そのまま）14 本: 12 段（intro・riley・nameplate・befriend・book・chat・keeper・map・mapspot・arrive・catalog・end）と、観察スポットから離れている時の「観察スポットへ いこう！」（away）、先に画面を閉じる時の「まず、光っている ボタンで もどろう！」（prep）。おしゃべり好きなイタズラ好きの子として、台本に声の調子のタグ（[excited] [mischievously] [playfully] [cheerful] [giggles] [laughs] など。ささやき系は使わない）を入れた。読み違えを防ぐため、台本では「ともだちちょう」「ひらく」とかなで書いた。1 本 1 回ずつ作り、くにが聴いて 03・04・07 を作り直し（03 は言葉を「ネームプレートを おしてみて！」に、04・07 はささやき系のタグを外した）、05「ともだち帳を 開いてみよう！」は 3 案から 1 案を選んだ。計 約 760 文字分のクレジット
+- **確認**: ローカルの whisper（large-v3-turbo）で 14 本とも台本どおりに読めていて、タグを声に出していないことを確かめた
+- **後処理**: 前後の無音を切り、最大音量を -3 dB にそろえて、モノラル 96 kbps（おはなしのナレーションと同じ）。日本語だけ（英語表示の時は鳴らさない）。効果音の音量とミュートに入る
+
+- **追加（11/7）**: ツアーの最後の段「ぼくの 役目は ここまで。ワールドの なかを たくさん 探検してみて！ また 会おう！」（`vo-tour-bye.mp3`）を同じ声・同じモデルで足した
+
+## ワールドで会えるスコップの声（`vo-scop-*.mp3`）
+
+- **生成**: ElevenLabs の Text to Speech（モデル `eleven_v4`、日本語、2026-11-07）。声はツアーと同じ「Ryu」。7 つのワールドの観察スポットのそばにいるスコップが話す、ひとこと → うんちく → しめのひとこと を各ワールド 2 本（`vo-scop-<ワールド>-1/2.mp3`、計 14 本、1 本 14〜21 秒）と、サバンナの奥のにせの観察スポットの「ざんねーん！ ここは かんさつスポットじゃ ないよーん！」（`vo-scop-fake.mp3`）。台本にはツアーと同じ声の調子のタグを入れ（ささやき系は使わない）、読み違えを防ぐため言葉はかなで書いた。画面の文は声と同じ言葉（タグなし）。うんちくは調べて確かめたことだけにした（出典は DEVLOG）
+- **確認**: ローカルの whisper（large-v3-turbo）で、うんちくの言葉が台本どおりに読めていることを確かめた。感嘆詞の一部（「はっくしょん」「ぷはっ」「えへへ」「よーん」）と「マーラ」は文字起こしでは別の音になったので、くにが聴いて確かめる
+- **後処理**: ツアーの声と同じ（前後の無音を切り、-3 dB、モノラル 96 kbps）。日本語だけ
 
 ## 効果音・環境音（`se-*.mp3`、`amb-*.mp3`）
 
@@ -63,7 +77,7 @@
 | `se-land.mp3` | 着地 | 0.34 s | 4,432 B |
 | `se-scope-open.mp3` | 双眼鏡を構える（アニマルスコープを開く／ホームとワールドの間で幕が閉じる） | 0.37 s | 4,746 B |
 | `se-scope-close.mp3` | 双眼鏡を下ろす（アニマルスコープを閉じる／幕が開く） | 0.21 s | 2,865 B |
-| `se-encounter.mp3` | 動物との出会い（頭の上に双眼鏡の札が出た時。同じ子は 12 秒あけるまで鳴らし直さない） | 0.78 s | 9,761 B |
+| `se-encounter.mp3` | 「見つけた！」の音。観察スポットからアニマルスコープに入る時と、あそびかたツアーでライリーに着いた時だけ（11/7 から、動物に会うたびには鳴らさない） | 0.78 s | 9,761 B |
 | `se-friend.mp3` | 「ともだちになる」の新しい音の候補（設定で「新しい音」を選んだ時だけ。既定は合成のチャイム） | 1.15 s | 14,150 B |
 | `se-tap.mp3` | UI の決定・タップ（ボタン） | 0.08 s | 1,297 B |
 | `se-book.mp3` | ともだち帳を開く | 0.29 s | 3,805 B |
@@ -72,3 +86,5 @@
 ## Source of `public/audio` (English)
 
 Background music for home, savanna and jungle (`bgm-home/savanna/jungle.mp3`) was regenerated with ElevenLabs Music (`music_v2_5`, instrumental, 75 s) and is looped as a single track. The other background music (`bgm-*.mp3`) was generated with [Suno](https://suno.com) (Pro plan, which includes commercial-use rights; 2026-11-06) as instrumentals, one generation (two takes) per track, then cut into 65-86 s seamless loops with ffmpeg. Both takes of each track are used: `bgm-<place>.mp3` and `bgm-<place>-2.mp3` alternate, one loop each, with a 3 s crossfade. `loops.json` holds the exact loop lengths; each file has 0.25 s of padding on both sides. The player characters' voices (`vo-*.mp3`) were designed with ElevenLabs Voice Design (`eleven_ttv_v3`) as anime-style young hero roles performed by adult voice actresses (ElevenLabs does not allow child voices in its library), and the lines were generated with Text to Speech (`eleven_v4`, Japanese). Sound effects and ambience (`se-*.mp3`, `amb-*.mp3`) were generated with [ElevenLabs](https://elevenlabs.io) Sound Effects (API, model `eleven_text_to_sound_v3`, 2026-11-06), one generation each, then trimmed and level-matched with ffmpeg. They were generated on a paid ElevenLabs plan. The default "become friends" chime is synthesized in code (`src/ui/chime.ts`). No personal information is included.
+
+The tour guide Scop's lines (`vo-tour-*.mp3`, 14 files, Japanese only) were generated on 2026-11-07 with ElevenLabs Text to Speech (`eleven_v4`) using the ElevenLabs voice "Ryu", with audio tags for a chatty, mischievous tone (no whisper tags). Each line was checked against the script with a local Whisper transcription, then trimmed and peak-normalized to -3 dB (mono, 96 kbps). The farewell line (`vo-tour-bye.mp3`) and Scop's in-world talks (`vo-scop-*.mp3`: two talks for each of the seven worlds plus one for the fake observation spot, Japanese only) were generated the same way on the same day.

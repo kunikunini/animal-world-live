@@ -116,6 +116,7 @@
       <symbol id="i-motion" viewBox="0 0 24 24"><path d="M3 8c3 0 3-3 6-3s3 3 6 3 3-3 6-3M3 16c3 0 3-3 6-3s3 3 6 3 3-3 6-3" /></symbol>
       <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" /></symbol>
       <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6l5.5-2 6 2 5.5-2v14l-5.5 2-6-2-5.5 2z" /><path d="M9 4v14M15 6v14" /></symbol>
+      <symbol id="i-like" viewBox="0 0 24 24"><path d="M7.5 10.5v9H4.5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z" /><path d="M7.5 10.5l3.6-6.2a1.9 1.9 0 0 1 3.4 1.5l-.9 3.7h5a2 2 0 0 1 2 2.4l-1.3 6.4a2 2 0 0 1-2 1.7H7.5" /></symbol>
       <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z" /></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
       <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1L3.2 9.4l6.1-.8z" /></symbol>
@@ -266,7 +267,7 @@
       <div class="observe-panel">
         <h2 id="observe-title" class="visually-hidden"><span data-i18n="monitor">観察モニター</span></h2>
         <div class="m-video">
-          <video id="observe-video" class="observe-video" playsinline loop preload="metadata" controls controlslist="nodownload"></video>
+          <!-- 映像の <video> は観察モニターを開く時に作り、閉じたら捨てる（src/ui/observe.ts） -->
           <div id="observe-poster" class="observe-poster" hidden>
             <div id="observe-poster-face" class="poster-face"></div>
             <p id="observe-poster-text" class="observe-poster-text"></p>
@@ -280,6 +281,7 @@
         <div class="m-sheet">
           <div id="observe-chips" class="chips" role="tablist" aria-label="出会った動物" data-i18n-aria="metAnimals" hidden></div>
           <div id="observe-hero" class="hero"></div>
+          <div id="observe-rx" class="m-rx" hidden></div>
           <div class="cta-area">
             <p id="observe-group-note" class="m-group-note" hidden></p>
             <button id="befriend" class="btn btn-hero" type="button"><svg class="ico ico-fill"><use href="#i-heart" /></svg><span data-i18n="befriend">ともだちになる</span></button>

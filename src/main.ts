@@ -42,6 +42,7 @@ import { REGION_AMB, REGION_BGM, sound } from './audio/sound'
 import { createSettings } from './ui/settings'
 import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
+import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
@@ -54,6 +55,9 @@ import { applyView, viewNames } from './debug/views'
 import { createSoundPanel } from './ui/soundControls'
 import { createStaminaUi } from './ui/stamina'
 import { loadScopCompanion, type ScopCompanion } from './world/scopCompanion'
+import { loadScopNpcs, type ScopNpcs } from './world/scopNpc'
+import { createScopTalk } from './ui/scopTalk'
+import { SCOP_FAKE_TALK, SCOP_TALKS } from './data/scopTalks'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -85,6 +89,10 @@ function createShell() {
   const iris = createIris()
   const settings = createSettings()
   const catalog = createCatalog(store)
+  // 実機の調べ: スコープ表示中に読み込み直しが起きたかを、設定の「音の記録」に残す
+  checkScopeTraceOnLoad()
+  catalog.onOpenChange((open) => traceScopeView('list', open))
+  observe.onOpenChange((open) => traceScopeView('monitor', open))
   const scope = createScope()
   const guide = createGuide()
 
@@ -307,6 +315,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       still?: boolean
       /** 色の明るさ（1 で書き出しのまま）。?<key>Bright=<数> で試せる */
       brighten?: number
+      /** 群れのプリミティブ版の差し替え口が無い子（wildfolk など）: その子の今の場所・向き・体の長さで place と同じように入れ替える */
+      replaceHost?: boolean
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true } },
@@ -351,21 +361,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // テル: ジャングルの中心の西、ゆめこ（南米）の北 13 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
       // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
       { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
+      // ---- 夜間バッチ（exp/animals-night）: 群れの場所のプリミティブ版と入れ替える（読めなければ・?<key>=primitive ならプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる ----
+      // ウーピー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 2 番目。コピー方式の試しでピーターの値（0.9／0.95／0.5／0.8）を流用すると腰の下限が 98.7% で届かず、
+      // ウーピーで振って背骨だけ 1 に上げた（後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8 で腰 99.2〜101.6%）
+      // ハイエナの群れのプリミティブ版（wildfolk）は差し替え口が無いので、その子の場所・向き・体の長さで入れ替える（replaceHost）
+      { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      // アンバー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 3 番目。ウーピーの値（0.9／1／0.5／0.8）の流用だけで腰 99.6〜103.0%。群れのプリミティブ版（wildfolk）と replaceHost で入れ替える
+      { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      // 夜間バッチ 2（11/7）。姿勢の補正値は各子で測って決めた値（LOG）
+      // ラーテル・プレーリードッグ・ワオキツネザルの群れのプリミティブ版（wildfolk・直立の形）は差し替え口が無いので replaceHost
+      { key: 'ratelWinnie', species: 'ラーテル', name: 'ウィニー', file: 'ratel-winnie', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
       const animal = ANIMALS.find((a) => a.species === r.species && a.name === r.name)
       if (!animal) continue
       let host = lions.find((l) => l.id === animal.id)
-      if (!host && !r.place) continue
+      const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, 'z') } : undefined)
+      if (!host && !place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
-      loadAiLion(`/models/${r.file}.glb`, { length: r.place ? r.place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), posture, upright: r.upright, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
+      loadAiLion(`/models/${r.file}.glb`, { length: place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), posture, upright: r.upright, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
         .then((ai) => {
-          if (r.place) {
+          if (place) {
             // place の子: place の場所に入れ物を作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる。
             // 名簿の全個体を置いた後（11/6）は、群れの場所に自動で置いたプリミティブ版がいるので、それを取り除いて入れ替える（読めなければそのまま残る）
             const old = host
-            host = createLion({ id: animal.id, x: r.place.x, z: r.place.z, yaw: r.place.yaw })
+            host = createLion({ id: animal.id, x: place.x, z: place.z, yaw: place.yaw })
             vividToon(host.group)
             scene.add(host.group)
             props.colliders.push(host.collider)
@@ -392,7 +413,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
         })
-        .catch((err) => console.warn(r.place && !host ? '[animals-ai] model not loaded; not placed' : '[animals-ai] model not loaded; keeping primitive', r.key, err))
+        .catch((err) => console.warn(place && !host ? '[animals-ai] model not loaded; not placed' : '[animals-ai] model not loaded; keeping primitive', r.key, err))
     }
   }
 
@@ -468,6 +489,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const scopOff = heroQuery.get('scop') === 'off'
   let scop: ScopCompanion | null = null
   let scopAsked = false
+  /** 3D のスコップを読み終えた・あきらめた（読み終わるまでワールドの吹き出しを出さない。4 秒たったら 2D の吹き出しで続ける） */
+  let scopSettled = scopOff
+  let scopAskedAt = 0
   const scopAnchor = new THREE.Vector3()
   const putHero = (next: HeroModel | null, id: string | null) => {
     if (hero) {
@@ -572,6 +596,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (!blocked && !paused) canvas.focus()
   }
   observe.onOpenChange(syncInput)
+  // モニターの間は描画を止めているので、閉じた時に経過時間を捨てる（動物が飛ばないように）
+  observe.onOpenChange((open) => {
+    if (!open) clock.getDelta()
+  })
   book.onOpenChange(syncInput)
   syncInput()
 
@@ -590,6 +618,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sound.cancelTap()
     if (animate) window.setTimeout(() => sound.play('scope-open'), 250)
     else sound.play('scope-open')
+    // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）
+    if (arrived) {
+      if (animate) window.setTimeout(cueFind, 700)
+      else cueFind()
+    }
     // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
     catalog.open(animate)
     if (animate) {
@@ -634,6 +667,21 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   const HERO_COLOR: Record<string, string> = { yellow: '#f2c230', teal: '#2bb3a8', pink: '#f07fa8', bluecap: '#2f6bff', purple: '#8a5cd6', braids: '#7cbf3c' }
   mapView.configure({ animalAt, colliders: props.colliders, heroColor: () => HERO_COLOR[heroId ?? 'yellow'] ?? '#f2c230', heroModel: () => (heroId ? heroById(heroId).model : null) })
+  // 「あっ、見つけた！」（出会いの音と主人公の声）: あそびかたツアーでライリーに着いた時（観察スポットからスコープに入る時は openScope）
+  const cueFind = () => {
+    sound.play('encounter')
+    sound.say('find', 450)
+  }
+  guide.onFind(cueFind)
+  // ツアーで、ワールドで話す段へ「つぎへ」で進む時: 開いている画面を閉じる
+  guide.onCloseSheets(() => {
+    if (observe.isOpen()) observe.close()
+    if (book.isOpen()) book.close()
+    if (catalog.isOpen()) catalog.close()
+    if (mapView.isOpen()) mapView.close()
+  })
+  // あそびかたツアー: 地図の中のいまのワールドの観察スポットの印を照らす
+  guide.setMapSpot(() => mapView.baseRect(`${here.key}:spot`))
   mapView.onTravel((base) => {
     const a = arrivalOf(base, animalAt)
     player.teleport(a.x, a.z, a.heading)
@@ -647,6 +695,40 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   minimap.show()
   let minimapTimer = 0
 
+  // ワールドのスコップ（7 ワールドの観察スポットのそばで話せる子・手の届かない所にいる子・サバンナの奥のにせのスポット）
+  let scopNpcs: ScopNpcs | null = null
+  let scopNpcsAsked = false
+  const scopTalkAt = new THREE.Vector3()
+  const scopTalkUi = createScopTalk()
+  const scopCallProj = new THREE.Vector3()
+  const SCOP_TALK_STORE = 'awl.scopTalk.v1'
+  // ワールドごとに 2 本を交互に（次に話す方を覚えておく。保存できない時はこの回だけ交互）
+  const scopTalkNext: Record<string, number> = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(SCOP_TALK_STORE) ?? '{}') ?? {}
+    } catch {
+      return {}
+    }
+  })()
+  scopTalkUi.onCall(() => {
+    if (!scopNpcs) return
+    const near = scopNpcs.nearest(player.object.position)
+    if (!near) return
+    let talk = SCOP_FAKE_TALK
+    if (near.key !== 'fake') {
+      const i = (scopTalkNext[near.key] ?? 0) % 2
+      talk = SCOP_TALKS[near.key][i]
+      scopTalkNext[near.key] = i + 1
+      try {
+        localStorage.setItem(SCOP_TALK_STORE, JSON.stringify(scopTalkNext))
+      } catch {
+        // 保存できなくても話せる
+      }
+    }
+    scopTalkAt.copy(near.head)
+    scopNpcs.talk(near.key)
+    scopTalkUi.open(talk)
+  })
   const applyReduceMotion = (on: boolean) => {
     player.setReduceMotion(on)
     props.setSway(on ? 0 : 1)
@@ -661,6 +743,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     weather.setReduceMotion(on)
     sea.setReduceMotion(on)
     scop?.setReduceMotion(on)
+    scopNpcs?.setReduceMotion(on)
+    scopTalkUi.setReduceMotion(on)
   }
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
@@ -1160,8 +1244,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 止めたまま作った時に描く枚数（後処理のシェーダーもここで用意される）
   let warmFrames = startPaused ? 2 : 0
   const tick = () => {
-    // 3D の地図を開いている間は本編を描かない（地図のジオラマだけ描く）
-    if (paused || viewing || mapView.is3DOpen()) {
+    // 3D の地図を開いている間は本編を描かない（地図のジオラマだけ描く）。
+    // アニマルスコープの一覧・観察モニターの間も描かない（ワールドから直接モニターを開いた時も。スマホのメモリと電池）
+    if (paused || viewing || mapView.is3DOpen() || catalog.isOpen() || observe.isOpen()) {
       if (warmFrames > 0) {
         warmFrames--
         postfx.render()
@@ -1199,6 +1284,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const riley = lions.find((l) => l.id === 'riley')
       if (!scopAsked && !scopOff) {
         scopAsked = true
+        scopAskedAt = performance.now()
         loadScopCompanion('/models/scop.glb', { heroHeight: figureHeight, ground: terrainHeight })
           .then((s) => {
             scop = s
@@ -1207,6 +1293,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             guide.onStep(() => s.hop())
           })
           .catch((err) => console.warn('scop model not loaded', err))
+          .finally(() => {
+            scopSettled = true
+          })
       }
       if (scop) {
         scop.setVisible(true)
@@ -1218,8 +1307,40 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         riley: riley ? toScreen(riley.position, (riley.headHeight ?? 0.95) * riley.group.scale.y * 0.6) : null,
         spot: toScreen(spot.position, 1.6),
         scop: scop ? toScreen(scop.anchor(scopAnchor), 0) : null,
+        scopLoading: !scopSettled && performance.now() - scopAskedAt < 4000,
+        encounter: encounterId,
       })
     } else if (scop) scop.setVisible(false)
+    // ワールドのスコップ: 入ったあとに 1 回だけ読み込む。そばに来たら頭の上に「こえを かける」
+    if (!scopNpcsAsked && !introOn) {
+      scopNpcsAsked = true
+      const surfaces = [scene.getObjectByName('biome-props'), props.group].filter((o): o is THREE.Object3D => !!o)
+      loadScopNpcs({ heroHeight: figureHeight, surfaces, colliders: props.colliders })
+        .then((n) => {
+          scopNpcs = n
+          n.setReduceMotion(reduceMotionNow)
+          scene.add(n.group)
+        })
+        .catch((err) => console.warn('world scop not loaded', err))
+    }
+    if (scopNpcs) {
+      const pp = player.object.position
+      scopNpcs.setTalkersVisible(!guide.isActive())
+      scopNpcs.update(dt, time, pp, camera)
+      const blocked = introOn || guide.isActive() || getLang() !== 'ja' || observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()
+      if (scopTalkUi.isOpen()) {
+        // 離れたり、ほかの画面を開いたら閉じる
+        if (blocked || Math.hypot(pp.x - scopTalkAt.x, pp.z - scopTalkAt.z) > 8) scopTalkUi.close()
+        scopTalkUi.setCall(null)
+      } else {
+        const near = blocked ? null : scopNpcs.nearest(pp)
+        if (near) {
+          scopCallProj.copy(near.head).project(camera)
+          const on = scopCallProj.z < 1 && Math.abs(scopCallProj.x) < 0.95 && Math.abs(scopCallProj.y) < 0.95
+          scopTalkUi.setCall(on ? { x: ((scopCallProj.x + 1) / 2) * window.innerWidth, y: ((1 - scopCallProj.y) / 2) * window.innerHeight } : null)
+        } else scopTalkUi.setCall(null)
+      }
+    }
     if (hero) {
       // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
       const p = player.object.position
@@ -1539,6 +1660,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
       // 生成モデルの群れ（歩行の計測用: action を止めてコマ送り、posture を書き換え）
       aiLions: () => aiLions,
+      // 本編を描いた回数（スコープ・モニターの間に増えないことの確認用）
+      frames: () => frames,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
       capture: (quality = 0.92) => {
         postfx.render()

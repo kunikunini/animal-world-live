@@ -87,3 +87,16 @@ export function videoForSpecies(species: string): { video: SpeciesVideo; subject
   }
   return null
 }
+
+/**
+ * 個体が決まっていないスタッフ撮影（複数の子が映っている等。animalIds が空で、subjects に種だけある物）のうち、その種が映っている物。
+ * 種の映像（videoForSpecies）が無い種だけに使う。個体名は分かった時に animalIds に足す
+ */
+export function staffVideoForSpecies(species: string): { video: SpeciesVideo; subject: VideoSubject } | null {
+  for (const video of STAFF_VIDEOS) {
+    if (video.animalIds.length) continue
+    const subject = video.subjects.find((s) => s.species.includes(species))
+    if (subject) return { video, subject }
+  }
+  return null
+}

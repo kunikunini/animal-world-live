@@ -728,3 +728,33 @@ textarea {
     grid-template-columns: 1fr 360px;
   }
 }
+
+/* ---- 上: 映像の人気（👍・❤️。この端末で押された数） ---- */
+.st-pop {
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+.st-pop-h { margin: 0; font-size: 16px; font-weight: 900; }
+.st-pop .st-empty { margin: 12px 0 4px; }
+.st-pop-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px 16px;
+}
+.st-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(43, 29, 18, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+}
+.st-pop-title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.st-pop-n { flex: none; min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; }

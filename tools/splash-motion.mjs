@@ -256,6 +256,9 @@ css += `/* 立ち上げの画面（スプラッシュ）。tools/splash-motion.m
   align-items: center;
   justify-content: center;
   gap: calc(var(--bw) * 0.16 + var(--fs) * 0.3);
+  /* 縦長の画面は吹き出しがスコップの頭の上に出るので、その分を上に空けてから上下まん中に置く
+     （空けないと、タブレットの縦などで吹き出しが画面の上で切れていた） */
+  padding-top: calc(var(--fs0) * 2.7);
   overflow: hidden;
   background: var(--sp-bg);
   transition: opacity 0.6s ease, visibility 0s linear 0.6s;
@@ -377,6 +380,7 @@ html:lang(en) .sp-bubble .sp-ja { display: none; }
 .splash.is-wait .sp-pop { transform-origin: 50% 100%; animation: sp-scop-hop ${n4(LOOP)}s linear ${n4(W0 + HOP_AT)}s infinite; }
 .splash.is-wait { cursor: pointer; }
 @media (min-aspect-ratio: 4/3) {
+  .splash { padding-top: 0; }
   .sp-bubble { left: calc(100% + var(--fs0) * 0.3); bottom: auto; top: 4%; translate: 0 0; }
   .sp-bubble > div { transform-origin: -10% 70%; }
   .sp-bub-bg::after, .sp-bubble > div::after { left: auto; right: 100%; top: 62%; width: 0.8em; height: 1.24em; margin: -0.62em 0 0; }

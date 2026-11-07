@@ -15,8 +15,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "https://media.kobakuni.com/angie-claire-carla_720p.mp4",
-        "fallbackUrl": "/media/angie-claire-carla_720p.mp4",
+        "url": "https://media.kobakuni.com/angie-claire-carla_m540.mp4",
+        "fallbackUrl": "/media/angie-claire-carla_m540.mp4",
         "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
@@ -34,8 +34,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "https://media.kobakuni.com/angie-claire-carla_720p.mp4",
-        "fallbackUrl": "/media/angie-claire-carla_720p.mp4",
+        "url": "https://media.kobakuni.com/angie-claire-carla_m540.mp4",
+        "fallbackUrl": "/media/angie-claire-carla_m540.mp4",
         "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
@@ -53,8 +53,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "https://media.kobakuni.com/angie-claire-carla_720p.mp4",
-        "fallbackUrl": "/media/angie-claire-carla_720p.mp4",
+        "url": "https://media.kobakuni.com/angie-claire-carla_m540.mp4",
+        "fallbackUrl": "/media/angie-claire-carla_m540.mp4",
         "poster": "/media/angie-claire-carla_poster.jpg"
       }
     },
@@ -91,8 +91,8 @@
       "status": "ready",
       "video": {
         "source": "recorded",
-        "url": "https://media.kobakuni.com/lions-3_20261104_720p.mp4",
-        "fallbackUrl": "/media/lions-3_20261104_720p.mp4",
+        "url": "https://media.kobakuni.com/lions-3_20261104_m540.mp4",
+        "fallbackUrl": "/media/lions-3_20261104_m540.mp4",
         "poster": "/media/lions-3_20261104_poster.jpg"
       }
     }

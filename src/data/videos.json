@@ -1,9 +1,9 @@
 {
-  "$comment": "ライオン以外の収録映像。ファイル名は public/media/ と R2（https://media.kobakuni.com/<file>）で同じ。subjects は元ファイルの名前に書かれた種だけ（映っていても名前に無い種は入れない）。どの個体が映っているかは確かめていないので、その種の子みんなに同じ映像を出し、モニターに「どの子かは未確認」と書く。その種が 1 頭しかいない時だけ、その子の映像として出す。staff が true の行はスタッフが撮った映像（アニマルスコープの「スタッフ撮影」の棚）: どの子かはファイル名が名簿の個体名と完全一致した時だけ決めて animalIds に書き、その子にだけ出す（種のみんなには出さない）。撮影者の名前は書かない。撮影日が確かでない物は recordedOn を書かない。棚は下の行ほど新しい（新しく足した物は下へ）。portrait は縦長の映像。onR2 は R2 に上げ終えたか。false の映像は開発サーバーでだけ出す（公開サイトでは R2 に無いと読めないので、上げるまで出さない）。",
+  "$comment": "ライオン以外の収録映像。ファイル名は public/media/ と R2（https://media.kobakuni.com/<file>）で同じ。subjects は元ファイルの名前に書かれた種だけ（映っていても名前に無い種は入れない）。どの個体が映っているかは確かめていないので、その種の子みんなに同じ映像を出し、モニターに「どの子かは未確認」と書く。その種が 1 頭しかいない時だけ、その子の映像として出す。staff が true の行はスタッフが撮った映像（アニマルスコープの「スタッフ撮影」の棚）: どの子かはファイル名が名簿の個体名と完全一致した時だけ決めて animalIds に書き、その子にだけ出す（種のみんなには出さない）。複数の子が映っているなど個体が決まらない物は animalIds を空にし、subjects にファイル名に書かれた種だけを書く（その種に種の映像が無ければ、その種の子みんなに「どの子かは未確認」で出す。個体名が分かったら animalIds に足す）。撮影者の名前は書かない。撮影日が確かでない物は recordedOn を書かない。棚は下の行ほど新しい（新しく足した物は下へ）。portrait は縦長の映像。onR2 は R2 に上げ終えたか。false の映像は開発サーバーでだけ出す（公開サイトでは R2 に無いと読めないので、上げるまで出さない）。",
   "videos": [
     {
       "id": "tapir-capybara-20261104",
-      "file": "tapir-capybara_20261104_720p.mp4",
+      "file": "tapir-capybara_20261104_m540.mp4",
       "poster": "tapir-capybara_20261104_poster.jpg",
       "duration": "3:05",
       "recordedOn": "2026-11-04",
@@ -16,7 +16,7 @@
     },
     {
       "id": "hyena-20261104",
-      "file": "hyena_20261104_720p.mp4",
+      "file": "hyena_20261104_m540.mp4",
       "poster": "hyena_20261104_poster.jpg",
       "duration": "3:03",
       "recordedOn": "2026-11-04",
@@ -26,7 +26,7 @@
     },
     {
       "id": "pelican-kangaroo-mara-20261104",
-      "file": "pelican-kangaroo-mara_20261104_720p.mp4",
+      "file": "pelican-kangaroo-mara_20261104_m540.mp4",
       "poster": "pelican-kangaroo-mara_20261104_poster.jpg",
       "duration": "3:04",
       "recordedOn": "2026-11-04",
@@ -40,7 +40,7 @@
     },
     {
       "id": "pony-20261104",
-      "file": "pony_20261104_720p.mp4",
+      "file": "pony_20261104_m540.mp4",
       "poster": "pony_20261104_poster.jpg",
       "duration": "2:38",
       "recordedOn": "2026-11-04",
@@ -50,7 +50,7 @@
     },
     {
       "id": "squirrel-monkey-20261104",
-      "file": "squirrel-monkey_20261104_720p.mp4",
+      "file": "squirrel-monkey_20261104_m540.mp4",
       "poster": "squirrel-monkey_20261104_poster.jpg",
       "duration": "2:41",
       "recordedOn": "2026-11-04",
@@ -68,6 +68,87 @@
       "portrait": true,
       "animalIds": ["r-1vmqxs9"],
       "title": { "ja": "ファス", "en": "ファス" },
+      "subjects": []
+    },
+    {
+      "id": "staff-r-1pz6900-01",
+      "file": "staff_r-1pz6900_01.mp4",
+      "poster": "staff_r-1pz6900_01_poster.jpg",
+      "duration": "0:24",
+      "onR2": true,
+      "staff": true,
+      "animalIds": ["r-1pz6900"],
+      "title": { "ja": "まっ君", "en": "まっ君" },
+      "subjects": []
+    },
+    {
+      "id": "staff-r-1cb853-01",
+      "file": "staff_r-1cb853_01.mp4",
+      "poster": "staff_r-1cb853_01_poster.jpg",
+      "duration": "0:12",
+      "onR2": true,
+      "staff": true,
+      "animalIds": ["r-1cb853"],
+      "title": { "ja": "ゆめこ", "en": "ゆめこ" },
+      "subjects": []
+    },
+    {
+      "id": "staff-r-zuotzx-01",
+      "file": "staff_r-zuotzx_01.mp4",
+      "poster": "staff_r-zuotzx_01_poster.jpg",
+      "duration": "0:10",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": ["r-zuotzx"],
+      "title": { "ja": "アンバー", "en": "アンバー" },
+      "subjects": []
+    },
+    {
+      "id": "staff-r-1wj5osd-01",
+      "file": "staff_r-1wj5osd_01.mp4",
+      "poster": "staff_r-1wj5osd_01_poster.jpg",
+      "duration": "0:10",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": ["r-1wj5osd"],
+      "title": { "ja": "タムタム", "en": "タムタム" },
+      "subjects": []
+    },
+    {
+      "id": "staff-ring-tailed-lemur-01",
+      "file": "staff_ring-tailed-lemur_01.mp4",
+      "poster": "staff_ring-tailed-lemur_01_poster.jpg",
+      "duration": "0:10",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": [],
+      "title": { "ja": "ワオキツネザル", "en": "Ring-tailed lemurs" },
+      "subjects": [{ "species": ["ワオキツネザル"] }]
+    },
+    {
+      "id": "staff-kinkajou-01",
+      "file": "staff_kinkajou_01.mp4",
+      "poster": "staff_kinkajou_01_poster.jpg",
+      "duration": "0:12",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": [],
+      "title": { "ja": "キンカジュー", "en": "Kinkajous" },
+      "subjects": [{ "species": ["キンカジュー"] }]
+    },
+    {
+      "id": "staff-alex-01",
+      "file": "staff_alex_01.mp4",
+      "poster": "staff_alex_01_poster.jpg",
+      "duration": "0:14",
+      "onR2": true,
+      "staff": true,
+      "animalIds": ["alex"],
+      "title": { "ja": "アレックス", "en": "アレックス" },
       "subjects": []
     }
   ]

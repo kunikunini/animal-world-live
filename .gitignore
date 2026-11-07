@@ -41,6 +41,9 @@ public/models/*
 !public/models/meerkat-tora.glb
 !public/models/squirrel-monkey-teru.glb
 !public/models/scop.glb
+!public/models/hyena-whoopi.glb
+!public/models/hyena-amber.glb
+!public/models/ratel-winnie.glb
 !public/models/SOURCE.md
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）

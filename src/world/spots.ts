@@ -18,7 +18,8 @@ export interface ObservationSpot {
  * （青い本体・赤のアクセント・黒の接眼と縁・水色に光るレンズ）。
  * 双眼鏡は近くにいるプレイヤーの方へゆっくり向き、レンズ側が見える（アイコンと同じ見え方）。
  */
-export function createObservationSpot(at: { x: number; z: number } = SPOT): ObservationSpot {
+/** opts.head = false で双眼鏡を載せない（サバンナの奥のにせのスポット。台の上はスコップが逆立ちする） */
+export function createObservationSpot(at: { x: number; z: number } = SPOT, opts: { head?: boolean } = {}): ObservationSpot {
   const group = new THREE.Group()
   group.name = 'observation-spot'
   const y = terrainHeight(at.x, at.z)
@@ -111,7 +112,8 @@ export function createObservationSpot(at: { x: number; z: number } = SPOT): Obse
   })
   const beam = new THREE.Mesh(beamGeo, beamMat)
 
-  group.add(post, cap, neck, head, ring, beam)
+  group.add(post, cap, neck, ring, beam)
+  if (opts.head !== false) group.add(head)
 
   const headWorld = position.clone().add(new THREE.Vector3(0, head.position.y, 0))
   let lastTime = 0

@@ -35,6 +35,8 @@ export interface MapView {
   onPick: (fn: (x: number, z: number) => void) => void
   /** 拠点に着いた（地図を閉じた後）。本編でその場所へ */
   onTravel: (fn: (base: MapBase) => void) => void
+  /** 開いている時: その拠点の印の画面の四角（px）。見えていなければ null（あそびかたツアーが照らす） */
+  baseRect: (id: string) => { x: number; y: number; w: number; h: number } | null
   /** 最新の位置。開いている間だけ描き直す */
   update: (player: MapPlayer, lions: MinimapMarker[]) => void
   /** 本編の情報: 動物の今の位置（出会っていない子も）、木や岩、主人公の服の色、動きをへらす */
@@ -619,6 +621,22 @@ export function createMapView(): MapView {
     },
     onTravel: (fn) => {
       travelListeners.push(fn)
+    },
+    baseRect: (id) => {
+      if (!open) return null
+      if (mode === '3d') {
+        const el = wrap3d.querySelector<HTMLElement>(`[data-base="${CSS.escape(id)}"]`)
+        if (!el) return null
+        const r = el.getBoundingClientRect()
+        return r.width > 2 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null
+      }
+      const p = renderer.basePoint(id)
+      if (!p) return null
+      const r = canvas.getBoundingClientRect()
+      const x = r.left + (p.x / canvas.width) * r.width
+      const y = r.top + (p.y / canvas.height) * r.height
+      if (x < r.left || x > r.right || y < r.top || y > r.bottom) return null
+      return { x: x - 26, y: y - 26, w: 52, h: 52 }
     },
     update: (player, lions) => {
       last = { player, lions }

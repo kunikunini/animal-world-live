@@ -63,6 +63,8 @@ export interface MapRenderer {
   setOverlay: (o: MapOverlay | null) => void
   /** キャンバス座標の近くの拠点（なければ null） */
   baseAt: (mx: number, my: number) => string | null
+  /** 広げた地図だけ: その拠点を描いた所（キャンバス座標）。いまの拡大で描いていなければ null */
+  basePoint: (id: string) => { x: number; y: number } | null
   /** 地図の中を歩いている主人公（拠点への移動の途中）。null でいつもの位置 */
   setTraveler: (p: { x: number; z: number; heading: number } | null) => void
   /** 広げた地図だけ: キャンバスの大きさ（px）と、CSS の 1px がキャンバスの何 px か */
@@ -1754,6 +1756,11 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     },
     setTraveler: (p) => {
       traveler = p
+    },
+    basePoint: (id) => {
+      if (!free) return null
+      const h = hits.find((x) => x.id === id)
+      return h ? { x: h.x, y: h.y } : null
     },
     baseAt: (mx, my) => {
       if (free) {

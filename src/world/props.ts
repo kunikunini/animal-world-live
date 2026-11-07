@@ -12,6 +12,8 @@ export interface Collider {
   x: number
   z: number
   r: number
+  /** false の時は地図のジオラマに描かない（ワールドのスコップなど、木や岩ではない当たり） */
+  map?: false
 }
 
 export interface Props {
