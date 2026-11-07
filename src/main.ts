@@ -288,8 +288,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   let reduceMotionNow = shell.settings.reduceMotion
   if (new URLSearchParams(location.search).get('model') !== 'primitive') {
-    // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め
-    const posture: Record<string, PostureFix> = { alex: { hind: 0.9, spine: 1.0, tail: 0.5, front: 0.7, ground: true } }
+    // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め。
+    // 後ろ脚は平均の曲がりだけ取り、振りは前脚の歩幅にそろう強さ（0.65）で残す（立ち姿へ 0.9 寄せていた時は後ろ足がほぼ動かず、引きずって見えた）
+    const posture: Record<string, PostureFix> = { alex: { hind: 0.65, hindCenter: true, spine: 1.0, tail: 0.5, front: 0.7, ground: true } }
     // 歩き方は data/roam.ts（種ごとの範囲と、仔・雄の違い）
     for (const id of ['alex', 'angie', 'riley', 'claire', 'carla']) {
       const lion = lions.find((l) => l.id === id)
