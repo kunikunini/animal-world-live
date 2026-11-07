@@ -11,6 +11,8 @@ import { SCOPE_MS } from './scope'
 import { animalName, getLang, onLangChange, speciesName, subAreaName, t } from './i18n'
 import type { I18nKey } from './i18n'
 import { hideView, showView } from './transition'
+import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
+import { reactions, videoKeyOf } from '../data/reactions'
 
 /**
  * アニマルスコープ（動画一覧）。どのワールドの観察スポットでも、スコープをのぞくと同じ一覧が開く。
@@ -113,11 +115,30 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   }
 
   // ---- いちばん上の新着の枠 ----
+  // Motion Prompt #137 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#137
+  //   切り替え: 次の 1 本が横から入り、今の 1 本を一緒に押し出す（1.15 秒、cubic ease-in-out、2 枚はつながったまま・フェードなし、継ぎ目に細い線）
+  // Motion Prompt #005 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#005
+  //   文字: 線が真ん中から伸び（0.1–0.5 秒）、上の段は線の下から（0.35–1.0 秒）、下の段は線の上から（0.55–1.15 秒）quint ease-out で出る。
+  //   消える時は上の段が backIn（s=1.2）で上へ、下の段が ease-in で下へ。透明度は変えず、枠の外へ出て隠れるだけ
   let heroSlides: HeroSlide[] = []
   let heroIndex = 0
   let heroTimer = 0
   let heroVisible = true
   let heroIo: IntersectionObserver | null = null
+  /** 止めるボタンで止めた（開き直すまで続く） */
+  let heroPaused = false
+  /** 動きをへらす時に、再生ボタンで流した */
+  let heroPlayed = false
+  /** いま表に出ている板（0 か 1） */
+  let heroPane = 0
+  /** 押し出しの途中（指で動かしている間も含む） */
+  let heroBusy = false
+
+  const PUSH_MS = 1150
+  const PUSH_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'
+  const QUINT_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)'
+  const BACK_IN = 'cubic-bezier(0.6, -0.28, 0.735, 0.045)'
+  const CUBIC_IN = 'cubic-bezier(0.32, 0, 0.67, 0)'
 
   /** 新着の映像: スタッフ撮影（新しい順）のあとに種の映像（videos.json の下の行ほど新しい）。開ける子がいる物だけ */
   const newestSlides = (): HeroSlide[] => {
@@ -141,18 +162,14 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   const heroEl = () => root.querySelector<HTMLElement>('.cat-hero[aria-roledescription]')
   const reduceMotion = () => document.body.classList.contains('is-reduce-motion')
+  const panes = (el: HTMLElement) => el.querySelectorAll<HTMLElement>('.cat-hero-pane')
+  const anim = (el: Element | null, frames: Keyframe[], duration: number, easing: string, delay = 0) =>
+    el?.animate(frames, { duration, easing, delay, fill: 'both' })
 
-  /** 今の 1 本を枠に出す（作り直さず、中身だけ入れ替える） */
-  const showSlide = (i: number) => {
-    const el = heroEl()
+  /** 文字と操作（観察する・👍・❤️・点）を i 本目に合わせる */
+  const fillSlideText = (el: HTMLElement, i: number) => {
     const sl = heroSlides[i]
-    if (!el || !sl) return
-    heroIndex = i
-    // 前の 1 本は要素ごと手放す。新しい 1 本は表紙を見せてから作る（syncHero）
-    dropHeroVideo()
-    el.classList.toggle('is-portrait', sl.video.portrait)
-    const img = el.querySelector<HTMLImageElement>('.cat-hero-img')
-    if (img) img.src = sl.video.poster
+    if (!sl) return
     ;(el.querySelector('.cat-badge-staff') as HTMLElement).hidden = !sl.video.staff
     ;(el.querySelector('.cat-hero-meta') as HTMLElement).textContent = sl.meta
     ;(el.querySelector('.cat-hero-title') as HTMLElement).textContent = sl.title
@@ -161,26 +178,120 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       watch.dataset.watch = sl.animal.id
       watch.setAttribute('aria-label', `${t('catWatch')}: ${sl.title}`)
     }
+    const rx = el.querySelector<HTMLElement>('.cat-hero-rx')
+    if (rx) rx.innerHTML = reactButtonsMarkup(sl.video.id)
     ;(el.querySelector('.cat-inbook') as HTMLElement).hidden = !store.has(sl.animal.id)
     el.querySelectorAll<HTMLElement>('.cat-hero-dot').forEach((d, n) => {
       if (n === i) d.setAttribute('aria-current', 'true')
       else d.removeAttribute('aria-current')
     })
-    if (!reduceMotion()) {
-      const text = el.querySelector<HTMLElement>('.cat-hero-text')
-      text?.classList.remove('is-in')
-      void text?.offsetWidth
-      text?.classList.add('is-in')
-    }
+  }
+
+  /** 板に表紙を入れる。読み終わる（decode）まで待つ（読めなくても 700ms で先へ） */
+  const fillPane = (pane: HTMLElement, i: number): Promise<void> => {
+    const sl = heroSlides[i]
+    const img = pane.querySelector<HTMLImageElement>('.cat-hero-img')
+    if (!sl || !img) return Promise.resolve()
+    pane.classList.toggle('is-portrait', sl.video.portrait)
+    if (img.getAttribute('src') !== sl.video.poster) img.src = sl.video.poster
+    const done = img.decode ? img.decode().catch(() => undefined) : Promise.resolve()
+    return Promise.race([done, new Promise<void>((r) => window.setTimeout(r, 700))])
+  }
+
+  /** #005 の入り（押し出しが終わってから） */
+  const revealText = (el: HTMLElement) => {
+    if (reduceMotion()) return
+    anim(el.querySelector('.cat-hero-line'), [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], 400, 'cubic-bezier(0.65, 0, 0.35, 1)', 100)
+    anim(el.querySelector('.cat-hero-meta'), [{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }], 650, QUINT_OUT, 350)
+    anim(el.querySelector('.cat-hero-title'), [{ transform: 'translateY(-105%)' }, { transform: 'translateY(0)' }], 600, QUINT_OUT, 550)
+  }
+
+  /** #005 の出（押し出しと同時に始める） */
+  const hideText = (el: HTMLElement) => {
+    if (reduceMotion()) return
+    anim(el.querySelector('.cat-hero-meta'), [{ transform: 'translateY(0)' }, { transform: 'translateY(-105%)' }], 350, BACK_IN)
+    anim(el.querySelector('.cat-hero-title'), [{ transform: 'translateY(0)' }, { transform: 'translateY(105%)' }], 300, CUBIC_IN, 50)
+    anim(el.querySelector('.cat-hero-line'), [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], 250, 'cubic-bezier(0.65, 0, 0.35, 1)', 100)
+  }
+
+  /** 板と映像の横の位置（板の幅に対する割合、-1〜1） */
+  const place = (el: HTMLElement, out: number, inn: number) => {
+    const [a, b] = [panes(el)[heroPane], panes(el)[1 - heroPane]]
+    const video = el.querySelector<HTMLElement>('.cat-hero-video')
+    if (a) a.style.transform = `translateX(${out * 100}%)`
+    if (video) video.style.transform = `translateX(${out * 100}%)`
+    if (b) b.style.transform = `translateX(${inn * 100}%)`
+  }
+
+  /**
+   * i 本目へ替える。dir=1 は次の 1 本が右から入る（左へ送る）、-1 は左から。
+   * from は指で動かした分（0〜1）。そこから残りを同じ速さの割合で押し出す
+   */
+  const goSlide = async (i: number, dir: 1 | -1, from = 0) => {
+    const el = heroEl()
+    if (!el || !heroSlides[i]) return
+    if (i === heroIndex && from === 0) return
     window.clearTimeout(heroTimer)
     heroTimer = 0
+    heroBusy = true
+    const incoming = panes(el)[1 - heroPane]
+    if (!incoming) return
+    incoming.style.setProperty('--seam', dir > 0 ? '0%' : '100%')
+    await fillPane(incoming, i)
+    if (!heroEl() || heroEl() !== el) return
+    const video = el.querySelector<HTMLVideoElement>('.cat-hero-video')
+    if (reduceMotion()) {
+      place(el, -dir, 0)
+    } else {
+      hideText(el)
+      incoming.classList.add('is-incoming')
+      const ms = Math.max(240, PUSH_MS * (1 - from))
+      const outgoing = panes(el)[heroPane]
+      const frames = (a: number, b: number) => [{ transform: `translateX(${a * 100}%)` }, { transform: `translateX(${b * 100}%)` }]
+      const runs = [
+        outgoing?.animate(frames(-dir * from, -dir), { duration: ms, easing: PUSH_EASE, fill: 'forwards' }),
+        video?.animate(frames(-dir * from, -dir), { duration: ms, easing: PUSH_EASE, fill: 'forwards' }),
+        incoming.animate(frames(dir * (1 - from), 0), { duration: ms, easing: PUSH_EASE, fill: 'forwards' }),
+      ]
+      await Promise.all(runs.map((r) => r?.finished.catch(() => undefined)))
+      if (heroEl() !== el) return
+      place(el, -dir, 0)
+      runs.forEach((r) => r?.cancel())
+      incoming.classList.remove('is-incoming')
+    }
+    // 表に出た板を入れ替え、映像は新しい板の位置へ戻して読み直す（表紙が見えている間に替える）
+    heroPane = 1 - heroPane
+    heroIndex = i
+    // 押し出しの間は前の 1 本が出ていく板と一緒に動き、終わった瞬間に要素ごと捨てる（新しい 1 本は syncHero が待ちのあとに作る）
+    dropHeroVideo()
+    const old = panes(el)[1 - heroPane]
+    if (old) old.style.transform = 'translateX(100%)'
+    fillSlideText(el, i)
+    revealText(el)
+    heroBusy = false
     syncHero()
+  }
+
+  const nextIndex = (d: 1 | -1) => (heroIndex + d + heroSlides.length) % heroSlides.length
+
+  /** 動きをへらす時は、再生ボタンを押した時だけ流す */
+  const heroRunning = () => !heroPaused && (!reduceMotion() || heroPlayed)
+
+  const syncPauseBtn = (el: HTMLElement) => {
+    const btn = el.querySelector<HTMLElement>('.cat-hero-ctl')
+    if (!btn) return
+    const running = heroRunning()
+    btn.setAttribute('aria-label', t(running ? 'heroPause' : 'heroPlay'))
+    btn.setAttribute('title', t(running ? 'heroPause' : 'heroPlay'))
+    btn.setAttribute('aria-pressed', String(!running))
+    const use = btn.querySelector('use')
+    use?.setAttribute('href', running ? '#i-pause' : '#i-play')
   }
 
   /**
    * 音なしのプレビューと切り替えを、見えている間だけ動かす。一覧を閉じた・ワールドの一覧へ移った・モニターや帳を開いた・
-   * 枠が画面の外・タブが裏、のどれかなら止めて映像を手放す（スマホのメモリ。モニターの映像と同時に 2 本読まない）。
-   * 動きをへらす設定では、流さず・切り替えず、点で選んだ時だけ替える
+   * 枠が画面の外・タブが裏・止めるボタン、のどれかなら止めて映像を手放す（スマホのメモリ。モニターの映像と同時に 2 本読まない）。
+   * 動きをへらす設定では、再生ボタンを押すまで流さず・切り替えない
    */
   const heroActive = () => {
     const body = document.body
@@ -191,8 +302,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       heroVisible &&
       !document.hidden &&
       !body.classList.contains('observe-open') &&
-      !body.classList.contains('book-open') &&
-      !reduceMotion()
+      !body.classList.contains('book-open')
     )
   }
 
@@ -216,14 +326,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     heroEl()?.classList.remove('is-playing')
   }
 
-  /** 今の 1 本の <video> を作って音なしで流す（待ちのあと。まだ見えている時だけ） */
+  /** 今の 1 本の <video> を作って音なしで流す（待ちのあと。まだ見えていて、流す状態で、押し出しの途中でない時だけ） */
   const startHeroVideo = () => {
     heroVideoTimer = 0
     const el = heroEl()
     const sl = heroSlides[heroIndex]
-    if (!el || !sl || !heroActive()) return
+    if (!el || !sl || !heroActive() || !heroRunning() || heroBusy) return
     const v = document.createElement('video')
     v.className = 'cat-hero-video'
+    v.classList.toggle('is-portrait', sl.video.portrait)
     v.muted = true
     v.defaultMuted = true
     v.playsInline = true
@@ -238,17 +349,28 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     })
     v.addEventListener('error', () => el.classList.remove('is-playing'))
     v.src = sl.video.url
-    el.querySelector('.cat-hero-img')?.after(v)
+    // 板（2 枚）の上、影の下に置く
+    const lastPane = [...panes(el)].pop()
+    if (lastPane) lastPane.after(v)
+    else el.prepend(v)
     void v.play().catch(() => undefined)
   }
 
+  /**
+   * 映像の寿命（fix/scope-memory の決まり）: 一覧を開いた瞬間は表紙だけ。のぞく演出が終わり、表紙を見せて落ち着いてから（1.5 秒）
+   * <video> を 1 本だけ作る。切り替え・閉じる・モニターや帳を開く・枠が画面の外・タブが裏の時は、前の要素を捨てる。
+   * 停止ボタンで止めた時は、その 1 本を止めて今の絵を残す（増やさない）。動きをへらす設定では、再生ボタンを押すまで作らない
+   */
   const syncHero = () => {
     const el = heroEl()
+    if (el) syncPauseBtn(el)
+    if (heroBusy) return
     const active = heroActive()
+    const running = active && heroRunning()
     const sl = heroSlides[heroIndex]
     if (el) {
       const v = el.querySelector<HTMLVideoElement>('.cat-hero-video')
-      if (active && sl) {
+      if (running && sl) {
         if (v && v.dataset.src === sl.video.url) {
           if (v.paused) void v.play().catch(() => undefined)
         } else {
@@ -258,25 +380,145 @@ export function createCatalog(store: FriendBookStore): CatalogView {
             heroVideoTimer = window.setTimeout(startHeroVideo, wait)
           }
         }
+      } else if (active && heroPaused && v) {
+        v.pause()
+        window.clearTimeout(heroVideoTimer)
+        heroVideoTimer = 0
       } else {
         dropHeroVideo()
       }
     }
-    if (active && heroSlides.length > 1) {
-      if (!heroTimer) heroTimer = window.setTimeout(() => {
-        heroTimer = 0
-        showSlide((heroIndex + 1) % heroSlides.length)
-      }, HERO_MS)
+    if (running && heroSlides.length > 1) {
+      if (!heroTimer)
+        heroTimer = window.setTimeout(() => {
+          heroTimer = 0
+          void goSlide(nextIndex(1), 1)
+        }, HERO_MS)
     } else if (heroTimer) {
       window.clearTimeout(heroTimer)
       heroTimer = 0
     }
   }
 
+  /** 指で横に送る。縦に動かした時はスクロールに任せる。動かした分だけ板がついてくる */
+  const bindSwipe = (el: HTMLElement) => {
+    let id = -1
+    let x0 = 0
+    let y0 = 0
+    let t0 = 0
+    let dir: 1 | -1 = 1
+    let mode: 'idle' | 'wait' | 'drag' | 'off' = 'idle'
+    let target = 0
+    let ready = false
+    let swallowClick = false
+    const width = () => el.getBoundingClientRect().width || 1
+    el.addEventListener('pointerdown', (e) => {
+      if (heroBusy || heroSlides.length < 2 || (e.pointerType === 'mouse' && e.button !== 0)) return
+      if ((e.target as HTMLElement).closest('.cat-hero-dots, .cat-hero-ctl')) return
+      id = e.pointerId
+      x0 = e.clientX
+      y0 = e.clientY
+      t0 = performance.now()
+      mode = 'wait'
+    })
+    el.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== id || mode === 'idle' || mode === 'off') return
+      const dx = e.clientX - x0
+      const dy = e.clientY - y0
+      if (mode === 'wait') {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+          mode = 'off'
+          return
+        }
+        if (Math.abs(dx) < 10) return
+        mode = 'drag'
+        dir = dx < 0 ? 1 : -1
+        target = nextIndex(dir)
+        ready = false
+        heroBusy = true
+        window.clearTimeout(heroTimer)
+        heroTimer = 0
+        const inc = panes(el)[1 - heroPane]
+        if (inc) {
+          inc.style.setProperty('--seam', dir > 0 ? '0%' : '100%')
+          inc.classList.add('is-incoming')
+          void fillPane(inc, target).then(() => (ready = true))
+        }
+        try {
+          el.setPointerCapture(id)
+        } catch {
+          // 取れなくても動かせる
+        }
+      }
+      if (mode !== 'drag' || reduceMotion()) return
+      // 向きと逆へ戻した分は 0 で止める（反対側の 1 本は出さない）
+      const p = Math.min(1, Math.max(0, (-dir * dx) / width()))
+      place(el, -dir * p, dir * (1 - p))
+    })
+    const end = (e: PointerEvent) => {
+      if (e.pointerId !== id) return
+      id = -1
+      const was = mode
+      mode = 'idle'
+      if (was !== 'drag') return
+      swallowClick = true
+      window.setTimeout(() => (swallowClick = false), 0)
+      const dx = e.clientX - x0
+      const p = Math.min(1, Math.max(0, (-dir * dx) / width()))
+      const v = Math.abs(dx) / Math.max(1, performance.now() - t0)
+      const go = e.type !== 'pointercancel' && (p > 0.2 || (v > 0.45 && p > 0.04))
+      heroBusy = false
+      if (go) {
+        void goSlide(target, dir, reduceMotion() ? 0 : p)
+        return
+      }
+      // 戻す
+      const inc = panes(el)[1 - heroPane]
+      if (reduceMotion() || p === 0) {
+        place(el, 0, dir)
+        inc?.classList.remove('is-incoming')
+        syncHero()
+        return
+      }
+      heroBusy = true
+      const ms = Math.max(200, 500 * p)
+      const outgoing = panes(el)[heroPane]
+      const video = el.querySelector<HTMLElement>('.cat-hero-video')
+      const fr = (a: number, b: number) => [{ transform: `translateX(${a * 100}%)` }, { transform: `translateX(${b * 100}%)` }]
+      const runs = [
+        outgoing?.animate(fr(-dir * p, 0), { duration: ms, easing: QUINT_OUT, fill: 'forwards' }),
+        video?.animate(fr(-dir * p, 0), { duration: ms, easing: QUINT_OUT, fill: 'forwards' }),
+        inc?.animate(fr(dir * (1 - p), dir), { duration: ms, easing: QUINT_OUT, fill: 'forwards' }),
+      ]
+      void Promise.all(runs.map((r) => r?.finished.catch(() => undefined))).then(() => {
+        place(el, 0, dir)
+        runs.forEach((r) => r?.cancel())
+        inc?.classList.remove('is-incoming')
+        heroBusy = false
+        syncHero()
+      })
+      void ready
+    }
+    el.addEventListener('pointerup', end)
+    el.addEventListener('pointercancel', end)
+    // 指で送ったあとの click（観察するボタンの上で離した時など）は押したことにしない
+    el.addEventListener(
+      'click',
+      (e) => {
+        if (swallowClick) {
+          e.stopPropagation()
+          e.preventDefault()
+        }
+      },
+      true,
+    )
+  }
+
   /** 描き直したあとに枠をつなぐ */
   const mountHero = () => {
     heroIo?.disconnect()
     heroIo = null
+    heroBusy = false
     const el = heroEl()
     if (!el) {
       syncHero()
@@ -293,7 +535,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       )
       heroIo.observe(el)
     }
-    showSlide(heroIndex)
+    heroPane = 0
+    const [a, b] = [panes(el)[0], panes(el)[1]]
+    if (a) a.style.transform = 'translateX(0)'
+    if (b) b.style.transform = 'translateX(100%)'
+    if (a) void fillPane(a, heroIndex)
+    fillSlideText(el, heroIndex)
+    revealText(el)
+    bindSwipe(el)
+    syncHero()
   }
 
   document.addEventListener('visibilitychange', syncHero)
@@ -306,7 +556,81 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     `<section class="cat-sec" data-sec="${key}"><h2 class="cat-h">${title}${extra}</h2>${body}</section>`
 
   /** いま開いているワールドの一覧。null ならアニマルスコープの段の一覧 */
-  let page: WorldKey | null = null
+  let page: WorldKey | 'favs' | null = null
+
+  /** 一覧に出せる映像を 1 本ずつ（同じ映像は 1 回）。ライオンの家族 → 種の映像 → スタッフ撮影（新しい順） */
+  interface VidItem {
+    key: string
+    animal: Animal
+    poster: string
+    title: string
+    duration: string
+    place: string
+  }
+  const placeOf = (a: Animal) => {
+    const w = a.world ? getWorld(a.world) : undefined
+    return a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
+  }
+  const allVideoItems = (): VidItem[] => {
+    const out: VidItem[] = []
+    const main = getAnimal(FEATURED.animalId)
+    if (main) out.push({ key: videoKeyOf(main), animal: main, poster: FEATURED.poster, title: t('catRecTitle'), duration: FEATURED.duration, place: t('catSavanna') })
+    for (const v of SPECIES_VIDEOS) {
+      const first = animalsInVideo(v.id)[0]
+      if (first) out.push({ key: v.id, animal: first, poster: v.poster, title: v.title[getLang()], duration: v.duration, place: placeOf(first) })
+    }
+    for (const v of STAFF_VIDEOS) {
+      const named = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
+      const a = named ?? listReadyAnimals().find((x) => x.videoId === v.id)
+      if (!a) continue
+      out.push({ key: v.id, animal: a, poster: v.poster, title: named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()], duration: v.duration, place: placeOf(a) })
+    }
+    return out
+  }
+
+  /** おすすめ: この端末で 👍・❤️ が多い映像から（同じ数なら一覧の並び）。順位の数字は出さない */
+  const popularRowHtml = () => {
+    const items = allVideoItems()
+      .map((it, i) => ({ it, i, s: reactions.score(it.key) }))
+      .sort((a, b) => b.s - a.s || a.i - b.i)
+      .map(({ it }) => it)
+    return items
+      .map(
+        (it) =>
+          `<button type="button" class="cat-rank" data-watch="${esc(it.animal.id)}" aria-label="${esc(it.title)}"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /></button>`,
+      )
+      .join('')
+  }
+
+  /** お気に入り（❤️ を押した映像、新しい順）の一覧 */
+  const renderFavsPage = () => {
+    const meta = (k: I18nKey) => esc(t(k))
+    const byKey = new Map(allVideoItems().map((it) => [it.key, it]))
+    const items = reactions
+      .favorites()
+      .map((k) => byKey.get(k))
+      .filter((x): x is VidItem => !!x)
+    const cards = items
+      .map(
+        (it) =>
+          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
+      )
+      .join('')
+    root.innerHTML = `
+      <div class="cat-scroll" tabindex="-1">
+        <div class="cat-glow" aria-hidden="true"></div>
+        <header class="cat-top">
+          <button type="button" class="cat-icon-btn" data-list="1" aria-label="${meta('catBackList')}" title="${meta('catBackList')}"><svg class="ico" aria-hidden="true"><use href="#i-back" /></svg></button>
+          <h1 class="cat-logo"><svg class="ico cat-logo-heart" aria-hidden="true"><use href="#i-heart" /></svg><span>${meta('catFavs')}</span></h1>
+          <div class="cat-top-right"><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
+        </header>
+        <section class="cat-sec">
+          <p class="cat-fav-lead">${items.length ? meta('catFavsLead') : meta('catFavsEmpty')}</p>
+          ${items.length ? `<div class="cat-fav-grid">${cards}</div>` : ''}
+          <p class="cat-fav-note">${meta('reactLocal')}</p>
+        </section>
+      </div>`
+  }
 
   const renderWorldPage = (w: WorldInfo) => {
     const meta = (k: I18nKey) => esc(t(k))
@@ -347,7 +671,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <header class="cat-top">
           <button type="button" class="cat-icon-btn" data-list="1" aria-label="${meta('catBackList')}" title="${meta('catBackList')}"><svg class="ico" aria-hidden="true"><use href="#i-back" /></svg></button>
           <h1 class="cat-logo"><span>${esc(worldName(w))}</span></h1>
-          <button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button>
+          <div class="cat-top-right"><button type="button" class="cat-icon-btn cat-top-fav" data-favs="1" aria-label="${meta('catFavs')}" title="${meta('catFavs')}"><svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg></button><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
         <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}">${w.key === 'africa' ? `<img class="cat-world-art" src="${SAVANNA_IMAGE}" alt="" style="object-fit:cover" />` : `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? ''}</svg>`}<span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
         ${body}
@@ -361,6 +685,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     heroTimer = 0
     heroIo?.disconnect()
     heroIo = null
+    if (page === 'favs') {
+      renderFavsPage()
+      return
+    }
     const pageWorld = page ? getWorld(page) : undefined
     if (pageWorld) {
       renderWorldPage(pageWorld)
@@ -393,10 +721,14 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const hero = heroSlides.length
       ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero" aria-roledescription="carousel" aria-label="${meta('catNew')}">
-            <img class="cat-hero-img" src="" alt="" />
-            <!-- 映像の <video> は表紙を見せてから作る（startHeroVideo） -->
+            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" /></div>
+            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" /></div>
+            <!-- 映像の <video> は表紙を見せて落ち着いてから 1 本だけ作る（startHeroVideo） -->
             <div class="cat-hero-shade" aria-hidden="true"></div>
-            <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
+            <div class="cat-hero-corner">
+              <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
+              ${heroSlides.length ? `<button type="button" class="cat-hero-ctl" data-hero-ctl="1" aria-pressed="false" aria-label="${meta('heroPause')}"><svg class="ico ico-fill" aria-hidden="true"><use href="#i-pause" /></svg></button>` : ''}
+            </div>
             ${
               heroSlides.length > 1
                 ? `<div class="cat-hero-dots">${heroSlides
@@ -405,10 +737,12 @@ export function createCatalog(store: FriendBookStore): CatalogView {
                 : ''
             }
             <div class="cat-hero-text" aria-live="off">
-              <span class="cat-hero-meta"></span>
-              <span class="cat-hero-title"></span>
+              <span class="cat-hero-clip"><span class="cat-hero-meta"></span></span>
+              <span class="cat-hero-line" aria-hidden="true"></span>
+              <span class="cat-hero-clip"><span class="cat-hero-title"></span></span>
               <div class="cat-hero-actions">
                 <button type="button" class="cat-watch" data-watch="">${PLAY}${meta('catWatch')}</button>
+                <span class="cat-hero-rx"></span>
                 <span class="cat-inbook" role="img" aria-label="${meta('inBook')}" title="${meta('inBook')}" hidden>${CHECK}</span>
               </div>
             </div>
@@ -481,15 +815,11 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
 
-    // 人気を測ったデータは無いので、順位（1・2…）は出さない（11/6 の UT 健診）。見出しは「おすすめ」、縦長のポスターの棚
+    // おすすめ: この端末で押された 👍・❤️ の数で並べる（サーバーは無いので、ほかの人の数は入らない）。順位（1・2…）は出さない（11/6 の UT 健診）
     const popular = section(
       'popular',
-      meta('catRowPopular'),
-      `<div class="cat-row cat-row-rank">${
-        main
-          ? `<button type="button" class="cat-rank" data-watch="${esc(main.id)}" aria-label="${esc(featuredTitle())}"><img src="${esc(thumb(FEATURED.poster))}" alt="" /></button>`
-          : ''
-      }${times(4, () => `<div class="cat-rank cat-rank-sil" aria-hidden="true"><div class="cat-sil">${PLAY}</div></div>`)}</div>`,
+      `${meta('catRowPopular')}<span class="cat-h-note">${meta('catPopularNote')}</span>`,
+      `<div class="cat-row cat-row-rank">${popularRowHtml()}</div>`,
     )
 
     // 種の映像のカード（3 枚に満たない分は形だけのシルエット）
@@ -546,7 +876,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <header class="cat-top">
           <button type="button" class="cat-icon-btn" data-back="1" aria-label="${meta('backWorld')}" title="${meta('backWorld')}"><svg class="ico" aria-hidden="true"><use href="#i-back" /></svg></button>
           <h1 class="cat-logo">${LOGO}<span>${meta('scope')}</span></h1>
-          <button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button>
+          <div class="cat-top-right"><button type="button" class="cat-icon-btn cat-top-fav" data-favs="1" aria-label="${meta('catFavs')}" title="${meta('catFavs')}"><svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg></button><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
         <nav class="cat-chips cat-row" aria-label="${meta('catCategories')}">
           ${chip('all', 'catAll', true)}${chip('live', 'catLive', false, true)}${chip('worlds', 'catWorlds')}${chip('animals', 'catAnimals')}${chip('zoos', 'catZoos')}
@@ -574,13 +904,28 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       setOpen(false)
       return
     }
+    if (handleReactClick(target)) return
     if (target.dataset.slide) {
-      showSlide(Number(target.dataset.slide))
+      const i = Number(target.dataset.slide)
+      if (!heroBusy && i !== heroIndex) void goSlide(i, i > heroIndex ? 1 : -1)
+      return
+    }
+    if (target.dataset.heroCtl) {
+      if (heroRunning()) heroPaused = true
+      else {
+        heroPaused = false
+        if (reduceMotion()) heroPlayed = true
+      }
+      syncHero()
       return
     }
     const worldKey = target.dataset.world as WorldKey | undefined
     if (worldKey && getWorld(worldKey)?.open) {
       goPage(worldKey)
+      return
+    }
+    if (target.dataset.favs) {
+      goPage('favs')
       return
     }
     if (target.dataset.list) {
@@ -620,7 +965,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   })
 
   /** ワールドの一覧と段の一覧を切り替える。戻った時は押したワールドのカードへフォーカスを返す */
-  const goPage = (next: WorldKey | null) => {
+  const goPage = (next: WorldKey | 'favs' | null) => {
     const from = page
     page = next
     returnFocus = null
@@ -630,6 +975,12 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const scroller = scrollEl()
     if (next) {
       scroller?.focus({ preventScroll: true })
+      return
+    }
+    if (from === 'favs') {
+      const favBtn = root.querySelector<HTMLElement>('[data-favs]')
+      scrollEl()?.scrollTo({ top: 0 })
+      ;(favBtn ?? scroller)?.focus({ preventScroll: true })
       return
     }
     const card = from ? root.querySelector<HTMLElement>(`[data-world="${from}"]`) : null
@@ -655,14 +1006,32 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   onLangChange(() => {
     if (open) render()
   })
+  // 👍・❤️ が押された（ここでもモニターでもトークでも）: ボタンの状態と、おすすめの並び・お気に入りの一覧を直す（新着の枠は作り直さない）
+  reactions.onChange(() => {
+    if (!open) return
+    if (page === 'favs') {
+      const top = scrollEl()?.scrollTop ?? 0
+      const focusedKey = (document.activeElement as HTMLElement | null)?.dataset?.reactKey
+      render()
+      const s2 = scrollEl()
+      if (s2) s2.scrollTop = top
+      if (focusedKey) (root.querySelector<HTMLElement>(`[data-react-key="${focusedKey}"]`) ?? s2)?.focus({ preventScroll: true })
+      return
+    }
+    syncReactButtons(root)
+    const row = root.querySelector<HTMLElement>('[data-sec="popular"] .cat-row')
+    if (row) row.innerHTML = popularRowHtml()
+  })
 
   const setOpen = (next: boolean, withScope = false, startPage: WorldKey | null = null) => {
     if (next === open) return
     open = next
     if (next) {
       page = startPage
-      // 開くたびに、いちばん新しい 1 本から見せる
+      // 開くたびに、いちばん新しい 1 本から、流れる状態で見せる
       heroIndex = 0
+      heroPaused = false
+      heroPlayed = false
       heroNotBefore = withScope ? performance.now() + SCOPE_MS : 0
       render()
       root.classList.remove('is-leave')

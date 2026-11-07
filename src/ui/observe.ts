@@ -10,6 +10,8 @@ import { renderHero, renderProfile } from './profile'
 import { sound } from '../audio/sound'
 import { animalName, getLang, speciesName, t } from './i18n'
 import { refreshIn, setViewOpen } from './transition'
+import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
+import { reactions, videoKeyOf } from '../data/reactions'
 
 export type ObserveOrigin = 'world' | 'book'
 
@@ -69,6 +71,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const stars = document.getElementById('befriend-stars') as HTMLElement
   const status = document.getElementById('befriend-status') as HTMLElement
   const memoryNote = document.getElementById('befriend-memory-note') as HTMLElement
+  const rx = document.getElementById('observe-rx') as HTMLElement
 
   const openListeners: Array<(open: boolean) => void> = []
   const befriendListeners: Array<(animal: Animal) => void> = []
@@ -237,6 +240,11 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     title.textContent = t('monitorOf', { name: animalName(animal) })
     hero.innerHTML = renderHero(animal)
     load(animal)
+    // 👍・❤️ は本物の映像がある時だけ（準備中・仮映像には付けない）
+    const resolved = resolveVideoSource(animal.video)
+    const key = resolved && !resolved.placeholder ? videoKeyOf(animal) : ''
+    rx.hidden = !key
+    rx.innerHTML = key ? reactButtonsMarkup(key, 'light', true) : ''
     profile.innerHTML = renderProfile(animal)
     befriended.classList.remove('is-pop')
     renderFriendState(animal)
@@ -418,6 +426,11 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     }
     openListeners.forEach((fn) => fn(open))
   }
+
+  rx.addEventListener('click', (e) => {
+    handleReactClick(e.target as Element)
+  })
+  reactions.onChange(() => syncReactButtons(rx))
 
   closeBtn.addEventListener('click', () => setOpen(false))
   // パネルの外（暗い地の部分）を押しても戻れる。PC では浮いたカードの周り
