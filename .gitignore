@@ -94,6 +94,30 @@ public/models/*
 !public/models/beaver-oak.glb
 !public/models/woodchuck-fas.glb
 !public/models/porcupine-kogomi.glb
+!public/models/kinkajou-fig.glb
+!public/models/lemur-jimin.glb
+!public/models/binturong-bin.glb
+!public/models/binturong-basil.glb
+!public/models/binturong-parsley.glb
+!public/models/lemur-percy.glb
+!public/models/lemur-sana.glb
+!public/models/kinkajou-kuko.glb
+!public/models/kinkajou-coco.glb
+!public/models/kinkajou-villa.glb
+!public/models/lemur-momo.glb
+!public/models/lemur-george.glb
+!public/models/lemur-luna.glb
+!public/models/kinkajou-hazel.glb
+!public/models/kinkajou-chirine.glb
+!public/models/lemur-jupiter.glb
+!public/models/lemur-spacey.glb
+!public/models/kinkajou-mia.glb
+!public/models/coati-kanna.glb
+!public/models/coati-myu.glb
+!public/models/coati-puppe.glb
+!public/models/coati-pupu.glb
+!public/models/coati-rin.glb
+!public/models/coati-rua.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
