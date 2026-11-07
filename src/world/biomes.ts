@@ -7,6 +7,7 @@ import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
 import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
+import { SUN_LIGHT_DIR } from './scene'
 
 /**
  * サバンナ以外の 5 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
@@ -147,6 +148,90 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
   group.add(rockMesh, snowMesh)
 }
 
+/**
+ * ジャングルの沼の水の素材（映り込みの描画はしない軽いシェーダー。スマホでも同じ）。
+ * - 色: 真ん中は深い青、岸に近いほど浅い明るい青緑。斜めから見るほど空色を映す
+ * - さざ波: 向きの違う波を重ねて面の向きをゆらし、日の向き（SUN_LIGHT_DIR）の照り返しを細く散らす
+ * - きらめき: 小さなます目ごとに、照り返しの強い所で時々ちかっと光る点
+ */
+function createPondMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    fog: true,
+    uniforms: {
+      ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+      uTime: { value: 0 },
+      uCenter: { value: new THREE.Vector2(JUNGLE_POND.x, JUNGLE_POND.z) },
+      uRadius: { value: JUNGLE_POND.radius * 1.12 },
+      uSun: { value: SUN_LIGHT_DIR.clone().normalize() },
+      uDeep: { value: new THREE.Color('#1c64b0') },
+      uShallow: { value: new THREE.Color('#3c9ccc') },
+      uSky: { value: new THREE.Color('#bfe4ff') },
+    },
+    vertexShader: /* glsl */ `
+      #include <fog_pars_vertex>
+      varying vec3 vWorld;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorld = wp.xyz;
+        vec4 mvPosition = viewMatrix * wp;
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      #include <fog_pars_fragment>
+      uniform float uTime;
+      uniform vec2 uCenter;
+      uniform float uRadius;
+      uniform vec3 uSun;
+      uniform vec3 uDeep;
+      uniform vec3 uShallow;
+      uniform vec3 uSky;
+      varying vec3 vWorld;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      void main() {
+        vec2 p = vWorld.xz;
+        float t = uTime;
+        // さざ波: 3 つの向きの波の傾き
+        vec2 g = vec2(0.0);
+        g += vec2(0.8, 0.6) * cos(dot(p, vec2(0.8, 0.6)) * 1.7 + t * 1.1) * 0.06;
+        g += vec2(-0.5, 0.85) * cos(dot(p, vec2(-0.5, 0.85)) * 2.6 - t * 1.4) * 0.045;
+        g += vec2(0.95, -0.3) * cos(dot(p, vec2(0.95, -0.3)) * 4.1 + t * 1.9) * 0.03;
+        vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
+        vec3 v = normalize(cameraPosition - vWorld);
+        // 色: 真ん中は深く、岸は浅く
+        float r = length(p - uCenter) / uRadius;
+        vec3 col = mix(uDeep, uShallow, smoothstep(0.35, 1.0, r));
+        // 空の映り込み（斜めから見るほど強い）
+        float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+        col = mix(col, uSky, 0.05 + fres * 0.35);
+        // 日の照り返し（細い）と、ゆるい光の帯
+        vec3 h = normalize(uSun + v);
+        float nh = max(dot(n, h), 0.0);
+        float spec = pow(nh, 70.0);
+        float sheen = pow(nh, 8.0);
+        col += vec3(1.0, 0.97, 0.88) * (spec * 1.6 + sheen * 0.22);
+        // 波の山に乗る細い光の線（ゆっくり流れる）
+        float crest = sin(dot(p, vec2(0.6, 0.8)) * 2.3 + t * 1.2) * sin(dot(p, vec2(-0.7, 0.7)) * 1.9 - t * 0.9);
+        col += vec3(0.85, 0.95, 1.0) * pow(max(crest, 0.0), 6.0) * 0.16;
+        // きらめき: 0.5m のます目ごとに、時々ちかっと光る点（照り返しの向きに近い所ほど強い）
+        vec2 cell = floor(p / 0.5);
+        float rnd = hash(cell);
+        float tw = sin(t * (1.6 + rnd * 2.4) + rnd * 6.2831) * 0.5 + 0.5;
+        vec2 f = fract(p / 0.5) - 0.5 - (vec2(hash(cell + 3.1), hash(cell + 7.7)) - 0.5) * 0.5;
+        float dotShape = smoothstep(0.09, 0.0, length(f));
+        float glint = step(0.8, rnd) * pow(tw, 8.0) * dotShape * (0.45 + sheen * 2.0);
+        col += vec3(1.0) * glint * 1.6;
+        gl_FragColor = vec4(col, 0.9);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+        #include <fog_fragment>
+      }
+    `,
+  })
+}
+
 /** ジャングル: 背の高い木（細い幹に濃い緑の玉）、ヤシ、シダ。目印は中心の奥の大木 */
 function createJungle(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('jungle')
@@ -239,14 +324,14 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   finish(fernMesh)
   group.add(fernMesh)
 
-  // ワニの沼の水面: 濁った緑の水（映り込みは描かない。ふちは岸の泥に隠れる）
-  const pond = new THREE.Mesh(
-    new THREE.CircleGeometry(JUNGLE_POND.radius * 1.12, 40).rotateX(-Math.PI / 2),
-    new THREE.MeshLambertMaterial({ color: '#5d8f6a', transparent: true, opacity: 0.88 }),
-  )
+  // ワニの沼の水面: 青い水に、空の映り込み（斜めから見るほど空色）・ゆっくり動くさざ波・日の光の照り返しときらめき
+  const pond = new THREE.Mesh(new THREE.CircleGeometry(JUNGLE_POND.radius * 1.12, 48).rotateX(-Math.PI / 2), createPondMaterial())
   pond.position.set(JUNGLE_POND.x, JUNGLE_POND.level, JUNGLE_POND.z)
-  pond.receiveShadow = true
   pond.name = 'jungle-pond'
+  // 時間は描く直前に進める（ほかの更新の道を増やさない）
+  pond.onBeforeRender = () => {
+    ;(pond.material as THREE.ShaderMaterial).uniforms.uTime.value = performance.now() / 1000
+  }
   group.add(pond)
 
   // 止まり木: 縦の幹と、東へ張り出した横枝（枝の先は細く）
