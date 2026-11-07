@@ -413,6 +413,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'goatFlow', species: 'ヤギ', name: 'フロー', file: 'goat-flow', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'goatLattejr', species: 'ヤギ', name: 'ラテjr', file: 'goat-lattejr', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'goatShizuru', species: 'ヤギ', name: 'しずる', file: 'goat-shizuru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
