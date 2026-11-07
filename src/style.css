@@ -6062,12 +6062,13 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 }
 .scop-msg-text {
   min-height: 3.6em;
-  max-height: min(16.2em, 40vh);
+  max-height: min(18.9em, 44vh);
   margin: 0;
   overflow-y: auto;
   font-size: 17px;
   font-weight: 700;
-  line-height: 1.8;
+  /* ふりがなの分、行の間を広めに */
+  line-height: 2.1;
   letter-spacing: 0.04em;
   white-space: pre-wrap;
   /* 文はかなを空白で区切ってあるので、言葉の途中では改行しない */
@@ -6186,4 +6187,12 @@ body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
 }
 @media (min-width: 768px) {
   .cat-fav-lead, .cat-fav-note, .cat-fav-grid { padding-left: 40px; padding-right: 40px; }
+}
+/* スコップの窓のふりがな（ツアーの吹き出しと同じく小さめ。窓が暗いので少し明るい灰色） */
+.scop-msg-text ruby { ruby-position: over; }
+.scop-msg-text rt {
+  font-size: 0.5em;
+  font-weight: 700;
+  color: #c9d3f2;
+  letter-spacing: 0;
 }
