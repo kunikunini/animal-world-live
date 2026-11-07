@@ -346,6 +346,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       replaceHost?: boolean
       /** 横たわる子（ヘビ）: 大きさを水平の長い方の辺で合わせる */
       lie?: boolean
+      /** ぶら下がる子（ナマケモノ）: 名前の札の高さは入れ物のまま（枝の下） */
+      hang?: boolean
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
@@ -452,6 +454,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'bearGorou', species: 'ツキノワグマ', name: 'ゴロウ', file: 'bear-gorou', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
       { key: 'bearMakkun', species: 'ツキノワグマ', name: 'まっ君', file: 'bear-makkun', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
       { key: 'prairieTanpopo', species: 'プレーリードッグ', name: 'たんぽぽ', file: 'prairie-tanpopo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'foxAzuki', species: 'キタキツネ', name: 'あずき', file: 'fox-azuki', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.7, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       { key: 'huskyRock', species: 'シベリアンハスキー', name: 'ロック', file: 'husky-rock', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
@@ -555,7 +558,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           if (!host) return
           // 尾の無い子は、Lion.update が書く尾の揺れを使わない入れ物に向ける（ai.parts.tail は 0 のまま）
           host.swapModel(ai.model, r.noTail ? { ...ai.parts, tail: new THREE.Object3D() } : ai.parts)
-          host.headHeight = ai.headHeight
+          if (!r.hang) host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const roam = roamFor(r.species, animal.id)
           const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, roam)
