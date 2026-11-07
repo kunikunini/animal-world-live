@@ -465,6 +465,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'tortoiseAruru', species: 'アルダブラゾウガメ', name: 'あるる', file: 'tortoise-aruru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'tortoiseButter', species: 'パンケーキリクガメ', name: 'バター', file: 'tortoise-butter', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'tortoiseSyrup', species: 'パンケーキリクガメ', name: 'シロップ', file: 'tortoise-syrup', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'pyreneanElsa', species: 'ピレネーシェパード', name: 'エルサ', file: 'pyrenean-elsa', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
