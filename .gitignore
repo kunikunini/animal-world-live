@@ -96,6 +96,7 @@ public/models/*
 !public/models/goat-flow.glb
 !public/models/goat-lattejr.glb
 !public/models/meerkat-moa.glb
+!public/models/meerkat-nerine.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
