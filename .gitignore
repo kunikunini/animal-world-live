@@ -125,6 +125,7 @@ public/models/*
 !public/models/coati-puppe.glb
 !public/models/coati-pupu.glb
 !public/models/coati-rin.glb
+!public/models/coati-rua.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
