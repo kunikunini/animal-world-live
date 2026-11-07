@@ -4,6 +4,7 @@
  * 保存が無ければ端末の「視差効果を減らす」に従う。
  */
 import { getLang, onLangChange, setLang, t, type Lang } from './i18n'
+import { bindAudioLogGesture } from '../debug/audioLog'
 import { sound, type FriendSound } from '../audio/sound'
 import { setViewOpen } from './transition'
 import { bindSoundControls } from './soundControls'
@@ -58,6 +59,9 @@ function writeMotion(on: boolean): void {
 
 export function createSettings(): Settings {
   const root = document.getElementById('settings') as HTMLElement
+  // 実機の調べ用: 見出し「設定」を 2 秒のうちに 5 回押すと、閉じる・スリープの時の音の記録を出す
+  const titleEl = root.querySelector<HTMLElement>('.sheet-title')
+  if (titleEl) bindAudioLogGesture(titleEl)
   const closeBtn = document.getElementById('settings-close') as HTMLButtonElement
   const openBtn = document.getElementById('home-settings') as HTMLButtonElement
   const motion = document.getElementById('reduce-motion') as HTMLInputElement

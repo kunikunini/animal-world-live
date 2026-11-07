@@ -8,6 +8,7 @@
  * - 音量とミュートは BGM（曲）・まわりの音（環境音）・効果音で別々。「動きをへらす」とは独立。この端末に覚える
  *   （まわりの音は 11/6 に BGM から分けた。保存が無ければ、それまでの BGM の値を引き継ぐ）
  */
+import { alog } from '../debug/audioLog'
 import { playFriendChime } from '../ui/chime'
 
 export type BgmKey = 'home' | 'savanna' | 'jungle' | 'north' | 'south' | 'water' | 'sky' | 'partner'
@@ -145,6 +146,8 @@ let master: GainNode | null = null
 let suspendTimer = 0
 /** おはなしの「とまる」で止めている（画面が戻っても勝手に鳴らさない） */
 let pausedByApp = false
+/** スマホでウインドウの focus が外れて、全体の音量を下げている（閉じる前ぶれ） */
+let blurred = false
 /** 画面が隠れる・一時停止の時に、全体の音量を下げきるまでの秒数 */
 const HIDE_FADE = 0.03
 
@@ -162,16 +165,27 @@ function fadeOutAndSuspend(still: () => boolean): void {
   if (!ctx || !master) return
   rampMaster(0, HIDE_FADE)
   window.clearTimeout(suspendTimer)
+  const t0 = performance.now()
   suspendTimer = window.setTimeout(
     () => {
+      // 実機の調べ用: ページが止められていたら、ここに来るのが遅れる（戻った時に来る）
+      const st = still()
+      alog(`suspend-timer +${Math.round(performance.now() - t0)}ms ${st ? 'suspend' : 'skip'} ${audioState()}`)
       try {
-        if (still() && ctx?.state === 'running') void ctx.suspend()
+        if (st && ctx?.state === 'running') void ctx.suspend()
       } catch {
         // 続ける
       }
     },
     HIDE_FADE * 1000 + 30,
   )
+}
+
+/** 実機の調べ用: いまの音の状態（AudioContext・全体の音量・観察モニターの映像の音） */
+function audioState(): string {
+  const v = document.getElementById('observe-video') as HTMLVideoElement | null
+  const vid = !v || v.paused ? 'off' : v.muted ? 'muted' : 'SOUND'
+  return `ctx=${ctx?.state ?? '-'} g=${master ? master.gain.value.toFixed(2) : '-'} bgm=${bgm.key ?? '-'} amb=${amb.key ?? '-'} video=${vid}`
 }
 /** 観察モニター（収録映像）を見ている間は BGM を下げる */
 let duck = 1
@@ -548,6 +562,7 @@ export const sound = {
     const ac = ensureContext()
     if (ac && ac.state === 'running') queueMicrotask(unlock)
     ac?.addEventListener('statechange', () => {
+      alog(`statechange ${audioState()}`)
       if (ac.state === 'running' && !unlocked) unlock()
       // 止まった時（自分で止めた時も、iPhone がスリープ・電話などで止めた "interrupted" も）は全体の音量を 0 にしておき、
       // 動き出した時は 0 から上げる（止まる前の音のかけらが再開の瞬間にいきなり鳴らないように）
@@ -555,7 +570,7 @@ export const sound = {
       if (ac.state !== 'running') {
         master.gain.cancelScheduledValues(ac.currentTime)
         master.gain.setValueAtTime(0, ac.currentTime)
-      } else if (!document.hidden && !pausedByApp) {
+      } else if (!document.hidden && !pausedByApp && !blurred) {
         rampMaster(1, 0.3)
       }
     })
@@ -569,6 +584,7 @@ export const sound = {
     const onShow = () => {
       if (!ctx || !unlocked || !master) return
       window.clearTimeout(suspendTimer)
+      blurred = false
       if (pausedByApp) return
       try {
         void ctx.resume()
@@ -577,12 +593,42 @@ export const sound = {
       }
       rampMaster(1, 0.3)
     }
-    document.addEventListener('visibilitychange', () => (document.hidden ? onHide() : onShow()))
+    document.addEventListener('visibilitychange', () => {
+      alog(`visibility ${document.hidden ? 'hidden' : 'visible'} ${audioState()}`)
+      if (document.hidden) onHide()
+      else onShow()
+    })
     // iPhone の Safari はロックの時に pagehide だけ来ることがある
-    window.addEventListener('pagehide', onHide)
+    window.addEventListener('pagehide', (e) => {
+      alog(`pagehide persisted=${e.persisted} ${audioState()}`)
+      onHide()
+    })
     window.addEventListener('pageshow', () => {
+      alog(`pageshow ${audioState()}`)
       if (!document.hidden) onShow()
     })
+    // スマホ・タブレット: アプリを閉じる・切り替える・ロックする時は、画面が隠れる（visibilitychange）より先に
+    // ウインドウの focus が外れる（blur）。iOS は隠れた直後にページを止めるので、隠れてから下げ始めると、
+    // 急に閉じた時ほど下げきる前に音が断ち切られて「プチッ」と鳴る。そこで、先に来る blur の時点で全体の音量を 0 へ下げておく
+    // （AudioContext は止めない。戻ってきた・隠れなかった時は focus で元へ）。PC は別のウインドウを触るだけで blur が来るので、しない
+    const touchDevice = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+    window.addEventListener('blur', () => {
+      alog(`blur ${audioState()}`)
+      if (!touchDevice || !ctx || !unlocked || !master || pausedByApp) return
+      blurred = true
+      rampMaster(0, HIDE_FADE)
+    })
+    const unblur = () => {
+      if (!blurred || document.hidden || !ctx || !master) return
+      blurred = false
+      if (!pausedByApp && ctx.state === 'running') rampMaster(1, 0.3)
+    }
+    window.addEventListener('focus', () => {
+      alog(`focus ${audioState()}`)
+      unblur()
+    })
+    // focus が来ないまま操作が始まった時（全画面の映像から戻った時など）も、音を戻す
+    window.addEventListener('pointerdown', unblur, true)
     // UI の決定・タップ: ボタンを押した時に小さく鳴らす。同じ操作で別の効果音が鳴る時はそちらだけにする
     document.addEventListener(
       'click',
