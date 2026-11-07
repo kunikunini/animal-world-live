@@ -19,6 +19,8 @@ export interface PlayerController {
   goTo: (waypoints: Array<{ x: number; z: number }>) => void
   /** 今、目的地へ向かって歩いているか */
   isAutoWalking: () => boolean
+  /** 歩いている目的地（最後の経由点）。歩いていなければ null */
+  destination: () => { x: number; z: number } | null
   /** 観察画面などを開いている間、タップとキーを受け付けない */
   setInputEnabled: (on: boolean) => void
   /** ジャンプ（地面にいるときだけ） */
@@ -616,6 +618,10 @@ export function createPlayer(
     update,
     goTo,
     isAutoWalking: () => waypoints.length > 0,
+    destination: () => {
+      const last = waypoints[waypoints.length - 1]
+      return last ? { x: last.x, z: last.z } : null
+    },
     setInputEnabled: (on) => {
       inputEnabled = on
       if (!on) {

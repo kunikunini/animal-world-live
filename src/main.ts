@@ -710,6 +710,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
 
   for (const lion of lions) labels.add(lion.id, nameOf(lion.id))
+  // 名前札のタップ: その子に向かって歩き、出会いの範囲（collider.r + 4.2）に入ったら止まる。
+  // 相手が動いたら行き先を直して追う（ミーアキャットなどはよく動く）。目的地は体に当たらない collider.r + 1.6。
+  // 別の所をタップした・スティックや WASD で動かした・20 秒たっても届かない時はやめる。
+  // 着いたら、群れの別の子のほうが近くても、出会いのピンはタップした子に出す（その子が範囲にいる間）
+  let labelWalk: { id: string; x: number; z: number; lx: number; lz: number; at: number; since: number } | null = null
+  let labelPick: string | null = null
+  const walkToAnimal = (id: string, since: number) => {
+    const lion = lions.find((l) => l.id === id)
+    if (!lion) return
+    const p = player.object.position
+    const dx = p.x - lion.position.x
+    const dz = p.z - lion.position.z
+    const d = Math.hypot(dx, dz) || 1
+    const stop = lion.collider.r + 1.6
+    const x = lion.position.x + (dx / d) * stop
+    const z = lion.position.z + (dz / d) * stop
+    player.goTo(routeTo({ x: p.x, z: p.z }, { x, z }))
+    // 岩をよける経路で最後の点がずれることがあるので、実際の目的地を覚える（別の所へのタップと見分ける）
+    const dest = player.destination() ?? { x, z }
+    labelWalk = { id, x: dest.x, z: dest.z, lx: lion.position.x, lz: lion.position.z, at: performance.now(), since }
+    labelPick = null
+  }
+  labels.onTap((id) => {
+    if (paused || introOn || observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()) return
+    walkToAnimal(id, performance.now())
+  })
   onLangChange(() => {
     for (const lion of lions) labels.rename(lion.id, nameOf(lion.id))
   })
@@ -1631,6 +1657,27 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 着いたらボタンが「スコープをのぞく」に変わる。のぞくのは押した時だけ（勝手には開かない）
     hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
 
+    // 名前札から歩いている: 範囲に入ったら止まる。相手が動いたら追う
+    if (labelWalk) {
+      const w = labelWalk
+      const lion = lions.find((l) => l.id === w.id)
+      const p = player.object.position
+      const dest = player.destination()
+      const now = performance.now()
+      // 別の所へ歩き出した（タップ・地図）か、スティック・キーで止めた／岩で止まった（目的地に着いていない）か、時間切れ
+      const overridden = dest !== null && Math.hypot(dest.x - w.x, dest.z - w.z) > 0.5
+      const stopped = dest === null && Math.hypot(p.x - w.x, p.z - w.z) > 2
+      if (!lion || farHosts.has(lion) || overridden || stopped || now - w.since > 20000) {
+        labelWalk = null
+      } else if (Math.hypot(p.x - lion.position.x, p.z - lion.position.z) < lion.collider.r + 4.2 - 0.3) {
+        labelWalk = null
+        labelPick = w.id
+        player.goTo([])
+      } else if (dest === null || (Math.hypot(lion.position.x - w.lx, lion.position.z - w.lz) > 1.5 && now - w.at > 400)) {
+        walkToAnimal(w.id, w.since)
+      }
+    }
+
     // 出会い: そばにいる個体を決める。切り替えは「はっきり近い状態が少し続いたら」
     let closest: { id: string; d: number } | null = null
     // いま出会っている個体の距離と届く範囲（範囲外なら null）
@@ -1653,8 +1700,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         })
       }
     }
+    // 名前札から歩いて着いた子が範囲にいれば、その子に出会う。範囲を出たら選び直しに戻す
+    const picked = labelPick !== null ? lions.find((l) => l.id === labelPick) : undefined
+    const pickedIn = picked !== undefined && !farHosts.has(picked) && Math.hypot(player.object.position.x - picked.position.x, player.object.position.z - picked.position.z) < picked.collider.r + 4.2
+    if (labelPick !== null && !pickedIn) labelPick = null
     let nextId = encounterId
-    if (encounterId !== null && currentD !== null) {
+    if (pickedIn) {
+      nextId = labelPick
+      candidateId = null
+    } else if (encounterId !== null && currentD !== null) {
       if (closest && closest.id !== encounterId && closest.d < currentD - SWITCH_MARGIN) {
         if (candidateId !== closest.id) {
           candidateId = closest.id

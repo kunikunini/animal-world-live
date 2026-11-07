@@ -2115,6 +2115,19 @@ body.is-reduce-motion .stamina.is-resting svg { animation: none; }
 .lion-label {
   z-index: 3;
   padding: 5px 11px;
+  /* タップでその子のそばへ歩く。ダブルタップの拡大で取られないように */
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 押せる範囲だけ広げる（見た目は変えない）。札は約 28px なので上下に足して 50px ほど、下は尻尾の分も。
+   padding で広げると layout() の測った大きさと位置がずれるので、透明な疑似要素で広げる */
+.lion-label::before {
+  content: '';
+  position: absolute;
+  inset: -10px -8px -14px;
 }
 
 .lion-label .spot-label-name {
