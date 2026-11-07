@@ -6034,6 +6034,8 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
   font-size: 15px;
   font-weight: 800;
+  /* 画面の端でも 1 行のまま（端で止める処理は ui/scopTalk.ts） */
+  white-space: nowrap;
   box-shadow: 0 4px 0 #1e348f, 0 8px 18px rgba(20, 30, 60, 0.28);
   cursor: pointer;
   animation: scop-call-bob 1.6s ease-in-out infinite;

@@ -43,6 +43,10 @@ const PLAIN_CPS = 12
 const LINGER_MS = 1000
 /** フェードの長さ（ms。style.css の .scop-msg の transition と合わせる） */
 const FADE_MS = 400
+/** 「声をかける」と画面の端のすきま（px） */
+const CALL_EDGE = 8
+/** 「声をかける」が上に跳ねる分（style.css の scop-call-bob の margin-top の最大） */
+const CALL_BOB = 15
 
 export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   const call = document.createElement('button')
@@ -85,6 +89,8 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   let talkMs = 0
   let endTimer = 0
   let fadeTimer = 0
+  let callW = 0
+  let callH = 0
 
   const clearTimers = () => {
     if (endTimer) clearTimeout(endTimer)
@@ -188,7 +194,16 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
     setCall: (screen) => {
       const on = screen !== null && !open
       if (call.hidden === on) call.hidden = !on
-      if (on && screen) call.style.transform = `translate(-50%, -100%) translate(${screen.x.toFixed(0)}px, ${screen.y.toFixed(0)}px)`
+      if (on && screen) {
+        // 画面の端では止めて、はみ出さないようにする（幅・高さは一度測って覚えておく）
+        if (!callW) {
+          callW = call.offsetWidth
+          callH = call.offsetHeight
+        }
+        const x = Math.max(CALL_EDGE + callW / 2, Math.min(window.innerWidth - CALL_EDGE - callW / 2, screen.x))
+        const y = Math.max(CALL_EDGE + callH + CALL_BOB, Math.min(window.innerHeight - CALL_EDGE, screen.y))
+        call.style.transform = `translate(-50%, -100%) translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`
+      }
     },
     onCall: (fn) => {
       callListeners.push(fn)
