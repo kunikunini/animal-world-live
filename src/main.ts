@@ -430,6 +430,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'tanukiTamtam', species: 'ホンドタヌキ', name: 'タムタム', file: 'tanuki-tamtam', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'beaverOak', species: 'アメリカビーバー', name: 'オーク', file: 'beaver-oak', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'sheepAsako', species: 'ヒツジ', name: 'あさこ', file: 'sheep-asako', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'collieShine', species: 'ボーダーコリー', name: 'シャイン', file: 'collie-shine', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
