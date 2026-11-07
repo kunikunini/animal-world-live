@@ -530,56 +530,108 @@ export function createDiorama(wrap: HTMLElement): Diorama {
 
   const _v = new THREE.Vector3()
   type Rect = { l: number; t: number; r: number; b: number }
+  type EdgeItem = { tg: { el: HTMLElement; x: number; z: number }; bw: number; bh: number }
   /**
    * 画面の外のワールドの札を、画面のふちに止める。向きは見る点からそのワールドの中心への方角（カメラの後ろでも決まる）。
-   * 重なる時はふちに沿ってずらし、どこも空いていなければ重なっても出す（どのワールドへも地図から飛べるように）
+   * ふちごとにまとめ、方角の順に並べてから重ならないように詰める（ずらしても、上下・左右の並びが方角と入れ替わらない）。
+   * どこも空いていなければ重なっても出す（どのワールドへも地図から飛べるように）
    */
-  const placeEdgeTag = (
-    it: { tg: { el: HTMLElement; x: number; z: number }; bw: number; bh: number },
+  const placeEdgeTags = (
+    list: EdgeItem[],
     w: number,
     h: number,
     placed: Rect[],
     show: (el: HTMLElement, on: boolean) => void,
     bottom: number,
   ) => {
-    const dx = it.tg.x - view.tx
-    const dz = it.tg.z - view.tz
+    const pad = 16
+    const gap = 4
     const cy = Math.cos(view.yaw)
     const sy = Math.sin(view.yaw)
-    let ex = dx * cy - dz * sy
-    let ey = dx * sy + dz * cy
-    const n = Math.hypot(ex, ey) || 1
-    ex /= n
-    ey /= n
-    // 札の中心が動ける範囲（矢印の分だけふちから離す）
-    const pad = 16
-    const hx = Math.max(0, w / 2 - it.bw / 2 - pad)
-    // 下は凡例の上まで（凡例は札より手前に描かれるので、下に入ると隠れる）
-    const hy = Math.max(0, (ey > 0 ? bottom - h / 2 : h / 2) - it.bh / 2 - pad)
-    const k = Math.min(Math.abs(ex) > 1e-6 ? hx / Math.abs(ex) : Infinity, Math.abs(ey) > 1e-6 ? hy / Math.abs(ey) : Infinity)
-    const sideHit = Math.abs(ex) * hy >= Math.abs(ey) * hx
-    const x0 = w / 2 + ex * k - it.bw / 2
-    const y0 = h / 2 + ey * k - it.bh / 2
-    const hit = (l: number, t: number) => placed.some((p) => l < p.r && l + it.bw > p.l && t < p.b && t + it.bh > p.t)
-    let at = { l: x0, t: y0 }
-    for (let i = 1; i <= 8 && hit(at.l, at.t); i++) {
-      // ふちに沿って、近い方から交互にずらす（左右のふちは上下へ、上下のふちは左右へ）
-      const s = (i % 2 ? 1 : -1) * Math.ceil(i / 2)
-      at = sideHit ? { l: x0, t: y0 + s * (it.bh + 4) } : { l: x0 + s * (it.bw * 0.6), t: y0 }
-      at.l = Math.max(pad, Math.min(w - it.bw - pad, at.l))
-      at.t = Math.max(pad, Math.min(bottom - it.bh - pad, at.t))
+    const groups = new Map<string, Array<{ it: EdgeItem; ex: number; ey: number; side: boolean; l: number; t: number; dist: number }>>()
+    for (const it of list) {
+      const dx = it.tg.x - view.tx
+      const dz = it.tg.z - view.tz
+      let ex = dx * cy - dz * sy
+      let ey = dx * sy + dz * cy
+      const dist = Math.hypot(ex, ey) || 1
+      ex /= dist
+      ey /= dist
+      // 札の中心が動ける範囲（矢印の分だけふちから離す）。下は凡例の上まで（凡例は札より手前に描かれるので、下に入ると隠れる）
+      const hx = Math.max(0, w / 2 - it.bw / 2 - pad)
+      const hy = Math.max(0, (ey > 0 ? bottom - h / 2 : h / 2) - it.bh / 2 - pad)
+      const k = Math.min(Math.abs(ex) > 1e-6 ? hx / Math.abs(ex) : Infinity, Math.abs(ey) > 1e-6 ? hy / Math.abs(ey) : Infinity)
+      const side = Math.abs(ex) * hy >= Math.abs(ey) * hx
+      const key = side ? (ex < 0 ? 'L' : 'R') : ey < 0 ? 'T' : 'B'
+      const e = { it, ex, ey, side, l: w / 2 + ex * k - it.bw / 2, t: h / 2 + ey * k - it.bh / 2, dist }
+      const g = groups.get(key)
+      if (g) g.push(e)
+      else groups.set(key, [e])
     }
-    if (hit(at.l, at.t)) at = { l: x0, t: y0 }
-    placed.push({ l: at.l, t: at.t, r: at.l + it.bw, b: at.t + it.bh })
-    // 矢印: 札の画面のふち側（左右のふちなら札の左右の端、上下のふちなら上下の端）から、方角を指す
-    const ang = Math.atan2(ey, ex)
-    const ax = sideHit ? Math.sign(ex) * (it.bw / 2 + 1) : 0
-    const ay = sideHit ? 0 : Math.sign(ey) * (it.bh / 2 + 1)
-    it.tg.el.style.setProperty('--edge-angle', `${ang.toFixed(3)}rad`)
-    it.tg.el.style.setProperty('--edge-x', `${ax.toFixed(1)}px`)
-    it.tg.el.style.setProperty('--edge-y', `${ay.toFixed(1)}px`)
-    show(it.tg.el, true)
-    it.tg.el.style.transform = `translate(${at.l.toFixed(1)}px, ${at.t.toFixed(1)}px)`
+    for (const g of groups.values()) {
+      const side = g[0].side
+      // ふちに沿った位置（左右のふちは上から下、上下のふちは左から右）。同じ方角なら近い方を先に
+      const pos = (e: (typeof g)[number]) => (side ? e.t : e.l)
+      const size = (e: (typeof g)[number]) => (side ? e.it.bh : e.it.bw)
+      g.sort((a, b) => pos(a) - pos(b) || a.dist - b.dist)
+      const lo = pad
+      const hi = (e: (typeof g)[number]) => (side ? bottom - e.it.bh - pad : w - e.it.bw - pad)
+      const hitOther = (e: (typeof g)[number], p: number) => {
+        const l = side ? e.l : p
+        const t = side ? p : e.t
+        return placed.some((r) => l < r.r && l + e.it.bw > r.l && t < r.b && t + e.it.bh > r.t)
+      }
+      // 前から: 前の札より後ろで、ほかの札・凡例（となりのふちの札も）に当たらない所を、近い方から交互に探す
+      const at: number[] = []
+      let prevEnd = -Infinity
+      for (const e of g) {
+        const min = Math.max(lo, prevEnd + gap)
+        const base = Math.max(min, Math.min(hi(e), pos(e)))
+        let p = base
+        for (let i = 1; i <= 12 && hitOther(e, p); i++) {
+          const q = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * (size(e) + gap)
+          if (q >= min && q <= hi(e) && !hitOther(e, q)) p = q
+        }
+        at.push(p)
+        prevEnd = p + size(e)
+      }
+      // 後ろから: はみ出した分を戻す（並びは保つ）
+      let nextStart = Infinity
+      for (let i = g.length - 1; i >= 0; i--) {
+        const e = g[i]
+        at[i] = Math.max(lo, Math.min(at[i], hi(e), nextStart - gap - size(e)))
+        nextStart = at[i]
+      }
+      g.forEach((e, i) => {
+        let l = side ? e.l : at[i]
+        let t = side ? at[i] : e.t
+        const hitAt = (x: number, y: number) => placed.some((r) => x < r.r && x + e.it.bw > r.l && y < r.b && y + e.it.bh > r.t)
+        if (!side && hitAt(l, t)) {
+          // 上下のふちに入りきらない時は、方角に近い方の左右のふちへ、角から積む
+          const sl = e.ex < 0 ? pad : w - e.it.bw - pad
+          for (let k = 0; k <= 8; k++) {
+            const st = e.ey > 0 ? bottom - e.it.bh - pad - k * (e.it.bh + gap) : pad + k * (e.it.bh + gap)
+            if (st < pad || st > bottom - e.it.bh - pad) break
+            if (!hitAt(sl, st)) {
+              l = sl
+              t = st
+              break
+            }
+          }
+        }
+        placed.push({ l, t, r: l + e.it.bw, b: t + e.it.bh })
+        // 矢印: 札の画面のふち側（左右のふちなら札の左右の端、上下のふちなら上下の端）から、方角を指す
+        const ang = Math.atan2(e.ey, e.ex)
+        const ax = side ? Math.sign(e.ex) * (e.it.bw / 2 + 1) : 0
+        const ay = side ? 0 : Math.sign(e.ey) * (e.it.bh / 2 + 1)
+        const el = e.it.tg.el
+        el.style.setProperty('--edge-angle', `${ang.toFixed(3)}rad`)
+        el.style.setProperty('--edge-x', `${ax.toFixed(1)}px`)
+        el.style.setProperty('--edge-y', `${ay.toFixed(1)}px`)
+        show(el, true)
+        el.style.transform = `translate(${l.toFixed(1)}px, ${t.toFixed(1)}px)`
+      })
+    }
   }
   /**
    * 札を置く。見る向きが変わるので毎コマ。重なる札は下・上・左右へずらし、それでもだめなら出さない
@@ -627,6 +679,8 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       const v = on ? '' : 'hidden'
       if (el.style.visibility !== v) el.style.visibility = v
     }
+    // ふちに止める札は、ほかの札を置いてからまとめて並べる
+    const edgeItems: EdgeItem[] = []
     for (const it of items) {
       const off = it.behind || it.sx < -it.bw / 2 || it.sx > w + it.bw / 2 || it.sy < -it.bh || it.sy > h + it.bh
       if (it.tg.world) {
@@ -634,7 +688,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
         const inside = !off && it.sx >= it.bw / 2 + 4 && it.sx <= w - it.bw / 2 - 4 && it.sy >= it.bh + 4 && it.sy <= h - 4
         it.tg.el.classList.toggle('is-edge', !inside)
         if (!inside) {
-          placeEdgeTag(it, w, h, placed, show, edgeBottom)
+          edgeItems.push(it)
           continue
         }
       }
@@ -665,7 +719,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
         if (it.tg.world) {
           // 画面の中でも置き場所が無い時（凡例の下など）は、ふちに止めて出す
           it.tg.el.classList.add('is-edge')
-          placeEdgeTag(it, w, h, placed, show, edgeBottom)
+          edgeItems.push(it)
           continue
         }
         if (!it.tg.target) {
@@ -679,6 +733,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       show(it.tg.el, true)
       it.tg.el.style.transform = `translate(${at.l.toFixed(1)}px, ${at.t.toFixed(1)}px)`
     }
+    placeEdgeTags(edgeItems, w, h, placed, show, edgeBottom)
   }
 
   // 見る向き: 見る点（地面の上）、まわりの角度（0 で北が上）、見下ろす角度、寄り
