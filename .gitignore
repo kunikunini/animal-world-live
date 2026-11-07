@@ -118,6 +118,18 @@ public/models/*
 !public/models/coati-pupu.glb
 !public/models/coati-rin.glb
 !public/models/coati-rua.glb
+!public/models/meerkat-moa.glb
+!public/models/meerkat-nerine.glb
+!public/models/meerkat-yomogi.glb
+!public/models/meerkat-suzu.glb
+!public/models/meerkat-haruka.glb
+!public/models/meerkat-sou.glb
+!public/models/sandcat-sheri.glb
+!public/models/tortoise-leonardo.glb
+!public/models/tortoise-larc.glb
+!public/models/tortoise-aruru.glb
+!public/models/tortoise-butter.glb
+!public/models/tortoise-syrup.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
