@@ -4147,6 +4147,25 @@ button.bk-tab:hover {
   translate: -50% 2px;
   background: #5e3a1c;
 }
+/* 画面の外のワールド: ふちに止めた札。看板の足の代わりに、そのワールドの方を指す矢印 */
+.map3d-base.is-world.is-edge { opacity: 1; }
+.map3d-base.is-world.is-edge::before { display: none; }
+.map3d-edge-arrow { display: none; }
+.map3d-base.is-world.is-edge .map3d-edge-arrow {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  margin: -7px 0 0 0;
+  border-style: solid;
+  border-width: 7px 0 7px 10px;
+  border-color: transparent transparent transparent #5e3a1c;
+  transform-origin: 0 50%;
+  transform: translate(var(--edge-x, 0px), var(--edge-y, 0px)) rotate(var(--edge-angle, 0rad));
+  pointer-events: none;
+}
 .map3d-heart {
   position: absolute;
   left: 0;

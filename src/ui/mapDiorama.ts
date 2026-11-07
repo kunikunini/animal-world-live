@@ -505,6 +505,11 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       el.className = 'map3d-base is-world'
       el.dataset.base = w.base
       el.textContent = w.label
+      // 画面の外にある時は、札を画面のふちに止めて、そのワールドの方を指す矢印を出す（placeTags）
+      const arrow = document.createElement('span')
+      arrow.className = 'map3d-edge-arrow'
+      arrow.setAttribute('aria-hidden', 'true')
+      el.append(arrow)
       overlay.append(el)
       tags.push({ el, x: c.x, y: NEIGHBOR_DROP + 14, z: c.z, bw: 0, bh: 0, world: true })
     }
@@ -524,6 +529,58 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   })
 
   const _v = new THREE.Vector3()
+  type Rect = { l: number; t: number; r: number; b: number }
+  /**
+   * 画面の外のワールドの札を、画面のふちに止める。向きは見る点からそのワールドの中心への方角（カメラの後ろでも決まる）。
+   * 重なる時はふちに沿ってずらし、どこも空いていなければ重なっても出す（どのワールドへも地図から飛べるように）
+   */
+  const placeEdgeTag = (
+    it: { tg: { el: HTMLElement; x: number; z: number }; bw: number; bh: number },
+    w: number,
+    h: number,
+    placed: Rect[],
+    show: (el: HTMLElement, on: boolean) => void,
+    bottom: number,
+  ) => {
+    const dx = it.tg.x - view.tx
+    const dz = it.tg.z - view.tz
+    const cy = Math.cos(view.yaw)
+    const sy = Math.sin(view.yaw)
+    let ex = dx * cy - dz * sy
+    let ey = dx * sy + dz * cy
+    const n = Math.hypot(ex, ey) || 1
+    ex /= n
+    ey /= n
+    // 札の中心が動ける範囲（矢印の分だけふちから離す）
+    const pad = 16
+    const hx = Math.max(0, w / 2 - it.bw / 2 - pad)
+    // 下は凡例の上まで（凡例は札より手前に描かれるので、下に入ると隠れる）
+    const hy = Math.max(0, (ey > 0 ? bottom - h / 2 : h / 2) - it.bh / 2 - pad)
+    const k = Math.min(Math.abs(ex) > 1e-6 ? hx / Math.abs(ex) : Infinity, Math.abs(ey) > 1e-6 ? hy / Math.abs(ey) : Infinity)
+    const sideHit = Math.abs(ex) * hy >= Math.abs(ey) * hx
+    const x0 = w / 2 + ex * k - it.bw / 2
+    const y0 = h / 2 + ey * k - it.bh / 2
+    const hit = (l: number, t: number) => placed.some((p) => l < p.r && l + it.bw > p.l && t < p.b && t + it.bh > p.t)
+    let at = { l: x0, t: y0 }
+    for (let i = 1; i <= 8 && hit(at.l, at.t); i++) {
+      // ふちに沿って、近い方から交互にずらす（左右のふちは上下へ、上下のふちは左右へ）
+      const s = (i % 2 ? 1 : -1) * Math.ceil(i / 2)
+      at = sideHit ? { l: x0, t: y0 + s * (it.bh + 4) } : { l: x0 + s * (it.bw * 0.6), t: y0 }
+      at.l = Math.max(pad, Math.min(w - it.bw - pad, at.l))
+      at.t = Math.max(pad, Math.min(bottom - it.bh - pad, at.t))
+    }
+    if (hit(at.l, at.t)) at = { l: x0, t: y0 }
+    placed.push({ l: at.l, t: at.t, r: at.l + it.bw, b: at.t + it.bh })
+    // 矢印: 札の画面のふち側（左右のふちなら札の左右の端、上下のふちなら上下の端）から、方角を指す
+    const ang = Math.atan2(ey, ex)
+    const ax = sideHit ? Math.sign(ex) * (it.bw / 2 + 1) : 0
+    const ay = sideHit ? 0 : Math.sign(ey) * (it.bh / 2 + 1)
+    it.tg.el.style.setProperty('--edge-angle', `${ang.toFixed(3)}rad`)
+    it.tg.el.style.setProperty('--edge-x', `${ax.toFixed(1)}px`)
+    it.tg.el.style.setProperty('--edge-y', `${ay.toFixed(1)}px`)
+    show(it.tg.el, true)
+    it.tg.el.style.transform = `translate(${at.l.toFixed(1)}px, ${at.t.toFixed(1)}px)`
+  }
   /**
    * 札を置く。見る向きが変わるので毎コマ。重なる札は下・上・左右へずらし、それでもだめなら出さない
    * （寄ったり回したりすると離れて出てくる）。カメラの後ろ・枠の外の札も出さない。押そうとしている拠点の札はいつも出す
@@ -535,9 +592,12 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const placed: Array<{ l: number; t: number; r: number; b: number }> = []
     // 凡例と右上のボタンの上には札を置かない
     const wr = wrap.getBoundingClientRect()
+    // 画面のふちに止める札の下の限り（凡例の上）
+    let edgeBottom = h
     wrap.parentElement?.querySelectorAll<HTMLElement>('.map-legend, .map-tools').forEach((el) => {
       const r = el.getBoundingClientRect()
       if (r.width) placed.push({ l: r.left - wr.left - 4, t: r.top - wr.top - 4, r: r.right - wr.left + 4, b: r.bottom - wr.top + 4 })
+      if (r.width && el.classList.contains('map-legend') && r.top - wr.top > h / 2) edgeBottom = Math.min(edgeBottom, r.top - wr.top - 4)
     })
     // 小さな主人公（足もとから「いまここ」の三角まで）の上には札を置かない
     _v.copy(hero.position).project(camera)
@@ -569,6 +629,15 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     }
     for (const it of items) {
       const off = it.behind || it.sx < -it.bw / 2 || it.sx > w + it.bw / 2 || it.sy < -it.bh || it.sy > h + it.bh
+      if (it.tg.world) {
+        // となりのワールドの札が画面の外なら、画面のふちに止める（水の世界のように、ほかのワールドが遠くて見えない所からも飛べるように）
+        const inside = !off && it.sx >= it.bw / 2 + 4 && it.sx <= w - it.bw / 2 - 4 && it.sy >= it.bh + 4 && it.sy <= h - 4
+        it.tg.el.classList.toggle('is-edge', !inside)
+        if (!inside) {
+          placeEdgeTag(it, w, h, placed, show, edgeBottom)
+          continue
+        }
+      }
       if (off) {
         show(it.tg.el, false)
         continue
@@ -593,6 +662,12 @@ export function createDiorama(wrap: HTMLElement): Diorama {
         }
       }
       if (!at) {
+        if (it.tg.world) {
+          // 画面の中でも置き場所が無い時（凡例の下など）は、ふちに止めて出す
+          it.tg.el.classList.add('is-edge')
+          placeEdgeTag(it, w, h, placed, show, edgeBottom)
+          continue
+        }
         if (!it.tg.target) {
           show(it.tg.el, false)
           continue
