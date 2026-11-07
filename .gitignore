@@ -119,6 +119,8 @@ public/models/*
 !public/models/coati-rin.glb
 !public/models/coati-rua.glb
 !public/models/meerkat-moa.glb
+!public/models/meerkat-kai.glb
+!public/models/meerkat-bine.glb
 !public/models/meerkat-nerine.glb
 !public/models/meerkat-yomogi.glb
 !public/models/meerkat-suzu.glb
@@ -126,6 +128,7 @@ public/models/*
 !public/models/meerkat-sou.glb
 !public/models/sandcat-sheri.glb
 !public/models/tortoise-leonardo.glb
+!public/models/tortoise-meteo.glb
 !public/models/tortoise-larc.glb
 !public/models/tortoise-aruru.glb
 !public/models/tortoise-butter.glb
