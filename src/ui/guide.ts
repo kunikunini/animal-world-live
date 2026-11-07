@@ -146,7 +146,7 @@ const STEPS: Step[] = [
   },
   {
     text: {
-      ja: '{名前|なまえ}の ふだを おしてみて！',
+      ja: 'ネームプレートを おしてみて！',
       en: 'Tap the name tag — tag, you’re it!',
     },
     targets: ['.encounter-pin', '.lion-label[data-id="riley"]', 'riley'],
