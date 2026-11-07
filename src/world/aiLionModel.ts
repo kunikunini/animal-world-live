@@ -52,6 +52,8 @@ export interface PostureFix {
    * この時の hind は「振りをどれだけ小さくするか」になる（0 = クリップの振りのまま）
    */
   hindCenter?: boolean
+  /** 前脚も同じく、平均の曲がりだけ取り除いて振りを残す（front は振りを小さくする強さになる） */
+  frontCenter?: boolean
 }
 
 /** 4 頭（アンジー・ライリー・クレア・カーラ）で決めた標準の強さ */
@@ -129,11 +131,11 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   let action: THREE.AnimationAction | null = null
   // 立ち姿（バインドポーズ）と、前のコマでミキサーが書いた素の値（補正と生活感レイヤーを重ねないために控える）。
   // Meshy の書き出しは骨の初期値がバインドポーズ
-  // meanInv: 歩行 1 周ぶんの平均の曲がり（立ち姿からの差）の逆。後ろ脚の hindCenter で使う
-  const bones: { bone: THREE.Object3D; rest: THREE.Quaternion; raw: THREE.Quaternion; k: number; hind: boolean; meanInv: THREE.Quaternion }[] = []
+  // meanInv: 歩行 1 周ぶんの平均の曲がり（立ち姿からの差）の逆。脚の hindCenter・frontCenter で使う
+  const bones: { bone: THREE.Object3D; rest: THREE.Quaternion; raw: THREE.Quaternion; k: number; hind: boolean; front: boolean; meanInv: THREE.Quaternion }[] = []
   inner.traverse((o) => {
     if ((o as THREE.Bone).isBone)
-      bones.push({ bone: o, rest: o.quaternion.clone(), raw: o.quaternion.clone(), k: weightFor(o.name, posture), hind: /backleg/i.test(o.name), meanInv: new THREE.Quaternion() })
+      bones.push({ bone: o, rest: o.quaternion.clone(), raw: o.quaternion.clone(), k: weightFor(o.name, posture), hind: /backleg/i.test(o.name), front: /frontleg/i.test(o.name), meanInv: new THREE.Quaternion() })
   })
   // Meshy の「歩く」は腰の骨に、リグの寸法合わせの名残（位置のずれと一様な縮小 約 0.93）を入れてくる。
   // そのままだと歩き出した時に体が 7% 縮んで前にずれる（立ち姿と歩行の間でポップする）ので、腰の位置と大きさは常に立ち姿の値に戻す
@@ -154,7 +156,7 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   const applyPosture = (w = 1) => {
     for (const b of bones) {
       b.k = weightFor(b.bone.name, posture)
-      if (b.hind && posture.hindCenter) b.bone.quaternion.multiply(qCenter.identity().slerp(b.meanInv, w))
+      if ((b.hind && posture.hindCenter) || (b.front && posture.frontCenter)) b.bone.quaternion.multiply(qCenter.identity().slerp(b.meanInv, w))
       if (b.k > 0) b.bone.quaternion.slerp(b.rest, b.k)
     }
     if (hips && hipsRest) {
@@ -173,13 +175,13 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     const cur = new THREE.Vector3()
     let fastest = 0
     action.setEffectiveWeight(1)
-    // 後ろ脚の平均の曲がり: 1 周を同じ間隔で取り、立ち姿からの差（rest⁻¹ · 再生の値）を平均する
-    const hindBones = bones.filter((b) => b.hind)
-    const sum = hindBones.map(() => new THREE.Vector4())
+    // 脚の平均の曲がり: 1 周を同じ間隔で取り、立ち姿からの差（rest⁻¹ · 再生の値）を平均する
+    const legBones = bones.filter((b) => b.hind || b.front)
+    const sum = legBones.map(() => new THREE.Vector4())
     const d = new THREE.Quaternion()
     for (let k = 0; k < N; k++) {
       mixer.setTime((k / N) * dur)
-      hindBones.forEach((b, i) => {
+      legBones.forEach((b, i) => {
         d.copy(b.rest).invert().multiply(b.bone.quaternion)
         const s4 = sum[i]
         const sign = k > 0 && s4.x * d.x + s4.y * d.y + s4.z * d.z + s4.w * d.w < 0 ? -1 : 1
@@ -189,7 +191,7 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
         s4.w += d.w * sign
       })
     }
-    hindBones.forEach((b, i) => b.meanInv.set(sum[i].x, sum[i].y, sum[i].z, sum[i].w).normalize().invert())
+    legBones.forEach((b, i) => b.meanInv.set(sum[i].x, sum[i].y, sum[i].z, sum[i].w).normalize().invert())
     for (let k = 0; k <= N; k++) {
       mixer.setTime((k / N) * dur)
       applyPosture()

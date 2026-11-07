@@ -313,6 +313,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 既定は生成モデル。?model=primitive（全部）か、種ごとの ?tiger=primitive・?capybara=primitive でプリミティブ版（伏せ）に戻して見比べられる。
   // place のある子は、モデルが読めた時だけ place の場所に置く。プリミティブ版の無い子（グラン）は読めなければ居ないまま（?zebra=off でも置かない）。
   // 群れの場所に自動で置いたプリミティブ版がいる子（銀牙・ピーター・ゆめこ・虎・テル）は、読めればそれと入れ替え、読めなければ・?<key>=primitive ならプリミティブ版のまま
+  // 歩き回る子の脚は hindCenter・frontCenter（平均の曲がりだけ取って振りを残す）。hind・front は前後の歩幅が腰の高さの 21〜24% にそろう強さを 1 頭ずつ測って決めた（11/8）
   {
     const q = new URLSearchParams(location.search)
     const AI_RESIDENTS: {
@@ -335,78 +336,78 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       replaceHost?: boolean
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
-      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true } },
+      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
       // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロは夜間バッチの生成モデル）。
       // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
       // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
       // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
-      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true },
+      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, hindCenter: true, spine: 0.98, tail: 1, front: 0.75, frontCenter: true, ground: true }, noTail: true },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
       // グランの後ろ脚はアレックスと同じく平均の曲がりだけ取る（0.95 で立ち姿へ寄せていた時は後ろ足がほぼ動かなかった）。0.7 で前脚の歩幅・速さにそろう
       { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 } },
       // フェン: 北の世界の中心の北のホッキョクオオカミ 3 頭のうち、いちばん東の子（ネガ・マリはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 接地だけだと腰 86〜100% で前足が浮く。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.85 で腰 99.3〜103.3%（フェンで測って決めた値）
-      { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
+      { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       // 銀牙: 北の世界の中心の南西、サバンナから来た人が最初に見る雪原（キツネの東 15 m。名簿の全個体を置いた後、ハスキーの群れと重ならないよう東へ 5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ（鼻先〜尾の先）1.4 m は実物の成犬の目安。接地だけだと腰が 86〜89% の忍び足。
       // 後ろ脚 0.75・背骨 0.9・尾 0.5・前脚 0.7 で腰 99.1〜101.3%（銀牙で測って決めた値）
       { key: 'husky', species: 'シベリアンハスキー', name: '銀牙', file: 'husky-ginga', posture: { hind: 0.75, spine: 0.9, tail: 0.5, front: 0.7, ground: true }, place: { ...residentPlace('north', 'シベリアンハスキー'), yaw: 0.3, length: 1.4 } },
       // ピーター: サバンナの道（スタート → スポット）の右手の草原。グラン（道の左手）と道をはさんだ向かい、ライリー（40, 5）から 22 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ 1.7 m は実物の成獣の目安。接地だけだと腰 80〜83%。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8 で腰 99.1〜102.3%（ピーターで測って決めた値）
-      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.8, ground: true }, place: { ...SAVANNA_HYENA, length: 1.7 } },
+      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.6, frontCenter: true, ground: true }, place: { ...SAVANNA_HYENA, length: 1.7 } },
       // ゆめこ: ジャングルの中心の西（ティガーの反対側。名簿の全個体を置いた後、アカハナグマの群れと重ならないよう南へ 4.5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 2.1 m は実物の成獣の目安。
       // 色の画像が暗く、ジャングルの光では写真より黒く沈むので、明るさを 2.5 倍にする（1・1.35・1.7・2.5・3.5 を写真と並べて、毛の灰色がいちばん近い値）。
       // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
-      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },
+      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.65, hindCenter: true, spine: 0.9, tail: 1, front: 0.65, frontCenter: true, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },
       // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
-      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 1, front: 0.7, frontCenter: true, ground: true }, noTail: true },
       // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
-      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
       // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽はプリミティブ版のまま）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
       // ひれが人の腕のように振れて体が歪むので、歩かせない（静止＋呼吸・首・左右の揺れ。waterfolk.ts）。大きさはプリミティブ版の高さにそろえる
       { key: 'penguin', species: 'ケープペンギン', name: 'リンリン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
-      { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.85, spine: 1, tail: 0.5, front: 0.95, ground: true } },
+      { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },
       // 虎: サバンナのスタート（0, 72）からスポットへ向かう途中、左手 4.5 m の踏み分け道の上（−4.5, 43.5）。背の高い草の中だと体が隠れるので、草の生えない道に置き、
       // まわり 1 m だけ歩く。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.55 m（鼻先〜尾の先）は実物の成獣の目安。
       // 接地だけだと腰 81〜85%。後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65 で腰 99.6〜102.8%（虎で測って決めた値）
       { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, place: { ...SAVANNA_MEERKAT, length: 0.55 } },
       // テル: ジャングルの中心の西、ゆめこ（南米）の北 13 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
       // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
-      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
+      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.6, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
       // ---- 夜間バッチ（exp/animals-night）: 群れの場所のプリミティブ版と入れ替える（読めなければ・?<key>=primitive ならプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる ----
       // ウーピー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 2 番目。コピー方式の試しでピーターの値（0.9／0.95／0.5／0.8）を流用すると腰の下限が 98.7% で届かず、
       // ウーピーで振って背骨だけ 1 に上げた（後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8 で腰 99.2〜101.6%）
       // ハイエナの群れのプリミティブ版（wildfolk）は差し替え口が無いので、その子の場所・向き・体の長さで入れ替える（replaceHost）
-      { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
       // アンバー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 3 番目。ウーピーの値（0.9／1／0.5／0.8）の流用だけで腰 99.6〜103.0%。群れのプリミティブ版（wildfolk）と replaceHost で入れ替える
-      { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 0.5, front: 0.75, frontCenter: true, ground: true }, replaceHost: true },
       // 夜間バッチ 2（11/7）。姿勢の補正値は各子で測って決めた値（LOG）
       // ラーテル・プレーリードッグ・ワオキツネザルの群れのプリミティブ版（wildfolk・直立の形）は差し替え口が無いので replaceHost
       { key: 'ratelWinnie', species: 'ラーテル', name: 'ウィニー', file: 'ratel-winnie', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
-      { key: 'otterMinato', species: 'コツメカワウソ', name: 'ミナト', file: 'otter-minato', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'otterMinato', species: 'コツメカワウソ', name: 'ミナト', file: 'otter-minato', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
       // マロ: 南半球の西のカピバラ 2 頭のうち中心に近い方（しずかの隣）。しずかの値（0.7／0.98／1／0.9）の流用は腰の下限 98.9% で届かず、背骨だけ 1 に上げた
       // （後ろ脚 0.7・背骨 1・尾 1・前脚 0.9 で腰 99.3〜101.9%）。尾は無い子なので尾の骨は動かさない（noTail）
-      { key: 'capybaraMaro', species: 'カピバラ', name: 'マロ', file: 'capybara-maro', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
+      { key: 'capybaraMaro', species: 'カピバラ', name: 'マロ', file: 'capybara-maro', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 1, front: 0.65, frontCenter: true, ground: true }, noTail: true },
       // ゆず: 南半球の中心の南のマーラ 2 頭のうちゆず（かぼすの隣）。かぼすの値（0.95／0.8／1／0.7）の流用は腰の下限 98.9% で届かず、後ろ脚だけ 1 に上げた（腰 99.9〜101.5%）。尾は無い子なので尾の骨は動かさない（noTail）
-      { key: 'maraYuzu', species: 'マーラ', name: 'ゆず', file: 'mara-yuzu', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      { key: 'maraYuzu', species: 'マーラ', name: 'ゆず', file: 'mara-yuzu', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 1, front: 0.7, frontCenter: true, ground: true }, noTail: true },
       // ラピ: 南半球のカピバラ 3 頭のうちラピ。マロの値（0.7／1／1／0.9）の流用だけで腰 100.0〜101.4%。尾の骨は動かさない（noTail）
-      { key: 'capybaraRapi', species: 'カピバラ', name: 'ラピ', file: 'capybara-rapi', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
+      { key: 'capybaraRapi', species: 'カピバラ', name: 'ラピ', file: 'capybara-rapi', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 1, front: 0.7, frontCenter: true, ground: true }, noTail: true },
       // ライム: 南半球のマーラ 5 頭のうちライム。ゆずの値（1／0.8／1／0.7）の流用だけで腰 100.3〜102.4%。尾の骨は動かさない（noTail）
-      { key: 'maraLime', species: 'マーラ', name: 'ライム', file: 'mara-lime', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      { key: 'maraLime', species: 'マーラ', name: 'ライム', file: 'mara-lime', posture: { hind: 0.75, hindCenter: true, spine: 0.8, tail: 1, front: 0.8, frontCenter: true, ground: true }, noTail: true },
       // レモン: 南半球のマーラ 5 頭のうちレモン。ゆずの値（1／0.8／1／0.7）の流用だけで腰 99.8〜100.5%。尾の骨は動かさない（noTail）
-      { key: 'maraLemon', species: 'マーラ', name: 'レモン', file: 'mara-lemon', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      { key: 'maraLemon', species: 'マーラ', name: 'レモン', file: 'mara-lemon', posture: { hind: 0.8, hindCenter: true, spine: 0.8, tail: 1, front: 0.8, frontCenter: true, ground: true }, noTail: true },
       // ライチ: 南半球のマーラ 5 頭のうちライチ。コピー方式でゆずの値（後ろ脚 1・背骨 0.8・尾 1・前脚 0.7）を流用。尾の骨は動かさない（noTail）
-      { key: 'maraLychee', species: 'マーラ', name: 'ライチ', file: 'mara-lychee', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      { key: 'maraLychee', species: 'マーラ', name: 'ライチ', file: 'mara-lychee', posture: { hind: 0.8, hindCenter: true, spine: 0.8, tail: 1, front: 0.8, frontCenter: true, ground: true }, noTail: true },
       // きのこ: ふれあいワールドの放牧場のポニー 3 頭のうちきのこ。めいの値（0.95／0.9／0.5／0.8）の流用は腰 98.5〜105.2% で外れ、1／0.9／0.5／0.9 に（腰 99.9〜101.6%）
-      { key: 'ponyKinoko', species: 'ポニー', name: 'きのこ', file: 'pony-kinoko', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'ponyKinoko', species: 'ポニー', name: 'きのこ', file: 'pony-kinoko', posture: { hind: 0.75, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
       // サクラ: ふれあいワールドの放牧場のポニー 3 頭のうちサクラ。コピー方式できのこの値（後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9）を流用
-      { key: 'ponySakura', species: 'ポニー', name: 'サクラ', file: 'pony-sakura', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'ponySakura', species: 'ポニー', name: 'サクラ', file: 'pony-sakura', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
       { key: 'goatLatte', species: 'ヤギ', name: 'ラテ', file: 'goat-latte', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
       { key: 'goatShiki', species: 'ヤギ', name: 'シキ', file: 'goat-shiki', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
       { key: 'goatTwotone', species: 'ヤギ', name: 'ツートン', file: 'goat-twotone', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
@@ -431,17 +432,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'bearGorou', species: 'ツキノワグマ', name: 'ゴロウ', file: 'bear-gorou', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
       { key: 'bearMakkun', species: 'ツキノワグマ', name: 'まっ君', file: 'bear-makkun', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
       { key: 'prairieTanpopo', species: 'プレーリードッグ', name: 'たんぽぽ', file: 'prairie-tanpopo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
-      { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
-      { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
-      { key: 'huskyRock', species: 'シベリアンハスキー', name: 'ロック', file: 'husky-rock', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
-      { key: 'huskyFuga', species: 'シベリアンハスキー', name: '風牙', file: 'husky-fuga', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
-      { key: 'huskyAnya', species: 'シベリアンハスキー', name: 'アーニャ', file: 'husky-anya', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
-      { key: 'huskyOthello', species: 'シベリアンハスキー', name: 'オセロ', file: 'husky-othello', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
-      { key: 'huskyYuki', species: 'シベリアンハスキー', name: 'ユキ', file: 'husky-yuki', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
-      { key: 'huskyNoel', species: 'シベリアンハスキー', name: 'ノエル', file: 'husky-noel', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
-      { key: 'wolfYua', species: 'ホッキョクオオカミ', name: 'ユア', file: 'wolf-yua', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
-      { key: 'wolfTeo', species: 'ホッキョクオオカミ', name: 'テオ', file: 'wolf-teo', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
-      { key: 'wolfKamui', species: 'ホッキョクオオカミ', name: 'カムイ', file: 'wolf-kamui', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
+      { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.7, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
+      { key: 'huskyRock', species: 'シベリアンハスキー', name: 'ロック', file: 'husky-rock', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
+      { key: 'huskyFuga', species: 'シベリアンハスキー', name: '風牙', file: 'husky-fuga', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'huskyAnya', species: 'シベリアンハスキー', name: 'アーニャ', file: 'husky-anya', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'huskyOthello', species: 'シベリアンハスキー', name: 'オセロ', file: 'husky-othello', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'huskyYuki', species: 'シベリアンハスキー', name: 'ユキ', file: 'husky-yuki', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'huskyNoel', species: 'シベリアンハスキー', name: 'ノエル', file: 'husky-noel', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'wolfYua', species: 'ホッキョクオオカミ', name: 'ユア', file: 'wolf-yua', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'wolfTeo', species: 'ホッキョクオオカミ', name: 'テオ', file: 'wolf-teo', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'wolfKamui', species: 'ホッキョクオオカミ', name: 'カムイ', file: 'wolf-kamui', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
       { key: 'tanukiTamtam', species: 'ホンドタヌキ', name: 'タムタム', file: 'tanuki-tamtam', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'beaverOak', species: 'アメリカビーバー', name: 'オーク', file: 'beaver-oak', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'woodchuckFas', species: 'ウッドチャック', name: 'ファス', file: 'woodchuck-fas', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
@@ -470,12 +471,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'coatiPupu', species: 'アカハナグマ', name: 'ぷぷ', file: 'coati-pupu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'coatiRin', species: 'アカハナグマ', name: 'リン', file: 'coati-rin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'coatiRua', species: 'アカハナグマ', name: 'ルア', file: 'coati-rua', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatNerine', species: 'ミーアキャット', name: 'ネリネ', file: 'meerkat-nerine', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatSou', species: 'ミーアキャット', name: 'そう', file: 'meerkat-sou', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatNerine', species: 'ミーアキャット', name: 'ネリネ', file: 'meerkat-nerine', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatSou', species: 'ミーアキャット', name: 'そう', file: 'meerkat-sou', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
       { key: 'sandcatSheri', species: 'スナネコ', name: 'シェリ', file: 'sandcat-sheri', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'tortoiseLeonardo', species: 'ケヅメリクガメ', name: 'レオナルド', file: 'tortoise-leonardo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'tortoiseLarc', species: 'ケヅメリクガメ', name: 'ラルク', file: 'tortoise-larc', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
