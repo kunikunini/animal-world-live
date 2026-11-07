@@ -2,7 +2,7 @@ import type { Animal } from './animals'
 
 /**
  * 映像ごとの 👍（いいね）と ❤️（お気に入り）。押すのはユーザー、保存はこの端末の localStorage だけ。
- * サーバーは無いので、スタッフ画面で見える数・アニマルスコープの「おすすめ」の並びは「この端末で押された数」。
+ * サーバーは無いので、スタッフ画面で見える数は「この端末で押された数」。アニマルスコープの「お気に入り」の段もこの端末で ❤️ を押した映像だけ。
  * 映像の鍵は、videos.json の id（種の映像・スタッフ撮影）か、それが無い映像（ライオンの家族）は MP4 の名前。
  * 家族で同じ映像を共有する子（アンジー・クレア・カーラ）は同じ鍵になる。
  * localStorage が使えない時はメモリに持つ（押せるが、閉じると消える）。
@@ -21,8 +21,6 @@ export interface ReactionStore {
   toggle: (key: string, kind: 'like' | 'fav') => Reaction
   /** お気に入りの映像の鍵（新しく足した順） */
   favorites: () => string[]
-  /** 並べ替え用の点（👍 と ❤️ の数の和。この端末では 0〜2） */
-  score: (key: string) => number
   all: () => Record<string, Reaction>
   onChange: (fn: () => void) => void
 }
@@ -95,10 +93,6 @@ export function createReactionStore(): ReactionStore {
         .filter(([, r]) => r.fav)
         .sort((a, b) => ((a[1].favAt ?? '') < (b[1].favAt ?? '') ? 1 : -1))
         .map(([k]) => k),
-    score: (key) => {
-      const r = get(key)
-      return (r.like ? 1 : 0) + (r.fav ? 1 : 0)
-    },
     all: read,
     onChange: (fn) => {
       listeners.push(fn)

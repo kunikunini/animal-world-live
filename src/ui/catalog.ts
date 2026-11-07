@@ -588,28 +588,23 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     return out
   }
 
-  /** おすすめ: この端末で 👍・❤️ が多い映像から（同じ数なら一覧の並び）。順位の数字は出さない */
-  const popularRowHtml = () => {
-    const items = allVideoItems()
-      .map((it, i) => ({ it, i, s: reactions.score(it.key) }))
-      .sort((a, b) => b.s - a.s || a.i - b.i)
-      .map(({ it }) => it)
-    return items
-      .map(
-        (it) =>
-          `<button type="button" class="cat-rank" data-watch="${esc(it.animal.id)}" aria-label="${esc(it.title)}"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /></button>`,
-      )
-      .join('')
+  /** お気に入りにした映像（❤️ を押した順の新しい方から）。一覧に無い映像の鍵は飛ばす */
+  const favItems = (): VidItem[] => {
+    const byKey = new Map(allVideoItems().map((it) => [it.key, it]))
+    return reactions
+      .favorites()
+      .map((k) => byKey.get(k))
+      .filter((x): x is VidItem => !!x)
   }
+
+  /** 横長の映像カード（数は出さない。👍・❤️ の状態はモニターと新着の枠のボタンで見る） */
+  const videoCardHtml = (it: VidItem) =>
+    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
 
   /** お気に入り（❤️ を押した映像、新しい順）の一覧 */
   const renderFavsPage = () => {
     const meta = (k: I18nKey) => esc(t(k))
-    const byKey = new Map(allVideoItems().map((it) => [it.key, it]))
-    const items = reactions
-      .favorites()
-      .map((k) => byKey.get(k))
-      .filter((x): x is VidItem => !!x)
+    const items = favItems()
     const cards = items
       .map(
         (it) =>
@@ -815,12 +810,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
 
-    // おすすめ: この端末で押された 👍・❤️ の数で並べる（サーバーは無いので、ほかの人の数は入らない）。順位（1・2…）は出さない（11/6 の UT 健診）
-    const popular = section(
-      'popular',
-      `${meta('catRowPopular')}<span class="cat-h-note">${meta('catPopularNote')}</span>`,
-      `<div class="cat-row cat-row-rank">${popularRowHtml()}</div>`,
-    )
+    // お気に入り: この端末で ❤️ を押した映像だけ（新しい順）。0 本の時は段ごと隠す（❤️ が押されたら出す）。数は出さない
+    const favList = favItems()
+    const favRow = `<section class="cat-sec" data-sec="favs"${favList.length ? '' : ' hidden'}><h2 class="cat-h">${meta('catFavs')}<button type="button" class="cat-h-link" data-favs="1">${meta('catSeeAll')} ›</button></h2><div class="cat-row">${favList.map(videoCardHtml).join('')}</div></section>`
 
     // 種の映像のカード（3 枚に満たない分は形だけのシルエット）
     const recCards = SPECIES_VIDEOS.flatMap((v) => {
@@ -881,7 +873,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <nav class="cat-chips cat-row" aria-label="${meta('catCategories')}">
           ${chip('all', 'catAll', true)}${chip('live', 'catLive', false, true)}${chip('worlds', 'catWorlds')}${chip('animals', 'catAnimals')}${chip('zoos', 'catZoos')}
         </nav>
-        ${live}${hero}${friendsRow}${worlds}${animals}${popular}${recs}${staff}${zoos}
+        ${live}${hero}${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}
       </div>`
     mountHero()
   }
@@ -1019,8 +1011,13 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       return
     }
     syncReactButtons(root)
-    const row = root.querySelector<HTMLElement>('[data-sec="popular"] .cat-row')
-    if (row) row.innerHTML = popularRowHtml()
+    const sec = root.querySelector<HTMLElement>('[data-sec="favs"]')
+    const row = sec?.querySelector<HTMLElement>('.cat-row')
+    if (sec && row) {
+      const list = favItems()
+      row.innerHTML = list.map(videoCardHtml).join('')
+      sec.hidden = list.length === 0
+    }
   })
 
   const setOpen = (next: boolean, withScope = false, startPage: WorldKey | null = null) => {
