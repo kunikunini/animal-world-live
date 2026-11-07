@@ -465,6 +465,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'prairieMarron', species: 'プレーリードッグ', name: 'マロン', file: 'prairie-marron', posture: { hind: 1, spine: 1, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       // めい（ギンギツネ）: 本人の写真から作ったクレイ風の絵で新しく生成（だいちゃんの複製は銀の毛色が違うので使わない）。北の世界の目印のキツネの形と入れ替える
       { key: 'silverfoxMei', species: 'ギンギツネ', name: 'めい', file: 'silverfox-mei', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      // ハナ（ニホンザル）: 本人の写真から作ったクレイ風の四つ足で歩く絵で新しく生成し、四足のリグ（イヌ科）を試す。北の世界の目印のサルの形と入れ替える
+      { key: 'macaqueHana', species: 'ニホンザル', name: 'ハナ', file: 'macaque-hana', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true, scale: 1.4 },
       { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.7, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       { key: 'huskyRock', species: 'シベリアンハスキー', name: 'ロック', file: 'husky-rock', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
@@ -526,6 +528,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'pythonHotaru', species: 'ビルマニシキヘビ', name: '蛍', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 1.5, brighten: 1.35 },
       { key: 'pythonNoriji', species: 'ビルマニシキヘビ', name: 'のり次', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.35, brighten: 1.35 },
       { key: 'pythonFubuki', species: 'ビルマニシキヘビ', name: '吹雪', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.65, brighten: 1.35 },
+      // おやき（スローロリス、ジャングル）: 本人の写真から作ったクレイ風の、丸太にしがみつく絵で生成。リグなしの静止モデル（丸太ごと）。
+      // 今の場所の地面に丸太ごと置き、大きさは水平の長い方の辺（丸太の長さ）をプリミティブ版の体の長さに合わせる。歩かせず、入れ物の呼吸の拡縮だけ
+      { key: 'lorisOyaki', species: 'スローロリス', name: 'おやき', file: 'loris-oyaki', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 3.5 },
       // ウリン（フタユビナマケモノ、ジャングル）: 本人の写真は無いので一般的なフタユビナマケモノの姿（11/8 くに：本人に似せるのは将来）。リグなしの静止モデル（4 本の手足で枝にぶら下がる）。
       // 今の場所の枝にぶら下げたまま、手足の先を枝の高さに合わせる（sloth.ts の swapModel）。大きさはプリミティブ版の高さ。呼吸は胴の太さだけ。名前の札は枝の下のまま
       { key: 'slothUrin', species: 'フタユビナマケモノ', name: 'ウリン', file: 'sloth-urin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, hang: true },
