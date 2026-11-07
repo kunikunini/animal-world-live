@@ -1326,7 +1326,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (scopNpcs) {
       const pp = player.object.position
       scopNpcs.setTalkersVisible(!guide.isActive())
-      scopNpcs.update(dt, time, pp)
+      scopNpcs.update(dt, time, pp, camera)
       const blocked = introOn || guide.isActive() || getLang() !== 'ja' || observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()
       if (scopTalkUi.isOpen()) {
         // 離れたり、ほかの画面を開いたら閉じる

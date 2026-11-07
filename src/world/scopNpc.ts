@@ -18,12 +18,12 @@ export type ScopTalkKey = RegionKey | 'fake'
 
 export interface ScopNpcs {
   group: THREE.Group
-  update: (dt: number, time: number, player: THREE.Vector3) => void
+  update: (dt: number, time: number, player: THREE.Vector3, camera: THREE.Camera) => void
   /** いちばん近い話せるスコップ（届く範囲の内側だけ） */
   nearest: (player: THREE.Vector3) => { key: ScopTalkKey; distance: number; head: THREE.Vector3 } | null
   /** 話し始めた時: 1 回跳ねる */
   talk: (key: ScopTalkKey) => void
-  /** ツアーの間は、ツアーのスコップと 2 匹にならないよう、スポットのそばのスコップを隠す */
+  /** ツアーの間は、ツアーのスコップと 2 匹にならないよう、ワールドのスコップをみな隠す */
   setTalkersVisible: (on: boolean) => void
   setReduceMotion: (on: boolean) => void
 }
@@ -34,6 +34,14 @@ type Pose = 'stand' | 'sleep' | 'hop' | 'headstand'
 const TALK_REACH = 3.6
 /** 話せるスコップをスポットから離す距離 */
 const TALKER_DIST = 7
+/**
+ * スコップは同じ景色に 2 匹いない（くにのこだわり）。出すのはいつも 1 匹だけで、プレイヤーにいちばん近い子。
+ * 入れ替えは、いま出ている子が画面の外にいる時か遠い時だけ。新しく出す子は、画面の外か、SWAP_FAR m より遠い時だけ（目の前で急に現れない）。
+ * 近づいて話せない、にならないよう、SWAP_NEAR m より近ければ必ず入れ替える
+ */
+const SWAP_GONE = 150
+const SWAP_FAR = 25
+const SWAP_NEAR = 18
 /** 手の届かないスコップは少し大きく（遠くからでも見つかるように） */
 const FAR_SCALE = 1.7
 
@@ -136,6 +144,7 @@ export async function loadScopNpcs(opts: {
   const make = (pose: Pose, at: THREE.Vector3, scale: number, key: ScopTalkKey | null, parent: THREE.Object3D = group): Npc => {
     const height = h0 * scale
     const root = new THREE.Group()
+    root.name = 'scop-npc'
     root.position.copy(at)
     const body = new THREE.Group()
     const pivot = new THREE.Group()
@@ -219,10 +228,30 @@ export async function loadScopNpcs(opts: {
   // 手の届かないスコップ
   const far = (pose: Pose, x: number, z: number, y?: number) => make(pose, new THREE.Vector3(x, y ?? topAt(opts.surfaces, x, z), z), FAR_SCALE, null)
   const R = Object.fromEntries(OUTER_REGIONS.map((r) => [r.key, r])) as Record<string, Region>
-  // サバンナ: コピエのそばのアカシアのてっぺんで寝ている
-  far('sleep', 32, -44)
-  // ジャングル: スポットの南西のヤシのてっぺんで寝ている
-  far('sleep', R.jungle.x - 10.2, R.jungle.z + 23.8)
+  // サバンナ: 水場の東のアカシア（観察スポットから約 100m、にせスポットから約 65m）のてっぺんで寝ている
+  far('sleep', 88, 2)
+  // ジャングル: 話せる子から 75〜100m のヤシのてっぺんで寝ている。木の並びはスマホとパソコンで違うので、
+  // 座標を決め打ちせず、木の当たり（幹の真上に葉の玉がある）から実際に背の高い木を探す
+  {
+    const r = R.jungle
+    const talker = npcs.find((n) => n.key === 'jungle')
+    const cx = talker?.base.x ?? r.x
+    const cz = talker?.base.z ?? r.z
+    // ヤシ（てっぺんが 5〜11m、近くからでも見上げられる）を先に。無ければ背の高い木
+    let best: { x: number; z: number; y: number; score: number } | null = null
+    for (const c of opts.colliders) {
+      if (c.map === false || c.r < 0.3 || c.r > 0.8) continue
+      if (Math.hypot(c.x - r.x, c.z - r.z) > r.walk + 10) continue
+      const d = Math.hypot(c.x - cx, c.z - cz)
+      if (d < 75 || d > 100) continue
+      const y = topAt(opts.surfaces, c.x, c.z)
+      const tall = y - terrainHeight(c.x, c.z)
+      if (tall < 5) continue
+      const score = Math.abs(d - 85) + (tall > 11 ? 100 : 0)
+      if (!best || score < best.score) best = { x: c.x, z: c.z, y, score }
+    }
+    if (best) far('sleep', best.x, best.z, best.y)
+  }
   // 南半球: 奥の赤い一枚岩のてっぺんで跳ねている
   far('hop', R.south.x, R.south.z + 62)
   // 水の世界: 沖の岩のアーチのてっぺんで寝ている
@@ -233,13 +262,13 @@ export async function loadScopNpcs(opts: {
     const a = Math.atan2(-r.z, -r.x) + Math.PI * 0.78
     far('hop', r.x + Math.cos(a) * 82, r.z + Math.sin(a) * 82)
   }
-  // 北の世界: スポットの奥の小さな雪山のてっぺんで跳ねている
+  // 北の世界: スポットのずっと奥（85m）の小さな雪山のてっぺんで跳ねている
   {
     const r = R.north
     const back = Math.atan2(-r.z, -r.x) + Math.PI
-    for (const da of [0.5, -0.5, 0.9, -0.9, 0]) {
-      const x = r.x + Math.cos(back + da) * 24
-      const z = r.z + Math.sin(back + da) * 24
+    for (const da of [0.35, -0.35, 0.6, -0.6, 0]) {
+      const x = r.x + Math.cos(back + da) * 85
+      const z = r.z + Math.sin(back + da) * 85
       if (blocked(x, z, 3.6)) continue
       const peak = snowPeak()
       const y = terrainHeight(x, z) - 0.3
@@ -250,12 +279,12 @@ export async function loadScopNpcs(opts: {
       break
     }
   }
-  // 空の世界: スポットの奥に浮かぶ小さな雲の上で寝ている（雲と一緒にゆっくり上下する）
+  // 空の世界: スポットのずっと奥（85m）に浮かぶ小さな雲の上で寝ている（雲と一緒にゆっくり上下する）
   {
     const r = R.sky
     const back = Math.atan2(-r.z, -r.x) + Math.PI + 0.4
-    const x = r.x + Math.cos(back) * 20
-    const z = r.z + Math.sin(back) * 20
+    const x = r.x + Math.cos(back) * 85
+    const z = r.z + Math.sin(back) * 85
     const cloud = smallCloud()
     const y = terrainHeight(x, z) + 11
     cloud.position.set(x, y, z)
@@ -283,15 +312,51 @@ export async function loadScopNpcs(opts: {
   }
 
   const toPlayer = new THREE.Vector3()
+  const frustum = new THREE.Frustum()
+  const projView = new THREE.Matrix4()
+  const sphere = new THREE.Sphere()
+  const where = (n: Npc) => (n.float ? toPlayer.set(n.float.position.x, n.float.position.y, n.float.position.z) : toPlayer.copy(n.base))
+  const dist = (n: Npc, player: THREE.Vector3) => {
+    const w = where(n)
+    return Math.hypot(player.x - w.x, player.z - w.z)
+  }
+  const inView = (n: Npc) => {
+    sphere.center.copy(where(n))
+    sphere.center.y += n.height * 0.6
+    sphere.radius = n.height * 1.2
+    return frustum.intersectsSphere(sphere)
+  }
+  let shown: Npc | null = null
   return {
     group,
-    update: (dt, time, player) => {
+    update: (dt, time, player, camera) => {
       if (fakeSpot) fakeSpot.update(time, Math.hypot(player.x - fakeSpot.position.x, player.z - fakeSpot.position.z))
+      // 出す 1 匹を決める（ツアーの間は出さない）
+      if (!talkersOn) shown = null
+      else {
+        camera.updateMatrixWorld()
+        projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+        frustum.setFromProjectionMatrix(projView)
+        let best: Npc | null = null
+        let bestD = Infinity
+        for (const n of npcs) {
+          const d = dist(n, player)
+          if (d < bestD) {
+            best = n
+            bestD = d
+          }
+        }
+        if (best !== shown && best) {
+          const oldGone = !shown || dist(shown, player) > SWAP_GONE || !inView(shown)
+          const newOk = bestD < SWAP_NEAR || bestD > SWAP_FAR || !inView(best)
+          if ((oldGone && newOk) || bestD < SWAP_NEAR) shown = best
+        }
+      }
       for (const n of npcs) {
-        const wp = n.float ? toPlayer.set(n.float.position.x, 0, n.float.position.z) : toPlayer.set(n.base.x, 0, n.base.z)
-        const d = Math.hypot(player.x - wp.x, player.z - wp.z)
-        const on = d < 260 && (!n.talker || talkersOn)
+        const d = dist(n, player)
+        const on = n === shown
         n.root.visible = on
+        // 雲はただの雲としていつも出す（上のスコップだけ出し入れ）
         if (n.float) n.float.visible = d < 260
         if (!on) continue
         n.breath += dt
