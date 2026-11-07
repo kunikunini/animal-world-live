@@ -70,7 +70,7 @@ const worldImage = (key: WorldKey) => `/worlds/${key}.webp`
 /** 動物園からえらぶ: 架空の動物園の絵（public/zoos/、実在の動物園ではない）。参加する動物園は募集中 */
 const ZOO_ART = ['sea', 'forest', 'snow', 'grass']
 
-/** 「どうぶつからえらぶ」の種のアイコン（本物の写真が無い種は、クレイアニメ風のイラスト。Codex で生成） */
+/** 「どうぶつからえらぶ」の種のアイコン（クレイアニメ風のイラスト。Codex で生成。ライオンは段のいちばん左で /species/lion.webp を直接使う） */
 const SPECIES_ICON: Record<string, string> = {
   カピバラ: 'capybara',
   ブチハイエナ: 'hyena',
@@ -869,7 +869,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowAnimals'),
       `<div class="cat-row cat-row-faces">${
         lion
-          ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}">${faceMarkup(lion, 'cat-face-img', true)}<span>${esc(speciesName(lion.species))}</span></button>`
+          ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}"><img class="cat-face-img" src="/species/lion.webp" alt="" loading="lazy" decoding="async" /><span>${esc(speciesName(lion.species))}</span></button>`
           : ''
       }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
