@@ -47,6 +47,14 @@
 - **確認**: ローカルの whisper（large-v3-turbo）で 14 本とも台本どおりに読めていて、タグを声に出していないことを確かめた
 - **後処理**: 前後の無音を切り、最大音量を -3 dB にそろえて、モノラル 96 kbps（おはなしのナレーションと同じ）。日本語だけ（英語表示の時は鳴らさない）。効果音の音量とミュートに入る
 
+- **追加（11/7）**: ツアーの最後の段「ぼくの 役目は ここまで。ワールドの なかを たくさん 探検してみて！ また 会おう！」（`vo-tour-bye.mp3`）を同じ声・同じモデルで足した
+
+## ワールドで会えるスコップの声（`vo-scop-*.mp3`）
+
+- **生成**: ElevenLabs の Text to Speech（モデル `eleven_v4`、日本語、2026-11-07）。声はツアーと同じ「Ryu」。7 つのワールドの観察スポットのそばにいるスコップが話す、ひとこと → うんちく → しめのひとこと を各ワールド 2 本（`vo-scop-<ワールド>-1/2.mp3`、計 14 本、1 本 14〜21 秒）と、サバンナの奥のにせの観察スポットの「ざんねーん！ ここは かんさつスポットじゃ ないよーん！」（`vo-scop-fake.mp3`）。台本にはツアーと同じ声の調子のタグを入れ（ささやき系は使わない）、読み違えを防ぐため言葉はかなで書いた。画面の文は声と同じ言葉（タグなし）。うんちくは調べて確かめたことだけにした（出典は DEVLOG）
+- **確認**: ローカルの whisper（large-v3-turbo）で、うんちくの言葉が台本どおりに読めていることを確かめた。感嘆詞の一部（「はっくしょん」「ぷはっ」「えへへ」「よーん」）と「マーラ」は文字起こしでは別の音になったので、くにが聴いて確かめる
+- **後処理**: ツアーの声と同じ（前後の無音を切り、-3 dB、モノラル 96 kbps）。日本語だけ
+
 ## 効果音・環境音（`se-*.mp3`、`amb-*.mp3`）
 
 - **生成**: [ElevenLabs](https://elevenlabs.io) の Sound Effects（API `POST /v1/sound-generation`、2026-11-06）。**今ゲームで鳴っているのは、新しいモデル `eleven_text_to_sound_v3` で 20 本すべてを作り直したもの**（11/6 午後。それまでの `eleven_text_to_sound_v2` は廃止予定の古いモデルだった）。前の版は聴き比べのページにある。くにの ElevenLabs アカウントで生成した。v3 も 1 つにつき 1 回生成した（20 回、1 秒 40 クレジットで計 4,400）
@@ -79,4 +87,4 @@
 
 Background music for home, savanna and jungle (`bgm-home/savanna/jungle.mp3`) was regenerated with ElevenLabs Music (`music_v2_5`, instrumental, 75 s) and is looped as a single track. The other background music (`bgm-*.mp3`) was generated with [Suno](https://suno.com) (Pro plan, which includes commercial-use rights; 2026-11-06) as instrumentals, one generation (two takes) per track, then cut into 65-86 s seamless loops with ffmpeg. Both takes of each track are used: `bgm-<place>.mp3` and `bgm-<place>-2.mp3` alternate, one loop each, with a 3 s crossfade. `loops.json` holds the exact loop lengths; each file has 0.25 s of padding on both sides. The player characters' voices (`vo-*.mp3`) were designed with ElevenLabs Voice Design (`eleven_ttv_v3`) as anime-style young hero roles performed by adult voice actresses (ElevenLabs does not allow child voices in its library), and the lines were generated with Text to Speech (`eleven_v4`, Japanese). Sound effects and ambience (`se-*.mp3`, `amb-*.mp3`) were generated with [ElevenLabs](https://elevenlabs.io) Sound Effects (API, model `eleven_text_to_sound_v3`, 2026-11-06), one generation each, then trimmed and level-matched with ffmpeg. They were generated on a paid ElevenLabs plan. The default "become friends" chime is synthesized in code (`src/ui/chime.ts`). No personal information is included.
 
-The tour guide Scop's lines (`vo-tour-*.mp3`, 14 files, Japanese only) were generated on 2026-11-07 with ElevenLabs Text to Speech (`eleven_v4`) using the ElevenLabs voice "Ryu", with audio tags for a chatty, mischievous tone (no whisper tags). Each line was checked against the script with a local Whisper transcription, then trimmed and peak-normalized to -3 dB (mono, 96 kbps).
+The tour guide Scop's lines (`vo-tour-*.mp3`, 14 files, Japanese only) were generated on 2026-11-07 with ElevenLabs Text to Speech (`eleven_v4`) using the ElevenLabs voice "Ryu", with audio tags for a chatty, mischievous tone (no whisper tags). Each line was checked against the script with a local Whisper transcription, then trimmed and peak-normalized to -3 dB (mono, 96 kbps). The farewell line (`vo-tour-bye.mp3`) and Scop's in-world talks (`vo-scop-*.mp3`: two talks for each of the seven worlds plus one for the fake observation spot, Japanese only) were generated the same way on the same day.

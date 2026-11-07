@@ -666,8 +666,8 @@ export const sound = {
     applyVolumes()
   },
 
-  /** ナレーション（public/audio/vo-<kind>-<name>.mp3。物語は story、あそびかたツアーのスコップは tour）。効果音の音量とミュートに入る */
-  narrate(name: string, kind: 'story' | 'tour' = 'story'): void {
+  /** ナレーション（public/audio/vo-<kind>-<name>.mp3。物語は story、あそびかたツアーのスコップは tour、ワールドのスコップは scop）。効果音の音量とミュートに入る */
+  narrate(name: string, kind: 'story' | 'tour' | 'scop' = 'story'): void {
     stopNarration()
     if (!unlocked || !ctx || !seBus || seOff()) return
     const file = `vo-${kind}-${name}.mp3`
@@ -692,6 +692,26 @@ export const sound = {
   },
   stopNarration(): void {
     stopNarration()
+  },
+  /** ナレーションが鳴る状態か（音が使えて、効果音を切っていない） */
+  voiceOn(): boolean {
+    return unlocked && !!ctx && !seOff()
+  },
+  /** 文字が 1 つ出る時の「ピッ」（RPG のメッセージ窓のような、短い矩形波。コードで合成）。効果音の音量とミュートに入る */
+  blip(): void {
+    if (!unlocked || !ctx || !seBus || seOff()) return
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = 'square'
+    osc.frequency.setValueAtTime(1180, t)
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.045, t + 0.004)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045)
+    osc.connect(g)
+    g.connect(seBus)
+    osc.start(t)
+    osc.stop(t + 0.05)
   },
   /** 一時停止（おはなし）: 音の全部を止めて、続ける時に同じ所から鳴らす（AudioContext を止める） */
   setPaused(on: boolean): void {

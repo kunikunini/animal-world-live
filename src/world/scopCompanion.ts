@@ -52,7 +52,7 @@ const LAND_TIME = 0.18
 const SQUASH = 0.9
 const STRETCH = 1.08
 
-function contactShadow(radius: number): THREE.Mesh | null {
+export function contactShadow(radius: number): THREE.Mesh | null {
   const size = 64
   const canvas = document.createElement('canvas')
   canvas.width = size
@@ -85,7 +85,8 @@ function contactShadow(radius: number): THREE.Mesh | null {
 /** 角度の差（-π〜π） */
 const angleDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
 
-export async function loadScopCompanion(url: string, opts: { heroHeight: number; ground: (x: number, z: number) => number }): Promise<ScopCompanion> {
+/** スコップのモデル（足の裏が y=0、真ん中が原点、高さ height）。ワールドのスコップ（scopNpc.ts）も clone して使う */
+export async function loadScopModel(url: string, heroHeight: number): Promise<{ model: THREE.Group; height: number }> {
   const loader = new GLTFLoader()
   loader.setMeshoptDecoder(MeshoptDecoder)
   const gltf = await loader.loadAsync(url)
@@ -103,7 +104,7 @@ export async function loadScopCompanion(url: string, opts: { heroHeight: number;
     src.dispose()
   })
   // 大きさと接地: 高さを主人公の HEIGHT_RATIO 倍に、足の裏を y=0、真ん中を原点に。正面は +z（Meshy の書き出しのまま）
-  const height = opts.heroHeight * HEIGHT_RATIO
+  const height = heroHeight * HEIGHT_RATIO
   const box = new THREE.Box3().setFromObject(inner)
   const size = box.getSize(new THREE.Vector3())
   inner.scale.setScalar(size.y > 0 ? height / size.y : 1)
@@ -111,6 +112,13 @@ export async function loadScopCompanion(url: string, opts: { heroHeight: number;
   box.setFromObject(inner)
   const c = box.getCenter(new THREE.Vector3())
   inner.position.set(-c.x, -box.min.y, -c.z)
+  const model = new THREE.Group()
+  model.add(inner)
+  return { model, height }
+}
+
+export async function loadScopCompanion(url: string, opts: { heroHeight: number; ground: (x: number, z: number) => number }): Promise<ScopCompanion> {
+  const { model: inner, height } = await loadScopModel(url, opts.heroHeight)
 
   // body: 跳ねる・つぶれる（足元が基準）。root: 置き場所と向き
   const body = new THREE.Group()

@@ -264,6 +264,15 @@ const STEPS: Step[] = [
     targets: [],
     advance: 'next',
   },
+  {
+    voice: 'bye',
+    text: {
+      ja: 'ぼくの {役目|やくめ}は ここまで。ワールドの なかを たくさん {探検|たんけん}してみて！ また {会|あ}おう！',
+      en: 'That’s my job done! Go explore the worlds. See you again!',
+    },
+    targets: [],
+    advance: 'next',
+  },
 ]
 
 const UI: Record<'next' | 'done' | 'quit' | 'quitLabel' | 'back' | 'backLabel' | 'prep' | 'walk' | 'away', Text> = {

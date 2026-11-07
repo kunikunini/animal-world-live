@@ -5969,3 +5969,112 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 .is-reduce-motion .coach-hole {
   transition: none;
 }
+
+/* ワールドのスコップ: 「こえを かける」（頭の上）と、RPG のようなメッセージ窓（画面の下、1 文字ずつ出る） */
+.scop-call {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 21;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  margin-top: -10px;
+  border: 3px solid #2f4fd8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2a44;
+  font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 4px 0 #1e348f, 0 8px 18px rgba(20, 30, 60, 0.28);
+  cursor: pointer;
+  animation: scop-call-bob 1.6s ease-in-out infinite;
+}
+.scop-call .ico {
+  width: 20px;
+  height: 20px;
+  color: #2f4fd8;
+}
+.scop-call:active {
+  box-shadow: 0 1px 0 #1e348f, 0 4px 10px rgba(20, 30, 60, 0.25);
+}
+@keyframes scop-call-bob {
+  0%, 100% { margin-top: -10px; }
+  50% { margin-top: -15px; }
+}
+.scop-msg {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 24;
+  width: min(560px, calc(100vw - 24px));
+  transform: translateX(-50%);
+  padding: 22px 18px 16px;
+  border: 3px solid #ffffff;
+  border-radius: 12px;
+  background: #10162f;
+  box-shadow: 0 0 0 3px #10162f, 0 10px 28px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  cursor: pointer;
+}
+.scop-msg-name {
+  position: absolute;
+  left: 14px;
+  top: -14px;
+  padding: 3px 12px;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  background: #2f4fd8;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.scop-msg-text {
+  min-height: 3.6em;
+  max-height: min(16.2em, 40vh);
+  margin: 0;
+  overflow-y: auto;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+  white-space: pre-wrap;
+  /* 文はかなを空白で区切ってあるので、言葉の途中では改行しない */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.scop-msg-more {
+  position: absolute;
+  right: 16px;
+  bottom: 6px;
+  font-size: 13px;
+  animation: scop-more 0.8s steps(1) infinite;
+}
+@keyframes scop-more {
+  50% { opacity: 0; }
+}
+.scop-msg-close {
+  position: absolute;
+  right: 6px;
+  top: 4px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scop-call,
+  .scop-msg-more { animation: none; }
+}
+body.is-reduce-motion :is(.scop-call, .scop-msg-more) { animation: none; }
+@media (max-width: 420px) {
+  .scop-msg-text { font-size: 16px; }
+}

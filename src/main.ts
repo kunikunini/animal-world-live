@@ -54,6 +54,9 @@ import { applyView, viewNames } from './debug/views'
 import { createSoundPanel } from './ui/soundControls'
 import { createStaminaUi } from './ui/stamina'
 import { loadScopCompanion, type ScopCompanion } from './world/scopCompanion'
+import { loadScopNpcs, type ScopNpcs } from './world/scopNpc'
+import { createScopTalk } from './ui/scopTalk'
+import { SCOP_FAKE_TALK, SCOP_TALKS } from './data/scopTalks'
 
 function hasWebGL(canvas: HTMLCanvasElement): boolean {
   try {
@@ -670,6 +673,40 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   minimap.show()
   let minimapTimer = 0
 
+  // ワールドのスコップ（7 ワールドの観察スポットのそばで話せる子・手の届かない所にいる子・サバンナの奥のにせのスポット）
+  let scopNpcs: ScopNpcs | null = null
+  let scopNpcsAsked = false
+  const scopTalkAt = new THREE.Vector3()
+  const scopTalkUi = createScopTalk()
+  const scopCallProj = new THREE.Vector3()
+  const SCOP_TALK_STORE = 'awl.scopTalk.v1'
+  // ワールドごとに 2 本を交互に（次に話す方を覚えておく。保存できない時はこの回だけ交互）
+  const scopTalkNext: Record<string, number> = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(SCOP_TALK_STORE) ?? '{}') ?? {}
+    } catch {
+      return {}
+    }
+  })()
+  scopTalkUi.onCall(() => {
+    if (!scopNpcs) return
+    const near = scopNpcs.nearest(player.object.position)
+    if (!near) return
+    let talk = SCOP_FAKE_TALK
+    if (near.key !== 'fake') {
+      const i = (scopTalkNext[near.key] ?? 0) % 2
+      talk = SCOP_TALKS[near.key][i]
+      scopTalkNext[near.key] = i + 1
+      try {
+        localStorage.setItem(SCOP_TALK_STORE, JSON.stringify(scopTalkNext))
+      } catch {
+        // 保存できなくても話せる
+      }
+    }
+    scopTalkAt.copy(near.head)
+    scopNpcs.talk(near.key)
+    scopTalkUi.open(talk)
+  })
   const applyReduceMotion = (on: boolean) => {
     player.setReduceMotion(on)
     props.setSway(on ? 0 : 1)
@@ -684,6 +721,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     weather.setReduceMotion(on)
     sea.setReduceMotion(on)
     scop?.setReduceMotion(on)
+    scopNpcs?.setReduceMotion(on)
+    scopTalkUi.setReduceMotion(on)
   }
   // 設定はホームで変える。ワールドは止まっているだけなので、戻った時には反映済み
   applyReduceMotion(shell.settings.reduceMotion)
@@ -1249,6 +1288,36 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         encounter: encounterId,
       })
     } else if (scop) scop.setVisible(false)
+    // ワールドのスコップ: 入ったあとに 1 回だけ読み込む。そばに来たら頭の上に「こえを かける」
+    if (!scopNpcsAsked && !introOn) {
+      scopNpcsAsked = true
+      const surfaces = [scene.getObjectByName('biome-props'), props.group].filter((o): o is THREE.Object3D => !!o)
+      loadScopNpcs({ heroHeight: figureHeight, surfaces, colliders: props.colliders })
+        .then((n) => {
+          scopNpcs = n
+          n.setReduceMotion(reduceMotionNow)
+          scene.add(n.group)
+        })
+        .catch((err) => console.warn('world scop not loaded', err))
+    }
+    if (scopNpcs) {
+      const pp = player.object.position
+      scopNpcs.setTalkersVisible(!guide.isActive())
+      scopNpcs.update(dt, time, pp)
+      const blocked = introOn || guide.isActive() || getLang() !== 'ja' || observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()
+      if (scopTalkUi.isOpen()) {
+        // 離れたり、ほかの画面を開いたら閉じる
+        if (blocked || Math.hypot(pp.x - scopTalkAt.x, pp.z - scopTalkAt.z) > 8) scopTalkUi.close()
+        scopTalkUi.setCall(null)
+      } else {
+        const near = blocked ? null : scopNpcs.nearest(pp)
+        if (near) {
+          scopCallProj.copy(near.head).project(camera)
+          const on = scopCallProj.z < 1 && Math.abs(scopCallProj.x) < 0.95 && Math.abs(scopCallProj.y) < 0.95
+          scopTalkUi.setCall(on ? { x: ((scopCallProj.x + 1) / 2) * window.innerWidth, y: ((1 - scopCallProj.y) / 2) * window.innerHeight } : null)
+        } else scopTalkUi.setCall(null)
+      }
+    }
     if (hero) {
       // 入れ物が 1 コマで動いた量から、速さと空中かどうかを出してアニメを選ぶ（瞬間移動の時は速さ 0）
       const p = player.object.position

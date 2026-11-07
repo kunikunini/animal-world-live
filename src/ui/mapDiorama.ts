@@ -287,7 +287,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const posts: Array<{ x: number; z: number; s: number }> = []
     if (world === 'africa') for (const t of ACACIAS) trees.push({ x: t.x, z: t.z, s: t.scale })
     for (const cl of colliders) {
-      if (!inside(cl.x, cl.z)) continue
+      if (cl.map === false || !inside(cl.x, cl.z)) continue
       // ふれあいワールドの細い当たり判定は柵の杭（木にしない）
       if (world === 'partner' && cl.r < 0.38) {
         if (posts.length < 200) posts.push({ x: cl.x, z: cl.z, s: 1 })
