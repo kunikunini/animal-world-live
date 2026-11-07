@@ -18,7 +18,24 @@ export interface ScopTalkUi {
   setReduceMotion: (on: boolean) => void
 }
 
-/** 声が無い時（音を切っている時）の 1 秒あたりの文字数 */
+/** 文の 1 まとまり: ふつうの 1 文字か、ルビ付きの言葉（{漢字|よみ}）。ルビ付きは、よみの文字数ぶんの時間で出す */
+type Unit = { base: string; rt?: string; w: number }
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string)
+function units(text: string): Unit[] {
+  const out: Unit[] = []
+  const re = /\{([^|}]+)\|([^}]+)\}/g
+  let last = 0
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    for (const c of Array.from(text.slice(last, m.index))) out.push({ base: c, w: 1 })
+    out.push({ base: m[1], rt: m[2], w: Array.from(m[2]).length })
+    last = m.index + m[0].length
+  }
+  for (const c of Array.from(text.slice(last))) out.push({ base: c, w: 1 })
+  return out
+}
+const unitHtml = (u: Unit) => (u.rt ? `<ruby>${esc(u.base)}<rt>${esc(u.rt)}</rt></ruby>` : esc(u.base))
+
+/** 声が無い時（音を切っている時）の 1 秒あたりの文字数（よみの文字数で数える） */
 const PLAIN_CPS = 12
 
 export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
@@ -45,7 +62,10 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
 
   const callListeners: Array<() => void> = []
   let reduce = false
-  let chars: string[] = []
+  let chars: Unit[] = []
+  // 出した量（よみの文字数）と、出しきった まとまりの数
+  let shownW = 0
+  let totalW = 0
   let shown = 0
   let cps = PLAIN_CPS
   let raf = 0
@@ -54,7 +74,7 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   let open = false
 
   const render = () => {
-    textEl.textContent = chars.slice(0, shown).join('')
+    textEl.innerHTML = chars.slice(0, shown).map(unitHtml).join('')
     const done = shown >= chars.length
     moreEl.hidden = !done
     // 長い文は窓の中で下へ送る
@@ -63,11 +83,19 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   const tick = (now: number) => {
     raf = 0
     if (!open) return
-    const want = Math.min(chars.length, Math.floor(((now - startAt) / 1000) * cps))
+    // 時間ぶんのよみの文字数まで出す（ルビ付きの言葉は、よみの 1 文字目で丸ごと出す）
+    const wantW = Math.min(totalW, Math.floor(((now - startAt) / 1000) * cps))
+    let want = shown
+    let w = shownW
+    while (want < chars.length && w < wantW) {
+      w += chars[want].w
+      want++
+    }
     if (want > shown) {
       // 空白と記号では鳴らさない。鳴らしすぎないよう 45ms あける
-      const added = chars.slice(shown, want).some((c) => /[^\s、。！？!?「」…〜ー]/.test(c))
+      const added = chars.slice(shown, want).some((u) => !!u.rt || /[^\s、。！？!?「」…〜ー]/.test(u.base))
       shown = want
+      shownW = w
       if (added && now - lastBlip > 45) {
         lastBlip = now
         sound.blip()
@@ -80,6 +108,7 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
     if (raf) cancelAnimationFrame(raf)
     raf = 0
     shown = chars.length
+    shownW = totalW
     render()
   }
   const close = () => {
@@ -115,10 +144,12 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
       callListeners.push(fn)
     },
     open: (talk) => {
-      chars = Array.from(talk.text)
+      chars = units(talk.text)
+      totalW = chars.reduce((a, u) => a + u.w, 0)
       // 声の長さで出しきる（少し早めに出しきって、声が文を追いかける）。声が鳴らない時はふつうの速さ
-      cps = sound.voiceOn() ? Math.max(7, Math.min(20, chars.length / Math.max(1, talk.sec * 0.92))) : PLAIN_CPS
+      cps = sound.voiceOn() ? Math.max(7, Math.min(20, totalW / Math.max(1, talk.sec * 0.92))) : PLAIN_CPS
       shown = 0
+      shownW = 0
       open = true
       win.hidden = false
       call.hidden = true
