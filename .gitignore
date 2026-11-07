@@ -99,6 +99,7 @@ public/models/*
 !public/models/meerkat-nerine.glb
 !public/models/wolf-yua.glb
 !public/models/wolf-teo.glb
+!public/models/wolf-kamui.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
