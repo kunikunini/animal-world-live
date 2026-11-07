@@ -5638,6 +5638,10 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 .coach-hole.is-none {
   box-shadow: none;
 }
+/* 段が変わった時は、前の目印からすべらせずにその場へ */
+.coach-hole.is-jump {
+  transition: none;
+}
 .coach-arrow {
   position: fixed;
   left: 0;
@@ -5646,8 +5650,8 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   pointer-events: none;
   transform-origin: 0 0;
 }
-/* 矢印の絵は押せる（画面の外の目印へ歩く） */
-.coach-arrow svg {
+/* 画面のふちの矢印だけ押せる（画面の外の目印へ歩く）。照らした物を指す矢印は押せない（下の物を押すじゃまをしない） */
+.coach-arrow.is-edge svg {
   pointer-events: auto;
   cursor: pointer;
 }
@@ -5837,6 +5841,15 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   color: #0b6f62;
 }
 .coach-actions .coach-quit {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #7a6a5a;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.coach-actions .coach-back {
   padding: 0 4px;
   border: 0;
   background: none;

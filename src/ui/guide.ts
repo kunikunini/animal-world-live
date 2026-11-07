@@ -40,6 +40,18 @@ export interface GuideFrame {
   spot: WorldPoint | null
   /** 3D のスコップの頭の上（吹き出しの付く所）。読めていなければ null */
   scop: WorldPoint | null
+  /** 3D のスコップを読んでいる途中（読み終わるまで、ワールドの吹き出しは出さない。上に一瞬出てから下へ動かないように） */
+  scopLoading: boolean
+  /** 頭の上に名前の札が出ている子（いちばん近い子）。いなければ null */
+  encounter: string | null
+}
+
+/** 画面の四角（px） */
+export interface Box {
+  x: number
+  y: number
+  w: number
+  h: number
 }
 
 export interface Guide {
@@ -64,24 +76,49 @@ export interface Guide {
   worldTarget: () => 'riley' | 'spot' | null
   /** 段が変わった時（3D のスコップがしゃべるように跳ねる） */
   onStep: (fn: () => void) => void
+  /** ライリーに着いた時（「あっ、見つけた！」を鳴らす） */
+  onFind: (fn: () => void) => void
+  /** ワールドで話す段へ「つぎへ」で進む時に、開いている画面（動物の部屋・帳・トーク・一覧・地図）を閉じてもらう */
+  onCloseSheets: (fn: () => void) => void
+  /** 地図の中の観察スポットの印の画面の四角（地図が開いていて見えている時だけ） */
+  setMapSpot: (fn: () => Box | null) => void
 }
 
 type Text = Record<Lang, string>
 interface Step {
   text: Text
-  /** 明るく抜く所。前から順に、見えている最初のものを使う。'riley' / 'spot' はワールドの中の目印 */
+  /** 明るく抜く所。前から順に、見えている最初のものを使う。'riley' / 'spot' はワールドの中の目印、'mapSpot' は地図の中の観察スポット */
   targets: string[]
+  /**
+   * 進め方。act = 操作（押す・歩く）で進む段で「つぎへ」を出さない。next = 説明だけの段で「つぎへ」で進む。
+   * both = 操作でも「つぎへ」でも進む（「ともだちになる」は押すかどうかを自分で決めるので、押さずに進めるように）
+   */
+  advance: 'act' | 'next' | 'both'
   /** この知らせが来たら次の段へ */
   until?: GuideEvent[]
   /** ワールドの目印までこの距離（m）より近づいたら次へ */
   near?: { target: 'riley'; within: number }
   /** 「いっしょに行く」ボタンを出す（照らしたライリー・スポットそのものを押しても歩く） */
-  walkTo?: 'riley'
+  walkTo?: 'riley' | 'spot'
   /** この段の説明に要る画面。開いていない時（前の段を「つぎへ」で飛ばした時など）はこの段を飛ばす */
-  needs?: 'observe' | 'book' | 'chat' | 'catalog' | 'map' | 'arrived' | 'friendRow'
+  needs?: 'observe' | 'book' | 'chat' | 'catalog' | 'map' | 'friendRow'
   /** この段で、カードが必ずよける物（照らす所より重く数える）。照らす所が画面いっぱいで、どこに置いても重なる段に使う */
   clear?: string[]
+  /** 本当の目印の前に閉じる・戻るボタンを照らす時の目印。照らしている間は「まず もどろう」の文にする（同じ文が何度も出ないように） */
+  prep?: string[]
+  /** ワールドで話す段。前の段から「つぎへ」で進んだ時に、開いている画面を閉じる */
+  world?: boolean
+  /** 観察スポットから離れている時の文（着くと text） */
+  away?: Text
+  /** この段が操作で済んだ時に「あっ、見つけた！」 */
+  find?: boolean
 }
+
+/** 画面が開く・閉じる知らせ */
+const SCREEN_EVENTS: GuideEvent[] = ['observeOpen', 'observeClose', 'book', 'bookClose', 'chat', 'scope', 'scopeClose', 'map', 'mapClose', 'visit']
+
+/** 開いている画面を閉じる・戻るボタン（前から順に、上にある画面のもの） */
+const BACK_BUTTONS = ['#observe-close', '#chat-back', '#book-close', '#catalog [data-back]', '#catalog [data-list]']
 
 const STEPS: Step[] = [
   {
@@ -90,6 +127,7 @@ const STEPS: Step[] = [
       en: 'Hi, I’m Scop! Let’s scope out how to play!',
     },
     targets: [],
+    advance: 'next',
   },
   {
     text: {
@@ -97,11 +135,14 @@ const STEPS: Step[] = [
       en: 'Let’s go meet Riley!',
     },
     targets: ['riley'],
-    // 名前の札（双眼鏡のピン）が出るのはライリーから約 5.4m（当たり判定＋4.2m）なので、その内側に入ったら次へ
-    near: { target: 'riley', within: 4.5 },
-    // ライリーの札が出たら（いちばん近い子がライリーになったら）次へ
+    advance: 'act',
+    world: true,
+    // 着いた: ライリーの札が出た（いちばん近い子がライリー。もう出ていた時も）、またはライリーから 5.2m の内側（札が出るのは約 5.4m。
+    // 家族のライオンがそばにいると札がほかの子に付くので、距離でも見る）
+    near: { target: 'riley', within: 5.2 },
     until: ['nearRiley'],
     walkTo: 'riley',
+    find: true,
   },
   {
     text: {
@@ -109,6 +150,7 @@ const STEPS: Step[] = [
       en: 'Tap the name tag — tag, you’re it!',
     },
     targets: ['.encounter-pin', '.lion-label[data-id="riley"]', 'riley'],
+    advance: 'act',
     until: ['observeOpen'],
   },
   {
@@ -117,6 +159,7 @@ const STEPS: Step[] = [
       en: 'Tap “Become friends” if you like. It’s up to you.',
     },
     targets: ['#befriend', '#befriended'],
+    advance: 'both',
     until: ['befriend'],
     needs: 'observe',
   },
@@ -127,6 +170,8 @@ const STEPS: Step[] = [
     },
     // ともだちにならずに「つぎへ」した時は、モニターの「閉じる」→ 帳のボタン（モニターの下に隠れた帳のボタンは照らさない）
     targets: ['#befriend-see', '#observe-close', '#open-book'],
+    prep: ['#observe-close'],
+    advance: 'act',
     until: ['book'],
   },
   {
@@ -135,71 +180,66 @@ const STEPS: Step[] = [
       en: 'Tap a friend to open your talk.',
     },
     targets: ['#book-list button[data-chat]'],
+    advance: 'act',
     until: ['chat'],
     needs: 'friendRow',
   },
   {
     text: {
-      ja: '{飼育員|しいくいん}さんの おしらせが とどくよ。「{会|あ}いに{行|い}く」も おしてみて！',
-      en: 'Keepers send notes here. Try “Go see”!',
+      ja: '{飼育員|しいくいん}さんの おしらせは、ここに とどくよ。',
+      en: 'Notes from the keepers arrive here.',
     },
-    targets: ['#chat-visit', '#chat-log'],
-    until: ['visit', 'observeOpen'],
+    targets: ['#chat-log'],
+    advance: 'next',
     needs: 'chat',
   },
   {
     text: {
-      ja: 'つぎは {光|ひか}っている {観察|かんさつ}スポットへ しゅっぱーつ！',
-      en: 'Next stop: the glowing observation spot!',
+      ja: 'つぎは {地図|ちず}を {開|ひら}こう！',
+      en: 'Next, open the map!',
     },
-    // 開いている画面を閉じてから（映像 → トーク → 帳の順）、スポットのボタンかスポットそのもの
-    targets: ['#observe-close', '#chat-back', '#book-close', '#goto-spot', 'spot'],
+    targets: [...BACK_BUTTONS, '#minimap-expand'],
+    prep: BACK_BUTTONS,
+    advance: 'act',
+    world: true,
+    until: ['map'],
+  },
+  {
+    text: {
+      ja: '{地図|ちず}の {観察|かんさつ}スポットを おしてみて！ そこまで {行|い}けるよ。',
+      en: 'Tap the observation spot on the map to go there!',
+    },
+    targets: ['mapSpot'],
+    advance: 'act',
     until: ['spot'],
+    needs: 'map',
+    // 地図は大きいので吹き出しはどこかで地図に重なる。見出し（2D／3D・動物・閉じる）は隠さない
+    clear: ['#map .sheet-head'],
   },
   {
     text: {
       ja: 'とうちゃーく！「スコープをのぞく」を おしてね。',
       en: 'Spot on! Tap “Look through the scope”.',
     },
-    targets: ['#goto-spot[data-mode="scope"]', 'spot'],
-    until: ['scope'],
-    needs: 'arrived',
-  },
-  {
-    text: {
-      ja: '{動画|どうが}が いっぱい！ レンズが くぎづけ！',
-      en: 'So many videos — my lenses are glued!',
+    away: {
+      ja: '{観察|かんさつ}スポットへ いこう！',
+      en: 'Let’s go to the observation spot!',
     },
-    targets: [],
-    needs: 'catalog',
+    targets: [...BACK_BUTTONS, '#goto-spot', 'spot'],
+    prep: BACK_BUTTONS,
+    advance: 'act',
+    world: true,
+    until: ['scope'],
+    walkTo: 'spot',
   },
   {
     text: {
-      ja: 'ワールドは {七|なな}つ！ おすと、そこの どうぶつが {見|み}られるよ。',
-      en: 'Seven worlds! Tap one to see who lives there.',
+      ja: '{動画|どうが}が いっぱい！ ワールドを おすと、そこの どうぶつが {見|み}られるよ。',
+      en: 'So many videos! Tap a world to see who lives there.',
     },
     targets: ['#catalog [data-world]'],
+    advance: 'next',
     needs: 'catalog',
-  },
-  {
-    text: {
-      ja: 'さいごは {地図|ちず}を {開|ひら}こう！',
-      en: 'Last stop: open the map!',
-    },
-    // 一覧のワールドのページ → 一覧へ戻る → 一覧を閉じる → 地図
-    targets: ['#observe-close', '#chat-back', '#book-close', '#catalog [data-list]', '#catalog [data-back]', '#minimap-expand'],
-    until: ['map'],
-  },
-  {
-    text: {
-      ja: '{行|い}きたい ところを おすと、そこまで {歩|ある}くよ。',
-      en: 'Tap a place and you’ll walk there.',
-    },
-    targets: ['#map-canvas', '#map-3d'],
-    until: ['mapClose'],
-    needs: 'map',
-    // 地図は大きいのでカードはどこかで地図に重なる。見出し（2D／3D・動物・閉じる）は隠さない（閉じると次の段へ進む）
-    clear: ['#map .sheet-head'],
   },
   {
     text: {
@@ -207,14 +247,18 @@ const STEPS: Step[] = [
       en: 'Hooray! Call me from Settings any time.',
     },
     targets: [],
+    advance: 'next',
   },
 ]
 
-const UI: Record<'next' | 'done' | 'quit' | 'quitLabel' | 'walk' | 'away', Text> = {
+const UI: Record<'next' | 'done' | 'quit' | 'quitLabel' | 'back' | 'backLabel' | 'prep' | 'walk' | 'away', Text> = {
   next: { ja: 'つぎへ', en: 'Next' },
   done: { ja: 'おわる', en: 'Finish' },
   quit: { ja: 'やめる', en: 'Skip' },
   quitLabel: { ja: 'あそびかたを おわる', en: 'End the tour' },
+  back: { ja: 'もどる', en: 'Back' },
+  backLabel: { ja: '1つ {前|まえ}の せつめいに もどる', en: 'Back to the previous tip' },
+  prep: { ja: 'まず、{光|ひか}っている ボタンで もどろう！', en: 'First, go back with the glowing button!' },
   walk: { ja: 'いっしょに {行|い}く', en: 'Walk me there' },
   away: { ja: 'あと {m} m', en: '{m} m to go' },
 }
@@ -365,6 +409,7 @@ export function createGuide(): Guide {
       <p class="coach-text"></p>
       <div class="coach-actions">
         <button type="button" class="coach-quit"></button>
+        <button type="button" class="coach-back"></button>
         <span class="coach-count"></span>
         <button type="button" class="coach-walk"></button>
         <button type="button" class="coach-next"></button>
@@ -382,6 +427,7 @@ export function createGuide(): Guide {
   const walkBtn = card.querySelector('.coach-walk') as HTMLButtonElement
   const nextBtn = card.querySelector('.coach-next') as HTMLButtonElement
   const quitBtn = card.querySelector('.coach-quit') as HTMLButtonElement
+  const backBtn = card.querySelector('.coach-back') as HTMLButtonElement
   const starsEl = card.querySelector('.stars') as HTMLElement
   /** 完了の段: 吹き出しのまわりに金の星が散る（ともだち登録の祝いと同じ星。動きをへらす時は静かに出して消す） */
   let starTimer = 0
@@ -410,7 +456,16 @@ export function createGuide(): Guide {
   let active = false
   let inWorld = false
   let index = 0
-  let world: GuideFrame = { riley: null, spot: null, scop: null }
+  let world: GuideFrame = { riley: null, spot: null, scop: null, scopLoading: false, encounter: null }
+  /** 段を始めてから、ワールドの目印の位置（frame）がもう届いたか。届く前は 3D のスコップの位置が分からないので吹き出しを出さない */
+  let frameSeen = false
+  /** いちばん先まで進んだ段（「もどる」で戻った段では「つぎへ」を出して先へ戻れるように） */
+  let furthest = 0
+  /** いま吹き出しに出している本文（変わった時だけ書き直す） */
+  let textNow = ''
+  let mapSpot: () => Box | null = () => null
+  /** いま照らしている目印（開発時の確認用） */
+  let litNow = ''
   let scrolledFor = -1
   /** いま照らしている物（DOM の要素、またはワールドの目印の名前）と、その画面の四角 */
   let lit: { el: Element | null; world: 'riley' | 'spot' | null; rect: { x: number; y: number; w: number; h: number } | null } = { el: null, world: null, rect: null }
@@ -418,6 +473,8 @@ export function createGuide(): Guide {
   const opened = { observe: false, book: false, chat: false, catalog: false, map: false }
   const walkListeners: Array<(t: 'riley' | 'spot') => void> = []
   const stepListeners: Array<() => void> = []
+  const findListeners: Array<() => void> = []
+  const closeListeners: Array<() => void> = []
   /** 最後に吹き出しに出した段（段が変わった時だけスコップを跳ねさせる） */
   let shownIndex = -1
 
@@ -426,15 +483,39 @@ export function createGuide(): Guide {
   // 吹き出しの本文は文節の中で改行せず、文の切れ目で先に改行する
   const textHtml = (s: string) => (getLang() === 'ja' ? phraseHtml(s, { sentences: true }) : esc(s))
 
+  const setText = (s: string) => {
+    if (s === textNow) return
+    textNow = s
+    textEl.innerHTML = textHtml(s)
+  }
+  /** 前の段の案内（光る輪・矢印・「あと ○ m」）をすぐ片づける。段が変わった時・画面が開いたり閉じたりした時 */
+  const clearMarks = () => {
+    hole.classList.add('is-none', 'is-jump')
+    hole.classList.remove('is-ring')
+    hole.style.width = '0px'
+    hole.style.height = '0px'
+    arrow.hidden = true
+    arrow.classList.remove('is-edge')
+    awayEl.textContent = ''
+    awayEl.hidden = true
+    arrowFor = ''
+    lit = { el: null, world: null, rect: null }
+  }
+
   const render = () => {
     const step = STEPS[index]
     const last = index === STEPS.length - 1
     countEl.textContent = `${index + 1} / ${STEPS.length}`
-    textEl.innerHTML = textHtml(step.text[getLang()])
+    setText(step.text[getLang()])
     nextBtn.innerHTML = html(last ? label('done') : label('next'))
+    // 操作で進む段には「つぎへ」を出さない（「もどる」で戻ってきた段は、先へ戻れるように出す）
+    nextBtn.hidden = step.advance === 'act' && index >= furthest
     quitBtn.innerHTML = html(label('quit'))
     quitBtn.setAttribute('aria-label', label('quitLabel'))
     quitBtn.hidden = last
+    backBtn.innerHTML = html(label('back'))
+    backBtn.setAttribute('aria-label', label('backLabel').replace(/\{([^|}]+)\|[^}]+\}/g, '$1'))
+    backBtn.hidden = index === 0
     walkBtn.innerHTML = html(label('walk'))
     walkBtn.hidden = !step.walkTo
     const wasDone = card.classList.contains('is-done')
@@ -442,6 +523,7 @@ export function createGuide(): Guide {
     if (last && !wasDone) celebrate()
     if (shownIndex !== index) {
       shownIndex = index
+      clearMarks()
       for (const fn of stepListeners) fn()
     }
     card.classList.remove('is-refresh')
@@ -460,6 +542,8 @@ export function createGuide(): Guide {
       awayEl.hidden = true
       document.body.classList.remove('coach-on')
       shownIndex = -1
+      textNow = ''
+      clearMarks()
     } else {
       document.body.classList.add('coach-on')
       render()
@@ -479,14 +563,25 @@ export function createGuide(): Guide {
   const place = () => {
     if (!show()) return
     const step = STEPS[index]
-    let rect: { x: number; y: number; w: number; h: number; round: boolean } | null = null
+    let rect: { x: number; y: number; w: number; h: number; round: boolean; ring?: boolean } | null = null
     let offTarget: WorldPoint | null = null
+    let litSel = ''
     lit = { el: null, world: null, rect: null }
     for (const t of step.targets) {
+      if (t === 'mapSpot') {
+        const b = mapSpot()
+        if (!b) continue
+        const pad = 10
+        rect = { x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2, round: false, ring: true }
+        awayEl.textContent = ''
+        litSel = t
+        break
+      }
       if (t === 'riley' || t === 'spot') {
         const p = world[t]
         if (!p) continue
         lit.world = t
+        litSel = t
         if (p.onScreen) {
           const size = Math.max(90, Math.min(200, 1400 / Math.max(4, p.distance)))
           rect = { x: p.x - size / 2, y: p.y - size / 2, w: size, h: size, round: true }
@@ -506,6 +601,7 @@ export function createGuide(): Guide {
       const r = visibleRect(el)
       if (r) {
         lit.el = el
+        litSel = t
         const pad = 8
         rect = { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2, round: false }
         awayEl.textContent = ''
@@ -514,6 +610,15 @@ export function createGuide(): Guide {
     }
     hole.hidden = false
     lit.rect = rect
+    litNow = rect || offTarget ? litSel : ''
+    // 本文: 閉じる・戻るボタンを照らしている間は「まず もどろう」、観察スポットから離れている間は away の文
+    const lang = getLang()
+    if (step.prep?.includes(litSel)) setText(label('prep'))
+    else if (step.away && (world.spot?.distance ?? Infinity) >= 5) setText(step.away[lang])
+    else setText(step.text[lang])
+    // 「いっしょに行く」はワールドにいて、まだ着いていない時だけ
+    const wantWalk = !!step.walkTo && !sheetsOpen() && !(step.walkTo === 'spot' && (world.spot?.distance ?? Infinity) < 5)
+    if (walkBtn.hidden === wantWalk) walkBtn.hidden = !wantWalk
     const W = window.innerWidth
     const H = window.innerHeight
 
@@ -588,6 +693,8 @@ export function createGuide(): Guide {
         if (o.tail === 'down' ? at < 22 || at > cw - 22 : at < 18 || at > ch - 18) a += OFF
         // 横に付ける時、画面のふちで押し戻されたら、しっぽがスコップに届かない
         if (o.tail !== 'down' && Math.abs(x - o.x) > 2) a += OFF
+        // 照らした物（押してほしいボタン・名前の札）に少しでもかかるなら使わない（画面のすみの吹き出しにする）
+        if (rect && overlap(x, y, cw, ch, rect) > 0) a += OFF
         if (a < bestA - 1) {
           best = { x, y, tail: o.tail, at }
           bestA = a
@@ -635,11 +742,15 @@ export function createGuide(): Guide {
     const ch = card.offsetHeight || 110
     card.style.left = `${cardX}px`
     card.style.top = `${cardY}px`
+    // ワールドで、3D のスコップの場所がまだ分からない間（段の始めの 1 コマ・モデルを読んでいる途中）は吹き出しを出さない
+    card.style.visibility = !sheetOpen && (!frameSeen || world.scopLoading) ? 'hidden' : ''
+    // 段が変わって輪が飛んだ時は、すべらせずにその場へ（前の段の目印から動いて見えないように）。次のコマから元に戻す
+    if (hole.classList.contains('is-jump')) requestAnimationFrame(() => hole.classList.remove('is-jump'))
 
     if (rect) {
       hole.classList.toggle('is-round', rect.round)
-      // ワールドの中の目印は輪だけ（まわりを暗くしない）。画面の部品はまわりを少し暗くして目立たせる
-      hole.classList.toggle('is-ring', rect.round)
+      // ワールドの中の目印・地図の中の印は輪だけ（まわりを暗くしない）。画面の部品はまわりを少し暗くして目立たせる
+      hole.classList.toggle('is-ring', rect.round || !!rect.ring)
       hole.classList.remove('is-none')
       hole.style.transform = `translate(${rect.x}px, ${rect.y}px)`
       hole.style.width = `${rect.w}px`
@@ -649,8 +760,10 @@ export function createGuide(): Guide {
       const key = `${index}:${Math.round(rect.x / 6)}:${Math.round(rect.y / 6)}:${Math.round(rect.w / 6)}:${Math.round(rect.h / 6)}:${Math.round(cardY / 6)}`
       if (key !== arrowFor) {
         arrowFor = key
-        arrowPick = pickArrow(rect, { x: cardX, y: cardY, w: cw, h: ch }, rect.round)
+        arrowPick = pickArrow(rect, { x: cardX, y: cardY, w: cw, h: ch }, rect.round || !!rect.ring)
       }
+      // 照らした物を指す矢印は押せない（下の物を押せるように）。押せるのは画面のふちの矢印だけ
+      arrow.classList.remove('is-edge')
       if (arrowPick) {
         arrow.hidden = false
         arrow.style.transform = `translate(${arrowPick.ax}px, ${arrowPick.ay}px) rotate(${arrowPick.deg}deg)`
@@ -669,8 +782,9 @@ export function createGuide(): Guide {
       hole.style.height = '0px'
       hole.style.transform = `translate(${W / 2}px, ${H / 2}px)`
       if (edge && offTarget) {
-        // 画面の外: 画面のふちの矢印（向きと場所は上で決めた）
+        // 画面の外: 画面のふちの矢印（向きと場所は上で決めた）。押すとそこまで歩く
         arrow.hidden = false
+        arrow.classList.add('is-edge')
         const { ax, deg, dx, dy } = edge
         let { ay } = edge
         // 矢印・「あと ○ m」が吹き出しに重なるなら、ふちに沿って吹き出しの上へ（入らなければ下へ）ずらす
@@ -693,41 +807,60 @@ export function createGuide(): Guide {
   const seen = (sel: string) => visibleRect(document.querySelector(sel)) !== null
   const needMet = (n: Step['needs']) => {
     if (!n) return true
-    if (n === 'arrived') return (world.spot?.distance ?? Infinity) < 5
     if (n === 'chat') return opened.chat || seen('#book-chat')
     // ともだち帳が開いていて、ともだちの行がある（ともだちにならずに進んだ時は、トークの段を飛ばす）
     if (n === 'friendRow') return opened.book && document.querySelector('#book-list button[data-chat]') !== null
     return opened[n]
   }
+  const sheetsOpen = () => opened.observe || opened.book || opened.chat || opened.catalog || opened.map
   let goSeq = 0
-  const go = (i: number, retry = true) => {
+  /**
+   * i の段へ。how: next = 「つぎへ」、act = 操作（知らせ・着いた）、back = 「もどる」。
+   * 説明に要る画面が開いていない段は飛ばす（前へ進む時は先へ、戻る時はさらに前へ）
+   */
+  const go = (i: number, how: 'next' | 'act' | 'back' = 'act', retry = true) => {
     if (i >= STEPS.length) {
       stop()
       return
     }
-    // 説明に要る画面が開いていない段は飛ばす（前の段を「つぎへ」で飛ばした時に、無い画面の話をしない）。
-    // 開く途中のこともあるので、1 回だけ少し待ってから決める
-    if (i < STEPS.length - 1 && !needMet(STEPS[i].needs)) {
+    if (i < 0) i = 0
+    const back = how === 'back'
+    // 開く途中のこともあるので、進む時は 1 回だけ少し待ってから決める
+    if (i > 0 && i < STEPS.length - 1 && !needMet(STEPS[i].needs)) {
+      if (back) {
+        go(i - 1, 'back')
+        return
+      }
       if (retry) {
         const seq = ++goSeq
         window.setTimeout(() => {
-          if (seq === goSeq && active) go(i, false)
+          if (seq === goSeq && active) go(i, how, false)
         }, 600)
         return
       }
-      go(i + 1, true)
+      go(i + 1, how, true)
       return
     }
     goSeq++
+    const from = index
+    // ライリーに着いた: 「あっ、見つけた！」（戻ってから「つぎへ」で進んだ時は鳴らさない）
+    if (!back && how === 'act' && i > from && STEPS[from].find && from >= furthest) for (const fn of findListeners) fn()
+    // ワールドで話す段へ「つぎへ」で進む時は、開いている画面を閉じてワールドへ（帳・トーク・動物の部屋を 1 枚ずつ閉じさせない）
+    if (!back && how === 'next' && STEPS[i].world && sheetsOpen()) for (const fn of closeListeners) fn()
     index = i
+    if (!back) furthest = Math.max(furthest, i)
     scrolledFor = -1
     arrowFor = ''
+    frameSeen = false
     render()
+    ensureLoop()
   }
 
   const start = () => {
     active = true
     index = 0
+    furthest = 0
+    frameSeen = false
     sync()
   }
 
@@ -738,7 +871,8 @@ export function createGuide(): Guide {
     sync()
   }
 
-  nextBtn.addEventListener('click', () => go(index + 1))
+  nextBtn.addEventListener('click', () => go(index + 1, 'next'))
+  backBtn.addEventListener('click', () => go(index - 1, 'back'))
   // 照らした物を押したら、その段は済み: 知らせを待つ段は知らせで、待たない段は押したことで次へ。
   // 照らしたライリー・スポット（ワールドの中）を押したら、そこまで歩く（地面ではなく動物を押しても歩くように）
   const inLit = (x: number, y: number) => {
@@ -752,7 +886,7 @@ export function createGuide(): Guide {
       const step = STEPS[index]
       const at = index
       if (lit.el && lit.el.contains(e.target as Node)) {
-        if (!step.until) window.setTimeout(() => index === at && go(index + 1), 120)
+        if (!step.until) window.setTimeout(() => index === at && go(index + 1, 'act'), 120)
         return
       }
       if (lit.world && inLit(e.clientX, e.clientY)) {
@@ -778,13 +912,23 @@ export function createGuide(): Guide {
       loopOn = false
       return
     }
-    place()
+    // 1 コマの置き直しで何かが失敗しても、輪・矢印を前の段のまま残さず、次のコマでまた置き直す
+    try {
+      place()
+    } catch (err) {
+      clearMarks()
+      if (import.meta.env.DEV) console.warn('guide place failed', err)
+    }
     requestAnimationFrame(loop)
   }
   const ensureLoop = () => {
     if (loopOn || !show()) return
     loopOn = true
     requestAnimationFrame(loop)
+  }
+
+  if (import.meta.env.DEV) {
+    ;(window as unknown as { __awlGuide: unknown }).__awlGuide = { now: () => ({ index, furthest, lit: litNow, text: textNow }) }
   }
 
   return {
@@ -808,9 +952,30 @@ export function createGuide(): Guide {
       if (event === 'scope' || event === 'scopeClose') opened.catalog = event === 'scope'
       if (event === 'map' || event === 'mapClose') opened.map = event === 'map'
       if (!active) return
+      // 画面が開いた・閉じた: 前の画面の上に出していた輪・矢印をすぐ片づける（次のコマで置き直す）。
+      // near などの毎コマ届く知らせでは片づけない（輪が 1 コマおきに消える）
+      if (show() && SCREEN_EVENTS.includes(event)) clearMarks()
       const step = STEPS[index]
       if (step.until?.includes(event)) {
-        go(index + 1)
+        go(index + 1, 'act')
+        return
+      }
+      // 先回り: 次かその次の段で待っている操作を先にした時は、そこまで進める（ライリーを直接押して部屋を開いた、など）
+      if (index >= furthest) {
+        for (let j = index + 1; j <= Math.min(index + 2, STEPS.length - 1); j++) {
+          if (STEPS[j].until?.includes(event)) {
+            go(j + 1, 'act')
+            return
+          }
+        }
+      }
+      // 地図の観察スポットを押さずに地図を閉じた（ほかの所を押した・閉じた）: 「地図を開こう」へ戻る。
+      // スポットを押した時は、地図が閉じたあとにスポットへ移るので、少し待って着いていなければ
+      if (event === 'mapClose' && STEPS[index].targets.includes('mapSpot')) {
+        const at = index
+        window.setTimeout(() => {
+          if (active && index === at && (world.spot?.distance ?? Infinity) >= 5) go(at - 1, 'back')
+        }, 900)
       }
       // もうともだちの子を開いた時（もう一度見る時）は、main.ts が開いたすぐあとに befriend を送るので「ともだちになる」の段は飛ぶ
     },
@@ -819,12 +984,14 @@ export function createGuide(): Guide {
     },
     frame: (f) => {
       world = f
+      frameSeen = true
       if (!show()) return
       const step = STEPS[index]
-      if (step.near) {
+      // 着いた（「もどる」で戻ってきた段では、読み直せるように自動では進めない）
+      if (step.near && index >= furthest) {
         const p = f[step.near.target]
-        if (p && p.distance < step.near.within) {
-          go(index + 1)
+        if ((p && p.distance < step.near.within) || f.encounter === step.near.target) {
+          go(index + 1, 'act')
         }
       }
     },
@@ -834,6 +1001,15 @@ export function createGuide(): Guide {
     worldTarget: () => (show() ? lit.world : null),
     onStep: (fn) => {
       stepListeners.push(fn)
+    },
+    onFind: (fn) => {
+      findListeners.push(fn)
+    },
+    onCloseSheets: (fn) => {
+      closeListeners.push(fn)
+    },
+    setMapSpot: (fn) => {
+      mapSpot = fn
     },
   }
 }

@@ -468,6 +468,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const scopOff = heroQuery.get('scop') === 'off'
   let scop: ScopCompanion | null = null
   let scopAsked = false
+  /** 3D のスコップを読み終えた・あきらめた（読み終わるまでワールドの吹き出しを出さない。4 秒たったら 2D の吹き出しで続ける） */
+  let scopSettled = scopOff
+  let scopAskedAt = 0
   const scopAnchor = new THREE.Vector3()
   const putHero = (next: HeroModel | null, id: string | null) => {
     if (hero) {
@@ -590,6 +593,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sound.cancelTap()
     if (animate) window.setTimeout(() => sound.play('scope-open'), 250)
     else sound.play('scope-open')
+    // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）
+    if (arrived) {
+      if (animate) window.setTimeout(cueFind, 700)
+      else cueFind()
+    }
     // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
     catalog.open(animate)
     if (animate) {
@@ -634,6 +642,21 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   const HERO_COLOR: Record<string, string> = { yellow: '#f2c230', teal: '#2bb3a8', pink: '#f07fa8', bluecap: '#2f6bff', purple: '#8a5cd6', braids: '#7cbf3c' }
   mapView.configure({ animalAt, colliders: props.colliders, heroColor: () => HERO_COLOR[heroId ?? 'yellow'] ?? '#f2c230', heroModel: () => (heroId ? heroById(heroId).model : null) })
+  // 「あっ、見つけた！」（出会いの音と主人公の声）: あそびかたツアーでライリーに着いた時（観察スポットからスコープに入る時は openScope）
+  const cueFind = () => {
+    sound.play('encounter')
+    sound.say('find', 450)
+  }
+  guide.onFind(cueFind)
+  // ツアーで、ワールドで話す段へ「つぎへ」で進む時: 開いている画面を閉じる
+  guide.onCloseSheets(() => {
+    if (observe.isOpen()) observe.close()
+    if (book.isOpen()) book.close()
+    if (catalog.isOpen()) catalog.close()
+    if (mapView.isOpen()) mapView.close()
+  })
+  // あそびかたツアー: 地図の中のいまのワールドの観察スポットの印を照らす
+  guide.setMapSpot(() => mapView.baseRect(`${here.key}:spot`))
   mapView.onTravel((base) => {
     const a = arrivalOf(base, animalAt)
     player.teleport(a.x, a.z, a.heading)
@@ -1199,6 +1222,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const riley = lions.find((l) => l.id === 'riley')
       if (!scopAsked && !scopOff) {
         scopAsked = true
+        scopAskedAt = performance.now()
         loadScopCompanion('/models/scop.glb', { heroHeight: figureHeight, ground: terrainHeight })
           .then((s) => {
             scop = s
@@ -1207,6 +1231,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             guide.onStep(() => s.hop())
           })
           .catch((err) => console.warn('scop model not loaded', err))
+          .finally(() => {
+            scopSettled = true
+          })
       }
       if (scop) {
         scop.setVisible(true)
@@ -1218,6 +1245,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         riley: riley ? toScreen(riley.position, (riley.headHeight ?? 0.95) * riley.group.scale.y * 0.6) : null,
         spot: toScreen(spot.position, 1.6),
         scop: scop ? toScreen(scop.anchor(scopAnchor), 0) : null,
+        scopLoading: !scopSettled && performance.now() - scopAskedAt < 4000,
+        encounter: encounterId,
       })
     } else if (scop) scop.setVisible(false)
     if (hero) {
