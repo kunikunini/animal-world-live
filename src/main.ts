@@ -338,6 +338,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       still?: boolean
       /** 色の明るさ（1 で書き出しのまま）。?<key>Bright=<数> で試せる */
       brighten?: number
+      /** 大きさの倍率。?<key>Scale=<数> で試せる */
+      scale?: number
+      /** 大きさの基準にする別の子の key（その子のプリミティブ版の大きさ × scale）。無ければ自分のプリミティブ版 */
+      sizeOf?: string
       /** 群れのプリミティブ版の差し替え口が無い子（wildfolk など）: その子の今の場所・向き・体の長さで place と同じように入れ替える */
       replaceHost?: boolean
     }[] = [
@@ -372,9 +376,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
       { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
-      // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽はプリミティブ版のまま）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
+      // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽も下でこの GLB の複製に差し替える）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
       // ひれが人の腕のように振れて体が歪むので、歩かせない（静止＋呼吸・首・左右の揺れ。waterfolk.ts）。大きさはプリミティブ版の高さにそろえる
       { key: 'penguin', species: 'ケープペンギン', name: 'リンリン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      // ケープペンギンのほかの 5 羽（11/8 くにの指示）: 新しく生成せず、リンリンの GLB を 1 回だけ読んで骨ごと複製したものに差し替える（loadAiLion が URL ごとに共有）。
+      // 置き場所・名前の札・プロフィール・ともだちは各個体のまま。リンリンと同じく歩かず、その場で呼吸・首・揺れだけ。
+      // ことか・満は生まれて間もない子なので、リンリンの 0.65 倍（見た目の最終判断はくに。?penguinKotokaScale=・?penguinMitsuruScale= で試せる）
+      { key: 'penguinTenten', species: 'ケープペンギン', name: 'テンテン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
+      { key: 'penguinSam', species: 'ケープペンギン', name: 'サム', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
+      { key: 'penguinPocchan', species: 'ケープペンギン', name: 'ポッちゃん', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
+      { key: 'penguinKotoka', species: 'ケープペンギン', name: 'ことか', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin', scale: 0.65 },
+      { key: 'penguinMitsuru', species: 'ケープペンギン', name: '満', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin', scale: 0.65 },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
       { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },
@@ -494,6 +506,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'tortoiseSyrup', species: 'パンケーキリクガメ', name: 'シロップ', file: 'tortoise-syrup', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'pyreneanElsa', species: 'ピレネーシェパード', name: 'エルサ', file: 'pyrenean-elsa', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
+    // 各子のプリミティブ版の、入れ物の倍率込みのワールドでの大きさ（読み込みの前、入れ物がまだプリミティブ版のうちに測る）。
+    // sizeOf の子は基準の子とワールドで同じ大きさになるよう、自分の入れ物の倍率（個体ごとに少し違う）で割り戻す
+    const baseWorld: Record<string, number> = {}
+    const sizeFor = (key: string, ref: string | undefined, own: number, hostScale: number) => {
+      baseWorld[key] = own * hostScale
+      return ref && baseWorld[ref] ? baseWorld[ref] / hostScale : own
+    }
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
       const animal = ANIMALS.find((a) => a.species === r.species && a.name === r.name)
@@ -502,7 +521,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, 'z') } : undefined)
       if (!host && !place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
-      loadAiLion(`/models/${r.file}.glb`, { length: place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), posture, upright: r.upright, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
+      loadAiLion(`/models/${r.file}.glb`, { length: sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1), posture, upright: r.upright, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
         .then((ai) => {
           if (place) {
             // place の子: place の場所に入れ物を作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる。

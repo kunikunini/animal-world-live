@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
+import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
 import { toonMaterial } from '../render/toon'
 
 /**
@@ -92,11 +94,24 @@ const WALK_FADE = 0.35
 /**
  * upright: 直立の子（ペンギン、ヒューマノイドのリグ）。向きは書き出しのまま（前が +z）で、length は前後の長さではなく高さとして合わせる
  */
+// 同じ GLB は 1 回だけ読み、呼ぶたびに骨ごと複製して渡す（ペンギン 6 羽がリンリンの 1 ファイルを共有する。ジオメトリと色の画像は共有）。
+// 元の scene は向き・大きさを書き換えないよう型としてだけ持つ
+const gltfCache = new Map<string, Promise<GLTF>>()
+function loadShared(url: string): Promise<GLTF> {
+  let p = gltfCache.get(url)
+  if (!p) {
+    const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
+    p = loader.loadAsync(url)
+    gltfCache.set(url, p)
+    p.catch(() => gltfCache.delete(url))
+  }
+  return p
+}
+
 export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean; /** 色の画像に掛ける明るさ（1 で書き出しのまま）。暗い毛色がワールドの光で沈む子だけ上げる */ brighten?: number }): Promise<AiLion> {
-  const loader = new GLTFLoader()
-  loader.setMeshoptDecoder(MeshoptDecoder)
-  const gltf = await loader.loadAsync(url)
-  const inner = gltf.scene
+  const gltf = await loadShared(url)
+  const inner = cloneSkinned(gltf.scene)
   inner.traverse((o) => {
     const mesh = o as THREE.Mesh
     if (!mesh.isMesh) return
@@ -109,7 +124,6 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
       mat.map = src.map
       if (opts.brighten) mat.color.setScalar(opts.brighten)
       mesh.material = mat
-      src.dispose()
     }
   })
 
