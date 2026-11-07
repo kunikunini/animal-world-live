@@ -108,6 +108,7 @@ public/models/*
 !public/models/stbernard-josef.glb
 !public/models/otter-minato.glb
 !public/models/woodchuck-fas.glb
+!public/models/pyrenean-elsa.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/

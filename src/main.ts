@@ -435,6 +435,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             { key: 'otterMinato', species: 'コツメカワウソ', name: 'ミナト', file: 'otter-minato', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
             { key: 'stbernardJosef', species: 'セントバーナード', name: 'ヨーゼフ', file: 'stbernard-josef', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
             { key: 'woodchuckFas', species: 'ウッドチャック', name: 'ファス', file: 'woodchuck-fas', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+            { key: 'pyreneanElsa', species: 'ピレネーシェパード', name: 'エルサ', file: 'pyrenean-elsa', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
