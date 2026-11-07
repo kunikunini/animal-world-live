@@ -25,6 +25,11 @@ const SKIP_SPECIES = new Set(['アフリカライオン'])
 /** 亡くなった子など、名簿に残っていてもアプリに出さない個体（種/名前。くにの決定 2026-11-06） */
 const SKIP_ANIMALS = new Set(['オオカンガルー/ヒマワリ'])
 /**
+ * 名簿の整理で外した個体（くにの指示 2026-11-07）。公表前の名前をリポジトリに書かないよう、名前ではなく ID（stableId: 種/名前のハッシュ）で外す。
+ * CSV から作り直しても戻らない
+ */
+const SKIP_IDS = new Set(['r-jyk4jt', 'r-6tpbde', 'r-14gbuyv', 'r-z6hhas', 'r-12g4tqa'])
+/**
  * CSV のワールド区分を、このアプリでは別のワールドに置く種（くにの決定 2026-11-06）。
  * 生成し直しても戻らないよう、ここで割り当てる。区分（sub_area）は CSV のまま
  */
@@ -104,6 +109,7 @@ for (const r of body) {
   for (const name of names) {
     if (SKIP_ANIMALS.has(`${species}/${name}`)) continue
     const id = stableId(species, name)
+    if (SKIP_IDS.has(id)) continue
     if (seen.has(id)) throw new Error(`ID が重なった: ${species} ${name}`)
     seen.add(id)
     animals.push({ id, world, subArea: sub, species, name, representative: r[iRep] === 'yes' })
