@@ -39,6 +39,22 @@ body {
   line-height: 1.5;
 }
 
+/* ダブルタップで拡大しない（iPad・iPhone の Safari は viewport の user-scalable=no を守らない）。アプリ側の style.css と同じ */
+html,
+body,
+button,
+a,
+input,
+select,
+textarea,
+label,
+summary,
+[role='button'],
+[role='switch'],
+[role='tab'] {
+  touch-action: manipulation;
+}
+
 button,
 input,
 select,
