@@ -84,6 +84,7 @@ public/models/*
 !public/models/wolf-mari.glb
 !public/models/kinkajou-mia.glb
 !public/models/goat-shizuru.glb
+!public/models/wolf-nega.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
