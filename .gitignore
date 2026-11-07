@@ -93,6 +93,7 @@ public/models/*
 !public/models/tortoise-leonardo.glb
 !public/models/husky-rock.glb
 !public/models/goat-marge.glb
+!public/models/goat-flow.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
