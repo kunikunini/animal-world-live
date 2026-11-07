@@ -76,6 +76,7 @@ public/models/*
 !public/models/goat-natsume.glb
 !public/models/kinkajou-hazel.glb
 !public/models/kinkajou-chirine.glb
+!public/models/goat-mifuyu.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
