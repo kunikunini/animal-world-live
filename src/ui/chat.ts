@@ -11,6 +11,8 @@ import { faceMarkup } from './faces'
 import { esc } from './html'
 import { animalName, getLang, speciesName, t } from './i18n'
 import { refreshIn } from './transition'
+import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
+import { reactions, videoKeyOf } from '../data/reactions'
 
 /**
  * ともだち帳のトーク画面。LINE のトークに似た見た目だが、会話をする場所ではなく「手紙」に近い。
@@ -113,6 +115,7 @@ export function createChatView({ letters, notices, read, friendSince }: ChatDeps
         </button>
         <p class="ch-card-title">${esc(t('sysVideo', { name: animalName(a) }))}</p>
         ${lines.map((l) => `<p class="ch-card-sub">${l}</p>`).join('')}
+        ${a.video.placeholder ? '' : `<div class="ch-card-rx">${reactButtonsMarkup(videoKeyOf(a), 'light', true)}</div>`}
       </div>`
   }
 
@@ -235,8 +238,10 @@ export function createChatView({ letters, notices, read, friendSince }: ChatDeps
     if (!b) return
     sendText(t(b.dataset.quick as (typeof QUICK)[number]))
   })
+  reactions.onChange(() => syncReactButtons(log))
   log.addEventListener('click', (e) => {
     const target = e.target as HTMLElement
+    if (handleReactClick(target)) return
     const visit = target.closest<HTMLButtonElement>('button[data-visit]')
     if (visit) {
       const a = animal

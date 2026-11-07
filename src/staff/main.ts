@@ -6,6 +6,8 @@ import { createLetterStore } from '../data/letters'
 import type { Notice, NoticeInput, NoticeKind } from '../data/notices'
 import { createNoticeStore } from '../data/notices'
 import { WORLDS } from '../data/worlds'
+import { getVideo } from '../data/videos'
+import { reactions, videoKeyOf } from '../data/reactions'
 import { faceMarkup } from '../ui/faces'
 import { esc } from '../ui/html'
 
@@ -277,7 +279,51 @@ const renderMainPane = (): string => {
     </section>`
 }
 
+/* ---------- 上: 映像の人気（👍・❤️） ---------- */
+
+const popEl = document.getElementById('st-pop') as HTMLElement | null
+
+/** 映像ごとの 👍・❤️ の数。サーバーが無いので、この端末（ブラウザ）で押された分だけ */
+const renderPopular = () => {
+  if (!popEl) return
+  const byKey = new Map<string, Animal[]>()
+  for (const a of listReadyAnimals()) {
+    if (!a.video.url || a.video.placeholder) continue
+    const k = videoKeyOf(a)
+    if (!k) continue
+    byKey.set(k, [...(byKey.get(k) ?? []), a])
+  }
+  const all = reactions.all()
+  const rows = [...byKey.entries()]
+    .map(([k, as], i) => {
+      const r = all[k]
+      const like = r?.like ? 1 : 0
+      const fav = r?.fav ? 1 : 0
+      const v = getVideo(k)
+      const title = v ? v.title.ja : as.map((a) => a.name).join('・')
+      return { k, title, like, fav, i, staff: v?.staff === true }
+    })
+    .sort((a, b) => b.like + b.fav - (a.like + a.fav) || a.i - b.i)
+  const total = rows.reduce((n, r) => n + r.like + r.fav, 0)
+  popEl.innerHTML = `
+    <h2 id="st-pop-h" class="st-pop-h">映像の人気（👍 いいね・❤️ お気に入り）</h2>
+    <p class="st-help">試作版: 数えているのは、この端末（ブラウザ）で押された分だけです。ほかの来園者の数を集めるサーバーはまだありません。アプリの「おすすめ」も、この数の多い順に並びます。</p>
+    ${
+      total === 0
+        ? '<p class="st-empty">この端末では、まだどの映像にも 👍・❤️ が押されていません。</p>'
+        : ''
+    }
+    <ol class="st-pop-list">${rows
+      .map(
+        (r) =>
+          `<li class="st-pop-row"><span class="st-pop-title">${esc(r.title)}${r.staff ? '<span class="st-pill">スタッフ撮影</span>' : ''}</span><span class="st-pop-n" aria-label="いいね ${r.like}">👍 ${r.like}</span><span class="st-pop-n" aria-label="お気に入り ${r.fav}">❤️ ${r.fav}</span></li>`,
+      )
+      .join('')}</ol>`
+}
+reactions.onChange(renderPopular)
+
 const render = () => {
+  renderPopular()
   if (!selectedId) {
     // 最初は、この端末でともだちになっている子がいればその子
     const firstFriend = friends.list().map((e) => e.animalId).find((id) => getAnimal(id))

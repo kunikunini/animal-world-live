@@ -4631,23 +4631,49 @@ body.is-reduce-motion .is-refresh {
   overflow: hidden;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
-.cat-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; }
-.cat-hero-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(34, 22, 15, 0) 35%, rgba(34, 22, 15, 0.92) 88%); }
+/* 新着の枠の板（2 枚）。表の 1 枚と、次に入ってくる 1 枚を横に並べて一緒に押し出す（catalog.ts の goSlide、Motion Prompt #137） */
+.cat-hero { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.cat-hero-pane { position: absolute; inset: 0; overflow: hidden; will-change: transform; background: var(--c-card); }
+.cat-hero-pane + .cat-hero-pane { transform: translateX(100%); }
+/* 継ぎ目の細い線（#137 は 539px の枠に 6px。ここでは 4px） */
+.cat-hero-pane.is-incoming::after { content: ''; position: absolute; top: 0; bottom: 0; left: var(--seam, 0%); width: 4px; translate: -50% 0; background: rgba(255, 246, 230, 0.85); z-index: 1; }
+.cat-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; -webkit-user-drag: none; pointer-events: none; }
+.cat-hero-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(34, 22, 15, 0.35) 0%, rgba(34, 22, 15, 0) 26%, rgba(34, 22, 15, 0) 38%, rgba(34, 22, 15, 0.92) 88%); }
 /* 新着の枠: 今の 1 本を音なしで流す。流れ始めるまでは表紙のまま（読めない時も表紙が残る） */
-.cat-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+.cat-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; will-change: transform; }
 .cat-hero.is-playing .cat-hero-video { opacity: 1; }
 /* 縦長の映像: 中央に縦のまま出し、うしろの表紙をぼかして左右を埋める（ぼかすのは流れている間だけ） */
-.cat-hero.is-portrait .cat-hero-video { object-fit: contain; object-position: 50% 50%; }
-.cat-hero.is-portrait .cat-hero-img { object-position: 50% 50%; }
-.cat-hero.is-portrait.is-playing .cat-hero-img { filter: blur(18px) brightness(0.8); transform: scale(1.15); }
-.cat-hero-text.is-in { animation: cat-hero-in 0.5s ease both; }
-@keyframes cat-hero-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
-.cat-hero-dots { position: absolute; top: 12px; right: 12px; display: flex; gap: 2px; }
+.cat-hero-video.is-portrait { object-fit: contain; object-position: 50% 50%; }
+.cat-hero-pane.is-portrait .cat-hero-img { object-position: 50% 50%; transition: filter 0.6s ease, transform 0.6s ease; }
+.cat-hero.is-playing .cat-hero-pane.is-portrait:not(.is-incoming) .cat-hero-img { filter: blur(18px) brightness(0.8); transform: scale(1.15); }
+.cat-hero-dots { position: absolute; top: 12px; right: 12px; display: flex; gap: 2px; z-index: 2; }
 .cat-hero-dot { width: 26px; height: 26px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
 .cat-hero-dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.5); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); transition: width 0.3s ease, background 0.3s ease; }
 .cat-hero-dot[aria-current]::before { width: 20px; background: #fff; }
 .cat-hero-dot:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 999px; }
-body.is-reduce-motion .cat-hero-text.is-in { animation: none; }
+/* 左上: 「収録映像」のラベルと、その下に新着の再生・停止 */
+.cat-hero-corner { position: absolute; left: 14px; top: 14px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.cat-hero-corner .cat-badge { position: static; }
+.cat-hero-ctl {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  background: rgba(34, 22, 15, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+.cat-hero-ctl .ico { width: 18px; height: 18px; }
+.cat-hero-ctl:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+/* 文字（Motion Prompt #005）: 上の段（場所・種）と下の段（名前）は、それぞれの枠の外へ出て隠れる。間に細い線 */
+.cat-hero-clip { display: block; overflow: hidden; }
+.cat-hero-meta, .cat-hero-title { display: block; }
+.cat-hero-line { display: block; width: 44px; height: 3px; margin: -4px 0; border-radius: 3px; background: var(--sun); transform-origin: 50% 50%; }
 .cat-badge {
   position: absolute;
   left: 14px;
@@ -4663,10 +4689,11 @@ body.is-reduce-motion .cat-hero-text.is-in { animation: none; }
   font-weight: 900;
 }
 .cat-badge .ico { width: 16px; height: 16px; }
-.cat-hero-text { position: absolute; left: 18px; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 10px; }
+.cat-hero-text { position: absolute; left: 18px; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 10px; z-index: 2; }
 .cat-hero-meta { font-size: 13px; font-weight: 700; color: rgba(255, 246, 230, 0.78); }
 .cat-hero-title { font-size: 26px; line-height: 1.3; font-weight: 900; white-space: pre-line; }
-.cat-hero-actions { display: flex; gap: 10px; margin-top: 4px; }
+.cat-hero-actions { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.cat-hero-rx { display: contents; }
 .cat-watch {
   flex: 1;
   height: 52px;
@@ -6077,4 +6104,86 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 body.is-reduce-motion :is(.scop-call, .scop-msg-more) { animation: none; }
 @media (max-width: 420px) {
   .scop-msg-text { font-size: 16px; }
+}
+
+/* ==========================================================================
+   アニマルスコープ: 地のグラデーション、右上のお気に入り、👍・❤️（ui/reactButtons.ts）
+   ========================================================================== */
+/* 地: 夕暮れのサバンナ。上はいつもの暗い茶色（貼りついた見出しとつながる）から、紅の帯を通って夜の藍へ。
+   左上に太陽の光、右に紫の残照、左下に深い青。スクロールしても地は動かない */
+.catalog .cat-scroll {
+  background:
+    radial-gradient(60% 38% at 6% 0%, rgba(242, 106, 27, 0.30), rgba(242, 106, 27, 0) 70%),
+    radial-gradient(55% 34% at 100% 30%, rgba(196, 72, 120, 0.22), rgba(196, 72, 120, 0) 72%),
+    radial-gradient(70% 40% at 0% 92%, rgba(54, 92, 160, 0.26), rgba(54, 92, 160, 0) 72%),
+    linear-gradient(180deg, var(--c-bg) 0%, #2a1712 28%, #2c1420 58%, #1b1630 82%, #121427 100%);
+}
+.catalog .cat-glow { background: radial-gradient(closest-side, rgba(255, 150, 60, 0.32), rgba(242, 106, 27, 0)); }
+
+.cat-top-right { flex: none; display: flex; align-items: center; gap: 8px; }
+.cat-top-fav .ico { width: 21px; height: 21px; color: #ff7d94; }
+.cat-logo-heart { width: 22px; height: 22px; color: #ff7d94; fill: currentColor; stroke: none; }
+.cat-h-note { font-size: 12px; font-weight: 700; color: rgba(255, 246, 230, 0.55); }
+
+/* 👍・❤️ */
+.rx { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.rx-btn {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  background: rgba(34, 22, 15, 0.42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.rx-btn .ico { width: 22px; height: 22px; }
+.rx-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.rx-like[aria-pressed='true'] { background: #f4c242; border-color: #f4c242; color: #4a2e05; }
+.rx-like[aria-pressed='true'] .ico { fill: currentColor; fill-opacity: 0.25; }
+.rx-fav[aria-pressed='true'] { background: #ff5c7a; border-color: #ff5c7a; }
+.rx-fav[aria-pressed='true'] .ico { fill: currentColor; }
+.rx-btn.is-pop .ico { animation: rx-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes rx-pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
+/* 明るい地（モニターの下・トーク）: 文字つきの丸いボタン */
+.rx-light .rx-btn { border-color: rgba(43, 29, 18, 0.16); background: #fff; color: var(--ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.rx-light .rx-like[aria-pressed='true'] { background: #fff3cf; border-color: #e0a91c; color: #6b4300; }
+.rx-light .rx-fav[aria-pressed='true'] { background: #ffe3e9; border-color: #ff5c7a; color: #c2193f; }
+.rx-labels .rx-btn { width: auto; height: 44px; padding: 0 16px 0 12px; border-radius: var(--r-pill); }
+.rx-labels .rx-btn .ico { width: 20px; height: 20px; }
+.m-rx { display: flex; justify-content: center; margin: 2px 0 14px; }
+.ch-card-rx { margin: 8px 0 2px; }
+.ch-card-rx .rx-btn { height: 38px; font-size: 13px; padding: 0 12px 0 10px; }
+.ch-card-rx .rx-btn .ico { width: 18px; height: 18px; }
+
+/* お気に入りの一覧 */
+.cat-fav-lead, .cat-fav-note { margin: 0; padding: 0 16px; font-size: 14px; font-weight: 700; color: rgba(255, 246, 230, 0.8); }
+.cat-fav-note { font-size: 12px; color: rgba(255, 246, 230, 0.55); }
+.cat-fav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: 20px 14px; padding: 0 16px; }
+.cat-fav-card { position: relative; }
+.cat-fav-card .cat-card, .cat-fav-card .cat-thumb { width: 100%; }
+.cat-fav-card .cat-thumb { height: auto; aspect-ratio: 16 / 9; }
+.cat-fav-card .rx { position: absolute; top: 8px; right: 8px; gap: 6px; }
+.cat-fav-card .rx-btn { width: 40px; height: 40px; }
+.cat-fav-card .rx-btn .ico { width: 19px; height: 19px; }
+
+/* 横向きのスマホ: 新着の枠が低いと、左上のラベルと停止ボタンが下の文字にかかる。枠の高さを確保する */
+@media (max-height: 500px) and (orientation: landscape) {
+  .cat-hero { height: max(300px, 62vh); }
+  .cat-hero-title { font-size: 22px; }
+}
+@media (min-width: 768px) {
+  .cat-fav-lead, .cat-fav-note, .cat-fav-grid { padding-left: 40px; padding-right: 40px; }
 }
