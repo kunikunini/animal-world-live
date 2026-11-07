@@ -91,6 +91,7 @@ public/models/*
 !public/models/meerkat-sou.glb
 !public/models/sandcat-sheri.glb
 !public/models/tortoise-leonardo.glb
+!public/models/husky-rock.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
