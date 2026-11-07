@@ -118,6 +118,7 @@ public/models/*
 !public/models/husky-yuki.glb
 !public/models/husky-noel.glb
 !public/models/tortoise-larc.glb
+!public/models/tortoise-aruru.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
