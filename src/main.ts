@@ -447,6 +447,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'stbernardJosef', species: 'セントバーナード', name: 'ヨーゼフ', file: 'stbernard-josef', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'pigRose', species: 'ホットベリーピック（ブタ）', name: 'ローズ', file: 'pig-rose', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'sheepPaul', species: 'ヒツジ', name: 'ポール', file: 'sheep-paul', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      // レア（ギープ）: 写真が無いので一般的なギープの姿（ヤギの体つき＋まだらの羊毛）。ヒツジの放牧場に新しく置いたヒツジの形（residents.ts）と入れ替える
+      { key: 'geepRhea', species: 'ギープ', name: 'レア', file: 'geep-rhea', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
       { key: 'sheepBarbary', species: 'ヒツジ', name: 'バーバリー', file: 'sheep-barbary', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'sheepTae', species: 'ヒツジ', name: '妙', file: 'sheep-tae', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'prairieCookie', species: 'プレーリードッグ', name: 'クッキー', file: 'prairie-cookie', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
