@@ -105,9 +105,12 @@ export function createWorldLabels(): WorldLabels {
         if (Math.hypot(e.clientX - downX, e.clientY - downY) > TAP_SLOP) return
         tapListeners.forEach((fn) => fn(tapId))
       })
-      el.addEventListener('pointercancel', (e) => {
+      // 押している間に札が隠れる（重なって外された）と pointerup が来ないので、つかまえが外れたら忘れる
+      const forget = (e: PointerEvent) => {
         if (e.pointerId === downId) downId = null
-      })
+      }
+      el.addEventListener('pointercancel', forget)
+      el.addEventListener('lostpointercapture', forget)
       const nameEl = document.createElement('span')
       nameEl.className = 'spot-label-name'
       nameEl.textContent = name
