@@ -345,6 +345,258 @@
 - **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.8・尾 1・前脚 0.7＋接地、尾の骨は動かさない。群れの中のこの子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?maraLychee=primitive`）
 - 個人情報は含まない。施設の未公表情報も含まない
 
+## ポニー きのこ（`pony-kinoko.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `pony-kinoko.glb` | きのこ（ポニー、ふれあいワールド） | 種の特徴から画像生成したクレイ風の側面の絵（きのこの写真は無い） | 9,873 | 8,595 | 311,184 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.69 MB → 311.2 KB）
+- **入力画像**: 種の特徴の文から期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。きのこ本人に似せたものではない。絵の写しは作業中の一時フォルダの消失で失い、リポジトリには置いていない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。放牧場のこの子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?ponyKinoko=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ポニー サクラ（`pony-sakura.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `pony-sakura.glb` | サクラ（ポニー、ふれあいワールド） | 種の特徴から画像生成したクレイ風の側面の絵（サクラの写真は無い） | 10,019 | 9,318 | 312,336 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-06）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.54 MB → 312.3 KB）
+- **入力画像**: 種の特徴の文から期間中に画像生成（GPT Image 2）で作ったクレイ風の横向き全身の絵。サクラ本人に似せたものではない。絵の写しは作業中の一時フォルダの消失で失い、リポジトリには置いていない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。放牧場のこの子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?ponySakura=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ ラテ（`goat-latte.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-latte.glb` | ラテ（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ラテの写真は無い） | 10,021 | 7,923 | 280,308 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.56 MB → 280.3 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-latte/inputs/`）。体つきは種の特徴から描いた。ラテ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。岩場のこの子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatLatte=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ シキ（`goat-shiki.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-shiki.glb` | シキ（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（シキの写真は無い） | 9,946 | 8,002 | 290,040 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.34 MB → 290.0 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-shiki/inputs/`）。体つきは種の特徴から描いた。シキ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatShiki=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ ツートン（`goat-twotone.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-twotone.glb` | ツートン（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ツートンの写真は無い） | 10,025 | 9,107 | 318,068 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.58 MB → 318.1 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-twotone/inputs/`）。体つきは種の特徴から描いた。ツートン本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。このヤギのプリミティブ版と入れ替える。後ろ脚の骨のウェイトは資産側で直した（`tools/animal-gate/fix-legs.py back`）（読めなければプリミティブ版のまま。`?goatTwotone=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ マーブル（`goat-marble.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-marble.glb` | マーブル（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（マーブルの写真は無い） | 9,919 | 7,812 | 285,940 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.36 MB → 285.9 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-marble/inputs/`）。体つきは種の特徴から描いた。マーブル本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatMarble=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ ナツメ（`goat-natsume.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-natsume.glb` | ナツメ（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ナツメの写真は無い） | 10,069 | 8,396 | 298,788 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.51 MB → 298.8 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-natsume/inputs/`）。体つきは種の特徴から描いた。ナツメ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatNatsume=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ みふゆ（`goat-mifuyu.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-mifuyu.glb` | みふゆ（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（みふゆの写真は無い） | 9,995 | 7,834 | 279,044 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.46 MB → 279.0 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-mifuyu/inputs/`）。体つきは種の特徴から描いた。みふゆ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatMifuyu=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ バウム（`goat-baum.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-baum.glb` | バウム（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（バウムの写真は無い） | 9,993 | 8,159 | 278,344 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.36 MB → 278.3 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-baum/inputs/`）。体つきは種の特徴から描いた。バウム本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatBaum=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ まちこ（`goat-machiko.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-machiko.glb` | まちこ（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（まちこの写真は無い） | 9,994 | 8,322 | 305,148 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.78 MB → 305.1 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-machiko/inputs/`）。体つきは種の特徴から描いた。まちこ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatMachiko=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ マージュ（`goat-marge.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-marge.glb` | マージュ（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（マージュの写真は無い） | 9,924 | 8,940 | 292,428 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.47 MB → 292.4 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-marge/inputs/`）。体つきは種の特徴から描いた。マージュ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatMarge=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ フロー（`goat-flow.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-flow.glb` | フロー（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（フローの写真は無い） | 10,060 | 8,968 | 310,624 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.52 MB → 310.6 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-flow/inputs/`）。体つきは種の特徴から描いた。フロー本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatFlow=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ ラテjr（`goat-lattejr.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-lattejr.glb` | ラテjr（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ラテjrの写真は無い） | 10,001 | 8,274 | 284,712 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.28 MB → 284.7 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-lattejr/inputs/`）。体つきは種の特徴から描いた。ラテjr本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatLattejr=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヤギ しずる（`goat-shizuru.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `goat-shizuru.glb` | しずる（ヤギ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（しずるの写真は無い） | 9,913 | 7,909 | 281,704 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.47 MB → 281.7 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/goat-shizuru/inputs/`）。体つきは種の特徴から描いた。しずる本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。このヤギのプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?goatShizuru=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヒツジ あさこ（`sheep-asako.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `sheep-asako.glb` | あさこ（ヒツジ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（あさこの写真は無い） | 10,000 | 7,002 | 252,180 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.25 MB → 252.2 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/sheep-asako/inputs/`）。体つきは種の特徴から描いた。あさこ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?sheepAsako=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ボーダーコリー シャイン（`collie-shine.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `collie-shine.glb` | シャイン（ボーダーコリー、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（シャインの写真は無い） | 10,054 | 8,966 | 292,632 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.83 MB → 292.6 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/collie-shine/inputs/`）。体つきは種の特徴から描いた。シャイン本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?collieShine=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## セントバーナード ヨーゼフ（`stbernard-josef.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `stbernard-josef.glb` | ヨーゼフ（セントバーナード、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ヨーゼフの写真は無い） | 9,699 | 7,206 | 256,632 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.65 MB → 256.6 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/stbernard-josef/inputs/`）。体つきは種の特徴から描いた。ヨーゼフ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?stbernardJosef=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ホットベリーピック（ブタ） ローズ（`pig-rose.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `pig-rose.glb` | ローズ（ホットベリーピック（ブタ）、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ローズの写真は無い） | 9,741 | 7,042 | 196,096 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（2.87 MB → 196.1 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/pig-rose/inputs/`）。体つきは種の特徴から描いた。ローズ本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?pigRose=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヒツジ ポール（`sheep-paul.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `sheep-paul.glb` | ポール（ヒツジ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（ポールの写真は無い） | 9,962 | 7,112 | 259,984 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.23 MB → 260.0 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/sheep-paul/inputs/`）。体つきは種の特徴から描いた。ポール本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?sheepPaul=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヒツジ バーバリー（`sheep-barbary.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `sheep-barbary.glb` | バーバリー（ヒツジ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（バーバリーの写真は無い） | 9,990 | 7,142 | 265,044 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.26 MB → 265.0 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/sheep-barbary/inputs/`）。体つきは種の特徴から描いた。バーバリー本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?sheepBarbary=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
+## ヒツジ 妙（`sheep-tae.glb`）
+
+| ファイル | 個体 | 入力画像 | 三角形 | 頂点 | サイズ |
+|---|---|---|---|---|---|
+| `sheep-tae.glb` | 妙（ヒツジ、ふれあい・パートナー） | 種の特徴から画像生成したクレイ風の側面の絵（妙の写真は無い） | 9,994 | 7,104 | 257,588 B |
+
+- **生成**: [Meshy](https://www.meshy.ai) の Image to 3D（Pro プラン、2026-11-07）。設定・四足リグ・「歩く」・最適化はウーピーと同じ（3.22 MB → 257.6 KB）
+- **入力画像**: Codex（GPT Image 2）で期間中に作ったクレイ風の横向き全身の絵（`experiments/animals-night/sheep-tae/inputs/`）。体つきは種の特徴から描いた。妙本人に似せたものではない
+- **ライセンス**: 生成時の設定は「プライベート」（所有権はこちら）
+- **読み込み時の扱い**: トゥーン素材。姿勢の補正は後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9＋接地。この子のプリミティブ版と入れ替える（読めなければプリミティブ版のまま。`?sheepTae=primitive`）
+- 個人情報は含まない。施設の未公表情報も含まない
+
 ## Source of `public/models` (English)
 
-Five lion models generated with [Meshy](https://www.meshy.ai) Image to 3D (Pro plan, 2026-11-05) from clay-style reference pictures of each lion that were prepared during the hackathon. Rigged with Meshy's quadruped rig and its "Walk" animation, then optimized with gltf-transform 4.5.1 (meshopt, 1024px WebP textures). Generated with the license setting "Private": models generated on Meshy's paid plans are owned by the user with no restriction on publication or commercial use (checked against Meshy's help/terms on 2026-11-05). The six player characters (`hero-boy.glb` = the curly-haired boy in a yellow hoodie, plus `hero-teal.glb`, `hero-pink.glb`, `hero-bluecap.glb`, `hero-purple.glb`, `hero-braids.glb`) were generated the same way (Meshy Image to 3D, Pro plan, 2026-11-05, license setting "Private", owned by us) from the front view of each child's character sheet prepared during the hackathon, rigged with Meshy's humanoid rig with its "Walk" and "Run" clips, and optimized with the same settings (335–383 KB, about 10,000 triangles each). They have no idle or jump clip. The player picks one on the home screen ("Who will explore?") and only that model is loaded. For the girl with braids, the vertex weights were rewritten before optimization: weights on her nine braid bones (hanging from Spine2, not animated) were moved to the head bone so her hat stays on her head while moving (`experiments/heroes/tools/move-weights-to-head.py` on the `exp/heroes` branch). The Bengal tiger Tigger in the jungle (`tiger-tigger.glb`, 335,916 B, 9,452 triangles, 2026-11-05), the Grant's zebra Gran in the savanna (`zebra-gran.glb`, 341,856 B, 8,670 triangles, 2026-11-06) and the capybara Shizuka in the southern-hemisphere world (`capybara-shizuka.glb`, 252,352 B, 9,802 triangles, 2026-11-06) were generated the same way (Meshy Image to 3D, Pro plan, license setting "Private", owned by us, quadruped rig with the "Walk" clip, same optimization) from clay-style side views prepared during the hackathon with a photo of each animal as the reference. Shizuka's first version was made from a written description of her photo because the photo file had not reached us; it was replaced by the version made with the photo itself as the reference. Everything else in the world is generated by code. No personal information is included. The Siberian husky Ginga in the northern world (`husky-ginga.glb`, 309,268 B, 10,027 triangles, 2026-11-06) was generated the same way, but from a clay-style side view drawn from typical breed features, because there is no photo of Ginga; it is not a likeness of Ginga's own coat or eye color. The spotted hyena Peter in the savanna (`hyena-peter.glb`, 311,756 B, 9,236 triangles, 2026-11-06) was made the same way from typical species features (no photo of Peter; the facility's hyena video does not identify which hyena is shown, so it was not used). The lowland tapir Yumeko in the jungle (`tapir-yumeko.glb`, 209,392 B, 9,728 triangles, 2026-11-06) was made the same way with a photo of Yumeko and a frame of her recorded video as the reference. The mara Kabosu in the southern-hemisphere world (`mara-kabosu.glb`, 275,132 B, 9,629 triangles, 2026-11-06) was made the same way from typical species features (no photo of Kabosu) and replaces the primitive mara figure (`?mara=primitive` switches back). The arctic wolf Fen in the northern world (`wolf-fen.glb`, 337,300 B, 9,947 triangles, 2026-11-06) was made the same way from typical species features (no photo of Fen) and replaces the primitive wolf figure (`?wolf=primitive` switches back); the first generation was discarded because its rig weights were broken, and the model was generated once more from a revised picture with the tail held away from the hind legs. The pony Mei in the petting world (`pony-mei.glb`, 303,604 B, 10,047 triangles, 2026-11-06) was made the same way from typical pony features, with the coat color taken from a frame of the facility's pony video (it is not confirmed that the pony in the video is Mei), and replaces the primitive pony (`?pony=primitive` switches back). The Cape penguin Rinrin in the water world (`penguin-rinrin.glb`, 244,552 B, 10,024 triangles, 2026-11-06) was made the same way from typical species features (no photo of Rinrin), rigged with Meshy's humanoid rig; its walk clip does not look like a penguin, so it does not walk and only breathes, turns its head and sways in place. It replaces the primitive penguin (`?penguin=primitive` switches back). The small-clawed otter Haruto in the water world (`otter-haruto.glb`, 247,288 B, 8,556 triangles, 2026-11-06) was made the same way from typical species features (no photo of Haruto) and replaces the primitive otter (`?otter=primitive` switches back). The meerkat Tora in the savanna (`meerkat-tora.glb`, 254,448 B, 9,568 triangles, 2026-11-06) was made the same way from typical species features (no photo of Tora); there was no primitive meerkat, so it is added only when the model loads (`?meerkat=off` leaves it out). The common squirrel monkey Teru in the jungle (`squirrel-monkey-teru.glb`, 264,760 B, 9,817 triangles, 2026-11-06) was made the same way with frames of Teru's recorded video (Teru is the only squirrel monkey at the facility) as the reference; there was no primitive squirrel monkey, so Teru is added only when the model loads (`?squirrelMonkey=off` leaves Teru out). The spotted hyena Whoopi in the savanna (`hyena-whoopi.glb`, 274,184 B, 9,398 triangles, 2026-11-06) was made the same way from typical species features (no photo of Whoopi) and replaces its primitive figure in the hyena group (`?hyenaWhoopi=primitive` switches back). The spotted hyena Amber in the savanna (`hyena-amber.glb`, 270,204 B, 9,319 triangles, 2026-11-06) was made the same way from typical species features (no photo of Amber) and replaces its primitive figure in the hyena group (`?hyenaAmber=primitive` switches back). The honey badger Winnie in the Africa world (`ratel-winnie.glb`, 234,496 B, 9,615 triangles, 2026-11-07) was made the same way from a clay-style side view drawn with the app's published face icon of Winnie as a color reference, and replaces its primitive figure (`?ratelWinnie=primitive` switches back). The guide character Scop, a pair of binoculars in a top hat (`scop.glb`, 194,220 B, 9,959 triangles, 2026-11-07), was generated the same way (Meshy Image to 3D, Pro plan, license setting "Private", owned by us) from the clay-style Scop picture prepared during the hackathon, with its yellow background replaced by white. It has no rig or animation clips; its hops and turns are done in code. Its back is not in the picture, so Meshy filled it in. The Asian small-clawed otter Kent in the water world (`otter-kent.glb`, 211,956 B, 9,163 triangles, 2026-11-07) was made the same way from typical species features (no photo of Kent) and replaces its primitive figure (`?otterKent=primitive` switches back). The Asian small-clawed otter Minato in the water world (`otter-minato.glb`, 216,720 B, 9,071 triangles, 2026-11-07) was made the same way from typical species features (no photo of Minato) and replaces its primitive figure (`?otterMinato=primitive` switches back). The capybara Maro in the southern-hemisphere world (`capybara-maro.glb`, 254,692 B, 9,640 triangles, 2026-11-06) was made the same way from typical species features (no photo of Maro) and replaces its primitive figure (`?capybaraMaro=primitive` switches back). The mara Yuzu in the southern-hemisphere world (`mara-yuzu.glb`, 245,376 B, 9,204 triangles, 2026-11-06) was made the same way from typical species features (no photo of Yuzu) and replaces its primitive figure (`?maraYuzu=primitive` switches back). The capybara Rapi in the southern-hemisphere world (`capybara-rapi.glb`, 239,744 B, 9,917 triangles, 2026-11-06) was made the same way from typical species features (no photo of Rapi) and replaces its primitive figure (`?capybaraRapi=primitive` switches back). The mara Lime in the southern-hemisphere world (`mara-lime.glb`, 257,804 B, 8,842 triangles, 2026-11-06) was made the same way from typical species features (no photo of Lime) and replaces its primitive figure (`?maraLime=primitive` switches back). The mara Lemon in the southern-hemisphere world (`mara-lemon.glb`, 277,256 B, 9,219 triangles, 2026-11-06) was made the same way from typical species features (no photo of Lemon) and replaces its primitive figure (`?maraLemon=primitive` switches back). The mara Lychee in the southern-hemisphere world (`mara-lychee.glb`, 243,828 B, 9,247 triangles, 2026-11-06) was made the same way from typical species features (no photo of Lychee); its front-leg skin weights were cleaned with `tools/animal-gate/fix-legs.py` (weights on the opposite side removed and renormalized), and it replaces its primitive figure (`?maraLychee=primitive` switches back).
+Five lion models generated with [Meshy](https://www.meshy.ai) Image to 3D (Pro plan, 2026-11-05) from clay-style reference pictures of each lion that were prepared during the hackathon. Rigged with Meshy's quadruped rig and its "Walk" animation, then optimized with gltf-transform 4.5.1 (meshopt, 1024px WebP textures). Generated with the license setting "Private": models generated on Meshy's paid plans are owned by the user with no restriction on publication or commercial use (checked against Meshy's help/terms on 2026-11-05). The six player characters (`hero-boy.glb` = the curly-haired boy in a yellow hoodie, plus `hero-teal.glb`, `hero-pink.glb`, `hero-bluecap.glb`, `hero-purple.glb`, `hero-braids.glb`) were generated the same way (Meshy Image to 3D, Pro plan, 2026-11-05, license setting "Private", owned by us) from the front view of each child's character sheet prepared during the hackathon, rigged with Meshy's humanoid rig with its "Walk" and "Run" clips, and optimized with the same settings (335–383 KB, about 10,000 triangles each). They have no idle or jump clip. The player picks one on the home screen ("Who will explore?") and only that model is loaded. For the girl with braids, the vertex weights were rewritten before optimization: weights on her nine braid bones (hanging from Spine2, not animated) were moved to the head bone so her hat stays on her head while moving (`experiments/heroes/tools/move-weights-to-head.py` on the `exp/heroes` branch). The Bengal tiger Tigger in the jungle (`tiger-tigger.glb`, 335,916 B, 9,452 triangles, 2026-11-05), the Grant's zebra Gran in the savanna (`zebra-gran.glb`, 341,856 B, 8,670 triangles, 2026-11-06) and the capybara Shizuka in the southern-hemisphere world (`capybara-shizuka.glb`, 252,352 B, 9,802 triangles, 2026-11-06) were generated the same way (Meshy Image to 3D, Pro plan, license setting "Private", owned by us, quadruped rig with the "Walk" clip, same optimization) from clay-style side views prepared during the hackathon with a photo of each animal as the reference. Shizuka's first version was made from a written description of her photo because the photo file had not reached us; it was replaced by the version made with the photo itself as the reference. Everything else in the world is generated by code. No personal information is included. The Siberian husky Ginga in the northern world (`husky-ginga.glb`, 309,268 B, 10,027 triangles, 2026-11-06) was generated the same way, but from a clay-style side view drawn from typical breed features, because there is no photo of Ginga; it is not a likeness of Ginga's own coat or eye color. The spotted hyena Peter in the savanna (`hyena-peter.glb`, 311,756 B, 9,236 triangles, 2026-11-06) was made the same way from typical species features (no photo of Peter; the facility's hyena video does not identify which hyena is shown, so it was not used). The lowland tapir Yumeko in the jungle (`tapir-yumeko.glb`, 209,392 B, 9,728 triangles, 2026-11-06) was made the same way with a photo of Yumeko and a frame of her recorded video as the reference. The mara Kabosu in the southern-hemisphere world (`mara-kabosu.glb`, 275,132 B, 9,629 triangles, 2026-11-06) was made the same way from typical species features (no photo of Kabosu) and replaces the primitive mara figure (`?mara=primitive` switches back). The arctic wolf Fen in the northern world (`wolf-fen.glb`, 337,300 B, 9,947 triangles, 2026-11-06) was made the same way from typical species features (no photo of Fen) and replaces the primitive wolf figure (`?wolf=primitive` switches back); the first generation was discarded because its rig weights were broken, and the model was generated once more from a revised picture with the tail held away from the hind legs. The pony Mei in the petting world (`pony-mei.glb`, 303,604 B, 10,047 triangles, 2026-11-06) was made the same way from typical pony features, with the coat color taken from a frame of the facility's pony video (it is not confirmed that the pony in the video is Mei), and replaces the primitive pony (`?pony=primitive` switches back). The Cape penguin Rinrin in the water world (`penguin-rinrin.glb`, 244,552 B, 10,024 triangles, 2026-11-06) was made the same way from typical species features (no photo of Rinrin), rigged with Meshy's humanoid rig; its walk clip does not look like a penguin, so it does not walk and only breathes, turns its head and sways in place. It replaces the primitive penguin (`?penguin=primitive` switches back). The small-clawed otter Haruto in the water world (`otter-haruto.glb`, 247,288 B, 8,556 triangles, 2026-11-06) was made the same way from typical species features (no photo of Haruto) and replaces the primitive otter (`?otter=primitive` switches back). The meerkat Tora in the savanna (`meerkat-tora.glb`, 254,448 B, 9,568 triangles, 2026-11-06) was made the same way from typical species features (no photo of Tora); there was no primitive meerkat, so it is added only when the model loads (`?meerkat=off` leaves it out). The common squirrel monkey Teru in the jungle (`squirrel-monkey-teru.glb`, 264,760 B, 9,817 triangles, 2026-11-06) was made the same way with frames of Teru's recorded video (Teru is the only squirrel monkey at the facility) as the reference; there was no primitive squirrel monkey, so Teru is added only when the model loads (`?squirrelMonkey=off` leaves Teru out). The spotted hyena Whoopi in the savanna (`hyena-whoopi.glb`, 274,184 B, 9,398 triangles, 2026-11-06) was made the same way from typical species features (no photo of Whoopi) and replaces its primitive figure in the hyena group (`?hyenaWhoopi=primitive` switches back). The spotted hyena Amber in the savanna (`hyena-amber.glb`, 270,204 B, 9,319 triangles, 2026-11-06) was made the same way from typical species features (no photo of Amber) and replaces its primitive figure in the hyena group (`?hyenaAmber=primitive` switches back). The honey badger Winnie in the Africa world (`ratel-winnie.glb`, 234,496 B, 9,615 triangles, 2026-11-07) was made the same way from a clay-style side view drawn with the app's published face icon of Winnie as a color reference, and replaces its primitive figure (`?ratelWinnie=primitive` switches back). The guide character Scop, a pair of binoculars in a top hat (`scop.glb`, 194,220 B, 9,959 triangles, 2026-11-07), was generated the same way (Meshy Image to 3D, Pro plan, license setting "Private", owned by us) from the clay-style Scop picture prepared during the hackathon, with its yellow background replaced by white. It has no rig or animation clips; its hops and turns are done in code. Its back is not in the picture, so Meshy filled it in. The Asian small-clawed otter Kent in the water world (`otter-kent.glb`, 211,956 B, 9,163 triangles, 2026-11-07) was made the same way from typical species features (no photo of Kent) and replaces its primitive figure (`?otterKent=primitive` switches back). The Asian small-clawed otter Minato in the water world (`otter-minato.glb`, 216,720 B, 9,071 triangles, 2026-11-07) was made the same way from typical species features (no photo of Minato) and replaces its primitive figure (`?otterMinato=primitive` switches back). The capybara Maro in the southern-hemisphere world (`capybara-maro.glb`, 254,692 B, 9,640 triangles, 2026-11-06) was made the same way from typical species features (no photo of Maro) and replaces its primitive figure (`?capybaraMaro=primitive` switches back). The mara Yuzu in the southern-hemisphere world (`mara-yuzu.glb`, 245,376 B, 9,204 triangles, 2026-11-06) was made the same way from typical species features (no photo of Yuzu) and replaces its primitive figure (`?maraYuzu=primitive` switches back). The capybara Rapi in the southern-hemisphere world (`capybara-rapi.glb`, 239,744 B, 9,917 triangles, 2026-11-06) was made the same way from typical species features (no photo of Rapi) and replaces its primitive figure (`?capybaraRapi=primitive` switches back). The mara Lime in the southern-hemisphere world (`mara-lime.glb`, 257,804 B, 8,842 triangles, 2026-11-06) was made the same way from typical species features (no photo of Lime) and replaces its primitive figure (`?maraLime=primitive` switches back). The mara Lemon in the southern-hemisphere world (`mara-lemon.glb`, 277,256 B, 9,219 triangles, 2026-11-06) was made the same way from typical species features (no photo of Lemon) and replaces its primitive figure (`?maraLemon=primitive` switches back). The mara Lychee in the southern-hemisphere world (`mara-lychee.glb`, 243,828 B, 9,247 triangles, 2026-11-06) was made the same way from typical species features (no photo of Lychee); its front-leg skin weights were cleaned with `tools/animal-gate/fix-legs.py` (weights on the opposite side removed and renormalized), and it replaces its primitive figure (`?maraLychee=primitive` switches back). The pony Kinoko in the petting world (`pony-kinoko.glb`, 311,184 B, 9,873 triangles, 2026-11-06) was made the same way from typical pony features (no photo of Kinoko) and replaces its primitive figure (`?ponyKinoko=primitive` switches back). The pony Sakura in the petting world (`pony-sakura.glb`, 312,336 B, 10,019 triangles, 2026-11-06) was made the same way from typical pony features (no photo of Sakura) and replaces its primitive figure (`?ponySakura=primitive` switches back). The goat Latte in the petting and partners world (`goat-latte.glb`, 280,308 B, 10,021 triangles, 2026-11-07) was made the same way from typical species features (no photo of Latte) and replaces its primitive figure (`?goatLatte=primitive` switches back). The goat Shiki in the petting and partners world (`goat-shiki.glb`, 290,040 B, 9,946 triangles, 2026-11-07) was made the same way from typical species features (no photo of Shiki) and replaces its primitive figure (`?goatShiki=primitive` switches back). The goat Twotone in the petting and partners world (`goat-twotone.glb`, 318,068 B, 10,025 triangles, 2026-11-07) was made the same way from typical species features (no photo of Twotone) and replaces its primitive figure (`?goatTwotone=primitive` switches back). The goat Marble in the petting and partners world (`goat-marble.glb`, 285,940 B, 9,919 triangles, 2026-11-07) was made the same way from typical species features (no photo of Marble) and replaces its primitive figure (`?goatMarble=primitive` switches back). The goat Natsume in the petting and partners world (`goat-natsume.glb`, 298,788 B, 10,069 triangles, 2026-11-07) was made the same way from typical species features (no photo of Natsume) and replaces its primitive figure (`?goatNatsume=primitive` switches back). The goat Mifuyu in the petting and partners world (`goat-mifuyu.glb`, 279,044 B, 9,995 triangles, 2026-11-07) was made the same way from typical species features (no photo of Mifuyu) and replaces its primitive figure (`?goatMifuyu=primitive` switches back). The goat Baum in the petting and partners world (`goat-baum.glb`, 278,344 B, 9,993 triangles, 2026-11-07) was made the same way from typical species features (no photo of Baum) and replaces its primitive figure (`?goatBaum=primitive` switches back). The goat Machiko in the petting and partners world (`goat-machiko.glb`, 305,148 B, 9,994 triangles, 2026-11-07) was made the same way from typical species features (no photo of Machiko) and replaces its primitive figure (`?goatMachiko=primitive` switches back). The goat Marge in the petting and partners world (`goat-marge.glb`, 292,428 B, 9,924 triangles, 2026-11-07) was made the same way from typical species features (no photo of Marge) and replaces its primitive figure (`?goatMarge=primitive` switches back). The goat Flow in the petting and partners world (`goat-flow.glb`, 310,624 B, 10,060 triangles, 2026-11-07) was made the same way from typical species features (no photo of Flow) and replaces its primitive figure (`?goatFlow=primitive` switches back). The goat Latte Jr. in the petting and partners world (`goat-lattejr.glb`, 284,712 B, 10,001 triangles, 2026-11-07) was made the same way from typical species features (no photo of Latte Jr.) and replaces its primitive figure (`?goatLattejr=primitive` switches back). The goat Shizuru in the petting and partners world (`goat-shizuru.glb`, 281,704 B, 9,913 triangles, 2026-11-07) was made the same way from typical species features (no photo of Shizuru) and replaces its primitive figure (`?goatShizuru=primitive` switches back). The sheep Asako in the petting and partners world (`sheep-asako.glb`, 252,180 B, 10,000 triangles, 2026-11-07) was made the same way from typical species features (no photo of Asako) and replaces its primitive figure (`?sheepAsako=primitive` switches back). The border collie Shine in the petting and partners world (`collie-shine.glb`, 292,632 B, 10,054 triangles, 2026-11-07) was made the same way from typical species features (no photo of Shine) and replaces its primitive figure (`?collieShine=primitive` switches back). The St. Bernard Josef in the petting and partners world (`stbernard-josef.glb`, 256,632 B, 9,699 triangles, 2026-11-07) was made the same way from typical species features (no photo of Josef) and replaces its primitive figure (`?stbernardJosef=primitive` switches back). The pot-bellied pig Rose in the petting and partners world (`pig-rose.glb`, 196,096 B, 9,741 triangles, 2026-11-07) was made the same way from typical species features (no photo of Rose) and replaces its primitive figure (`?pigRose=primitive` switches back). The sheep Paul in the petting and partners world (`sheep-paul.glb`, 259,984 B, 9,962 triangles, 2026-11-07) was made the same way from typical species features (no photo of Paul) and replaces its primitive figure (`?sheepPaul=primitive` switches back). The sheep Barbary in the petting and partners world (`sheep-barbary.glb`, 265,044 B, 9,990 triangles, 2026-11-07) was made the same way from typical species features (no photo of Barbary) and replaces its primitive figure (`?sheepBarbary=primitive` switches back). The sheep Tae in the petting and partners world (`sheep-tae.glb`, 257,588 B, 9,994 triangles, 2026-11-07) was made the same way from typical species features (no photo of Tae) and replaces its primitive figure (`?sheepTae=primitive` switches back).

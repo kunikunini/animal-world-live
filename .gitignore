@@ -53,6 +53,27 @@ public/models/*
 !public/models/mara-lime.glb
 !public/models/mara-lemon.glb
 !public/models/mara-lychee.glb
+!public/models/pony-kinoko.glb
+!public/models/pony-sakura.glb
+!public/models/goat-latte.glb
+!public/models/goat-shiki.glb
+!public/models/goat-twotone.glb
+!public/models/goat-marble.glb
+!public/models/goat-natsume.glb
+!public/models/goat-mifuyu.glb
+!public/models/goat-baum.glb
+!public/models/goat-machiko.glb
+!public/models/goat-marge.glb
+!public/models/goat-flow.glb
+!public/models/goat-lattejr.glb
+!public/models/goat-shizuru.glb
+!public/models/sheep-asako.glb
+!public/models/collie-shine.glb
+!public/models/stbernard-josef.glb
+!public/models/pig-rose.glb
+!public/models/sheep-paul.glb
+!public/models/sheep-barbary.glb
+!public/models/sheep-tae.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/

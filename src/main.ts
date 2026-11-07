@@ -345,7 +345,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
       { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
-      // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
+      // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
       { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true } },
       // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽はプリミティブ版のまま）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
@@ -386,6 +386,29 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'maraLemon', species: 'マーラ', name: 'レモン', file: 'mara-lemon', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
       // ライチ: 南半球のマーラ 5 頭のうちライチ。コピー方式でゆずの値（後ろ脚 1・背骨 0.8・尾 1・前脚 0.7）を流用。尾の骨は動かさない（noTail）
       { key: 'maraLychee', species: 'マーラ', name: 'ライチ', file: 'mara-lychee', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      // きのこ: ふれあいワールドの放牧場のポニー 3 頭のうちきのこ。めいの値（0.95／0.9／0.5／0.8）の流用は腰 98.5〜105.2% で外れ、1／0.9／0.5／0.9 に（腰 99.9〜101.6%）
+      { key: 'ponyKinoko', species: 'ポニー', name: 'きのこ', file: 'pony-kinoko', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      // サクラ: ふれあいワールドの放牧場のポニー 3 頭のうちサクラ。コピー方式できのこの値（後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9）を流用
+      { key: 'ponySakura', species: 'ポニー', name: 'サクラ', file: 'pony-sakura', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatLatte', species: 'ヤギ', name: 'ラテ', file: 'goat-latte', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatShiki', species: 'ヤギ', name: 'シキ', file: 'goat-shiki', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatTwotone', species: 'ヤギ', name: 'ツートン', file: 'goat-twotone', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatMarble', species: 'ヤギ', name: 'マーブル', file: 'goat-marble', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatNatsume', species: 'ヤギ', name: 'ナツメ', file: 'goat-natsume', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatMifuyu', species: 'ヤギ', name: 'みふゆ', file: 'goat-mifuyu', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatBaum', species: 'ヤギ', name: 'バウム', file: 'goat-baum', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatMachiko', species: 'ヤギ', name: 'まちこ', file: 'goat-machiko', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatMarge', species: 'ヤギ', name: 'マージュ', file: 'goat-marge', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatFlow', species: 'ヤギ', name: 'フロー', file: 'goat-flow', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatLattejr', species: 'ヤギ', name: 'ラテjr', file: 'goat-lattejr', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatShizuru', species: 'ヤギ', name: 'しずる', file: 'goat-shizuru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepAsako', species: 'ヒツジ', name: 'あさこ', file: 'sheep-asako', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'collieShine', species: 'ボーダーコリー', name: 'シャイン', file: 'collie-shine', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'stbernardJosef', species: 'セントバーナード', name: 'ヨーゼフ', file: 'stbernard-josef', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'pigRose', species: 'ホットベリーピック（ブタ）', name: 'ローズ', file: 'pig-rose', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepPaul', species: 'ヒツジ', name: 'ポール', file: 'sheep-paul', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepBarbary', species: 'ヒツジ', name: 'バーバリー', file: 'sheep-barbary', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepTae', species: 'ヒツジ', name: '妙', file: 'sheep-tae', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
