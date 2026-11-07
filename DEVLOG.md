@@ -1742,3 +1742,11 @@
 - 修正: `src/staff/main.ts` の説明を「この数は、この端末で押された分だけです。ほかの来園者の数を集めるサーバーはまだありません。アプリの『お気に入り』は、見る人それぞれの ❤️ で作られるので、この数とは関係ありません。」に（サーバーがない一文は残した）
 - 検証: `npm run build` 通過。dev のスタッフ画面で新しい文が出ることを確かめた
 - 結果（くにの iPhone 実機）: 既定（遠景はプリミティブ版）で、水の世界でもサバンナでも 60 fps で安定。FPS の件はこれで決着
+
+## 2026-11-08 アプリを閉じて開き直すと音が鳴らなくなるのを直す
+
+- 指示（くに）: 一回アプリを閉じると、開き直した時に音が鳴らない。実機の音の記録（設定の見出し 5 回押し）を見て原因を確かめ、直す
+- 原因（記録で確認）: 戻ってきて画面が見えた時の `resume()` は操作の外なので iOS に断られ、`visible ctx=interrupted` → `statechange ctx=suspended` で止まり、running にならなかった。最初のタップで解放する処理は 1 回で外れるので、そのあと何回タップしても動かし直さなかった。もう 1 つ、最初の解放は `suspended` の時しか `resume()` しておらず、ページを開いた時点で `interrupted` だと最初のタップでも動かなかった
+- 修正: `src/audio/sound.ts` だけ。解放の処理を `resumeInGesture()` に分け、running 以外（suspended も interrupted も）なら `resume()` と無音 1 回。タップ（pointerdown・touchend・keydown）のたびに、解放済みで止まっていれば動かし直す（おはなしの「とまる」の間と、画面が隠れている時はしない）。動かし直した時は記録に `tap-resume` を残す。動き出した後は今までどおり statechange で 0 から元の音量へ
+- 検証: `tsc`・`npm run build` 通過。dev（PC の Chrome）で、鳴っている AudioContext をわざと suspend → タップで `tap-resume` → `statechange ctx=running` になることを確かめた
+- 未確認: iPhone で閉じて開き直した時に鳴るか（実機でしか試せない。明朝の実機確認へ）

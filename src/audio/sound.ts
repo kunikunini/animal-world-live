@@ -451,13 +451,11 @@ function stopNarration(): void {
   }
 }
 
-/** 最初のユーザー操作で呼ぶ。iOS はこの中で鳴らさないと解放されないので、無音を 1 回鳴らす */
-function unlock(): void {
-  if (unlocked) return
-  const ac = ensureContext()
-  if (!ac) return
+/** ユーザーの操作の中で、止まっている AudioContext を動かす。iOS は操作の中で鳴らさないと解放されないので、無音を 1 回鳴らす。
+ *  止まり方は suspended だけでなく、iPhone の "interrupted"（電話・スリープ・アプリの切り替えのあと）もあるので、running 以外は全部 */
+function resumeInGesture(ac: AudioContext): void {
   try {
-    if (ac.state === 'suspended') void ac.resume()
+    if (ac.state !== 'running') ac.resume().catch(() => {})
     const b = ac.createBuffer(1, 1, 22050)
     const s = ac.createBufferSource()
     s.buffer = b
@@ -466,6 +464,14 @@ function unlock(): void {
   } catch {
     // 解放できなくても続ける
   }
+}
+
+/** 最初のユーザー操作で呼ぶ */
+function unlock(): void {
+  if (unlocked) return
+  const ac = ensureContext()
+  if (!ac) return
+  resumeInGesture(ac)
   unlocked = true
   window.removeEventListener('pointerdown', unlock, true)
   window.removeEventListener('keydown', unlock, true)
@@ -629,6 +635,17 @@ export const sound = {
     })
     // focus が来ないまま操作が始まった時（全画面の映像から戻った時など）も、音を戻す
     window.addEventListener('pointerdown', unblur, true)
+    // アプリを閉じて開き直した時、画面が見えた時の resume() は操作の外なので、iOS に断られて suspended / interrupted のまま残ることがある
+    // （11/7 くにの実機の記録: visible のあと interrupted → suspended で止まり、running にならなかった）。
+    // そこで、止まったままなら次のタップでもう一度動かす。動き出したら statechange で 0 から元の音量へ上げる。おはなしの「とまる」の間はしない
+    const wake = () => {
+      if (!unlocked || !ctx || pausedByApp || document.hidden || ctx.state === 'running') return
+      alog(`tap-resume ${audioState()}`)
+      resumeInGesture(ctx)
+    }
+    window.addEventListener('pointerdown', wake, true)
+    window.addEventListener('touchend', wake, true)
+    window.addEventListener('keydown', wake, true)
     // UI の決定・タップ: ボタンを押した時に小さく鳴らす。同じ操作で別の効果音が鳴る時はそちらだけにする
     document.addEventListener(
       'click',
