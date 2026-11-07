@@ -81,6 +81,7 @@ public/models/*
 !public/models/lemur-jupiter.glb
 !public/models/goat-machiko.glb
 !public/models/lemur-spacey.glb
+!public/models/wolf-mari.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
