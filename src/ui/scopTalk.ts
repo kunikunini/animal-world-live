@@ -7,6 +7,8 @@ import type { ScopTalk } from '../data/scopTalks'
  * - メッセージ窓: 画面の下の RPG のような窓。名前の札「スコップ」と、1 文字ずつ「ピッ」と出る文（うんちくなので、読む速さで）。
  *   文の速さは声の長さに合わせる。窓を押すと、出ている途中なら全部出し、出きっていれば閉じる。
  *   動きをへらす時は、はじめから全部出して「ピッ」も鳴らさない
+ * - 文ははじめから全部並べておき、まだの文字は見えなくしておく（出る途中で言葉が次の行へ跳ねたり、窓がのびたりしないように）
+ * - 話し終わって（文が出きって、声も終わって）1 秒たったら、窓はフッと消える。動きをへらす時はフェードなしで消す
  */
 export interface ScopTalkUi {
   /** 「声をかける」の位置（画面の座標）。null で隠す */
@@ -33,10 +35,14 @@ function units(text: string): Unit[] {
   for (const c of Array.from(text.slice(last))) out.push({ base: c, w: 1 })
   return out
 }
-const unitHtml = (u: Unit) => (u.rt ? `<ruby>${esc(u.base)}<rt>${esc(u.rt)}</rt></ruby>` : esc(u.base))
+const unitHtml = (u: Unit) => `<span class="is-yet">${u.rt ? `<ruby>${esc(u.base)}<rt>${esc(u.rt)}</rt></ruby>` : esc(u.base)}</span>`
 
 /** 声が無い時（音を切っている時）の 1 秒あたりの文字数（よみの文字数で数える） */
 const PLAIN_CPS = 12
+/** 話し終わってから窓が消えはじめるまで（ms） */
+const LINGER_MS = 1000
+/** フェードの長さ（ms。style.css の .scop-msg の transition と合わせる） */
+const FADE_MS = 400
 
 export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   const call = document.createElement('button')
@@ -72,13 +78,52 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   let startAt = 0
   let lastBlip = 0
   let open = false
+  let spans: HTMLElement[] = []
+  let revealed = 0
+  // 話しはじめた時刻と声の長さ（声を切っていても、この長さは読む時間として待つ）
+  let openAt = 0
+  let talkMs = 0
+  let endTimer = 0
+  let fadeTimer = 0
 
+  const clearTimers = () => {
+    if (endTimer) clearTimeout(endTimer)
+    if (fadeTimer) clearTimeout(fadeTimer)
+    endTimer = 0
+    fadeTimer = 0
+  }
   const render = () => {
-    textEl.innerHTML = chars.slice(0, shown).map(unitHtml).join('')
+    for (; revealed < shown; revealed++) spans[revealed].classList.remove('is-yet')
     const done = shown >= chars.length
     moreEl.hidden = !done
-    // 長い文は窓の中で下へ送る
-    textEl.scrollTop = textEl.scrollHeight
+    // 長い文は窓の中で下へ送る（最後に出た文字が見えるところまで）
+    const last = spans[shown - 1]
+    if (last) {
+      const bottom = last.offsetTop + last.offsetHeight
+      if (bottom > textEl.scrollTop + textEl.clientHeight) textEl.scrollTop = bottom - textEl.clientHeight
+    }
+    if (done && !endTimer && !fadeTimer) waitEnd()
+  }
+  // 文が出きったあと、声が終わるのを待ってから 1 秒おいて消す
+  const waitEnd = () => {
+    endTimer = 0
+    if (!open) return
+    if (performance.now() < openAt + talkMs || sound.narrating()) {
+      endTimer = window.setTimeout(waitEnd, 200)
+      return
+    }
+    endTimer = window.setTimeout(fadeOut, LINGER_MS)
+  }
+  const fadeOut = () => {
+    endTimer = 0
+    if (!open) return
+    if (reduce) {
+      close()
+      return
+    }
+    win.classList.add('is-fading')
+    // transitionend が来ない時（transition が切られている時など）も閉じる
+    fadeTimer = window.setTimeout(close, FADE_MS + 100)
   }
   const tick = (now: number) => {
     raf = 0
@@ -112,6 +157,8 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
     render()
   }
   const close = () => {
+    clearTimers()
+    win.classList.remove('is-fading')
     if (!open) return
     open = false
     if (raf) cancelAnimationFrame(raf)
@@ -123,6 +170,9 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
   call.addEventListener('click', (e) => {
     e.stopPropagation()
     for (const fn of callListeners) fn()
+  })
+  win.addEventListener('transitionend', (e) => {
+    if (e.target === win && e.propertyName === 'opacity' && win.classList.contains('is-fading')) close()
   })
   win.addEventListener('click', (e) => {
     e.stopPropagation()
@@ -148,8 +198,16 @@ export function createScopTalk(root: HTMLElement = document.body): ScopTalkUi {
       totalW = chars.reduce((a, u) => a + u.w, 0)
       // 声の長さで出しきる（少し早めに出しきって、声が文を追いかける）。声が鳴らない時はふつうの速さ
       cps = sound.voiceOn() ? Math.max(7, Math.min(20, totalW / Math.max(1, talk.sec * 0.92))) : PLAIN_CPS
+      clearTimers()
+      win.classList.remove('is-fading')
       shown = 0
       shownW = 0
+      revealed = 0
+      textEl.innerHTML = chars.map(unitHtml).join('')
+      spans = Array.from(textEl.children) as HTMLElement[]
+      textEl.scrollTop = 0
+      openAt = performance.now()
+      talkMs = talk.sec * 1000
       open = true
       win.hidden = false
       call.hidden = true

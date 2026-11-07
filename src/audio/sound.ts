@@ -693,6 +693,10 @@ export const sound = {
   stopNarration(): void {
     stopNarration()
   },
+  /** ナレーションが鳴っている途中か */
+  narrating(): boolean {
+    return narrSrc !== null
+  },
   /** ナレーションが鳴る状態か（音が使えて、効果音を切っていない） */
   voiceOn(): boolean {
     return unlocked && !!ctx && !seOff()

@@ -6058,13 +6058,23 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   width: min(560px, calc(100vw - 24px));
   transform: translateX(-50%);
   padding: 22px 18px 16px;
-  border: 3px solid #ffffff;
+  border: 3px solid rgba(255, 255, 255, 0.9);
   border-radius: 12px;
-  background: #10162f;
-  box-shadow: 0 0 0 3px #10162f, 0 10px 28px rgba(0, 0, 0, 0.35);
-  color: #ffffff;
+  /* 薄い青の半透明。後ろの景色をぼかして、文字は濃い紺で読めるように */
+  background: rgba(196, 222, 255, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 0 2px rgba(47, 79, 216, 0.45), 0 10px 28px rgba(20, 30, 60, 0.25);
+  color: #14204a;
   font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
   cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+/* 話し終わって 1 秒たったらフッと消える（ui/scopTalk.ts） */
+.scop-msg.is-fading {
+  opacity: 0;
+  pointer-events: none;
 }
 .scop-msg-name {
   position: absolute;
@@ -6074,6 +6084,7 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   border: 2px solid #ffffff;
   border-radius: 8px;
   background: #2f4fd8;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -6092,6 +6103,12 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   /* 文はかなを空白で区切ってあるので、言葉の途中では改行しない */
   word-break: keep-all;
   overflow-wrap: anywhere;
+  /* 下へ送る時に、文字の位置をこの中で測る */
+  position: relative;
+}
+/* まだ出ていない文字。場所はとったまま見えなくしておく（出る途中で言葉が次の行へ跳ねないように） */
+.scop-msg-text .is-yet {
+  visibility: hidden;
 }
 .scop-msg-more {
   position: absolute;
@@ -6111,7 +6128,7 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
   height: 32px;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(20, 32, 74, 0.7);
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
@@ -6119,8 +6136,10 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 @media (prefers-reduced-motion: reduce) {
   .scop-call,
   .scop-msg-more { animation: none; }
+  .scop-msg { transition: none; }
 }
 body.is-reduce-motion :is(.scop-call, .scop-msg-more) { animation: none; }
+body.is-reduce-motion .scop-msg { transition: none; }
 @media (max-width: 420px) {
   .scop-msg-text { font-size: 16px; }
 }
@@ -6206,11 +6225,11 @@ body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
 @media (min-width: 768px) {
   .cat-fav-lead, .cat-fav-note, .cat-fav-grid { padding-left: 40px; padding-right: 40px; }
 }
-/* スコップの窓のふりがな（ツアーの吹き出しと同じく小さめ。窓が暗いので少し明るい灰色） */
+/* スコップの窓のふりがな（ツアーの吹き出しと同じく小さめ。窓が薄い青なので、少し明るい紺） */
 .scop-msg-text ruby { ruby-position: over; }
 .scop-msg-text rt {
   font-size: 0.5em;
   font-weight: 700;
-  color: #c9d3f2;
+  color: #3d4f86;
   letter-spacing: 0;
 }
