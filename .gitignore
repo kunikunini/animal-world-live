@@ -122,6 +122,7 @@ public/models/*
 !public/models/tortoise-butter.glb
 !public/models/coati-myu.glb
 !public/models/tortoise-syrup.glb
+!public/models/coati-puppe.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
