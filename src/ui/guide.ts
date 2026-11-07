@@ -13,6 +13,7 @@
  * 設定の「あそび方をもう一度見る」でいつでも最初から。?guide=1 で毎回出す（確認用）。
  */
 import { phraseHtml } from './phrase'
+import { sound } from '../audio/sound'
 import { getLang } from './i18n'
 import type { Lang } from './i18n'
 
@@ -87,6 +88,8 @@ export interface Guide {
 type Text = Record<Lang, string>
 interface Step {
   text: Text
+  /** スコップの声（public/audio/vo-tour-<voice>.mp3、日本語の時だけ） */
+  voice: string
   /** 明るく抜く所。前から順に、見えている最初のものを使う。'riley' / 'spot' はワールドの中の目印、'mapSpot' は地図の中の観察スポット */
   targets: string[]
   /**
@@ -122,6 +125,7 @@ const BACK_BUTTONS = ['#observe-close', '#chat-back', '#book-close', '#catalog [
 
 const STEPS: Step[] = [
   {
+    voice: 'intro',
     text: {
       ja: 'ぼく、スコップ！ いっしょに あそびかたを のぞいてみよう！',
       en: 'Hi, I’m Scop! Let’s scope out how to play!',
@@ -130,6 +134,7 @@ const STEPS: Step[] = [
     advance: 'next',
   },
   {
+    voice: 'riley',
     text: {
       ja: 'ライリーに {会|あ}いに いこう！',
       en: 'Let’s go meet Riley!',
@@ -145,6 +150,7 @@ const STEPS: Step[] = [
     find: true,
   },
   {
+    voice: 'nameplate',
     text: {
       ja: 'ネームプレートを おしてみて！',
       en: 'Tap the name tag — tag, you’re it!',
@@ -154,6 +160,7 @@ const STEPS: Step[] = [
     until: ['observeOpen'],
   },
   {
+    voice: 'befriend',
     text: {
       ja: '「ともだちになる」を おすかどうかは、きみが {決|き}めてね。',
       en: 'Tap “Become friends” if you like. It’s up to you.',
@@ -164,6 +171,7 @@ const STEPS: Step[] = [
     needs: 'observe',
   },
   {
+    voice: 'book',
     text: {
       ja: 'ともだち{帳|ちょう}を {開|ひら}いてみよう！',
       en: 'Let’s open your Friend Book!',
@@ -175,6 +183,7 @@ const STEPS: Step[] = [
     until: ['book'],
   },
   {
+    voice: 'chat',
     text: {
       ja: 'ともだちを おすと、トークが {開|ひら}くよ。',
       en: 'Tap a friend to open your talk.',
@@ -185,6 +194,7 @@ const STEPS: Step[] = [
     needs: 'friendRow',
   },
   {
+    voice: 'keeper',
     text: {
       ja: '{飼育員|しいくいん}さんの おしらせは、ここに とどくよ。',
       en: 'Notes from the keepers arrive here.',
@@ -194,6 +204,7 @@ const STEPS: Step[] = [
     needs: 'chat',
   },
   {
+    voice: 'map',
     text: {
       ja: 'つぎは {地図|ちず}を {開|ひら}こう！',
       en: 'Next, open the map!',
@@ -205,6 +216,7 @@ const STEPS: Step[] = [
     until: ['map'],
   },
   {
+    voice: 'mapspot',
     text: {
       ja: '{地図|ちず}の {観察|かんさつ}スポットを おしてみて！ そこまで {行|い}けるよ。',
       en: 'Tap the observation spot on the map to go there!',
@@ -217,6 +229,7 @@ const STEPS: Step[] = [
     clear: ['#map .sheet-head'],
   },
   {
+    voice: 'arrive',
     text: {
       ja: 'とうちゃーく！「スコープをのぞく」を おしてね。',
       en: 'Spot on! Tap “Look through the scope”.',
@@ -233,6 +246,7 @@ const STEPS: Step[] = [
     walkTo: 'spot',
   },
   {
+    voice: 'catalog',
     text: {
       ja: '{動画|どうが}が いっぱい！ ワールドを おすと、そこの どうぶつが {見|み}られるよ。',
       en: 'So many videos! Tap a world to see who lives there.',
@@ -242,6 +256,7 @@ const STEPS: Step[] = [
     needs: 'catalog',
   },
   {
+    voice: 'end',
     text: {
       ja: 'やったね！ また {見|み}たいときは ホームの {設定|せってい}から よんでね。',
       en: 'Hooray! Call me from Settings any time.',
@@ -483,10 +498,31 @@ export function createGuide(): Guide {
   // 吹き出しの本文は文節の中で改行せず、文の切れ目で先に改行する
   const textHtml = (s: string) => (getLang() === 'ja' ? phraseHtml(s, { sentences: true }) : esc(s))
 
-  const setText = (s: string) => {
+  // スコップの声: 吹き出しの言葉が替わった時に鳴らす（日本語の時だけ）。同じ段では、一度言った言葉は繰り返さない
+  // （観察スポットの近くで「観察スポットへ いこう！」と着いた時の文が行き来した時や、吹き出しが隠れてまた出た時に、何度も言わないように）
+  let voiceSaid = new Set<string>()
+  let voiceStep = -1
+  let voiceDelay = 0
+  let voiceTimer = 0
+  const speak = (voice: string) => {
+    if (getLang() !== 'ja' || !active) return
+    if (voiceStep !== index) {
+      voiceStep = index
+      voiceSaid = new Set()
+    }
+    if (voiceSaid.has(voice)) return
+    voiceSaid.add(voice)
+    window.clearTimeout(voiceTimer)
+    sound.stopNarration()
+    const delay = voiceDelay
+    voiceDelay = 0
+    voiceTimer = window.setTimeout(() => active && sound.narrate(voice, 'tour'), delay)
+  }
+  const setText = (s: string, voice: string) => {
     if (s === textNow) return
     textNow = s
     textEl.innerHTML = textHtml(s)
+    speak(voice)
   }
   /** 前の段の案内（光る輪・矢印・「あと ○ m」）をすぐ片づける。段が変わった時・画面が開いたり閉じたりした時 */
   const clearMarks = () => {
@@ -506,7 +542,7 @@ export function createGuide(): Guide {
     const step = STEPS[index]
     const last = index === STEPS.length - 1
     countEl.textContent = `${index + 1} / ${STEPS.length}`
-    setText(step.text[getLang()])
+    setText(step.text[getLang()], step.voice)
     nextBtn.innerHTML = html(last ? label('done') : label('next'))
     // 操作で進む段には「つぎへ」を出さない（「もどる」で戻ってきた段は、先へ戻れるように出す）
     nextBtn.hidden = step.advance === 'act' && index >= furthest
@@ -613,9 +649,9 @@ export function createGuide(): Guide {
     litNow = rect || offTarget ? litSel : ''
     // 本文: 閉じる・戻るボタンを照らしている間は「まず もどろう」、観察スポットから離れている間は away の文
     const lang = getLang()
-    if (step.prep?.includes(litSel)) setText(label('prep'))
-    else if (step.away && (world.spot?.distance ?? Infinity) >= 5) setText(step.away[lang])
-    else setText(step.text[lang])
+    if (step.prep?.includes(litSel)) setText(label('prep'), 'prep')
+    else if (step.away && (world.spot?.distance ?? Infinity) >= 5) setText(step.away[lang], 'away')
+    else setText(step.text[lang], step.voice)
     // 「いっしょに行く」はワールドにいて、まだ着いていない時だけ
     const wantWalk = !!step.walkTo && !sheetsOpen() && !(step.walkTo === 'spot' && (world.spot?.distance ?? Infinity) < 5)
     if (walkBtn.hidden === wantWalk) walkBtn.hidden = !wantWalk
@@ -845,6 +881,8 @@ export function createGuide(): Guide {
     const from = index
     // ライリーに着いた: 「あっ、見つけた！」（戻ってから「つぎへ」で進んだ時は鳴らさない）
     if (!back && how === 'act' && i > from && STEPS[from].find && from >= furthest) for (const fn of findListeners) fn()
+    // 主人公の声と重ならないように、そのあとの声は少し待つ（「あっ、見つけた！」＝ライリーに着いた時・スコープをのぞいた時、「やったー！」＝ともだちになるを押した時）
+    voiceDelay = back || how !== 'act' ? 0 : STEPS[from].find || STEPS[from].until?.includes('scope') ? 2000 : STEPS[from].until?.includes('befriend') ? 1500 : 0
     // ワールドで話す段へ「つぎへ」で進む時は、開いている画面を閉じてワールドへ（帳・トーク・動物の部屋を 1 枚ずつ閉じさせない）
     if (!back && how === 'next' && STEPS[i].world && sheetsOpen()) for (const fn of closeListeners) fn()
     index = i
@@ -861,12 +899,19 @@ export function createGuide(): Guide {
     index = 0
     furthest = 0
     frameSeen = false
+    // もう一度はじめから見る時も、最初の言葉から声を出す
+    textNow = ''
+    voiceStep = -1
+    // 出発の時の主人公の声（「冒険に出発だ！」）と重ならないように、最初の言葉は少し待つ
+    voiceDelay = 700
     sync()
   }
 
   const stop = () => {
     if (!active) return
     active = false
+    window.clearTimeout(voiceTimer)
+    sound.stopNarration()
     writeDone()
     sync()
   }

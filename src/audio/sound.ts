@@ -666,11 +666,11 @@ export const sound = {
     applyVolumes()
   },
 
-  /** 物語のナレーション（public/audio/vo-story-<name>.mp3）。効果音の音量とミュートに入る */
-  narrate(name: string): void {
+  /** ナレーション（public/audio/vo-<kind>-<name>.mp3。物語は story、あそびかたツアーのスコップは tour）。効果音の音量とミュートに入る */
+  narrate(name: string, kind: 'story' | 'tour' = 'story'): void {
     stopNarration()
     if (!unlocked || !ctx || !seBus || seOff()) return
-    const file = `vo-story-${name}.mp3`
+    const file = `vo-${kind}-${name}.mp3`
     let p = shots.get(file)
     if (!p) {
       p = fetchBuffer(file)
