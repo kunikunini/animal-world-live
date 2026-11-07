@@ -111,6 +111,7 @@ public/models/*
 !public/models/pyrenean-elsa.glb
 !public/models/pig-rose.glb
 !public/models/porcupine-kogomi.glb
+!public/models/husky-fuga.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
