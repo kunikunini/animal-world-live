@@ -219,6 +219,7 @@ const DICT = {
   catNew: { ja: '新着', en: 'New' },
   catSlide: { ja: '{n}本目: {title}', en: 'Video {n}: {title}' },
   catRowZoos: { ja: '動物園からえらぶ', en: 'Pick a zoo' },
+  catZooWanted: { ja: '募集中', en: 'Zoos wanted' },
   silhouetteOf: { ja: '{name}（写真はじゅんびちゅう）', en: '{name} (photo coming soon)' },
   catWorldSoon: { ja: 'じゅんびちゅう', en: 'Coming soon' },
   catWorldEnter: { ja: '{world}の動物を見る', en: 'See the animals of {world}' },
