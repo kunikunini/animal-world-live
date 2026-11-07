@@ -31,6 +31,11 @@ export interface AiLion {
   tick: (dt: number) => void
   /** 姿勢の補正の強さ（開発時の計測で書き換えると次のコマから効く） */
   posture: PostureFix
+  /** 座る（true）／立つ。歩いている間は座らない。1.2 秒かけて切り替わる */
+  setSitting: (on: boolean) => void
+  /** 座り姿の骨の角度（開発時に書き換えると次のコマから効く） */
+  sitPose: SitPose
+  sitWeight: () => number
   mixer: THREE.AnimationMixer | null
   action: THREE.AnimationAction | null
 }
@@ -55,6 +60,28 @@ export interface PostureFix {
   /** 前脚も同じく、平均の曲がりだけ取り除いて振りを残す（front は振りを小さくする強さになる） */
   frontCenter?: boolean
 }
+
+/**
+ * 座り姿。体の横から見た面の中で、骨を立ち姿から回す角度（ラジアン、正は頭が下がる向き）。
+ * 腰の骨で胴を起こし、後ろ脚は折りたたんで地面へ、前脚は胴が起きたぶん戻して地面にまっすぐ立てる
+ */
+export interface SitPose {
+  hips: number
+  chest: number
+  head: number
+  thigh: number
+  knee: number
+  hock: number
+  toe: number
+  shoulder: number
+  elbow: number
+  wrist: number
+  tail: number
+}
+// アレックスで決めた値（腰の関節が地面から 0.47、前脚は肩・ひじ・足先がほぼ縦一列、後ろ脚はひざが前・かかとが腰の下・足先が前で地面、尾の先は地面）
+export const SIT_DEFAULT: SitPose = { hips: -0.6, chest: 0, head: 0.35, thigh: -0.45, knee: 1.7, hock: -1.6, toe: 0.25, shoulder: 0.6, elbow: 0.35, wrist: -0.25, tail: 1.55 }
+/** 座る・立つの切り替えの秒数 */
+const SIT_FADE = 1.2
 
 /** 4 頭（アンジー・ライリー・クレア・カーラ）で決めた標準の強さ */
 export const POSTURE_DEFAULT: PostureFix = { hind: 0.6, spine: 0.8, tail: 0.5, front: 0.5, ground: true }
@@ -97,6 +124,13 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   const hips = find(/^hips$/i) ?? find(/hips|pelvis|root/i)
   const tailRoot = find(/^tail$/i) ?? find(/tail/i)
   const ears = [find(/^(L_)?earend$/i), find(/^R_earend$/i)]
+  // 座り姿で回す骨（四足リグの名前。無い骨は飛ばす）
+  const sitBones = {
+    chest: find(/^chest$/i),
+    hind: [['backleg', 'backleg0', 'backleg1', 'backleg2'], ['R_backleg', 'R_backleg0', 'R_backleg1', 'R_backleg2']].map((names) => names.map((n) => find(new RegExp(`^${n}$`, 'i')))),
+    front: [['frontleg', 'frontleg0', 'frontleg1'], ['R_frontleg', 'R_frontleg0', 'R_frontleg1']].map((names) => names.map((n) => find(new RegExp(`^${n}$`, 'i')))),
+    tail: find(/^tailstart$/i),
+  }
 
   // 向き: 頭の位置が腰より前（+z）になるように回す
   const wrap = new THREE.Group()
@@ -212,6 +246,9 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
 
   let walkTarget = 0
   let walk = 0
+  let sitTarget = 0
+  let sit = 0
+  const sitPose: SitPose = { ...SIT_DEFAULT }
   let restWritten = false
   const v = new THREE.Vector3()
   const toWrap = new THREE.Matrix4()
@@ -235,6 +272,10 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     // 歩行の重みをなめらかに
     const step = dt / WALK_FADE
     walk += Math.max(-step, Math.min(step, walkTarget - walk))
+    // 座るのは止まっている時だけ（歩き出す前に立ち上がる）
+    const sstep = dt / SIT_FADE
+    const sitWant = walkTarget > 0 ? 0 : sitTarget
+    sit += Math.max(-sstep, Math.min(sstep, sitWant - sit))
     if (mixer && action) {
       // ミキサーは値が前のコマと同じだと骨に書き直さない。前のコマの補正と生活感レイヤーを先に戻しておく
       for (const b of bones) b.bone.quaternion.copy(b.raw)
@@ -268,8 +309,30 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
       rotateBone(tailRoot, UP, parts.tail.rotation.y * life)
     }
 
-    // 接地: 歩いている間、いちばん低い足裏の点を地面に合わせる（足裏の頂点だけスキンを計算する）。立ち姿は足が y=0 で作ってある
-    if (walk > 0 && soles.length) {
+    // 座り姿: 横から見た面の中で骨を回す。なめらかに出入りするよう重み（smoothstep）を掛ける
+    if (sit > 0.001 && wrap.parent && hips) {
+      const k = sit * sit * (3 - 2 * sit)
+      wrap.updateMatrixWorld(true)
+      wrap.parent.getWorldQuaternion(qGroup)
+      rotateBone(hips, RIGHT, sitPose.hips * k)
+      rotateBone(sitBones.chest, RIGHT, sitPose.chest * k)
+      rotateBone(head, RIGHT, sitPose.head * k)
+      for (const [hip, knee, hock, toe] of sitBones.hind) {
+        rotateBone(hip, RIGHT, sitPose.thigh * k)
+        rotateBone(knee, RIGHT, sitPose.knee * k)
+        rotateBone(hock, RIGHT, sitPose.hock * k)
+        rotateBone(toe, RIGHT, sitPose.toe * k)
+      }
+      for (const [shoulder, elbow, wrist] of sitBones.front) {
+        rotateBone(shoulder, RIGHT, sitPose.shoulder * k)
+        rotateBone(elbow, RIGHT, sitPose.elbow * k)
+        rotateBone(wrist, RIGHT, sitPose.wrist * k)
+      }
+      rotateBone(sitBones.tail, RIGHT, sitPose.tail * k)
+    }
+
+    // 接地: 歩いている間・座っている間、いちばん低い足裏の点を地面に合わせる（足裏の頂点だけスキンを計算する）。立ち姿は足が y=0 で作ってある
+    if ((walk > 0 || sit > 0.001) && soles.length) {
       wrap.updateMatrixWorld(true)
       let low = Infinity
       for (const s of soles) {
@@ -293,6 +356,11 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     setWalking: (on) => {
       walkTarget = on ? 1 : 0
     },
+    setSitting: (on) => {
+      sitTarget = on ? 1 : 0
+    },
+    sitPose,
+    sitWeight: () => sit,
     setWalkSpeed: (speed) => {
       if (action) action.timeScale = speed / clipSpeed
     },

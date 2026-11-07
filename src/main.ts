@@ -24,6 +24,7 @@ import { createLion, type Lion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
 import { loadAiLion, POSTURE_DEFAULT, type AiLion, type PostureFix } from './world/aiLionModel'
 import { roamFor } from './data/roam'
+import { createLionShift } from './world/lionShift'
 import { createLionWander, type LionWander } from './world/lionWander'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
@@ -257,6 +258,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     scene.add(lion.group)
     props.colliders.push(lion.collider)
   }
+  // ライオン 4 頭の丘と水辺の行き来（アレックスは丘のまま）
+  const lionShift = createLionShift(lions, props.colliders)
   // 実験: ?lion=v2 で Blender 製モデルに差し替える。読めなければプリミティブのまま
   if (new URLSearchParams(location.search).get('lion') === 'v2') {
     const angie = lions.find((l) => l.id === 'angie')
@@ -302,9 +305,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           lion.swapModel(ai.model, ai.parts)
           lion.headHeight = ai.headHeight
           aiLions[id] = ai
-          const w = createLionWander(lion, ai, props.colliders, roamFor('ライオン', id))
+          // アレックスは座っている時間が長く、ときどき立って歩く（雄のライオンは一日の大半を座るか寝て過ごす）
+          const w = createLionWander(lion, ai, props.colliders, { ...roamFor('ライオン', id), ...(id === 'alex' ? { sit: { sit: [70, 130] as [number, number], roam: [20, 35] as [number, number] } } : {}) })
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
+          lionShift?.setWander(id, w)
           lodAdd(ai, lion, true, w)
         })
         .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
@@ -1502,6 +1507,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         e.ai.tick(dt)
       }
     }
+
+    lionShift?.update(dt, camera, player.object.position, guide.isActive())
 
     // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
     const px = player.object.position.x

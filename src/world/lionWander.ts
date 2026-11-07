@@ -20,6 +20,8 @@ import type { AiLion } from './aiLionModel'
 export interface LionWander {
   update: (dt: number, time: number, player: THREE.Vector3) => void
   setReduceMotion: (on: boolean) => void
+  /** 自分の場所を移す（丘と水辺の行き来。見えていない時に呼ぶ）。その場へ置き直し、歩き途中ならやめる */
+  relocate: (x: number, z: number, yaw: number) => void
 }
 
 export interface WanderOptions {
@@ -31,6 +33,11 @@ export interface WanderOptions {
   idle: [number, number]
   /** 行き先の地面の高さが元の場所からこれ以上違う所へは行かない（m）。省略時 0.3 */
   maxRise?: number
+  /**
+   * 座る子（アレックス）: 座っている時間と、立って歩き回る時間を交互に（秒の幅）。
+   * 座っている間は歩き出さない。歩き回る時間が終わったら、歩き終わってから座る
+   */
+  sit?: { sit: [number, number]; roam: [number, number] }
 }
 
 const TURN_SPEED = 2.4
@@ -43,8 +50,19 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
   const home = { x: group.position.x, z: group.position.z, h: terrainHeight(group.position.x, group.position.z) }
   const own = lion.collider
   // 観察スポットと登り道からの距離。もともとそれより近くにいる子（アンジー）は、いまの距離より近づかなければよい
-  const spotKeep = Math.min(SPOT_CLEARANCE + own.r, Math.hypot(SPOT.x - home.x, SPOT.z - home.z) - 0.3)
-  const pathKeep = Math.min(SPOT_CLEARANCE + own.r, distanceToSegment(home.x, home.z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) - 0.3)
+  let spotKeep = 0
+  let pathKeep = 0
+  const keepFromHome = () => {
+    spotKeep = Math.min(SPOT_CLEARANCE + own.r, Math.hypot(SPOT.x - home.x, SPOT.z - home.z) - 0.3)
+    pathKeep = Math.min(SPOT_CLEARANCE + own.r, distanceToSegment(home.x, home.z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) - 0.3)
+  }
+  keepFromHome()
+  // 座る子: いまが座る時間か、残りの秒
+  const sitOpt = opts.sit
+  const span = (r: [number, number]) => r[0] + Math.random() * (r[1] - r[0])
+  let sitting = !!sitOpt
+  let phase = sitOpt ? span(sitOpt.sit) * (0.3 + Math.random() * 0.7) : 0
+  if (sitOpt) ai.setSitting(true)
   // クリップの速さを体の速さに合わせる（model は群れの倍率の中にあるので、倍率で割る）
   ai.setWalkSpeed(opts.speed / group.scale.y)
   let target: { x: number; z: number } | null = null
@@ -102,6 +120,23 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
       ai.setWalking(false)
       return
     }
+    if (sitOpt) {
+      phase -= dt
+      if (sitting) {
+        if (phase > 0) return
+        // 立ち上がって歩き回る時間へ（立ち上がる間は歩き出さない）
+        sitting = false
+        ai.setSitting(false)
+        phase = span(sitOpt.roam)
+        timer = 1.6
+      } else if (phase <= 0 && !target) {
+        sitting = true
+        ai.setSitting(true)
+        ai.setWalking(false)
+        phase = span(sitOpt.sit)
+        return
+      }
+    }
     if (target) {
       const dx = target.x - group.position.x
       const dz = target.z - group.position.z
@@ -144,6 +179,17 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
     update,
     setReduceMotion: (on) => {
       reduceMotion = on
+    },
+    relocate: (x, z, yaw) => {
+      target = null
+      ai.setWalking(false)
+      home.x = x
+      home.z = z
+      home.h = terrainHeight(x, z)
+      keepFromHome()
+      place(x, z)
+      group.rotation.y = yaw
+      timer = opts.idle[0] * (0.3 + Math.random() * 0.7)
     },
   }
 }
