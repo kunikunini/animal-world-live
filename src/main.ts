@@ -412,6 +412,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'goatShizuru', species: 'ヤギ', name: 'しずる', file: 'goat-shizuru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
     ]
