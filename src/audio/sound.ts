@@ -451,27 +451,36 @@ function stopNarration(): void {
   }
 }
 
-/** 最初のユーザー操作で呼ぶ。iOS はこの中で鳴らさないと解放されないので、無音を 1 回鳴らす */
+/**
+ * 最初のユーザー操作で呼ぶ。iOS はこの中で鳴らさないと解放されないので、無音を 1 回鳴らす。
+ * AudioContext が実際に動き出すまでは、操作のたびに試し直す（1 回目の操作で動かなかった時に、音が出ないまま残らないように。
+ * 11/8 スコープ専用モードで開き直した画面が無音だった件の対策のひとつ）
+ */
 function unlock(): void {
-  if (unlocked) return
   const ac = ensureContext()
   if (!ac) return
   try {
-    if (ac.state === 'suspended') void ac.resume()
-    const b = ac.createBuffer(1, 1, 22050)
-    const s = ac.createBufferSource()
-    s.buffer = b
-    s.connect(ac.destination)
-    s.start(0)
+    if (ac.state !== 'running') {
+      void ac.resume()
+      const b = ac.createBuffer(1, 1, 22050)
+      const s = ac.createBufferSource()
+      s.buffer = b
+      s.connect(ac.destination)
+      s.start(0)
+    }
   } catch {
     // 解放できなくても続ける
   }
+  if (ac.state === 'running') stopUnlockListeners()
+  if (unlocked) return
   unlocked = true
-  window.removeEventListener('pointerdown', unlock, true)
-  window.removeEventListener('keydown', unlock, true)
-  window.removeEventListener('touchend', unlock, true)
+  alog(`unlock ${audioState()}`)
   syncBgm()
   void syncLayer(amb)
+}
+const UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'keydown', 'touchend', 'click'] as const
+function stopUnlockListeners(): void {
+  for (const t of UNLOCK_EVENTS) window.removeEventListener(t, unlock, true)
 }
 
 let pendingTap = 0
@@ -553,9 +562,7 @@ export const sound = {
   init(): void {
     // 開発中だけ、検証用にコンソールから触れるようにする
     if (import.meta.env.DEV) (window as unknown as { __awlSound?: unknown }).__awlSound = sound
-    window.addEventListener('pointerdown', unlock, true)
-    window.addEventListener('keydown', unlock, true)
-    window.addEventListener('touchend', unlock, true)
+    for (const t of UNLOCK_EVENTS) window.addEventListener(t, unlock, true)
     // ブラウザが自動再生を許していれば（PC の Chrome でよく開くサイトなど）、AudioContext は最初から動いている。
     // その時は操作を待たずに鳴らす。許していなければ止まったままなので、最初の操作を待つ（曲の読み込みは先に進める）
     // 本体が届く前にタップされていた時（index.html で許可を取った時）も同じ。あとから動き出した時も拾う
@@ -563,7 +570,7 @@ export const sound = {
     if (ac && ac.state === 'running') queueMicrotask(unlock)
     ac?.addEventListener('statechange', () => {
       alog(`statechange ${audioState()}`)
-      if (ac.state === 'running' && !unlocked) unlock()
+      if (ac.state === 'running') unlock()
       // 止まった時（自分で止めた時も、iPhone がスリープ・電話などで止めた "interrupted" も）は全体の音量を 0 にしておき、
       // 動き出した時は 0 から上げる（止まる前の音のかけらが再開の瞬間にいきなり鳴らないように）
       if (!unlocked || !master) return

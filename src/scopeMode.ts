@@ -65,6 +65,38 @@ function setSpot(url: URL, spot: ReturnSpot, guide: number | null): void {
 
 let leaving = false
 
+/**
+ * 行き来の画面（index.html の #hop）。to = スコープへ、back = ワールドへ。
+ * 出す時は 0.25 秒でふわっと出し、出しきってからページを入れ替える（入れ替わった先は最初から同じ画面が出ている）
+ */
+function showHop(dir: 'to' | 'back'): Promise<void> {
+  const root = document.documentElement
+  const el = document.getElementById('hop')
+  root.classList.remove('hop-to', 'hop-back')
+  try {
+    if (localStorage.getItem('awl.lang') === 'en') root.classList.add('hop-en')
+  } catch {
+    // 読めなくても続ける
+  }
+  root.classList.add('is-hop', `hop-${dir}`)
+  if (!el) return Promise.resolve()
+  el.classList.remove('is-out')
+  el.classList.add('is-fade-in')
+  return new Promise((r) => window.setTimeout(r, 260))
+}
+
+/** 行き来の画面を消す（次の画面が出せるようになったら呼ぶ）。0.45 秒で薄れる */
+export function hideHop(): void {
+  const root = document.documentElement
+  const el = document.getElementById('hop')
+  if (!el || !root.classList.contains('is-hop')) return
+  el.classList.add('is-out')
+  window.setTimeout(() => {
+    root.classList.remove('is-hop', 'hop-to', 'hop-back')
+    el.classList.remove('is-out', 'is-fade-in')
+  }, 500)
+}
+
 /** 3D のワールドから、スコープ専用モードへ */
 export function goScope(spot: ReturnSpot, guide: number | null): void {
   if (leaving) return
@@ -73,7 +105,7 @@ export function goScope(spot: ReturnSpot, guide: number | null): void {
   for (const k of KEYS) url.searchParams.delete(k)
   url.searchParams.set('scope', '1')
   setSpot(url, spot, guide)
-  location.replace(url.toString())
+  void showHop('to').then(() => location.replace(url.toString()))
 }
 
 /** スコープ専用モードから、通常起動（ワールド）へ。戻り先があればそこへ */
@@ -84,5 +116,5 @@ export function goWorld(spot: ReturnSpot | null, guide: number | null): void {
   for (const k of KEYS) url.searchParams.delete(k)
   if (spot) setSpot(url, spot, guide)
   else if (guide !== null) url.searchParams.set('g', String(guide))
-  location.replace(url.toString())
+  void showHop('back').then(() => location.replace(url.toString()))
 }

@@ -46,7 +46,7 @@ import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
-import { goScope, goWorld, isScopeMode, readHandoff, type ReturnSpot, type ScopeHandoff } from './scopeMode'
+import { goScope, goWorld, hideHop, isScopeMode, readHandoff, type ReturnSpot, type ScopeHandoff } from './scopeMode'
 import { dropSplash } from './ui/splash'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
@@ -2026,7 +2026,9 @@ function startScopeMode(handoff: ScopeHandoff): void {
   })
   shell.catalog.open(false)
   shell.guide.reach('scope')
-  dropSplash()
+  dropSplash(false)
+  // 一覧の表紙が出始めてから、行き来の画面を薄くする
+  window.setTimeout(hideHop, 150)
 }
 
 function main(): void {
@@ -2141,7 +2143,8 @@ function main(): void {
         document.body.classList.add('is-unscoping')
         window.setTimeout(() => document.body.classList.remove('is-unscoping'), 650)
       }
-      dropSplash()
+      dropSplash(false)
+      hideHop()
       canvas.focus()
       if (handoff.guide !== null) shell.guide.resume(handoff.guide)
       else shell.guide.autoStart(shell.store.list().length > 0)
@@ -2152,7 +2155,8 @@ function main(): void {
       document.body.classList.remove('in-world')
       shell.home.show()
       shell.home.showFallback()
-      dropSplash()
+      dropSplash(false)
+      hideHop()
     } finally {
       busy = false
     }

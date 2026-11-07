@@ -66,9 +66,23 @@
       <div class="splash-logo"><span class="sp-row"><span class="sp-word sp-w1"><i>A</i><i>N</i><i>I</i><i>M</i><i>A</i><i>L</i></span><span class="sp-word sp-w2"><i>W</i><i>O</i><i>R</i><i>L</i><i>D</i></span></span><span class="sp-live"><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><span class="sp-word sp-w3"><i>L</i><i>I</i><i>V</i><i>E</i></span></span></div>
       <!-- splash:end -->
     </div>
+    <!-- スコープとワールドの行き来の画面（双眼鏡をのぞく演出の続き）。src/scopeMode.ts。素の立ち上げの画面の代わりに出す -->
+    <div id="hop" class="hop" aria-hidden="true">
+      <div class="hop-lens"><i class="hop-rim hop-l"></i><i class="hop-rim hop-r"></i><img class="hop-scop" src="/splash-scop.webp" alt="" width="560" height="624" decoding="async" /></div>
+      <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span><span class="hop-dots"><i></i><i></i><i></i></span></p>
+    </div>
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
       document.documentElement.classList.add('is-splash')
+      // スコープとワールドの行き来（?scope=1 で開いた時・戻り先 rx を持って戻った時）は、立ち上げの画面の代わりに行き来の画面を出す
+      try {
+        var hq = new URLSearchParams(location.search)
+        var hop = hq.get('scope') === '1' ? 'to' : hq.has('rx') ? 'back' : ''
+        if (hop) {
+          document.documentElement.classList.add('is-hop', 'hop-' + hop)
+          if (localStorage.getItem('awl.lang') === 'en') document.documentElement.classList.add('hop-en')
+        }
+      } catch (e) {}
       // 動きが始まった時刻（消すのは、動きを見せ終えてから。src/ui/splash.ts）
       window.__awlSplashT0 = performance.now()
       try {
