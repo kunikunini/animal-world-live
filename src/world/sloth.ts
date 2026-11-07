@@ -18,6 +18,9 @@ export interface SlothOptions {
   size?: number
 }
 
+/** 生成モデルの手足の先の高さ（group の原点から。原点は枝の中心より半径の 0.6 倍下なので、その少し上で枝に掛かる） */
+const CLAW_TOP = 0.2
+
 export function createSloth(options: SlothOptions): Lion {
   const group = new THREE.Group()
   group.name = `sloth-${options.id}`
@@ -108,10 +111,19 @@ export function createSloth(options: SlothOptions): Lion {
   let noticeTime = -10
   const headTarget = new THREE.Vector3()
   const phase = Math.random() * Math.PI * 2
+  // 生成モデル（swapModel）: 手の先を枝に掛けた位置（原点の少し上）に合わせてぶら下げる。呼吸は枝の位置を動かさずに胴の太さだけ（横と前後に ±1.5%）
+  const pivot = new THREE.Group()
+  let primitives: THREE.Object3D[] = []
+  let model: THREE.Object3D | null = null
 
   const update = (time: number, dt: number, player: THREE.Vector3) => {
     // ゆっくり、ゆっくり揺れる
     hang.rotation.x = reduceMotion ? 0 : Math.sin(time * 0.35 + phase) * 0.05
+    if (model) {
+      const b = reduceMotion ? 0 : Math.sin(time * 1.2 + phase) * 0.015
+      pivot.scale.set(1 + b, 1, 1 + b)
+      return
+    }
     headTarget.copy(player)
     group.worldToLocal(headTarget)
     const dist = Math.hypot(headTarget.x, headTarget.z)
@@ -135,8 +147,28 @@ export function createSloth(options: SlothOptions): Lion {
     notice: (time) => {
       noticeTime = time
     },
-    swapModel: () => {
-      // ナマケモノは差し替えの実験の対象外
+    swapModel: (m) => {
+      primitives = hang.children.slice()
+      for (const c of primitives) c.visible = false
+      m.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) {
+          o.castShadow = true
+          o.receiveShadow = true
+        }
+      })
+      // 手足の先（モデルのいちばん上）を枝の中心の高さ（原点の 0.6 半径上）に
+      m.updateMatrixWorld(true)
+      const top = new THREE.Box3().setFromObject(m).max.y
+      m.position.y += CLAW_TOP - top
+      // 生成モデルの手足の並び（体の長さ）は入れ物の x 向き。枝は入れ物の z 向きに伸びるので、縦軸で 90° 回して枝に沿わせる
+      pivot.rotation.y = -Math.PI / 2
+      pivot.add(m)
+      hang.add(pivot)
+      model = m
+    },
+    showPrimitive: (on) => {
+      for (const c of primitives) c.visible = on
+      pivot.visible = !on
     },
   }
 }

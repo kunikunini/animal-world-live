@@ -519,6 +519,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'pythonHotaru', species: 'ビルマニシキヘビ', name: '蛍', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 1.5, brighten: 1.35 },
       { key: 'pythonNoriji', species: 'ビルマニシキヘビ', name: 'のり次', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.35, brighten: 1.35 },
       { key: 'pythonFubuki', species: 'ビルマニシキヘビ', name: '吹雪', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.65, brighten: 1.35 },
+      // ウリン（フタユビナマケモノ、ジャングル）: 本人の写真は無いので一般的なフタユビナマケモノの姿（11/8 くに：本人に似せるのは将来）。リグなしの静止モデル（4 本の手足で枝にぶら下がる）。
+      // 今の場所の枝にぶら下げたまま、手足の先を枝の高さに合わせる（sloth.ts の swapModel）。大きさはプリミティブ版の高さ。呼吸は胴の太さだけ。名前の札は枝の下のまま
+      { key: 'slothUrin', species: 'フタユビナマケモノ', name: 'ウリン', file: 'sloth-urin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, hang: true },
     ]
     // 各子のプリミティブ版の、入れ物の倍率込みのワールドでの大きさ（読み込みの前、入れ物がまだプリミティブ版のうちに測る）。
     // sizeOf の子は基準の子とワールドで同じ大きさになるよう、自分の入れ物の倍率（個体ごとに少し違う）で割り戻す
