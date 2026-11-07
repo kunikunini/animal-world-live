@@ -18,6 +18,7 @@ import { createAtmosphere } from './world/atmosphere'
 import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
+import { createGpuRelease } from './render/gpuRelease'
 import { getClay, setClay, vividToon } from './render/toon'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
 import { createLion, type Lion } from './world/lions'
@@ -584,6 +585,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   applyPostSize()
   window.addEventListener('resize', applyPostSize)
+  // 軽量モード: スコープの一覧を開いている間は、3D の絵と形の GPU の写しを手放す（戻ったら描く時に積み直す）
+  const gpuRelease = createGpuRelease(renderer, scene)
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
@@ -807,6 +810,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       if (animate) window.setTimeout(cueFind, 700)
       else cueFind()
     }
+    // 一覧を組む前に、3D の GPU の荷物を手放す（描画はこの時点で止まっている）
+    gpuRelease.release()
     // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
     catalog.open(animate)
     if (animate) {
@@ -819,7 +824,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   catalog.onOpenChange((open) => {
     guide.reach(open ? 'scope' : 'scopeClose')
     syncInput()
-    if (open) return
+    if (open) {
+      gpuRelease.release()
+      return
+    }
     // 一覧を閉じた: 世界がぼけた寄りから戻ってくる。HUD もふわっと戻る
     viewing = false
     sound.play('scope-close')
@@ -1839,6 +1847,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sky.position.copy(camera.position)
 
     postfx.render()
+    gpuRelease.markRendered()
     if (introOn) introAfterRender()
 
     // 簡易 FPS 計測と DPR の自動調整
