@@ -86,3 +86,6 @@ artwork/
 # 計測ツールの作業出力（tools/animal-gate）
 tools/animal-gate/work/
 tools/animal-gate/.mainci.tmp
+
+# 継続運転の生の Meshy GLB（リグ前・修正前を含む）。出所のメモは各 LOG と public/models/SOURCE.md にあり、配信用の最適化版だけ追跡する
+experiments/animals-night/*/raw/
