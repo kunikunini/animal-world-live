@@ -409,6 +409,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'lemurSpacey', species: 'ワオキツネザル', name: 'スペイシー', file: 'lemur-spacey', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'kinkajouMia', species: 'キンカジュー', name: 'ミア', file: 'kinkajou-mia', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'goatMachiko', species: 'ヤギ', name: 'まちこ', file: 'goat-machiko', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatShizuru', species: 'ヤギ', name: 'しずる', file: 'goat-shizuru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
