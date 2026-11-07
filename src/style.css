@@ -6104,6 +6104,7 @@ body.is-reduce-motion .region-title.is-on { animation-name: rt-fade; }
 body.is-reduce-motion :is(.scop-call, .scop-msg-more) { animation: none; }
 @media (max-width: 420px) {
   .scop-msg-text { font-size: 16px; }
+}
 
 /* ==========================================================================
    アニマルスコープ: 地のグラデーション、右上のお気に入り、👍・❤️（ui/reactButtons.ts）
