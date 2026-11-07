@@ -459,6 +459,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'prairieTanpopo', species: 'プレーリードッグ', name: 'たんぽぽ', file: 'prairie-tanpopo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'foxAzuki', species: 'キタキツネ', name: 'あずき', file: 'fox-azuki', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'prairieMarron', species: 'プレーリードッグ', name: 'マロン', file: 'prairie-marron', posture: { hind: 1, spine: 1, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      // めい（ギンギツネ）: 本人の写真から作ったクレイ風の絵で新しく生成（だいちゃんの複製は銀の毛色が違うので使わない）。北の世界の目印のキツネの形と入れ替える
+      { key: 'silverfoxMei', species: 'ギンギツネ', name: 'めい', file: 'silverfox-mei', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.7, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       { key: 'huskyRock', species: 'シベリアンハスキー', name: 'ロック', file: 'husky-rock', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
