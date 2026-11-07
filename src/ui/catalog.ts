@@ -325,6 +325,11 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     )
   }
 
+  /**
+   * 新着の枠で音なしのプレビュー映像を流すか（11/8 くに: スコープの一覧を開いて 0.7 秒で iPhone がページを落とした件の第 2 弾）。
+   * 一覧を開いている間は <video> を 1 本も作らず、表紙の絵だけで切り替える。映像を読むのは「観察する」でモニターを開いた時だけ
+   */
+  const HERO_PREVIEW_VIDEO = false
   let heroVideoTimer = 0
   /** のぞく演出の間は映像を作らない（演出が終わる時刻。performance.now()） */
   let heroNotBefore = 0
@@ -350,7 +355,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     heroVideoTimer = 0
     const el = heroEl()
     const sl = heroSlides[heroIndex]
-    if (!el || !sl || !heroActive() || !heroRunning() || heroBusy) return
+    if (!HERO_PREVIEW_VIDEO || !el || !sl || !heroActive() || !heroRunning() || heroBusy) return
     const v = document.createElement('video')
     v.className = 'cat-hero-video'
     v.classList.toggle('is-portrait', sl.video.portrait)
@@ -389,7 +394,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const sl = heroSlides[heroIndex]
     if (el) {
       const v = el.querySelector<HTMLVideoElement>('.cat-hero-video')
-      if (running && sl) {
+      if (HERO_PREVIEW_VIDEO && running && sl) {
         if (v && v.dataset.src === sl.video.url) {
           if (v.paused) void v.play().catch(() => undefined)
         } else {
@@ -693,31 +698,36 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   }
 
   /**
-   * 開いた瞬間に全部の段を組み上げない（iPhone で一覧を開いて約 1.2 秒でページごと読み直された、11/8 の実機の記録）。
-   * 開いた時は先頭（ライブ・新着の枠）だけ作り、残りの段はあとから足す: のぞく演出の時は一覧が見えはじめる少し前（1.5 秒目）、
-   * 演出なしの時は最初の 2 コマを描いたあと。足した段の「下から並ぶ」動きは、開いた時から数えた元の時刻に合わせる
+   * 開いた瞬間に全部の段を組み上げない（11/8 iPhone で一覧を開いて 0.7〜1.2 秒でページごと読み直された）。
+   * 開いた時は見出しと最初の段（ライブ）だけ作り、ほかの段は同じ高さの空の枠（.cat-lazy）にしておく。
+   * 枠が画面に入った時（IntersectionObserver）に、その段だけ組み上げる。一度に組むのは 1 回の知らせで入った枠だけ。
+   * のぞく演出の途中で足した段の「下から並ぶ」動きは、開いた時から数えた元の時刻に合わせる
    */
-  let restHtml = ''
-  let restTimer = 0
-  let restRaf = 0
+  const lazyHtml = new Map<string, string>()
+  let lazyIo: IntersectionObserver | null = null
   let openedAt = 0
-  const REST_AFTER_MS = 1500
-  const cancelRest = () => {
-    window.clearTimeout(restTimer)
-    cancelAnimationFrame(restRaf)
-    restTimer = 0
-    restRaf = 0
+  /** 空の枠の高さ（px、375px 幅で測った段の高さ。段が組み上がった時にずれが小さいように） */
+  const LAZY_H: Record<string, number> = { hero: 440, friends: 141, worlds: 175, animals: 168, recs: 215, staff: 214, zoos: 139 }
+  const stopLazy = () => {
+    lazyIo?.disconnect()
+    lazyIo = null
+    lazyHtml.clear()
   }
-  const flushRest = () => {
-    cancelRest()
-    const html = restHtml
-    restHtml = ''
-    const sc = scrollEl()
-    if (!html || !sc) return
+  const lazySlot = (key: string, html: string) => {
+    if (!html) return ''
+    lazyHtml.set(key, html)
+    return `<div class="cat-lazy" data-lazy="${key}" style="min-height:${LAZY_H[key] ?? 160}px" aria-hidden="true"></div>`
+  }
+  const fillLazy = (slot: HTMLElement) => {
+    const key = slot.dataset.lazy ?? ''
+    const html = lazyHtml.get(key)
+    lazyIo?.unobserve(slot)
+    lazyHtml.delete(key)
+    if (html === undefined || !slot.isConnected) return
     const tpl = document.createElement('template')
     tpl.innerHTML = html
     const added = Array.from(tpl.content.children) as HTMLElement[]
-    sc.append(tpl.content)
+    slot.replaceWith(tpl.content)
     if (root.classList.contains('is-scope-in')) {
       const since = (performance.now() - openedAt) / 1000
       for (const el of added) {
@@ -725,17 +735,32 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         el.style.animationDelay = `${(d - since).toFixed(2)}s`
       }
     }
+    if (key === 'hero') mountHero()
   }
-  const scheduleRest = (withScope: boolean) => {
-    cancelRest()
-    if (!restHtml) return
-    if (withScope) restTimer = window.setTimeout(flushRest, REST_AFTER_MS)
-    else restRaf = requestAnimationFrame(() => (restRaf = requestAnimationFrame(flushRest)))
+  /** 残りの空の枠を全部組む（ジャンプ・👍❤️ の直し・閉じる前など、段がそろっている必要がある時） */
+  const fillAllLazy = () => {
+    root.querySelectorAll<HTMLElement>('.cat-lazy').forEach(fillLazy)
+    stopLazy()
+  }
+  const watchLazy = () => {
+    const sc = scrollEl()
+    const slots = root.querySelectorAll<HTMLElement>('.cat-lazy')
+    if (!sc || !slots.length) return
+    if (!('IntersectionObserver' in window)) {
+      fillAllLazy()
+      return
+    }
+    lazyIo = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) fillLazy(e.target as HTMLElement)
+      },
+      { root: sc, rootMargin: '0px 0px 120px 0px' },
+    )
+    slots.forEach((el) => lazyIo!.observe(el))
   }
 
   const render = (staged = false) => {
-    cancelRest()
-    restHtml = ''
+    stopLazy()
     // 描き直す前に、今の枠の映像を要素ごと手放す（外れた <video> が読み続けないように）
     dropHeroVideo()
     window.clearTimeout(heroTimer)
@@ -937,10 +962,14 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <nav class="cat-chips cat-row" aria-label="${meta('catCategories')}">
           ${chip('all', 'catAll', true)}${chip('live', 'catLive', false, true)}${chip('worlds', 'catWorlds')}${chip('animals', 'catAnimals')}${chip('zoos', 'catZoos')}
         </nav>
-        ${live}${hero}${staged ? '' : `${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}`}
+        ${live}${
+          staged
+            ? `${lazySlot('hero', hero)}${lazySlot('friends', friendsRow)}${lazySlot('worlds', worlds)}${lazySlot('animals', animals)}${favRow}${lazySlot('recs', recs)}${lazySlot('staff', staff)}${lazySlot('zoos', zoos)}`
+            : `${hero}${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}`
+        }
       </div>`
-    if (staged) restHtml = `${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}`
     mountHero()
+    if (staged) watchLazy()
   }
 
   const scrollEl = () => root.querySelector<HTMLElement>('.cat-scroll')
@@ -1005,7 +1034,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     }
     const jump = target.dataset.jump
     if (jump) {
-      flushRest()
+      fillAllLazy()
       root.querySelectorAll<HTMLElement>('.cat-chip').forEach((c) => {
         const on = c === target
         c.classList.toggle('is-on', on)
@@ -1067,7 +1096,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   // 👍・❤️ が押された（ここでもモニターでもトークでも）: ボタンの状態と、おすすめの並び・お気に入りの一覧を直す（新着の枠は作り直さない）
   reactions.onChange(() => {
     if (!open) return
-    flushRest()
+    fillAllLazy()
     if (page === 'favs') {
       const top = scrollEl()?.scrollTop ?? 0
       const focusedKey = (document.activeElement as HTMLElement | null)?.dataset?.reactKey
@@ -1099,7 +1128,6 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       heroNotBefore = withScope ? performance.now() + SCOPE_MS : 0
       openedAt = performance.now()
       render(!page)
-      scheduleRest(withScope)
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)
       if (withScope) {
@@ -1109,8 +1137,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       } else showView(root)
       scrollEl()?.focus({ preventScroll: true })
     } else {
-      cancelRest()
-      restHtml = ''
+      stopLazy()
       root.classList.remove('is-scope-in')
       root.classList.add('is-leave')
       hideView(root, () => root.classList.remove('is-leave'))
@@ -1123,7 +1150,6 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     open: (withScope) => setOpen(true, withScope),
     settle: () => {
       root.classList.remove('is-scope-in')
-      flushRest()
       heroNotBefore = 0
     },
     close: () => setOpen(false),
