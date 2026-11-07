@@ -47,6 +47,12 @@ public/models/*
 !public/models/SOURCE.md
 !public/models/otter-kent.glb
 !public/models/otter-minato.glb
+!public/models/capybara-maro.glb
+!public/models/mara-yuzu.glb
+!public/models/capybara-rapi.glb
+!public/models/mara-lime.glb
+!public/models/mara-lemon.glb
+!public/models/mara-lychee.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/

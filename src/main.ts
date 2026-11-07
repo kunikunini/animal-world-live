@@ -320,7 +320,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true } },
-      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
+      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロは夜間バッチの生成モデル）。
       // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
       // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
       // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
@@ -342,7 +342,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 色の画像が暗く、ジャングルの光では写真より黒く沈むので、明るさを 2.5 倍にする（1・1.35・1.7・2.5・3.5 を写真と並べて、毛の灰色がいちばん近い値）。
       // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
       { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },
-      // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
+      // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
       { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
       // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
@@ -373,6 +373,19 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'ratelWinnie', species: 'ラーテル', name: 'ウィニー', file: 'ratel-winnie', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'otterMinato', species: 'コツメカワウソ', name: 'ミナト', file: 'otter-minato', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      // マロ: 南半球の西のカピバラ 2 頭のうち中心に近い方（しずかの隣）。しずかの値（0.7／0.98／1／0.9）の流用は腰の下限 98.9% で届かず、背骨だけ 1 に上げた
+      // （後ろ脚 0.7・背骨 1・尾 1・前脚 0.9 で腰 99.3〜101.9%）。尾は無い子なので尾の骨は動かさない（noTail）
+      { key: 'capybaraMaro', species: 'カピバラ', name: 'マロ', file: 'capybara-maro', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
+      // ゆず: 南半球の中心の南のマーラ 2 頭のうちゆず（かぼすの隣）。かぼすの値（0.95／0.8／1／0.7）の流用は腰の下限 98.9% で届かず、後ろ脚だけ 1 に上げた（腰 99.9〜101.5%）。尾は無い子なので尾の骨は動かさない（noTail）
+      { key: 'maraYuzu', species: 'マーラ', name: 'ゆず', file: 'mara-yuzu', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      // ラピ: 南半球のカピバラ 3 頭のうちラピ。マロの値（0.7／1／1／0.9）の流用だけで腰 100.0〜101.4%。尾の骨は動かさない（noTail）
+      { key: 'capybaraRapi', species: 'カピバラ', name: 'ラピ', file: 'capybara-rapi', posture: { hind: 0.7, spine: 1, tail: 1, front: 0.9, ground: true }, noTail: true },
+      // ライム: 南半球のマーラ 5 頭のうちライム。ゆずの値（1／0.8／1／0.7）の流用だけで腰 100.3〜102.4%。尾の骨は動かさない（noTail）
+      { key: 'maraLime', species: 'マーラ', name: 'ライム', file: 'mara-lime', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      // レモン: 南半球のマーラ 5 頭のうちレモン。ゆずの値（1／0.8／1／0.7）の流用だけで腰 99.8〜100.5%。尾の骨は動かさない（noTail）
+      { key: 'maraLemon', species: 'マーラ', name: 'レモン', file: 'mara-lemon', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
+      // ライチ: 南半球のマーラ 5 頭のうちライチ。コピー方式でゆずの値（後ろ脚 1・背骨 0.8・尾 1・前脚 0.7）を流用。尾の骨は動かさない（noTail）
+      { key: 'maraLychee', species: 'マーラ', name: 'ライチ', file: 'mara-lychee', posture: { hind: 1, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
