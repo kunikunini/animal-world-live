@@ -466,6 +466,63 @@ function resumeInGesture(ac: AudioContext): void {
   }
 }
 
+/** 裏から戻ってきて、まだ iOS の音の通り道を開け直していない（次のタップで開け直す） */
+let returned = false
+let silentEl: HTMLAudioElement | null = null
+
+/** 無音の短い WAV（8kHz・8bit・0.2 秒）。ファイルを増やさないよう、その場で作る */
+function silentWavUrl(): string {
+  const n = 1600
+  const buf = new ArrayBuffer(44 + n)
+  const v = new DataView(buf)
+  const str = (o: number, t: string) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)))
+  str(0, 'RIFF')
+  v.setUint32(4, 36 + n, true)
+  str(8, 'WAVE')
+  str(12, 'fmt ')
+  v.setUint32(16, 16, true)
+  v.setUint16(20, 1, true)
+  v.setUint16(22, 1, true)
+  v.setUint32(24, 8000, true)
+  v.setUint32(28, 8000, true)
+  v.setUint16(32, 1, true)
+  v.setUint16(34, 8, true)
+  str(36, 'data')
+  v.setUint32(40, n, true)
+  for (let i = 0; i < n; i++) v.setUint8(44 + i, 128)
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
+}
+
+/**
+ * iPhone でアプリを裏に回して戻ると、AudioContext は running と返すのに音が出ないことがある（11/8 くにの実機の記録:
+ * タップで running に戻り、全体の音量も 1 に上がっているのに鳴らなかった）。iOS の音の通り道（オーディオセッション）が閉じたままなので、
+ * タップの中で「音楽を再生する」と伝え（Safari 16.4 以降の navigator.audioSession）、無音の <audio> を 1 回鳴らして開け直す
+ */
+function kickAudioSession(): void {
+  const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession
+  try {
+    if (session) session.type = 'playback'
+  } catch {
+    // 続ける
+  }
+  try {
+    if (!silentEl) {
+      silentEl = new Audio()
+      silentEl.setAttribute('playsinline', '')
+      silentEl.preload = 'auto'
+      silentEl.src = silentWavUrl()
+    }
+    silentEl.currentTime = 0
+    const p = silentEl.play()
+    p?.then(
+      () => alog(`silent-audio ok session=${session?.type ?? '-'}`),
+      (e: unknown) => alog(`silent-audio ng ${(e as { name?: string })?.name ?? '?'} session=${session?.type ?? '-'}`),
+    )
+  } catch {
+    // 続ける
+  }
+}
+
 /** 最初のユーザー操作で呼ぶ */
 function unlock(): void {
   if (unlocked) return
@@ -589,6 +646,7 @@ export const sound = {
     }
     const onShow = () => {
       if (!ctx || !unlocked || !master) return
+      returned = true
       window.clearTimeout(suspendTimer)
       blurred = false
       if (pausedByApp) return
@@ -638,10 +696,19 @@ export const sound = {
     // アプリを閉じて開き直した時、画面が見えた時の resume() は操作の外なので、iOS に断られて suspended / interrupted のまま残ることがある
     // （11/7 くにの実機の記録: visible のあと interrupted → suspended で止まり、running にならなかった）。
     // そこで、止まったままなら次のタップでもう一度動かす。動き出したら statechange で 0 から元の音量へ上げる。おはなしの「とまる」の間はしない
+    // 戻ってきた後の最初のタップでは、running でも iOS の音の通り道を開け直す（kickAudioSession の説明）
     const wake = () => {
-      if (!unlocked || !ctx || pausedByApp || document.hidden || ctx.state === 'running') return
-      alog(`tap-resume ${audioState()}`)
+      if (!unlocked || !ctx || pausedByApp || document.hidden) return
+      if (ctx.state === 'running' && !returned) return
+      const kick = returned
+      returned = false
+      alog(`tap-resume${kick ? ' kick' : ''} ${audioState()}`)
+      if (kick) kickAudioSession()
       resumeInGesture(ctx)
+      // 実機の調べ用: 1 秒後に、AudioContext の時計が進んでいるか（音が流れているか）と音量を残す
+      const ac = ctx
+      const t0 = ac.currentTime
+      window.setTimeout(() => alog(`after-tap +1s clock+${(ac.currentTime - t0).toFixed(2)}s ${audioState()}`), 1000)
     }
     window.addEventListener('pointerdown', wake, true)
     window.addEventListener('touchend', wake, true)

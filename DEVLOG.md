@@ -1750,3 +1750,8 @@
 - 修正: `src/audio/sound.ts` だけ。解放の処理を `resumeInGesture()` に分け、running 以外（suspended も interrupted も）なら `resume()` と無音 1 回。タップ（pointerdown・touchend・keydown）のたびに、解放済みで止まっていれば動かし直す（おはなしの「とまる」の間と、画面が隠れている時はしない）。動かし直した時は記録に `tap-resume` を残す。動き出した後は今までどおり statechange で 0 から元の音量へ
 - 検証: `tsc`・`npm run build` 通過。dev（PC の Chrome）で、鳴っている AudioContext をわざと suspend → タップで `tap-resume` → `statechange ctx=running` になることを確かめた
 - 未確認: iPhone で閉じて開き直した時に鳴るか（実機でしか試せない。明朝の実機確認へ）
+- 続き（11/8、くにの実機の記録で 2 回目）: タップで `tap-resume` → `ctx=running` に戻り、全体の音量も 1 に上がっていたのに鳴らなかった（くに「鳴ってなかった」）。AudioContext は running と返すのに音が出ない iOS の症状と判断。くにの選択で、小さい方の直しから試す
+- 修正: 戻ってきた後の最初のタップで（running でも）、iOS の音の通り道を開け直す。`navigator.audioSession.type = 'playback'`（Safari 16.4 以降）にし、その場で作った無音の WAV（0.2 秒）を `<audio>` で 1 回鳴らす。記録に `tap-resume kick`・`silent-audio ok/ng`・1 秒後の `after-tap +1s clock+…s`（AudioContext の時計が進んだ秒数）を残す
+- 検証: `tsc`・`npm run build` 通過。dev（PC の Chrome）で pageshow を起こしてからタップし、`tap-resume kick` → `silent-audio ok` → `after-tap +1s clock+1.00s` が 1 回だけ出ることを確かめた（PC の Chrome には audioSession がないので `session=-`）
+- 気になる点: audioSession を playback にすると、iPhone の消音スイッチが入っていても音が出るようになる（戻った後だけ）
+- 未確認: iPhone で鳴るか（試し用 URL で実機確認）
