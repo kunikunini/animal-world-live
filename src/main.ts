@@ -343,7 +343,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
-      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 } },
+      // グランの後ろ脚はアレックスと同じく平均の曲がりだけ取る（0.95 で立ち姿へ寄せていた時は後ろ足がほぼ動かなかった）。0.7 で前脚の歩幅・速さにそろう
+      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 } },
       // フェン: 北の世界の中心の北のホッキョクオオカミ 3 頭のうち、いちばん東の子（ネガ・マリはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 接地だけだと腰 86〜100% で前足が浮く。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.85 で腰 99.3〜103.3%（フェンで測って決めた値）
       { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
