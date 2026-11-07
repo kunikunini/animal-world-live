@@ -20,7 +20,7 @@ import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { getClay, setClay, vividToon } from './render/toon'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
-import { createLion } from './world/lions'
+import { createLion, type Lion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
 import { loadAiLion, POSTURE_DEFAULT, type AiLion, type PostureFix } from './world/aiLionModel'
 import { roamFor } from './data/roam'
@@ -272,6 +272,20 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // ?model=primitive でプリミティブ版（伏せ）に戻せる。読めない時もプリミティブ版のまま続く
   const aiLions: Record<string, AiLion> = {}
   const wanderers: LionWander[] = []
+  // 遠景（11/7 夜、iPhone で全ワールド 26〜50 fps）: 生成モデルは境界箱がずれて消えないよう frustumCulled を切っているので、
+  // 視界の外でも遠くでも全員が毎フレーム描画・影・tick される。プレイヤーから LOD_FAR m より遠い子は tick（歩き回り・アニメ・接地）を止め、
+  // 同じ入れ物でプリミティブ版に戻せる子はプリミティブ版を出し、戻せない子（place・replaceHost で作った入れ物）は隠す（影からも外れる）。
+  // LOD_NEAR m まで近づいたら本物に戻す（差 8 m で境界の点滅を防ぐ）。名前の札は 45 m 以内にしか出ないので遠景の子には付かない。?lod=off で切る
+  const LOD_FAR = 80
+  const LOD_NEAR = 72
+  const lodOn = new URLSearchParams(location.search).get('lod') !== 'off'
+  // ?lodPrim=off: 遠景でプリミティブ版を出さず、全員隠す（見比べ用）
+  const lodPrim = new URLSearchParams(location.search).get('lodPrim') !== 'off'
+  const lod: { ai: AiLion; host: Lion; wander: LionWander | null; primOk: boolean; far: boolean }[] = []
+  const farHosts = new Set<Lion>()
+  const lodAdd = (ai: AiLion, host: Lion, primOk: boolean, wander: LionWander | null) => {
+    lod.push({ ai, host, wander, primOk: lodPrim && primOk && !!host.showPrimitive, far: false })
+  }
   let reduceMotionNow = shell.settings.reduceMotion
   if (new URLSearchParams(location.search).get('model') !== 'primitive') {
     // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め
@@ -289,6 +303,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           const w = createLionWander(lion, ai, props.colliders, roamFor('ライオン', id))
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
+          lodAdd(ai, lion, true, w)
         })
         .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
     }
@@ -503,10 +518,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const roam = roamFor(r.species, animal.id)
-          if (r.still || roam.tier === 'still') return
-          const w = createLionWander(host, ai, props.colliders, roam)
-          w.setReduceMotion(reduceMotionNow)
-          wanderers.push(w)
+          const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, roam)
+          if (w) {
+            w.setReduceMotion(reduceMotionNow)
+            wanderers.push(w)
+          }
+          // place・replaceHost で作った入れ物の中のプリミティブはライオンの形なので、遠景でも出さない
+          lodAdd(ai, host, !place, w)
         })
         .catch((err) => console.warn(place && !host ? '[animals-ai] model not loaded; not placed' : '[animals-ai] model not loaded; keeping primitive', r.key, err))
     }
@@ -1459,8 +1477,23 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
     // 生成モデルの群れ: 少し歩いては立ち止まる → 歩行の再生・姿勢の補正・生活感レイヤーを骨に写す
-    for (const w of wanderers) w.update(dt, time, player.object.position)
-    for (const ai of Object.values(aiLions)) ai.tick(dt)
+    {
+      const pp = player.object.position
+      for (const e of lod) {
+        const d = Math.hypot(e.host.group.position.x - pp.x, e.host.group.position.z - pp.z)
+        const far = lodOn && (e.far ? d > LOD_NEAR : d > LOD_FAR)
+        if (far !== e.far) {
+          e.far = far
+          e.ai.model.visible = !far
+          if (e.primOk) e.host.showPrimitive!(far)
+          if (far) farHosts.add(e.host)
+          else farHosts.delete(e.host)
+        }
+        if (far) continue
+        e.wander?.update(dt, time, pp)
+        e.ai.tick(dt)
+      }
+    }
 
     // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
     const px = player.object.position.x
@@ -1570,6 +1603,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     let currentD: number | null = null
     const heads = new Map<string, { x: number; y: number; d: number }>()
     for (const lion of lions) {
+      if (farHosts.has(lion)) continue
       const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
       const reach = lion.collider.r + 4.2
       if (lion.id === encounterId && d < reach) currentD = d
@@ -1755,6 +1789,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
       // 生成モデルの群れ（歩行の計測用: action を止めてコマ送り、posture を書き換え）
       aiLions: () => aiLions,
+      // 遠景で止めている生成モデルの数（確認用）
+      lodFar: () => lod.filter((e) => e.far).length,
+      lodTotal: () => lod.length,
       // 本編を描いた回数（スコープ・モニターの間に増えないことの確認用）
       frames: () => frames,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
