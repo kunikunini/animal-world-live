@@ -64,3 +64,21 @@ export function hideSplash(behind?: () => void): void {
   el.addEventListener('click', out)
   window.addEventListener('keydown', out, { once: true })
 }
+
+/**
+ * 立ち上げの画面をすぐ消す（スコープ専用モードとの行き来の時。最短の見せる時間や、音のためのタップ待ちをしない）。
+ * fade なら 0.6 秒で薄れて消える。ページの中身がもう出せる時に呼ぶ
+ */
+export function dropSplash(fade = true): void {
+  const el = document.getElementById('splash')
+  const root = document.documentElement
+  ;(window as unknown as { __awlSplashJs?: boolean }).__awlSplashJs = true
+  root.classList.remove('is-splash')
+  if (!el) return
+  if (!fade) {
+    el.remove()
+    return
+  }
+  el.classList.add('is-out')
+  setTimeout(() => el.remove(), 700)
+}
