@@ -325,6 +325,11 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     )
   }
 
+  /**
+   * 新着の枠で音なしのプレビュー映像を流すか（11/8 くに: スコープの一覧を開いて 0.7 秒で iPhone がページを落とした件の第 2 弾）。
+   * 一覧を開いている間は <video> を 1 本も作らず、表紙の絵だけで切り替える。映像を読むのは「観察する」でモニターを開いた時だけ
+   */
+  const HERO_PREVIEW_VIDEO = false
   let heroVideoTimer = 0
   /** のぞく演出の間は映像を作らない（演出が終わる時刻。performance.now()） */
   let heroNotBefore = 0
@@ -350,7 +355,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     heroVideoTimer = 0
     const el = heroEl()
     const sl = heroSlides[heroIndex]
-    if (!el || !sl || !heroActive() || !heroRunning() || heroBusy) return
+    if (!HERO_PREVIEW_VIDEO || !el || !sl || !heroActive() || !heroRunning() || heroBusy) return
     const v = document.createElement('video')
     v.className = 'cat-hero-video'
     v.classList.toggle('is-portrait', sl.video.portrait)
@@ -389,7 +394,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const sl = heroSlides[heroIndex]
     if (el) {
       const v = el.querySelector<HTMLVideoElement>('.cat-hero-video')
-      if (running && sl) {
+      if (HERO_PREVIEW_VIDEO && running && sl) {
         if (v && v.dataset.src === sl.video.url) {
           if (v.paused) void v.play().catch(() => undefined)
         } else {
