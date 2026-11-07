@@ -252,6 +252,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // ほかのワールドで会える子（トラ・オオカミ）も同じ伏せの体で作り、出会いの仕組みに乗せる
   const lions = [...LIONS.map((l) => createLion(l)), ...createResidents(props.colliders)]
   for (const lion of lions) {
+    growAnimal(lion)
     vividToon(lion.group)
     scene.add(lion.group)
     props.colliders.push(lion.collider)
@@ -500,6 +501,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             // 名簿の全個体を置いた後（11/6）は、群れの場所に自動で置いたプリミティブ版がいるので、それを取り除いて入れ替える（読めなければそのまま残る）
             const old = host
             host = createLion({ id: animal.id, x: place.x, z: place.z, yaw: place.yaw })
+            growAnimal(host)
             vividToon(host.group)
             scene.add(host.group)
             props.colliders.push(host.collider)
@@ -2012,6 +2014,27 @@ function main(): void {
 main()
 
 /** プリミティブ版の体の長さ（群れの座標系の z 方向、頭から尾の先まで）。生成モデルの大きさをこれにそろえる */
+/**
+ * 動物の大きさの倍率。主人公の子が 2m ほどあり、実物どおりの寸法の動物が並ぶと小さく感じる（11/8 くにの指摘）。
+ * 実物に近い大きさで作ってある種だけ大きくする。もともと実物より大きめにできている種（オオカミ・ハスキー・カピバラ・クマ・キツネ・
+ * カワウソ・マーラ・ミーアキャットなど）と、鳥・木の上の子は今のまま。
+ * 置き場所は変えず、入れ物ごと（プリミティブ版・生成モデル・名前の札の高さ・当たり判定）大きくする
+ */
+const ANIMAL_SCALE = 1.3
+const GROW_SPECIES = new Set([
+  'ライオン', 'グラントシマウマ', 'ブチハイエナ', 'ベンガルトラ', 'アメリカバク', 'ラーテル', 'スナネコ',
+  'アルダブラゾウガメ', 'ケヅメリクガメ', 'パンケーキリクガメ', 'シャムワニ', 'メガネカイマン', 'ビルマニシキヘビ',
+  'ビントロング', 'キンカジュー', 'アカハナグマ', 'コモンリスザル', 'ニホンザル', 'ヤマアラシ', 'アメリカビーバー',
+  'オオカンガルー', 'アカカンガルー', 'パルマワラビー', 'モモイロペリカン',
+  'ポニー', 'ヤギ', 'ヒツジ', 'ギープ', 'ホットベリーピック（ブタ）', 'ピレネーシェパード',
+])
+function growAnimal(animal: { id: string; group: THREE.Object3D; collider: { r: number } }): void {
+  const species = getAnimal(animal.id)?.species
+  if (!species || !GROW_SPECIES.has(species)) return
+  animal.group.scale.multiplyScalar(ANIMAL_SCALE)
+  animal.collider.r *= ANIMAL_SCALE
+}
+
 function primitiveLength(group: THREE.Object3D, axis: 'y' | 'z' = 'z'): number {
   group.updateMatrixWorld(true)
   const inv = group.matrixWorld.clone().invert()
