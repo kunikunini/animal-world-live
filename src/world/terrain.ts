@@ -76,9 +76,33 @@ const outerNoise = new Simplex2D(WORLD_SEED + 211)
 function northHeight(x: number, z: number): number {
   return simplex.fbm(x * 0.012, z * 0.012, 4, 2.1, 0.5) * 5.2 + outerNoise.fbm(x * 0.06, z * 0.06, 2, 2, 0.5) * 0.25
 }
-/** ジャングル: こぶの多い森の地面 */
-function jungleHeight(x: number, z: number): number {
+/** ジャングル: こぶの多い森の地面（沼の加工前） */
+function jungleRaw(x: number, z: number): number {
   return simplex.fbm(x * 0.016, z * 0.016, 4, 2.0, 0.5) * 4.2 + outerNoise.fbm(x * 0.05, z * 0.05, 2, 2, 0.5) * 0.6
+}
+/**
+ * ジャングルの沼: シャムワニとメガネカイマンの居場所（residents.ts の拠点 (-15, 6)・(-15, 11) を 2.6 倍に広げた所、
+ * ワールドの中心から (-39, 15.6)・(-39, 28.6)）を水辺にする（11/7 くにの指摘「ワニが草にめり込んでいる」。坂の草地に伏せていた）。
+ * 地面を浅い皿に掘り下げ、水面は縁のいちばん低い所より少し下（水が宙に浮かない）。ワニは底に伏せて背中が水面から出る
+ */
+const JUNGLE_REGION = OUTER_REGIONS.find((r) => r.key === 'jungle') ?? { x: -300, z: 0 }
+const pondX = JUNGLE_REGION.x - 39
+const pondZ = JUNGLE_REGION.z + 22.1
+const pondR = 9.5
+let pondRim = Infinity
+for (let i = 0; i < 32; i++) {
+  const a = (i / 32) * Math.PI * 2
+  pondRim = Math.min(pondRim, jungleRaw(pondX + Math.cos(a) * pondR * 1.15, pondZ + Math.sin(a) * pondR * 1.15))
+}
+export const JUNGLE_POND = { x: pondX, z: pondZ, radius: pondR, level: pondRim - 0.15 }
+/** 沼の底（水面から 0.12m。伏せたワニの体の半分が水面から出る深さ。人も入って歩ける） */
+const pondBottom = JUNGLE_POND.level - 0.12
+/** ジャングル: こぶの多い森の地面。ワニの沼は浅い皿に */
+function jungleHeight(x: number, z: number): number {
+  const h = jungleRaw(x, z)
+  const d = Math.hypot(x - pondX, z - pondZ) / (pondR * 1.6)
+  if (d >= 1) return h
+  return lerp(h, pondBottom, 1 - smoothstep(0.55, 1, d))
 }
 /** 南半球: 平らな赤い大地に低い砂の波 */
 function southHeight(x: number, z: number): number {
@@ -424,6 +448,7 @@ const colJungle = new THREE.Color('#8cc63f')
 const colJungleDeep = new THREE.Color('#5aa33a')
 const colMoss = new THREE.Color('#bfd84a')
 const colJungleEarth = new THREE.Color('#9c6f44')
+const colPondMud = new THREE.Color('#7a5a36')
 function jungleColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.04 - 3, z * 0.04 + 7) * 0.5 + 0.5
   out.copy(colJungle).lerp(colJungleDeep, n)
@@ -433,6 +458,9 @@ function jungleColor(x: number, z: number, _h: number, slope: number, out: THREE
   const trail = Math.abs(outerNoise.noise(x * 0.012 + 20, z * 0.012 - 20))
   out.lerp(colJungleEarth, (1 - smoothstep(0.02, 0.07, trail)) * 0.75)
   if (slope < 0.9) out.lerp(colJungleEarth, Math.min(1, (0.9 - slope) * 4))
+  // ワニの沼のまわりは湿った泥
+  const dp = Math.hypot(x - JUNGLE_POND.x, z - JUNGLE_POND.z) / JUNGLE_POND.radius
+  if (dp < 1.6) out.lerp(colPondMud, (1 - smoothstep(1.05, 1.6, dp)) * 0.85)
 }
 
 // 南半球: 赤い土、乾いた草のまだら、白っぽい砂（トップの絵のオレンジの土と黄金色の草に寄せる）

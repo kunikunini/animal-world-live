@@ -5,7 +5,7 @@ import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
-import { CREEK, GOAT_ROCKS, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 
 /**
@@ -151,7 +151,9 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
 function createJungle(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('jungle')
   // 広場は広めに: 日は西から差すので、西の高い木の影がスポットまで伸びないように
-  const trees = scatter(rand, r, mobile ? 90 : 130, { max: r.walk + 40, clearing: 24, path: 7 })
+  // ワニの沼の中と岸には、木・ヤシ・シダを生やさない（rand は同じ数だけ使うので、ほかの場所の並びは変わらない）
+  const offPond = (m: number) => (p: { x: number; z: number }) => Math.hypot(p.x - JUNGLE_POND.x, p.z - JUNGLE_POND.z) > JUNGLE_POND.radius + m
+  const trees = scatter(rand, r, mobile ? 90 : 130, { max: r.walk + 40, clearing: 24, path: 7 }).filter(offPond(3.5))
   const trunkGeo = new THREE.CylinderGeometry(0.22, 0.45, 1, 7)
   trunkGeo.translate(0, 0.5, 0)
   const blobGeo = new THREE.IcosahedronGeometry(1, 1)
@@ -186,7 +188,7 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   group.add(trunks, blobs)
 
   // ヤシ: 少し曲がった幹に、垂れた細長い葉 6 枚
-  const palms = scatter(rand, r, mobile ? 30 : 45, { max: r.walk + 10, clearing: 12, path: 6 })
+  const palms = scatter(rand, r, mobile ? 30 : 45, { max: r.walk + 10, clearing: 12, path: 6 }).filter(offPond(2.5))
   const leafGeo = new THREE.ConeGeometry(0.5, 4.2, 4)
   leafGeo.translate(0, 2.1, 0)
   leafGeo.rotateX(Math.PI / 2)
@@ -215,7 +217,7 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   group.add(palmTrunks, palmLeaves)
 
   // シダ: 地面に広がる低い葉の束（当たり判定なし）
-  const ferns = scatter(rand, r, mobile ? 380 : 800, { max: r.walk + 15, clearing: 5, path: 3 })
+  const ferns = scatter(rand, r, mobile ? 380 : 800, { max: r.walk + 15, clearing: 5, path: 3 }).filter(offPond(0.5))
   const fernGeo = new THREE.ConeGeometry(0.28, 1.6, 3)
   fernGeo.translate(0, 0.8, 0)
   fernGeo.rotateX(1.05)
@@ -236,6 +238,16 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   })
   finish(fernMesh)
   group.add(fernMesh)
+
+  // ワニの沼の水面: 濁った緑の水（映り込みは描かない。ふちは岸の泥に隠れる）
+  const pond = new THREE.Mesh(
+    new THREE.CircleGeometry(JUNGLE_POND.radius * 1.12, 40).rotateX(-Math.PI / 2),
+    new THREE.MeshLambertMaterial({ color: '#5d8f6a', transparent: true, opacity: 0.88 }),
+  )
+  pond.position.set(JUNGLE_POND.x, JUNGLE_POND.level, JUNGLE_POND.z)
+  pond.receiveShadow = true
+  pond.name = 'jungle-pond'
+  group.add(pond)
 
   // 止まり木: 縦の幹と、東へ張り出した横枝（枝の先は細く）
   {
