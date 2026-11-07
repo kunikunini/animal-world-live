@@ -70,13 +70,13 @@ const worldImage = (key: WorldKey) => `/worlds/${key}.webp`
 /** 動物園からえらぶ: 架空の動物園の絵（public/zoos/、実在の動物園ではない）。参加する動物園は募集中 */
 const ZOO_ART = ['sea', 'forest', 'snow', 'grass']
 
-/** ライブの窓の下の名前（左から）。配信はまだ無いので、どの窓にも木の看板（文言は子ごとに変える）を斜めにかける */
-const LIVE_SPECIES: Array<{ ja: string; en: string; away: { ja: string; en: string }; tilt: number }> = [
-  { ja: 'ライオン', en: 'Lion', away: { ja: '帰宅中', en: 'Gone home' }, tilt: -9 },
-  { ja: 'アメリカバク', en: 'Lowland tapir', away: { ja: 'おひるね中', en: 'Napping' }, tilt: 7 },
-  { ja: 'ブチハイエナ', en: 'Spotted hyena', away: { ja: 'ごはん中', en: 'Eating' }, tilt: -6 },
-  { ja: 'ポニー', en: 'Pony', away: { ja: 'おさんぽ中', en: 'On a walk' }, tilt: 9 },
-  { ja: 'カンガルー', en: 'Kangaroo', away: { ja: 'おでかけ中', en: 'Out & about' }, tilt: -7 },
+/** ライブの窓の下の名前（左から）。配信はまだ無いので、どの窓にも木の看板（文言は子ごとに変える）を赤い丸の真ん中にかける。日本語はくにの看板の絵（文字入り）、英語は無地の看板に英文を重ねる */
+const LIVE_SPECIES: Array<{ ja: string; en: string; away: { ja: string; en: string }; sign: string }> = [
+  { ja: 'ライオン', en: 'Lion', away: { ja: '帰宅中', en: 'Gone home' }, sign: 'home' },
+  { ja: 'アメリカバク', en: 'Lowland tapir', away: { ja: 'おひるね中', en: 'Napping' }, sign: 'nap' },
+  { ja: 'ブチハイエナ', en: 'Spotted hyena', away: { ja: 'ごはん中', en: 'Eating' }, sign: 'eat' },
+  { ja: 'ポニー', en: 'Pony', away: { ja: 'おさんぽ中', en: 'On a walk' }, sign: 'walk' },
+  { ja: 'カンガルー', en: 'Kangaroo', away: { ja: 'おでかけ中', en: 'Out & about' }, sign: 'out' },
 ]
 
 /** いちばん上の大きな枠: 新着の映像を何本まで順に見せるか、1 本を何ミリ秒見せるか */
@@ -701,7 +701,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       `<span class="cat-live-dot"></span>${meta('catRowLive')}`,
       `<div class="cat-row cat-row-live">${LIVE_SPECIES.map(
         (sp) =>
-          `<div class="cat-live" role="img" aria-label="${esc(`${sp[getLang()]}（${sp.away[getLang()]}）`)}"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-sign" style="--tilt:${sp.tilt}deg" aria-hidden="true"><span>${esc(sp.away[getLang()])}</span></span></div><span class="cat-live-name">${esc(sp[getLang()])}</span></div>`,
+          `<div class="cat-live" role="img" aria-label="${esc(`${sp[getLang()]}（${sp.away[getLang()]}）`)}"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-sign${getLang() === 'ja' ? ' is-art' : ''}" style="--sign:url(/ui/sign-${sp.sign}.webp)" aria-hidden="true"><span>${esc(sp.away[getLang()])}</span></span></div><span class="cat-live-name">${esc(sp[getLang()])}</span></div>`,
       ).join('')}</div>`,
     )
 

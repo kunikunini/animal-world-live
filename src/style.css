@@ -4628,18 +4628,16 @@ body.is-reduce-motion .is-refresh {
 .cat-sil-round { width: 100%; height: 100%; border-radius: 50%; box-shadow: inset 0 0 0 3px var(--c-bg); }
 /* 看板のロープが列の上で切れないように */
 .cat-row-live { padding-top: 12px; margin-top: -12px; }
-/* 木の看板（文字なしの絵に文言を重ねる）。肉球を隠すように斜めにかける */
+/* 木の看板（文字なしの絵に文言を重ねる）。肉球を隠すように赤い丸の真ん中にかける（くにの指示で斜めにしない） */
 .cat-live-sign {
   position: absolute;
   left: 50%;
-  top: -3px;
-  width: 80px;
-  height: 51px;
+  top: 14px;
+  width: 66px;
+  height: 42px;
   box-sizing: border-box;
-  padding-top: 31px;
+  padding-top: 26px;
   translate: -50% 0;
-  rotate: var(--tilt, -8deg);
-  transform-origin: 50% 0;
   background: url('/ui/sign-wood.webp') center / 100% 100% no-repeat;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
   display: flex;
@@ -4654,7 +4652,12 @@ body.is-reduce-motion .is-refresh {
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
-html[lang='en'] .cat-live-sign > span { font-size: 10px; letter-spacing: 0; }
+html[lang='en'] .cat-live-sign > span { font-size: 9px; letter-spacing: 0; }
+/* 日本語: 文字入りの看板の絵（くに）をそのまま使う */
+.cat-live-sign.is-art { top: 19px; width: 66px; height: 33px; padding: 0; background-image: var(--sign); }
+.cat-live-sign.is-art > span { display: none; }
+/* 看板のうしろから肉球の指先がのぞかないよう、ライブの窓の肉球は隠す */
+.cat-live-ring .cat-sil > svg { visibility: hidden; }
 
 /* 大きな注目 */
 .cat-hero-sec { padding: 0 16px; }
