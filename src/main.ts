@@ -429,6 +429,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'wolfKamui', species: 'ホッキョクオオカミ', name: 'カムイ', file: 'wolf-kamui', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'tanukiTamtam', species: 'ホンドタヌキ', name: 'タムタム', file: 'tanuki-tamtam', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'beaverOak', species: 'アメリカビーバー', name: 'オーク', file: 'beaver-oak', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue

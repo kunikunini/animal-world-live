@@ -102,6 +102,7 @@ public/models/*
 !public/models/wolf-kamui.glb
 !public/models/tanuki-tamtam.glb
 !public/models/otter-kent.glb
+!public/models/beaver-oak.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
