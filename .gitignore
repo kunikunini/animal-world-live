@@ -74,6 +74,7 @@ public/models/*
 !public/models/lemur-george.glb
 !public/models/lemur-luna.glb
 !public/models/goat-natsume.glb
+!public/models/kinkajou-hazel.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
