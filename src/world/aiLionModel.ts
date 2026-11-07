@@ -109,7 +109,7 @@ function loadShared(url: string): Promise<GLTF> {
   return p
 }
 
-export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean; /** 色の画像に掛ける明るさ（1 で書き出しのまま）。暗い毛色がワールドの光で沈む子だけ上げる */ brighten?: number }): Promise<AiLion> {
+export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean; /** 横たわる子（ヘビ、リグなし）: length を水平の長い方の辺に合わせる */ lie?: boolean; /** 色の画像に掛ける明るさ（1 で書き出しのまま）。暗い毛色がワールドの光で沈む子だけ上げる */ brighten?: number }): Promise<AiLion> {
   const gltf = await loadShared(url)
   const inner = cloneSkinned(gltf.scene)
   inner.traverse((o) => {
@@ -161,7 +161,7 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   // 大きさと接地（立ち姿で足が y=0）
   const box = new THREE.Box3().setFromObject(inner)
   const size = box.getSize(new THREE.Vector3())
-  const along = opts.upright ? size.y : size.z
+  const along = opts.lie ? Math.max(size.x, size.z) : opts.upright ? size.y : size.z
   const s = along > 0 ? opts.length / along : 1
   inner.scale.setScalar(s)
   inner.updateMatrixWorld(true)

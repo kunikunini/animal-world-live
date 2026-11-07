@@ -344,6 +344,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sizeOf?: string
       /** 群れのプリミティブ版の差し替え口が無い子（wildfolk など）: その子の今の場所・向き・体の長さで place と同じように入れ替える */
       replaceHost?: boolean
+      /** 横たわる子（ヘビ）: 大きさを水平の長い方の辺で合わせる */
+      lie?: boolean
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
@@ -505,6 +507,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'tortoiseButter', species: 'パンケーキリクガメ', name: 'バター', file: 'tortoise-butter', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'tortoiseSyrup', species: 'パンケーキリクガメ', name: 'シロップ', file: 'tortoise-syrup', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'pyreneanElsa', species: 'ピレネーシェパード', name: 'エルサ', file: 'pyrenean-elsa', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      // ビルマニシキヘビ 3 頭（ジャングル）: プリミティブ版のとぐろが茶色い塊に見えるので、模様のある生成モデルに。生成は写真がいちばん良い蛍の 1 体分だけ（リグなし、とぐろ＋ゆるい S 字の静止モデル）。
+      // のり次・吹雪はその GLB の複製で、大きさは蛍の 0.9／1.1 倍。プリミティブ版のとぐろの直径に合わせると草に埋もれて小さいので、蛍は 1.5 倍（のり次 1.35・吹雪 1.65）。
+      // ジャングルの光では黄色が茶色に沈むので明るさ 1.35。歩かせず、入れ物（Lion）の呼吸の拡縮だけ。それぞれの群れの場所・向きで入れ替える
+      { key: 'pythonHotaru', species: 'ビルマニシキヘビ', name: '蛍', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 1.5, brighten: 1.35 },
+      { key: 'pythonNoriji', species: 'ビルマニシキヘビ', name: 'のり次', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.35, brighten: 1.35 },
+      { key: 'pythonFubuki', species: 'ビルマニシキヘビ', name: '吹雪', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.65, brighten: 1.35 },
     ]
     // 各子のプリミティブ版の、入れ物の倍率込みのワールドでの大きさ（読み込みの前、入れ物がまだプリミティブ版のうちに測る）。
     // sizeOf の子は基準の子とワールドで同じ大きさになるよう、自分の入れ物の倍率（個体ごとに少し違う）で割り戻す
@@ -521,7 +529,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, 'z') } : undefined)
       if (!host && !place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
-      loadAiLion(`/models/${r.file}.glb`, { length: sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1), posture, upright: r.upright, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
+      loadAiLion(`/models/${r.file}.glb`, { length: sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1), posture, upright: r.upright, lie: r.lie, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
         .then((ai) => {
           if (place) {
             // place の子: place の場所に入れ物を作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる。
