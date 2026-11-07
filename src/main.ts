@@ -453,6 +453,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             { key: 'coatiPupu', species: 'アカハナグマ', name: 'ぷぷ', file: 'coati-pupu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
             { key: 'coatiRin', species: 'アカハナグマ', name: 'リン', file: 'coati-rin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
             { key: 'coatiRua', species: 'アカハナグマ', name: 'ルア', file: 'coati-rua', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+            { key: 'sheepPaul', species: 'ヒツジ', name: 'ポール', file: 'sheep-paul', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
