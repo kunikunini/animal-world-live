@@ -70,7 +70,18 @@ const worldImage = (key: WorldKey) => `/worlds/${key}.webp`
 /** 動物園からえらぶ: 架空の動物園の絵（public/zoos/、実在の動物園ではない）。参加する動物園は募集中 */
 const ZOO_ART = ['sea', 'forest', 'snow', 'grass']
 
-/** ライブの窓の下の名前（左から）。配信はまだ無いので、どの窓にも木の看板（文言は子ごとに変える）を赤い丸の真ん中にかける。日本語はくにの看板の絵（文字入り）、英語は無地の看板に英文を重ねる */
+/** 「どうぶつからえらぶ」の種のアイコン（本物の写真が無い種は、クレイアニメ風のイラスト。Codex で生成） */
+const SPECIES_ICON: Record<string, string> = {
+  カピバラ: 'capybara',
+  ブチハイエナ: 'hyena',
+  モモイロペリカン: 'pelican',
+  オオカンガルー: 'kangaroo',
+  マーラ: 'mara',
+  ポニー: 'pony',
+  コモンリスザル: 'squirrel-monkey',
+}
+
+/** ライブの窓の下の名前（左から）。配信はまだ無いので、どの窓にも木の看板（文言は子ごとに変える）を赤い丸の下のふちに札として貼る。日本語はくにの看板の絵（文字入り、ロープを外した）、英語は木の色の札に英文 */
 const LIVE_SPECIES: Array<{ ja: string; en: string; away: { ja: string; en: string }; sign: string }> = [
   { ja: 'ライオン', en: 'Lion', away: { ja: '帰宅中', en: 'Gone home' }, sign: 'home' },
   { ja: 'アメリカバク', en: 'Lowland tapir', away: { ja: 'おひるね中', en: 'Napping' }, sign: 'nap' },
@@ -754,9 +765,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const live = section(
       'live',
       `<span class="cat-live-dot"></span>${meta('catRowLive')}`,
-      `<div class="cat-row cat-row-live">${LIVE_SPECIES.map(
+      `<div class="cat-row">${LIVE_SPECIES.map(
         (sp) =>
-          `<div class="cat-live" role="img" aria-label="${esc(`${sp[getLang()]}（${sp.away[getLang()]}）`)}"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-sign${getLang() === 'ja' ? ' is-art' : ''}" style="--sign:url(/ui/sign-${sp.sign}.webp)" aria-hidden="true"><span>${esc(sp.away[getLang()])}</span></span></div><span class="cat-live-name">${esc(sp[getLang()])}</span></div>`,
+          `<div class="cat-live" role="img" aria-label="${esc(`${sp[getLang()]}（${sp.away[getLang()]}）`)}"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-sign${getLang() === 'ja' ? ' is-art' : ''}" style="--sign:url(/ui/label-${sp.sign}.webp)" aria-hidden="true"><span>${esc(sp.away[getLang()])}</span></span></div><span class="cat-live-name">${esc(sp[getLang()])}</span></div>`,
       ).join('')}</div>`,
     )
 
@@ -770,9 +781,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
             <div class="cat-hero-pane"><img class="cat-hero-img" alt="" decoding="async" /></div>
             <!-- 映像の <video> は表紙を見せて落ち着いてから 1 本だけ作る（startHeroVideo） -->
             <div class="cat-hero-shade" aria-hidden="true"></div>
+            <!-- 再生・停止は映像の真ん中（くにの指示） -->
+              ${heroSlides.length ? `<button type="button" class="cat-hero-ctl" data-hero-ctl="1" aria-pressed="false" aria-label="${meta('heroPause')}"><svg class="ico ico-fill" aria-hidden="true"><use href="#i-pause" /></svg></button>` : ''}
             <div class="cat-hero-corner">
               <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
-              ${heroSlides.length ? `<button type="button" class="cat-hero-ctl" data-hero-ctl="1" aria-pressed="false" aria-label="${meta('heroPause')}"><svg class="ico ico-fill" aria-hidden="true"><use href="#i-pause" /></svg></button>` : ''}
             </div>
             ${
               heroSlides.length > 1
@@ -845,7 +857,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         const first = inVideo.find((a) => sub.species.includes(a.species))
         if (!first) return []
         const label = sub.label ? sub.label[getLang()] : speciesName(first.species)
-        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${faceMarkup(first, 'cat-face-img', true)}<span>${esc(label)}</span></button>`]
+        const icon = SPECIES_ICON[sub.species[0]]
+        const face = icon ? `<img class="cat-face-img" src="/species/${icon}.webp" alt="" loading="lazy" decoding="async" />` : faceMarkup(first, 'cat-face-img', true)
+        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${face}<span>${esc(label)}</span></button>`]
       })
     })
     // 段が寂しくならないよう、5 つに満たない分は形だけのシルエット
