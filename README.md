@@ -51,7 +51,7 @@ All animal footage in this prototype is **recorded footage**, shot at Hokkaido A
 
 The species of each 2026-11-04 video come from the names of the original files. Which animal is on camera has not been checked, so for a species with several animals the same video is shown for each of them and the monitor says so. If only one animal of that species lives at the facility, the video is shown as that animal's.
 
-The delivery versions are 720p, H.264/AAC, converted from HLG to SDR. The original files are not in this repository. `public/media/` holds the poster images and the lion family video; the 2026-11-04 videos are kept out of the repository to keep it small and are served from R2. On the published site a video appears once it has been uploaded to R2 (`onR2` in `src/data/videos.json`); until then it appears only on the development server.
+The delivery versions are 720p, H.264/AAC, converted from HLG to SDR. The app streams lighter copies made from them for phones (`*_m540.mp4`: 960×540, about 0.57 Mbps, 15 MB or less, `moov` at the front); the 720p files stay on R2 unchanged. The original files are not in this repository. `public/media/` holds the poster images and the lion family video; the 2026-11-04 videos are kept out of the repository to keep it small and are served from R2. On the published site a video appears once it has been uploaded to R2 (`onR2` in `src/data/videos.json`); until then it appears only on the development server.
 
 The published site streams the footage from Cloudflare R2 (`https://media.kobakuni.com/<file>`); a copy in `public/media/` (when present) is the fallback for local development. See "Deployment" below.
 
@@ -163,7 +163,7 @@ Built with Claude: Japan 2026 の提出作品として、ハッカソン期間�
 
 2026-11-04 の映像の種は、収録した元ファイルの名前から取っています。どの個体が映っているかは確かめていないので、同じ種が複数いる時はその子たちみんなに同じ映像を出し、モニターにそう書いています。施設にその種が 1 頭だけの時は、その子の映像として出しています。
 
-配信用の版は 720p、H.264/AAC（HLG から SDR へ変換）です。収録した元ファイルはリポジトリに入れていません。`public/media/` にはポスター画像とライオンの親子の映像を置いています。2026-11-04 の映像はリポジトリを軽くするためリポジトリに入れず、R2 から配信します。公開サイトでは R2 に上げ終えた映像だけを出し（`src/data/videos.json` の `onR2`）、上げるまでは開発サーバーでだけ見えます。
+配信用の版は 720p、H.264/AAC（HLG から SDR へ変換）です。アプリはスマホ向けに、それを軽くした版（`*_m540.mp4`: 960×540、約 0.57 Mbps、1 本 15 MB 以下、`moov` を先頭に）を流します。720p の版は R2 にそのまま残しています。収録した元ファイルはリポジトリに入れていません。`public/media/` にはポスター画像とライオンの親子の映像を置いています。2026-11-04 の映像はリポジトリを軽くするためリポジトリに入れず、R2 から配信します。公開サイトでは R2 に上げ終えた映像だけを出し（`src/data/videos.json` の `onR2`）、上げるまでは開発サーバーでだけ見えます。
 
 公開サイトでは映像を Cloudflare R2（`https://media.kobakuni.com/<ファイル名>`）から配信します。`public/media/` に同じ名前の映像がある時は、ローカル開発時の予備になります。詳しくは下の「公開」を参照してください。
 

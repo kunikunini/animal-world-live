@@ -3,7 +3,7 @@
   "videos": [
     {
       "id": "tapir-capybara-20261104",
-      "file": "tapir-capybara_20261104_720p.mp4",
+      "file": "tapir-capybara_20261104_m540.mp4",
       "poster": "tapir-capybara_20261104_poster.jpg",
       "duration": "3:05",
       "recordedOn": "2026-11-04",
@@ -16,7 +16,7 @@
     },
     {
       "id": "hyena-20261104",
-      "file": "hyena_20261104_720p.mp4",
+      "file": "hyena_20261104_m540.mp4",
       "poster": "hyena_20261104_poster.jpg",
       "duration": "3:03",
       "recordedOn": "2026-11-04",
@@ -26,7 +26,7 @@
     },
     {
       "id": "pelican-kangaroo-mara-20261104",
-      "file": "pelican-kangaroo-mara_20261104_720p.mp4",
+      "file": "pelican-kangaroo-mara_20261104_m540.mp4",
       "poster": "pelican-kangaroo-mara_20261104_poster.jpg",
       "duration": "3:04",
       "recordedOn": "2026-11-04",
@@ -40,7 +40,7 @@
     },
     {
       "id": "pony-20261104",
-      "file": "pony_20261104_720p.mp4",
+      "file": "pony_20261104_m540.mp4",
       "poster": "pony_20261104_poster.jpg",
       "duration": "2:38",
       "recordedOn": "2026-11-04",
@@ -50,7 +50,7 @@
     },
     {
       "id": "squirrel-monkey-20261104",
-      "file": "squirrel-monkey_20261104_720p.mp4",
+      "file": "squirrel-monkey_20261104_m540.mp4",
       "poster": "squirrel-monkey_20261104_poster.jpg",
       "duration": "2:41",
       "recordedOn": "2026-11-04",

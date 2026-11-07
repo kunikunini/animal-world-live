@@ -7,6 +7,7 @@ import type { WorldInfo, WorldKey } from '../data/worlds'
 import type { FriendBookStore } from '../data/friends'
 import { faceMarkup } from './faces'
 import { esc } from './html'
+import { SCOPE_MS } from './scope'
 import { animalName, getLang, onLangChange, speciesName, subAreaName, t } from './i18n'
 import type { I18nKey } from './i18n'
 import { hideView, showView } from './transition'
@@ -83,6 +84,8 @@ const WORLD_ART: Partial<Record<WorldKey, string>> = {
 /** いちばん上の大きな枠: 新着の映像を何本まで順に見せるか、1 本を何ミリ秒見せるか */
 const HERO_MAX = 5
 const HERO_MS = 7000
+/** 新着の枠: 表紙を見せてから映像を作るまでの待ち（開く瞬間・切り替えの瞬間に読み込みを重ねない。スマホのメモリ） */
+const HERO_VIDEO_WAIT = 1500
 
 interface HeroSlide {
   animal: Animal
@@ -145,7 +148,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const sl = heroSlides[i]
     if (!el || !sl) return
     heroIndex = i
-    el.classList.remove('is-playing')
+    // 前の 1 本は要素ごと手放す。新しい 1 本は表紙を見せてから作る（syncHero）
+    dropHeroVideo()
     el.classList.toggle('is-portrait', sl.video.portrait)
     const img = el.querySelector<HTMLImageElement>('.cat-hero-img')
     if (img) img.src = sl.video.poster
@@ -178,12 +182,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
    * 枠が画面の外・タブが裏、のどれかなら止めて映像を手放す（スマホのメモリ。モニターの映像と同時に 2 本読まない）。
    * 動きをへらす設定では、流さず・切り替えず、点で選んだ時だけ替える
    */
-  const syncHero = () => {
-    const el = heroEl()
-    const video = el?.querySelector<HTMLVideoElement>('.cat-hero-video')
+  const heroActive = () => {
     const body = document.body
-    const active =
-      !!el &&
+    return (
+      !!heroEl() &&
       open &&
       page === null &&
       heroVisible &&
@@ -191,22 +193,73 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       !body.classList.contains('observe-open') &&
       !body.classList.contains('book-open') &&
       !reduceMotion()
+    )
+  }
+
+  let heroVideoTimer = 0
+  /** のぞく演出の間は映像を作らない（演出が終わる時刻。performance.now()） */
+  let heroNotBefore = 0
+  /** 枠の映像を要素ごと手放す（止める → src を外す → 読み込みを捨てる → DOM から外す） */
+  const dropHeroVideo = () => {
+    window.clearTimeout(heroVideoTimer)
+    heroVideoTimer = 0
+    root.querySelectorAll<HTMLVideoElement>('.cat-hero-video').forEach((v) => {
+      try {
+        v.pause()
+        v.removeAttribute('src')
+        v.load()
+      } catch {
+        // 外す処理は続ける
+      }
+      v.remove()
+    })
+    heroEl()?.classList.remove('is-playing')
+  }
+
+  /** 今の 1 本の <video> を作って音なしで流す（待ちのあと。まだ見えている時だけ） */
+  const startHeroVideo = () => {
+    heroVideoTimer = 0
+    const el = heroEl()
     const sl = heroSlides[heroIndex]
-    if (video) {
+    if (!el || !sl || !heroActive()) return
+    const v = document.createElement('video')
+    v.className = 'cat-hero-video'
+    v.muted = true
+    v.defaultMuted = true
+    v.playsInline = true
+    v.setAttribute('muted', '')
+    v.setAttribute('playsinline', '')
+    v.preload = 'auto'
+    v.setAttribute('aria-hidden', 'true')
+    v.tabIndex = -1
+    v.dataset.src = sl.video.url
+    v.addEventListener('playing', () => {
+      if (v.isConnected) el.classList.add('is-playing')
+    })
+    v.addEventListener('error', () => el.classList.remove('is-playing'))
+    v.src = sl.video.url
+    el.querySelector('.cat-hero-img')?.after(v)
+    void v.play().catch(() => undefined)
+  }
+
+  const syncHero = () => {
+    const el = heroEl()
+    const active = heroActive()
+    const sl = heroSlides[heroIndex]
+    if (el) {
+      const v = el.querySelector<HTMLVideoElement>('.cat-hero-video')
       if (active && sl) {
-        if (video.dataset.src !== sl.video.url) {
-          video.dataset.src = sl.video.url
-          video.src = sl.video.url
-          video.load()
+        if (v && v.dataset.src === sl.video.url) {
+          if (v.paused) void v.play().catch(() => undefined)
+        } else {
+          if (v) dropHeroVideo()
+          if (!heroVideoTimer) {
+            const wait = Math.max(HERO_VIDEO_WAIT, heroNotBefore - performance.now() + HERO_VIDEO_WAIT)
+            heroVideoTimer = window.setTimeout(startHeroVideo, wait)
+          }
         }
-        video.muted = true
-        if (video.paused) void video.play().catch(() => undefined)
-      } else if (video.dataset.src) {
-        video.pause()
-        delete video.dataset.src
-        video.removeAttribute('src')
-        video.load()
-        el?.classList.remove('is-playing')
+      } else {
+        dropHeroVideo()
       }
     }
     if (active && heroSlides.length > 1) {
@@ -229,9 +282,6 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       syncHero()
       return
     }
-    const video = el.querySelector<HTMLVideoElement>('.cat-hero-video')
-    video?.addEventListener('playing', () => el.classList.add('is-playing'))
-    video?.addEventListener('error', () => el.classList.remove('is-playing'))
     heroVisible = true
     if ('IntersectionObserver' in window) {
       heroIo = new IntersectionObserver(
@@ -305,13 +355,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   }
 
   const render = () => {
-    // 描き直す前に、今の枠の映像を手放す（外れた <video> が読み続けないように）
-    const oldVideo = heroEl()?.querySelector<HTMLVideoElement>('.cat-hero-video')
-    if (oldVideo) {
-      oldVideo.pause()
-      oldVideo.removeAttribute('src')
-      oldVideo.load()
-    }
+    // 描き直す前に、今の枠の映像を要素ごと手放す（外れた <video> が読み続けないように）
+    dropHeroVideo()
     window.clearTimeout(heroTimer)
     heroTimer = 0
     heroIo?.disconnect()
@@ -349,7 +394,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero" aria-roledescription="carousel" aria-label="${meta('catNew')}">
             <img class="cat-hero-img" src="" alt="" />
-            <video class="cat-hero-video" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+            <!-- 映像の <video> は表紙を見せてから作る（startHeroVideo） -->
             <div class="cat-hero-shade" aria-hidden="true"></div>
             <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
             ${
@@ -618,6 +663,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       page = startPage
       // 開くたびに、いちばん新しい 1 本から見せる
       heroIndex = 0
+      heroNotBefore = withScope ? performance.now() + SCOPE_MS : 0
       render()
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)
@@ -638,7 +684,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   return {
     open: (withScope) => setOpen(true, withScope),
-    settle: () => root.classList.remove('is-scope-in'),
+    settle: () => {
+      root.classList.remove('is-scope-in')
+      heroNotBefore = 0
+    },
     close: () => setOpen(false),
     isOpen: () => open,
     onOpenChange: (fn) => {

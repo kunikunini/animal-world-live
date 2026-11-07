@@ -42,6 +42,7 @@ import { REGION_AMB, REGION_BGM, sound } from './audio/sound'
 import { createSettings } from './ui/settings'
 import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
+import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
@@ -88,6 +89,10 @@ function createShell() {
   const iris = createIris()
   const settings = createSettings()
   const catalog = createCatalog(store)
+  // 実機の調べ: スコープ表示中に読み込み直しが起きたかを、設定の「音の記録」に残す
+  checkScopeTraceOnLoad()
+  catalog.onOpenChange((open) => traceScopeView('list', open))
+  observe.onOpenChange((open) => traceScopeView('monitor', open))
   const scope = createScope()
   const guide = createGuide()
 
@@ -578,6 +583,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     if (!blocked && !paused) canvas.focus()
   }
   observe.onOpenChange(syncInput)
+  // モニターの間は描画を止めているので、閉じた時に経過時間を捨てる（動物が飛ばないように）
+  observe.onOpenChange((open) => {
+    if (!open) clock.getDelta()
+  })
   book.onOpenChange(syncInput)
   syncInput()
 
@@ -1222,8 +1231,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 止めたまま作った時に描く枚数（後処理のシェーダーもここで用意される）
   let warmFrames = startPaused ? 2 : 0
   const tick = () => {
-    // 3D の地図を開いている間は本編を描かない（地図のジオラマだけ描く）
-    if (paused || viewing || mapView.is3DOpen()) {
+    // 3D の地図を開いている間は本編を描かない（地図のジオラマだけ描く）。
+    // アニマルスコープの一覧・観察モニターの間も描かない（ワールドから直接モニターを開いた時も。スマホのメモリと電池）
+    if (paused || viewing || mapView.is3DOpen() || catalog.isOpen() || observe.isOpen()) {
       if (warmFrames > 0) {
         warmFrames--
         postfx.render()
@@ -1637,6 +1647,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
       // 生成モデルの群れ（歩行の計測用: action を止めてコマ送り、posture を書き換え）
       aiLions: () => aiLions,
+      // 本編を描いた回数（スコープ・モニターの間に増えないことの確認用）
+      frames: () => frames,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
       capture: (quality = 0.92) => {
         postfx.render()

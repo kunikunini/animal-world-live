@@ -266,7 +266,7 @@
       <div class="observe-panel">
         <h2 id="observe-title" class="visually-hidden"><span data-i18n="monitor">観察モニター</span></h2>
         <div class="m-video">
-          <video id="observe-video" class="observe-video" playsinline loop preload="metadata" controls controlslist="nodownload"></video>
+          <!-- 映像の <video> は観察モニターを開く時に作り、閉じたら捨てる（src/ui/observe.ts） -->
           <div id="observe-poster" class="observe-poster" hidden>
             <div id="observe-poster-face" class="poster-face"></div>
             <p id="observe-poster-text" class="observe-poster-text"></p>

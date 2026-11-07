@@ -52,7 +52,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const placeholderNote = document.getElementById('observe-placeholder') as HTMLElement
   const groupNote = document.getElementById('observe-group-note') as HTMLElement
   const badgeStaff = document.getElementById('observe-badge-staff') as HTMLElement
-  const video = document.getElementById('observe-video') as HTMLVideoElement
+  const videoBox = document.querySelector('#observe .m-video') as HTMLElement
   const poster = document.getElementById('observe-poster') as HTMLElement
   const posterFace = document.getElementById('observe-poster-face') as HTMLElement
   const posterText = document.getElementById('observe-poster-text') as HTMLElement
@@ -85,6 +85,12 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   /** 試す URL の並び（第一が R2、予備がリポジトリ内）と、いま何番目か */
   let sources: string[] = []
   let sourceIndex = 0
+  /**
+   * モニターの <video>。開く時にその 1 本だけ作り、閉じたら要素ごと捨てる（スマホのメモリ。閉じた後に前の映像を読んだまま残さない）。
+   * 閉じている間は null。開いている間は必ずある（映像の無い子では hidden のまま src を入れない）
+   */
+  let video: HTMLVideoElement = null as unknown as HTMLVideoElement
+  let hasVideo = false
 
   const showPoster = (text: string, canRetry: boolean) => {
     poster.hidden = false
@@ -252,20 +258,8 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     if (open) renderChips()
   })
 
-  video.addEventListener('error', () => {
-    if (video.hidden) return
-    if (sourceIndex + 1 < sources.length) {
-      // 配信元（R2）が読めない時はリポジトリ内の予備へ
-      console.warn('video source failed, trying fallback', sources[sourceIndex])
-      sourceIndex++
-      applySource(++loadSeq)
-      return
-    }
-    showPoster(t('videoLoadFailed'), true)
-  })
-
   retryBtn.addEventListener('click', () => {
-    if (current) {
+    if (current && hasVideo) {
       loadedUrl = ''
       load(current)
     }
@@ -273,12 +267,9 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
 
   unmuteBtn.addEventListener('click', () => {
     // ユーザーのタップなので音を出せる
+    if (!hasVideo) return
     video.muted = false
     unmuteBtn.hidden = true
-  })
-  // 動画の操作（全画面の中など）で音を出した時も「音を出す」を消す（残ったままにしない）
-  video.addEventListener('volumechange', () => {
-    if (!video.muted) unmuteBtn.hidden = true
   })
 
   /**
@@ -287,7 +278,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
    *   ページの位置を 0 に戻し、観察モニターの重なりを作り直し、フォーカスを「戻る」へ戻す
    * - 閉じる時: 全画面・ピクチャーインピクチャーのままなら先に普通の表示へ戻す（閉じた後に映像だけ浮いて残らないように）
    */
-  const fsVideo = video as HTMLVideoElement & {
+  type FsVideo = HTMLVideoElement & {
     webkitDisplayingFullscreen?: boolean
     webkitExitFullscreen?: () => void
     webkitPresentationMode?: string
@@ -312,16 +303,70 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     // iPhone は全画面を閉じるアニメーションの後にもう一度位置が動くことがある
     window.setTimeout(resetScroll, 400)
   }
-  video.addEventListener('webkitendfullscreen', afterFullscreen)
   const onFullscreenChange = () => {
     const d = document as Document & { webkitFullscreenElement?: Element | null }
     if (!document.fullscreenElement && !d.webkitFullscreenElement) afterFullscreen()
   }
   document.addEventListener('fullscreenchange', onFullscreenChange)
   document.addEventListener('webkitfullscreenchange', onFullscreenChange)
-  video.addEventListener('leavepictureinpicture', afterFullscreen)
+
+  /** モニターの <video> を作る（開く時に 1 回）。属性は前の index.html の物と同じ */
+  const createVideo = () => {
+    const v = document.createElement('video')
+    v.id = 'observe-video'
+    v.className = 'observe-video'
+    v.playsInline = true
+    v.setAttribute('playsinline', '')
+    v.loop = true
+    v.preload = 'metadata'
+    v.controls = true
+    v.setAttribute('controlslist', 'nodownload')
+    v.hidden = true
+    v.addEventListener('error', () => {
+      if (v !== video || v.hidden || !v.getAttribute('src')) return
+      if (sourceIndex + 1 < sources.length) {
+        // 配信元（R2）が読めない時はリポジトリ内の予備へ
+        console.warn('video source failed, trying fallback', sources[sourceIndex])
+        sourceIndex++
+        applySource(++loadSeq)
+        return
+      }
+      showPoster(t('videoLoadFailed'), true)
+    })
+    // 動画の操作（全画面の中など）で音を出した時も「音を出す」を消す（残ったままにしない）
+    v.addEventListener('volumechange', () => {
+      if (!v.muted) unmuteBtn.hidden = true
+    })
+    v.addEventListener('webkitendfullscreen', afterFullscreen)
+    v.addEventListener('leavepictureinpicture', afterFullscreen)
+    videoBox.insertBefore(v, poster)
+    video = v
+    hasVideo = true
+    loadedUrl = ''
+  }
+
+  /** 閉じた時: 再生を止め、読み込みを捨て、要素ごと外す */
+  const destroyVideo = () => {
+    if (!hasVideo) return
+    const v = video
+    hasVideo = false
+    video = null as unknown as HTMLVideoElement
+    loadedUrl = ''
+    sources = []
+    try {
+      v.pause()
+      v.removeAttribute('src')
+      v.removeAttribute('poster')
+      v.load()
+    } catch {
+      // 外す処理は続ける
+    }
+    v.remove()
+  }
 
   const leaveFullscreen = () => {
+    if (!hasVideo) return
+    const fsVideo = video as FsVideo
     try {
       if (fsVideo.webkitDisplayingFullscreen) fsVideo.webkitExitFullscreen?.()
     } catch {
@@ -368,7 +413,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     if (!open) {
       leaveFullscreen()
       loadSeq++
-      video.pause()
+      destroyVideo()
       status.textContent = ''
     }
     openListeners.forEach((fn) => fn(open))
@@ -393,6 +438,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
       const backLabel = from === 'book' ? t('backBook') : t('backWorld')
       closeBtn.setAttribute('aria-label', backLabel)
       closeBtn.title = backLabel
+      if (!hasVideo) createVideo()
       show(animal)
       setOpen(true)
       closeBtn.focus()
