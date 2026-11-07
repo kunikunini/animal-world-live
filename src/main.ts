@@ -397,6 +397,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'goatTwotone', species: 'ヤギ', name: 'ツートン', file: 'goat-twotone', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
       { key: 'goatMarble', species: 'ヤギ', name: 'マーブル', file: 'goat-marble', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
       { key: 'kinkajouVilla', species: 'キンカジュー', name: 'ヴィラ', file: 'kinkajou-villa', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'lemurMomo', species: 'ワオキツネザル', name: 'モモ', file: 'lemur-momo', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
     ]
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue

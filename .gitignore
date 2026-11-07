@@ -70,6 +70,7 @@ public/models/*
 !public/models/goat-twotone.glb
 !public/models/goat-marble.glb
 !public/models/kinkajou-villa.glb
+!public/models/lemur-momo.glb
 
 # wrangler のローカル状態（ログインのトークンは ~/.wrangler 側で、ここには入らない）
 .wrangler/
