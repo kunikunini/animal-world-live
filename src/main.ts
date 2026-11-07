@@ -524,6 +524,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'pythonHotaru', species: 'ビルマニシキヘビ', name: '蛍', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 1.5, brighten: 1.35 },
       { key: 'pythonNoriji', species: 'ビルマニシキヘビ', name: 'のり次', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.35, brighten: 1.35 },
       { key: 'pythonFubuki', species: 'ビルマニシキヘビ', name: '吹雪', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.65, brighten: 1.35 },
+      // おやき（スローロリス、ジャングル）: 本人の写真から作ったクレイ風の、丸太にしがみつく絵で生成。リグなしの静止モデル（丸太ごと）。
+      // 今の場所の地面に丸太ごと置き、大きさは水平の長い方の辺（丸太の長さ）をプリミティブ版の体の長さに合わせる。歩かせず、入れ物の呼吸の拡縮だけ
+      { key: 'lorisOyaki', species: 'スローロリス', name: 'おやき', file: 'loris-oyaki', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 3.5 },
       // ウリン（フタユビナマケモノ、ジャングル）: 本人の写真は無いので一般的なフタユビナマケモノの姿（11/8 くに：本人に似せるのは将来）。リグなしの静止モデル（4 本の手足で枝にぶら下がる）。
       // 今の場所の枝にぶら下げたまま、手足の先を枝の高さに合わせる（sloth.ts の swapModel）。大きさはプリミティブ版の高さ。呼吸は胴の太さだけ。名前の札は枝の下のまま
       { key: 'slothUrin', species: 'フタユビナマケモノ', name: 'ウリン', file: 'sloth-urin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, hang: true },
