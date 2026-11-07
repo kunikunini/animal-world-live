@@ -110,6 +110,24 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* ダブルタップで拡大しない（iPad・iPhone の Safari は viewport の user-scalable=no を守らない。ボタンを速く 2 回押すと拡大され、
+   3D の画面は 2 本指をゲームが受け取るので戻せず、端のコントローラーが画面の外に出る）。
+   要素の指定はクラス・ID の指定より弱いので、3D の画面・ミニマップ・スティック・新着（none / pan-y）はそのまま */
+html,
+body,
+button,
+a,
+input,
+select,
+textarea,
+label,
+summary,
+[role='button'],
+[role='switch'],
+[role='tab'] {
+  touch-action: manipulation;
+}
+
 body.in-world {
   background: #c9a062;
 }
