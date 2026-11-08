@@ -135,7 +135,10 @@ export function primeHop(): Promise<void> {
 function cleanup(): void {
   const el = hopEl()
   document.documentElement.classList.remove('is-hop', 'hop-to', 'hop-back')
-  el?.classList.remove('is-out', 'is-open', 'is-focus', 'is-fade-in')
+  el?.classList.remove('is-out', 'is-open', 'is-focus', 'is-fade-in', 'is-wait', 'is-hint')
+  el?.removeAttribute('role')
+  el?.removeAttribute('aria-label')
+  el?.setAttribute('aria-hidden', 'true')
 }
 
 /** 行き来の画面を 0.3 秒で薄くして消す（失敗した時・動きをへらす時） */
@@ -152,6 +155,8 @@ function openHop(): void {
   const el = hopEl()
   if (opened || !el || !document.documentElement.classList.contains('is-hop')) return
   opened = true
+  window.clearTimeout(hintTimer)
+  el.classList.remove('is-wait', 'is-hint')
   if (reduced()) {
     hideHop()
     return
@@ -161,23 +166,53 @@ function openHop(): void {
   window.setTimeout(cleanup, 650)
 }
 
-/** のぞき窓のタップ: 待たずに開ける近道（開けるための必須の操作ではない）。音の解放のためタップは止めずに通す */
+/**
+ * のぞき窓は自動では広げず、タップで開く（11/8、くにの実機で自動で開くと入場の BGM が鳴らないことがあったため）。
+ * そのタップで音の解放もする（sound.ts が window の捕捉（capture）で、このクリックより先に AudioContext を動かす。仕組みは変えない）。
+ * 準備が済む前のタップは覚えておき、済んだらすぐ開く（そのタップで音はもう解放されている）
+ */
 let ready = false
 let tapped = false
+let hintTimer = 0
+function onTap(): void {
+  tapped = true
+  if (ready) openHop()
+}
 function bindTap(): void {
   const el = hopEl()
   if (!el || el.dataset.bound) return
   el.dataset.bound = '1'
-  el.addEventListener('click', () => {
-    tapped = true
-    if (ready) openHop()
+  // index.html の中のスクリプトが、本体が届く前のタップを覚えている
+  if ((window as unknown as { __awlHopTap?: boolean }).__awlHopTap) tapped = true
+  el.addEventListener('click', onTap)
+  window.addEventListener('keydown', (e) => {
+    if (!document.documentElement.classList.contains('is-hop') || opened) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onTap()
+    }
   })
 }
 
-/**
- * スコープ専用モードの入場: 一覧を組んだら呼ぶ。窓の中に一覧がうすく見え、holdMs たったら自動で窓が広がる。タップならすぐ広がる
- */
-export function revealHop(holdMs: number): void {
+/** タップを待つ: スコップが跳ね、窓のふちが明滅する（動きをへらす時は止まったまま）。2.5 秒タップが無ければ吹き出しを出す */
+function waitTap(): void {
+  const el = hopEl()
+  if (!el || opened) return
+  el.classList.add('is-wait')
+  el.setAttribute('role', 'button')
+  el.removeAttribute('aria-hidden')
+  const root = document.documentElement
+  const en = root.classList.contains('hop-en')
+  const back = root.classList.contains('hop-back')
+  el.setAttribute('aria-label', back ? (en ? 'Tap to go back to the world' : 'タップで ワールドに もどる') : en ? 'Tap to look through the scope' : 'タップで スコープを のぞく')
+  window.clearTimeout(hintTimer)
+  hintTimer = window.setTimeout(() => {
+    if (!opened) el.classList.add('is-hint')
+  }, 2500)
+}
+
+/** スコープ専用モードの入場: 一覧を組んだら呼ぶ。窓の中に一覧がうすく見え、タップで窓が広がる */
+export function revealHop(): void {
   bindTap()
   setView('see')
   ready = true
@@ -185,29 +220,29 @@ export function revealHop(holdMs: number): void {
     openHop()
     return
   }
-  window.setTimeout(openHop, holdMs)
+  waitTap()
 }
 
-/** ワールドへ戻った時: 組み立てが済む前から、タップを受けられるようにする（済んだらすぐ入る） */
+/** 行き来の画面のタップを、組み立て・一覧ができる前から受けられるようにする */
 export function armHop(): void {
   bindTap()
 }
 
 /**
  * ワールドへ戻った時: 組み立てが済んで 1 コマ描いたら呼ぶ。窓の中のぼやけた絵が消えて本物のワールドにピントが合い、
- * 少し見せてから自動で窓が広がる。タップされていたら（組み立て中のタップも）すぐ広がる。動きをへらす時はフェードだけ
+ * タップでワールドに入る。組み立て中にタップされていたらすぐ広がる。動きをへらす時はピントの変化なし・フェードだけ
  */
 export function focusHop(): void {
   bindTap()
   ready = true
   const el = hopEl()
   if (!el) return
-  if (tapped || reduced()) {
+  if (tapped) {
     openHop()
     return
   }
   el.classList.add('is-focus')
-  window.setTimeout(openHop, 900)
+  waitTap()
 }
 
 /** 3D のワールドから、スコープ専用モードへ */

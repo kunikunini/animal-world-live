@@ -73,6 +73,7 @@
       <i class="hop-rim hop-l"></i><i class="hop-rim hop-r"></i>
       <img class="hop-scop" src="/splash-scop.webp" alt="" width="560" height="624" decoding="sync" />
       <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span></p>
+      <p class="hop-hint"><span class="hop-to" lang="ja">タップで のぞいてみよう！</span><span class="hop-back" lang="ja">タップで ワールドに もどろう！</span><span class="hop-to-en" lang="en">Tap to take a look!</span><span class="hop-back-en" lang="en">Tap to go back to the world!</span></p>
     </div>
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
@@ -92,6 +93,8 @@
             hopEl.classList.add('has-shot')
             hopEl.classList.remove('is-solid')
           }
+          // 本体（JS）が届く前ののぞき窓のタップも覚えておく（届いたら、準備ができ次第すぐ開く。src/scopeMode.ts）
+          if (hopEl) hopEl.addEventListener('click', function () { window.__awlHopTap = true })
         }
       } catch (e) {}
       // 動きが始まった時刻（消すのは、動きを見せ終えてから。src/ui/splash.ts）

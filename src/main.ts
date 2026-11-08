@@ -2032,6 +2032,8 @@ function startScopeMode(handoff: ScopeHandoff): void {
   sound.setBgm(REGION_BGM[region] ?? 'savanna')
   sound.setAmb(REGION_AMB[region] ?? null)
   document.body.classList.add('scope-mode', 'is-viewing')
+  // 一覧ができる前ののぞき窓のタップも受ける（済んだらすぐ開く）
+  armHop()
   const shell = createShell()
   shell.home.hide()
   // あそびかたツアーの途中なら続きから（「スコープをのぞく」の段は、一覧が開いたことで次へ進む）
@@ -2047,8 +2049,8 @@ function startScopeMode(handoff: ScopeHandoff): void {
   shell.catalog.open(false)
   shell.guide.reach('scope')
   dropSplash(false)
-  // のぞき窓の中に一覧がうすく見え、少しして自動で窓が広がる（タップならすぐ）
-  revealHop(700)
+  // のぞき窓の中に一覧がうすく見え、タップで窓が広がる（自動では広げない。そのタップで音を解放して BGM が鳴った状態で一覧を開く）
+  revealHop()
 }
 
 function main(): void {
@@ -2153,7 +2155,7 @@ function main(): void {
   // スコープ専用モードから戻った: ホームを通らず、前にいた場所からワールドを続ける（立ち上げの画面のうしろで組み立てる）
   const returnToWorld = async (spot: ReturnSpot) => {
     busy = true
-    // 組み立ての途中でのぞき窓をタップしたら、済み次第すぐ入る
+    // 組み立ての途中でのぞき窓をタップしたら、済み次第すぐ入る（タップが無ければ、ピントが合ったあとタップを待つ）
     armHop()
     try {
       await nextFrames(2)
@@ -2163,7 +2165,7 @@ function main(): void {
       shell.home.hide()
       document.body.classList.add('in-world')
       dropSplash(false)
-      // 本物のワールドを 1 コマ描いてから、のぞき窓のピントを合わせ、窓を広げて入る（ぼけた寄りから戻る演出はのぞき窓が受け持つ）
+      // 本物のワールドを 1 コマ描いてから、のぞき窓のピントを合わせ、タップで窓を広げて入る（ぼけた寄りから戻る演出はのぞき窓が受け持つ）
       await nextFrames(1)
       focusHop()
       canvas.focus()
