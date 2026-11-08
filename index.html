@@ -67,9 +67,12 @@
       <!-- splash:end -->
     </div>
     <!-- スコープとワールドの行き来の画面（双眼鏡をのぞく演出の続き）。src/scopeMode.ts。素の立ち上げの画面の代わりに出す -->
-    <div id="hop" class="hop" aria-hidden="true">
-      <div class="hop-lens"><i class="hop-rim hop-l"></i><i class="hop-rim hop-r"></i><img class="hop-scop" src="/splash-scop.webp" alt="" width="560" height="624" decoding="sync" /></div>
-      <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span><span class="hop-dots"><i></i><i></i><i></i></span></p>
+    <div id="hop" class="hop is-solid" aria-hidden="true">
+      <div class="hop-view"></div>
+      <div class="hop-curtain"></div>
+      <i class="hop-rim hop-l"></i><i class="hop-rim hop-r"></i>
+      <img class="hop-scop" src="/splash-scop.webp" alt="" width="560" height="624" decoding="sync" />
+      <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span></p>
     </div>
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
@@ -81,6 +84,14 @@
         if (hop) {
           document.documentElement.classList.add('is-hop', 'hop-' + hop)
           if (localStorage.getItem('awl.lang') === 'en') document.documentElement.classList.add('hop-en')
+          // ワールドへ戻る時: のぞき窓の中に、スコープへ入る前のワールドの小さな絵（引き伸ばしてぼやけて見える）を最初のコマから出す
+          var shot = hop === 'back' ? sessionStorage.getItem('awl.hopShot') : null
+          var hopEl = document.getElementById('hop')
+          if (shot && hopEl && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(shot)) {
+            hopEl.style.setProperty('--shot', 'url("' + shot + '")')
+            hopEl.classList.add('has-shot')
+            hopEl.classList.remove('is-solid')
+          }
         }
       } catch (e) {}
       // 動きが始まった時刻（消すのは、動きを見せ終えてから。src/ui/splash.ts）

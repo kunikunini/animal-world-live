@@ -46,7 +46,7 @@ import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
-import { goScope, goWorld, hideHop, isScopeMode, primeHop, readHandoff, type ReturnSpot, type ScopeHandoff } from './scopeMode'
+import { armHop, focusHop, goScope, goWorld, hideHop, isScopeMode, primeHop, readHandoff, revealHop, saveHopShot, type ReturnSpot, type ScopeHandoff } from './scopeMode'
 import { dropSplash } from './ui/splash'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
@@ -823,6 +823,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）。
     // 声は演出の頭で鳴らし、言い終わってからページを入れ替える（入れ替えると音も止まるので、0.7 秒目からだと「見つけ」で切れていた。11/8 くにの実機）。
     // 出会いの音は今までどおり 0.7 秒目
+    // のぞき窓（行き来の画面）に、戻る時にぼやけて見せるワールドの小さな絵を取っておく（描いた直後に読む）
+    try {
+      postfx.render()
+      const small = document.createElement('canvas')
+      small.width = 96
+      small.height = Math.max(1, Math.round((96 * canvas.height) / Math.max(1, canvas.width)))
+      small.getContext('2d')?.drawImage(canvas, 0, 0, small.width, small.height)
+      saveHopShot(small.toDataURL('image/jpeg', 0.6))
+    } catch {
+      // 取れなくても続ける（窓の中は紺のレンズ）
+    }
     let voiceDone: Promise<void> = Promise.resolve()
     if (arrived) {
       voiceDone = sound.sayToEnd('find')
@@ -2036,8 +2047,8 @@ function startScopeMode(handoff: ScopeHandoff): void {
   shell.catalog.open(false)
   shell.guide.reach('scope')
   dropSplash(false)
-  // 一覧の表紙が出始めてから、行き来の画面を薄くする
-  window.setTimeout(hideHop, 150)
+  // のぞき窓の中に一覧がうすく見え、少しして自動で窓が広がる（タップならすぐ）
+  revealHop(700)
 }
 
 function main(): void {
@@ -2142,6 +2153,8 @@ function main(): void {
   // スコープ専用モードから戻った: ホームを通らず、前にいた場所からワールドを続ける（立ち上げの画面のうしろで組み立てる）
   const returnToWorld = async (spot: ReturnSpot) => {
     busy = true
+    // 組み立ての途中でのぞき窓をタップしたら、済み次第すぐ入る
+    armHop()
     try {
       await nextFrames(2)
       world = startWorld(canvas, shell)
@@ -2149,13 +2162,10 @@ function main(): void {
       await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
       shell.home.hide()
       document.body.classList.add('in-world')
-      // スコープを閉じた時と同じく、世界がぼけた寄りから戻ってくる
-      if (!document.body.classList.contains('is-reduce-motion')) {
-        document.body.classList.add('is-unscoping')
-        window.setTimeout(() => document.body.classList.remove('is-unscoping'), 650)
-      }
       dropSplash(false)
-      hideHop()
+      // 本物のワールドを 1 コマ描いてから、のぞき窓のピントを合わせ、窓を広げて入る（ぼけた寄りから戻る演出はのぞき窓が受け持つ）
+      await nextFrames(1)
+      focusHop()
       canvas.focus()
       if (handoff.guide !== null) shell.guide.resume(handoff.guide)
       else shell.guide.autoStart(shell.store.list().length > 0)

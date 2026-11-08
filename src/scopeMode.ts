@@ -65,13 +65,48 @@ function setSpot(url: URL, spot: ReturnSpot, guide: number | null): void {
 
 let leaving = false
 
+const SHOT_KEY = 'awl.hopShot'
+const SHOT_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/
+
+/** スコープに入る前のワールドの小さな絵（のぞき窓の中にぼやけて見せる）。ワールドの側で、入れ替える前に保存する */
+export function saveHopShot(dataUrl: string): void {
+  try {
+    if (SHOT_RE.test(dataUrl)) sessionStorage.setItem(SHOT_KEY, dataUrl)
+  } catch {
+    // 保存できなくても続ける（窓の中は紺のレンズになる）
+  }
+}
+
+function readShot(): string | null {
+  try {
+    const v = sessionStorage.getItem(SHOT_KEY)
+    return v && SHOT_RE.test(v) ? v : null
+  } catch {
+    return null
+  }
+}
+
+const hopEl = () => document.getElementById('hop')
+const reduced = () =>
+  document.body.classList.contains('is-reduce-motion') || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)
+
+/** のぞき窓の中身: solid = 紺のレンズ、see = 下の画面がうすく見える、shot = 入る前のワールドの小さな絵 */
+function setView(view: 'solid' | 'see' | 'shot'): void {
+  const el = hopEl()
+  if (!el) return
+  const shot = view === 'shot' ? readShot() : null
+  el.classList.toggle('is-solid', view === 'solid' || (view === 'shot' && !shot))
+  el.classList.toggle('has-shot', !!shot)
+  if (shot) el.style.setProperty('--shot', `url("${shot}")`)
+}
+
 /**
- * 行き来の画面（index.html の #hop）。to = スコープへ、back = ワールドへ。
- * 出す時は 0.25 秒でふわっと出し、出しきってからページを入れ替える（入れ替わった先は最初から同じ画面が出ている）
+ * 行き来の画面（index.html の #hop、のぞき窓）を出す。to = スコープへ、back = ワールドへ。
+ * 0.25 秒でふわっと出し、出しきってからページを入れ替える（入れ替わった先は最初から同じ画面が出ている）
  */
 async function showHop(dir: 'to' | 'back'): Promise<void> {
   const root = document.documentElement
-  const el = document.getElementById('hop')
+  const el = hopEl()
   // スコップの絵を先に読み終えておく（出した瞬間に遅れて現れて、カクついて見えないように）
   await Promise.race([primeHop(), new Promise((r) => window.setTimeout(r, 150))])
   root.classList.remove('hop-to', 'hop-back')
@@ -80,12 +115,13 @@ async function showHop(dir: 'to' | 'back'): Promise<void> {
   } catch {
     // 読めなくても続ける
   }
+  setView(dir === 'back' ? 'shot' : 'solid')
   root.classList.add('is-hop', `hop-${dir}`)
-  if (!el) return Promise.resolve()
-  el.classList.remove('is-out', 'is-fade-in')
+  if (!el) return
+  el.classList.remove('is-out', 'is-open', 'is-focus', 'is-fade-in')
   void el.offsetWidth
   el.classList.add('is-fade-in')
-  // 出しきってから入れ替える（スコップが広がり終わる 0.35 秒）
+  // 出しきってから入れ替える（スコップが出てくる 0.35 秒）
   return new Promise((r) => window.setTimeout(r, 360))
 }
 
@@ -96,16 +132,82 @@ export function primeHop(): Promise<void> {
   return img.decode().catch(() => undefined)
 }
 
-/** 行き来の画面を消す（次の画面が出せるようになったら呼ぶ）。0.3 秒で薄れる */
+function cleanup(): void {
+  const el = hopEl()
+  document.documentElement.classList.remove('is-hop', 'hop-to', 'hop-back')
+  el?.classList.remove('is-out', 'is-open', 'is-focus', 'is-fade-in')
+}
+
+/** 行き来の画面を 0.3 秒で薄くして消す（失敗した時・動きをへらす時） */
 export function hideHop(): void {
-  const root = document.documentElement
-  const el = document.getElementById('hop')
-  if (!el || !root.classList.contains('is-hop')) return
+  const el = hopEl()
+  if (!el || !document.documentElement.classList.contains('is-hop')) return
   el.classList.add('is-out')
-  window.setTimeout(() => {
-    root.classList.remove('is-hop', 'hop-to', 'hop-back')
-    el.classList.remove('is-out', 'is-fade-in')
-  }, 350)
+  window.setTimeout(cleanup, 350)
+}
+
+let opened = false
+/** 窓が広がって画面いっぱいになり、消える（動きをへらす時はフェード） */
+function openHop(): void {
+  const el = hopEl()
+  if (opened || !el || !document.documentElement.classList.contains('is-hop')) return
+  opened = true
+  if (reduced()) {
+    hideHop()
+    return
+  }
+  el.classList.remove('is-fade-in')
+  el.classList.add('is-open')
+  window.setTimeout(cleanup, 650)
+}
+
+/** のぞき窓のタップ: 待たずに開ける近道（開けるための必須の操作ではない）。音の解放のためタップは止めずに通す */
+let ready = false
+let tapped = false
+function bindTap(): void {
+  const el = hopEl()
+  if (!el || el.dataset.bound) return
+  el.dataset.bound = '1'
+  el.addEventListener('click', () => {
+    tapped = true
+    if (ready) openHop()
+  })
+}
+
+/**
+ * スコープ専用モードの入場: 一覧を組んだら呼ぶ。窓の中に一覧がうすく見え、holdMs たったら自動で窓が広がる。タップならすぐ広がる
+ */
+export function revealHop(holdMs: number): void {
+  bindTap()
+  setView('see')
+  ready = true
+  if (tapped) {
+    openHop()
+    return
+  }
+  window.setTimeout(openHop, holdMs)
+}
+
+/** ワールドへ戻った時: 組み立てが済む前から、タップを受けられるようにする（済んだらすぐ入る） */
+export function armHop(): void {
+  bindTap()
+}
+
+/**
+ * ワールドへ戻った時: 組み立てが済んで 1 コマ描いたら呼ぶ。窓の中のぼやけた絵が消えて本物のワールドにピントが合い、
+ * 少し見せてから自動で窓が広がる。タップされていたら（組み立て中のタップも）すぐ広がる。動きをへらす時はフェードだけ
+ */
+export function focusHop(): void {
+  bindTap()
+  ready = true
+  const el = hopEl()
+  if (!el) return
+  if (tapped || reduced()) {
+    openHop()
+    return
+  }
+  el.classList.add('is-focus')
+  window.setTimeout(openHop, 900)
 }
 
 /** 3D のワールドから、スコープ専用モードへ */

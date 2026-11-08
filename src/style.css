@@ -6284,78 +6284,120 @@ body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
   .coach-card::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(255, 253, 246); }
 }
 
-/* ---- スコープとワールドの行き来の画面（11/8）。双眼鏡をのぞく演出の暗転の続きとして、レンズの中にスコップ ---- */
+/* ---- スコープとワールドの行き来の画面（11/8）: のぞき窓 ----
+   暗い地に 2 つの丸い窓（双眼鏡をのぞく演出 .sc-curtain と同じ、丸い穴のマスク）。窓の中は .hop-view:
+   - is-solid: 紺のレンズ（うしろがまだ出せない時。ワールドから移る時と、スコープの一覧ができる前）
+   - 何も付かない: うすく暗くした下の画面（スコープの一覧）が窓の中にぼんやり見える
+   - has-shot: スコープに入る前のワールドの小さな絵（96px）を引き伸ばした物。ぼかし（filter・backdrop-filter）は使わない
+   is-focus でその絵が消えて、うしろの本物のワールドがくっきり見える（ピントが合う）。is-open で窓が広がって画面いっぱいに */
+@property --hop-k { syntax: '<number>'; inherits: true; initial-value: 1; }
 .hop {
-  --r: clamp(64px, min(21vw, 16vh), 124px);
-  --off: calc(var(--r) * 0.62);
+  --lens: clamp(64px, min(21vw, 16vh), 124px);
+  --r: calc(var(--lens) * var(--hop-k));
+  --off: calc(var(--lens) * 0.62);
+  --cy: 46%;
   position: fixed;
   inset: 0;
   z-index: 1001;
   display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 26px;
-  background: radial-gradient(120% 80% at 50% 44%, #1d2640 0%, #0d1222 70%);
+  overflow: hidden;
+  cursor: pointer;
   color: #fff6e6;
   font-family: var(--font-logo);
+  -webkit-tap-highlight-color: transparent;
   transition: opacity 0.3s ease;
 }
-html.is-hop .hop { display: flex; }
+html.is-hop .hop { display: block; }
 html.is-hop #splash { display: none; }
-/* 出す時（移る前のページ）: 地は 0.25 秒でふわっと、レンズと文字は少し小さい所から、スコップはさらに小さい所から広がって出る */
-.hop.is-fade-in { animation: hop-in 0.25s ease both; }
-.hop.is-fade-in :is(.hop-lens, .hop-text) { animation: hop-pop 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
-.hop.is-fade-in .hop-scop { animation: hop-scop-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both, hop-bob 1.1s ease-in-out 0.35s infinite alternate; }
-/* 消す時（入れ替わった先のページ）: 0.3 秒で薄れながら、レンズが少しだけ縮む */
-.hop.is-out { opacity: 0; pointer-events: none; }
-.hop-lens, .hop-text { transition: transform 0.3s ease; }
-.hop.is-out :is(.hop-lens, .hop-text) { transform: scale(0.96); }
-@keyframes hop-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hop-pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
-@keyframes hop-scop-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.78); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-.hop-lens { position: relative; width: calc((var(--off) + var(--r)) * 2); height: calc(var(--r) * 2); }
+.hop-view {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% var(--cy), rgba(13, 18, 34, 0.35), rgba(13, 18, 34, 0.7) 60%);
+  transition: opacity 0.55s ease, background-color 0.4s ease;
+}
+.hop.is-solid .hop-view { background: radial-gradient(circle at 50% var(--cy), #2a3658 0%, #121a30 60%); }
+.hop.has-shot .hop-view {
+  background: linear-gradient(rgba(13, 18, 34, 0.18), rgba(13, 18, 34, 0.18)), var(--shot) center / cover no-repeat;
+  transform: scale(1.04);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.hop.is-focus .hop-view { opacity: 0; transform: none; }
+.hop-curtain {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 50% var(--cy), #1d2640 0%, #0d1222 70%);
+  -webkit-mask-image:
+    radial-gradient(circle var(--r) at calc(50% - var(--off)) var(--cy), transparent 99%, #000 100%),
+    radial-gradient(circle var(--r) at calc(50% + var(--off)) var(--cy), transparent 99%, #000 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle var(--r) at calc(50% - var(--off)) var(--cy), transparent 99%, #000 100%),
+    radial-gradient(circle var(--r) at calc(50% + var(--off)) var(--cy), transparent 99%, #000 100%);
+  mask-composite: intersect;
+}
 .hop-rim {
   position: absolute;
-  top: 0;
+  top: calc(var(--cy) - var(--r));
   width: calc(var(--r) * 2);
   height: calc(var(--r) * 2);
   box-sizing: border-box;
   border-radius: 50%;
   border: 6px solid #f4c242;
-  background: radial-gradient(circle at 42% 36%, rgba(120, 160, 255, 0.16), rgba(13, 18, 34, 0) 70%);
-  box-shadow: 0 0 0 3px rgba(43, 29, 18, 0.9), 0 0 28px rgba(244, 194, 66, 0.45), inset 0 0 40px rgba(13, 18, 34, 0.75);
+  box-shadow: 0 0 0 3px rgba(43, 29, 18, 0.9), 0 0 28px rgba(244, 194, 66, 0.45), inset 0 0 36px rgba(13, 18, 34, 0.7);
 }
-.hop-l { left: 0; }
-.hop-r { right: 0; }
+.hop-l { left: calc(50% - var(--off) - var(--r)); }
+.hop-r { left: calc(50% + var(--off) - var(--r)); }
+/* スコップは右の窓のふちから顔を出す */
 .hop-scop {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: calc(var(--r) * 1.25);
+  left: calc(50% + var(--off) + var(--lens) * 0.42);
+  top: calc(var(--cy) + var(--lens) * 0.12);
+  width: calc(var(--lens) * 0.82);
   height: auto;
-  transform: translate(-50%, -52%);
-  animation: hop-bob 1.1s ease-in-out infinite alternate;
+  transform: rotate(-10deg);
+  transform-origin: 30% 90%;
+  animation: hop-bob 1.2s ease-in-out infinite alternate;
+  transition: opacity 0.2s ease;
 }
-@keyframes hop-bob { from { transform: translate(-50%, -50%); } to { transform: translate(-50%, -57%); } }
-.hop-text { margin: 0; display: flex; align-items: center; font-size: clamp(16px, 4.4vw, 22px); font-weight: 900; letter-spacing: 0.06em; }
-.hop-text > span:not(.hop-dots) { display: none; }
+@keyframes hop-bob { from { transform: rotate(-10deg); } to { transform: rotate(-4deg) translateY(-4%); } }
+.hop-text {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: calc(var(--cy) + var(--lens) + 26px);
+  margin: 0;
+  text-align: center;
+  font-size: clamp(15px, 4.2vw, 21px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  transition: opacity 0.2s ease;
+}
+.hop-text > span { display: none; }
 html.hop-to:not(.hop-en) .hop-to,
 html.hop-back:not(.hop-en) .hop-back,
 html.hop-to.hop-en .hop-to-en,
 html.hop-back.hop-en .hop-back-en { display: inline; }
-.hop-dots { display: inline-flex; gap: 5px; margin-left: 8px; }
-.hop-dots i { width: 6px; height: 6px; border-radius: 50%; background: #f4c242; animation: hop-dot 0.9s ease-in-out infinite; }
-.hop-dots i:nth-child(2) { animation-delay: 0.15s; }
-.hop-dots i:nth-child(3) { animation-delay: 0.3s; }
-@keyframes hop-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
-/* 動きをへらす時: 広がる・揺れる・縮むはやめて、フェードだけ */
+/* 出す時（移る前のページ）: 地は 0.25 秒でふわっと、窓は少し小さい所から、スコップはふちの下から出てくる */
+.hop.is-fade-in { animation: hop-in 0.25s ease both, hop-k-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.hop.is-fade-in .hop-scop { animation: hop-scop-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both, hop-bob 1.2s ease-in-out 0.35s infinite alternate; }
+.hop.is-fade-in .hop-text { animation: hop-in 0.3s ease both; }
+@keyframes hop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hop-k-in { from { --hop-k: 0.86; } to { --hop-k: 1; } }
+@keyframes hop-scop-in { from { opacity: 0; transform: rotate(-10deg) translateY(30%) scale(0.8); } to { opacity: 1; transform: rotate(-10deg); } }
+/* 窓が広がって画面いっぱいに（双眼鏡をのぞきこむ）。広がる間はタップを受けない */
+.hop.is-open { animation: hop-open 0.6s cubic-bezier(0.55, 0, 0.7, 0.3) forwards; pointer-events: none; }
+.hop.is-open .hop-view { opacity: 0; }
+.hop.is-open :is(.hop-scop, .hop-text) { opacity: 0; }
+@keyframes hop-open { from { --hop-k: 1; } to { --hop-k: 9; } }
+/* 消す時（失敗した時・動きをへらす時）: 0.3 秒で薄れる */
+.hop.is-out { opacity: 0; pointer-events: none; }
+/* 動きをへらす時: 窓の広がり・ピントの変化・スコップの動きはやめ、全体のフェードだけ（scopeMode.ts も is-open の代わりに is-out を使う） */
 @media (prefers-reduced-motion: reduce) {
-  .hop .hop-scop, .hop-dots i { animation: none !important; }
-  .hop.is-fade-in :is(.hop-lens, .hop-text) { animation: hop-in 0.25s ease both; }
-  .hop.is-out :is(.hop-lens, .hop-text) { transform: none; }
+  .hop, .hop * { animation: none !important; }
+  .hop.is-fade-in { animation: hop-in 0.25s ease both !important; }
+  .hop.has-shot .hop-view { transform: none; }
 }
-body.is-reduce-motion .hop .hop-scop,
-body.is-reduce-motion .hop-dots i { animation: none !important; }
-body.is-reduce-motion .hop.is-fade-in :is(.hop-lens, .hop-text) { animation: hop-in 0.25s ease both; }
-body.is-reduce-motion .hop.is-out :is(.hop-lens, .hop-text) { transform: none; }
+body.is-reduce-motion .hop,
+body.is-reduce-motion .hop * { animation: none !important; }
+body.is-reduce-motion .hop.is-fade-in { animation: hop-in 0.25s ease both !important; }
+body.is-reduce-motion .hop.has-shot .hop-view { transform: none; }
