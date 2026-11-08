@@ -15,6 +15,16 @@ export function reactButtonsMarkup(key: string, variant: 'dark' | 'light' = 'dar
   return `<span class="rx rx-${variant}${labels ? ' rx-labels' : ''}">${btn('like', 'i-like', t('react'), r.like)}${btn('fav', 'i-heart', t('favorite'), r.fav)}</span>`
 }
 
+/**
+ * 文の中の {like}・{fav} を、ボタンと同じ絵（押した時の色の丸）に置き換える。絵文字の 👍・❤️ は端末ごとに絵が違うので使わない。
+ * text は esc 済みのものを渡す
+ */
+export function withReactMarks(text: string): string {
+  const mark = (kind: 'like' | 'fav', icon: string, label: string) =>
+    `<span class="rx-mark rx-mark-${kind}" role="img" aria-label="${esc(label)}"><svg class="ico" aria-hidden="true"><use href="#${icon}" /></svg></span>`
+  return text.replace(/\{like\}/g, mark('like', 'i-like', t('react'))).replace(/\{fav\}/g, mark('fav', 'i-heart', t('favorite')))
+}
+
 /** 押された 👍/❤️ を切り替える。ボタンでなければ false（呼び出し側はほかの処理へ進む） */
 export function handleReactClick(target: Element | null): boolean {
   const btn = target?.closest<HTMLElement>('[data-react]')

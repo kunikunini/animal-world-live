@@ -11,7 +11,7 @@ import { SCOPE_MS } from './scope'
 import { animalName, getLang, onLangChange, speciesName, subAreaName, t } from './i18n'
 import type { I18nKey } from './i18n'
 import { hideView, showView } from './transition'
-import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
+import { handleReactClick, reactButtonsMarkup, syncReactButtons, withReactMarks } from './reactButtons'
 import { reactions, videoKeyOf } from '../data/reactions'
 
 /**
@@ -652,9 +652,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
           <div class="cat-top-right"><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
         <section class="cat-sec">
-          <p class="cat-fav-lead">${items.length ? meta('catFavsLead') : meta('catFavsEmpty')}</p>
+          <p class="cat-fav-lead">${withReactMarks(items.length ? meta('catFavsLead') : meta('catFavsEmpty'))}</p>
           ${items.length ? `<div class="cat-fav-grid">${cards}</div>` : ''}
-          <p class="cat-fav-note">${meta('reactLocal')}</p>
+          <p class="cat-fav-note">${withReactMarks(meta('reactLocal'))}</p>
         </section>
       </div>`
   }

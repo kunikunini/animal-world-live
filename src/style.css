@@ -6324,6 +6324,13 @@ body.is-reduce-motion .rx-btn.is-pop { animation: none; }
 /* お気に入りの一覧 */
 .cat-fav-lead, .cat-fav-note { margin: 0; padding: 0 16px; font-size: 14px; font-weight: 700; color: rgba(255, 246, 230, 0.8); }
 .cat-fav-note { font-size: 12px; color: rgba(255, 246, 230, 0.55); }
+/* 文の中の 👍・❤️ は、ボタンを押した時と同じ色の丸い絵（reactButtons.ts の withReactMarks） */
+.rx-mark { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; margin: 0 0.15em; border-radius: 50%; vertical-align: -0.45em; }
+.rx-mark .ico { width: 62%; height: 62%; }
+.rx-mark-like { background: #f4c242; color: #4a2e05; }
+.rx-mark-like .ico { fill: currentColor; fill-opacity: 0.25; }
+.rx-mark-fav { background: #ff5c7a; color: #fff; }
+.rx-mark-fav .ico { fill: currentColor; }
 .cat-fav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: 20px 14px; padding: 0 16px; }
 .cat-fav-card { position: relative; }
 .cat-fav-card .cat-card, .cat-fav-card .cat-thumb { width: 100%; }
