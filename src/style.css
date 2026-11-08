@@ -6303,7 +6303,8 @@ body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
   overflow: hidden;
   cursor: pointer;
   color: #fff6e6;
-  font-family: var(--font-logo);
+  /* --font-logo（Zen Maru Gothic）は「のぞいてみる」の字だけを取っているので、その字だけ太くなる。行き来の画面は 1 つの書体でそろえる */
+  font-family: var(--font-home);
   -webkit-tap-highlight-color: transparent;
   transition: opacity 0.3s ease;
 }
