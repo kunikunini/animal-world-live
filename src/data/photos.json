@@ -66,7 +66,13 @@
     "r-19kt440": "/faces/r-19kt440.webp",
     "r-1eujohi": "/faces/r-1eujohi.webp",
     "r-5p9jcc": "/faces/r-5p9jcc.webp",
-    "r-xeb8kq": "/faces/r-xeb8kq.webp"
+    "r-xeb8kq": "/faces/r-xeb8kq.webp",
+    "angie": "/faces/angie.webp",
+    "claire": "/faces/claire.webp",
+    "r-18xm0fl": "/faces/r-18xm0fl.webp",
+    "r-2js3ns": "/faces/r-2js3ns.webp",
+    "r-lpd7lb": "/faces/r-lpd7lb.webp",
+    "riley": "/faces/riley.webp"
   },
   "edited": {
     "r-1cb853": "ゆめこ（アメリカバク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
@@ -92,6 +98,7 @@
     "r-agcxtp": "ムック（ユーラシアワシミミズク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
     "r-1k82p5k": "レラ（ワシミミズク）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
     "r-17co4v7": "たけぞう（メンフクロウ）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
-    "alex": "アレックス（ライオン）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）"
+    "alex": "アレックス（ライオン）: 柵の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト）",
+    "r-2js3ns": "さつき（コモンマーモセット）: 人の頭・肩の除去・背景ぼかし（Codex、media-inbox/README の固定プロンプト B）"
   }
 }
