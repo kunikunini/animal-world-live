@@ -28,12 +28,8 @@ interface Grazer {
 }
 
 const FLOCK_CENTER = { x: 22, z: -8 }
-const HERD: ReadonlyArray<{ x: number; z: number; yaw: number; scale: number }> = [
-  { x: -66, z: 34, yaw: 0.6, scale: 1.0 },
-  { x: -58, z: 44, yaw: 2.4, scale: 0.9 },
-  { x: -72, z: 48, yaw: -1.2, scale: 1.05 },
-  { x: -52, z: 54, yaw: 1.9, scale: 0.85 },
-]
+// 草を食む生き物（箱の形のレイヨウ風）は、ハイエナのそばで「誰でもない四角い動物」に見えるので置かない（11/8 くにの指摘）
+const HERD: ReadonlyArray<{ x: number; z: number; yaw: number; scale: number }> = []
 
 function createBirdGeometry(): THREE.BufferGeometry {
   // V 字の板。中央がくぼんだ 2 枚の翼

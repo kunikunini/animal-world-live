@@ -59,6 +59,8 @@ export interface Lion {
    * ears は耳のメッシュ。名前が見つからなければ、その部分の微アニメだけ止まる。
    */
   swapModel: (model: THREE.Object3D, parts: { neck?: THREE.Object3D; ears?: THREE.Object3D[]; tail?: THREE.Object3D }) => void
+  /** 遠景用: swapModel で隠したプリミティブ版を出す／隠す（生成モデル側の表示は呼ぶ側が切り替える）。無い入れ物は遠景では生成モデルごと隠す */
+  showPrimitive?: (on: boolean) => void
 }
 
 export const LION_COLORS = {
@@ -505,6 +507,9 @@ export function createLion(options: LionOptions): Lion {
       animNeck = parts.neck ?? new THREE.Object3D()
       animEars = parts.ears ?? []
       animTail = parts.tail ?? new THREE.Object3D()
+    },
+    showPrimitive: (on) => {
+      primitive.visible = on
     },
   }
 }

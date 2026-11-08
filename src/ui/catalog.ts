@@ -11,7 +11,7 @@ import { SCOPE_MS } from './scope'
 import { animalName, getLang, onLangChange, speciesName, subAreaName, t } from './i18n'
 import type { I18nKey } from './i18n'
 import { hideView, showView } from './transition'
-import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
+import { handleReactClick, reactButtonsMarkup, syncReactButtons, withReactMarks } from './reactButtons'
 import { reactions, videoKeyOf } from '../data/reactions'
 
 /**
@@ -51,13 +51,10 @@ const FEATURED: VideoItem = {
   duration: '3:01',
 }
 
-const SAVANNA_IMAGE = '/home/peek.jpg'
 
 const PAW =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="15.5" rx="4.6" ry="3.8"/><circle cx="6.5" cy="10" r="2"/><circle cx="10" cy="6.8" r="2"/><circle cx="14" cy="6.8" r="2"/><circle cx="17.5" cy="10" r="2"/></svg>'
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>'
-const ZOO =
-  '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10l9-6 9 6M5 10v9h14v-9M10 19v-5h4v5"/></svg>'
 const CHECK =
   '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
 const LOGO =
@@ -67,21 +64,31 @@ const times = (n: number, fn: (i: number) => string) => Array.from({ length: n }
 
 const worldName = (w: WorldInfo) => w.name[getLang()]
 
-/** ワールドのカードの絵（自作 SVG。地形の雰囲気だけ） */
-const WORLD_ART: Partial<Record<WorldKey, string>> = {
-  jungle:
-    '<path d="M0 132V96q30-18 58-4t62-6 62 2 50-6V132z" fill="#0f5a37"/><path d="M28 104c-4-26 6-48 22-60-10 18-12 38-8 60z" fill="#1f8a4f"/><path d="M40 52c14-10 34-10 46 0-16-2-30 0-46 0zM40 52c-14-8-30-6-40 4 14-4 26-4 40-4zM40 52c4-14 18-22 32-22-14 6-24 14-32 22z" fill="#7ad17f"/><path d="M182 108c-2-30 8-52 24-64-12 20-14 42-10 64z" fill="#1f8a4f"/><path d="M196 46c12-12 30-14 36-8-12 0-24 4-36 8zM196 46c-12-10-30-8-36 0 12-2 24-2 36 0z" fill="#7ad17f"/>',
-  south:
-    '<circle cx="178" cy="40" r="20" fill="#ffe08a"/><path d="M0 132v-30q60-10 116-6t116 2V132z" fill="#8f3720"/><path d="M58 98q6-26 40-28t52 8q10 10 16 20z" fill="#c95d36"/><path d="M70 92q14-14 34-14" stroke="#e98a5a" stroke-width="3" fill="none" stroke-linecap="round"/>',
-  partner:
-    '<circle cx="186" cy="32" r="15" fill="#fff1b8"/><path d="M0 132V96q40-22 92-10t82-6 58 6V132z" fill="#5fae4a"/><path d="M0 132v-22q60-12 116-4t116-6V132z" fill="#8fd052"/><path d="M132 98V70l22-16 22 16v28z" fill="#c8402f"/><path d="M128 72l26-20 26 20" stroke="#6a4a3a" stroke-width="5" fill="none" stroke-linejoin="round"/><path d="M146 98V82h16v16z" fill="#f6f1e6"/><path d="M20 112h86M20 104h86" stroke="#f3e2c4" stroke-width="3"/><path d="M24 116v-18M46 116v-18M68 116v-18M90 116v-18" stroke="#b07a48" stroke-width="4" stroke-linecap="round"/>',
-  water:
-    '<circle cx="182" cy="34" r="16" fill="#fff4c2"/><path d="M118 92q14-26 34-26t30 26z" fill="#3f9a5a"/><path d="M128 92q10-16 24-16" stroke="#7ccf7a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M0 132V92q29-8 58 0t58 0 58 0 58 0V132z" fill="#1d6fa6"/><path d="M0 106q29-8 58 0t58 0 58 0 58 0" stroke="#bfefff" stroke-width="3" fill="none"/><path d="M0 132v-12q40-10 80-2t72-6 80 4V132z" fill="#f4dc9c"/><path d="M40 112c0-10 4-16 9-16s9 6 9 16z" fill="#23252b"/><path d="M45 112c0-7 2-11 4-11s4 4 4 11z" fill="#f7f6f2"/><circle cx="49" cy="93" r="5" fill="#23252b"/>',
-  sky:
-    '<circle cx="40" cy="30" r="15" fill="#fff4c8"/><path d="M150 40q4-14 18-12 6-10 18-4 14-2 14 12 10 2 8 10h-62q-6-4 4-6z" fill="#fff"/><path d="M16 66q2-10 14-9 6-8 16-2 10 0 10 9h-38z" fill="#fff" opacity=".9"/><path d="M0 132V96l22-40 14 28 18-52 22 58 14-18 18 28V132z" fill="#8a88c4"/><path d="M36 84l18-52 6 18-10 34zM22 56l6 14-6 4z" fill="#f4e4c8"/><path d="M0 132v-24q60-14 116-6t116-6V132z" fill="#a4d66a"/><path d="M168 132V82" stroke="#7a5431" stroke-width="5"/><path d="M154 82h28" stroke="#7a5431" stroke-width="5" stroke-linecap="round"/><ellipse cx="168" cy="70" rx="10" ry="12" fill="#9a7a5a"/><circle cx="168" cy="60" r="8" fill="#b08a64"/><circle cx="164.5" cy="60" r="3.2" fill="#ffd34a"/><circle cx="171.5" cy="60" r="3.2" fill="#ffd34a"/><circle cx="164.5" cy="60" r="1.5" fill="#1a1410"/><circle cx="171.5" cy="60" r="1.5" fill="#1a1410"/><path d="M162 53l-2-6 5 4zM174 53l2-6-5 4z" fill="#8a6a4a"/><path d="M112 30q8-6 14 0 6-6 14 0" stroke="#3a3550" stroke-width="3" fill="none" stroke-linecap="round"/>',
-  north:
-    '<path d="M0 132V92l40-44 30 30 46-58 50 62 30-26 36 36V132z" fill="#2f5f96"/><path d="M116 20l-18 24 10-4 8 8 8-8 10 4zM40 48l-12 14 7-3 5 5 5-5 7 3z" fill="#fff"/><path d="M0 132v-22q58-12 116-6t116-4V132z" fill="#e9f4fb"/><path d="M180 112l10-28 10 28zM196 116l8-22 8 22z" fill="#1f4f3a"/>',
+/** ワールドのカードの絵: いまのワールドをゲームの中で撮った物（public/worlds/<key>.webp、640×360） */
+const worldImage = (key: WorldKey) => `/worlds/${key}.webp`
+
+/** 動物園からえらぶ: 架空の動物園の絵（public/zoos/、実在の動物園ではない）。参加する動物園は募集中 */
+const ZOO_ART = ['sea', 'forest', 'snow', 'grass']
+
+/** 「どうぶつからえらぶ」の種のアイコン（クレイアニメ風のイラスト。Codex で生成。ライオンは段のいちばん左で /species/lion.webp を直接使う） */
+const SPECIES_ICON: Record<string, string> = {
+  カピバラ: 'capybara',
+  ブチハイエナ: 'hyena',
+  モモイロペリカン: 'pelican',
+  オオカンガルー: 'kangaroo',
+  マーラ: 'mara',
+  ポニー: 'pony',
+  コモンリスザル: 'squirrel-monkey',
 }
+
+/** ライブの窓の下の名前（左から）。配信はまだ無いので、どの窓にも木の看板（文言は子ごとに変える）を赤い丸の下のふちに札として貼る。日本語はくにの看板の絵（文字入り、ロープを外した）、英語は木の色の札に英文 */
+const LIVE_SPECIES: Array<{ ja: string; en: string; away: { ja: string; en: string }; sign: string }> = [
+  { ja: 'ライオン', en: 'Lion', away: { ja: '帰宅中', en: 'Gone home' }, sign: 'home' },
+  { ja: 'アメリカバク', en: 'Lowland tapir', away: { ja: 'おひるね中', en: 'Napping' }, sign: 'nap' },
+  { ja: 'ブチハイエナ', en: 'Spotted hyena', away: { ja: 'ごはん中', en: 'Eating' }, sign: 'eat' },
+  { ja: 'ポニー', en: 'Pony', away: { ja: 'おさんぽ中', en: 'On a walk' }, sign: 'walk' },
+  { ja: 'カンガルー', en: 'Kangaroo', away: { ja: 'おでかけ中', en: 'Out & about' }, sign: 'out' },
+]
 
 /** いちばん上の大きな枠: 新着の映像を何本まで順に見せるか、1 本を何ミリ秒見せるか */
 const HERO_MAX = 5
@@ -98,6 +105,21 @@ interface HeroSlide {
 
 /** 一覧の小さな絵は 640×360 の縮小版（1280×720 の表紙を何枚も並べると、iPhone でメモリを使いすぎる） */
 const thumb = (poster: string) => poster.replace(/_poster\.jpg$/, '_poster-sm.jpg')
+/**
+ * 段のカードの表紙。スマホのカードは幅 208px なので、その 2 倍の 416px の版（_poster-xs.jpg）を出す。
+ * 幅 768px 以上（カード 260px）だけ 640px の版。iPhone は画像を「幅×高さ×4 バイト」に広げて持つので、大きい版を出さない
+ */
+const cardImg = (poster: string) => {
+  const sm = esc(thumb(poster))
+  const xs = esc(poster.replace(/_poster\.jpg$/, '_poster-xs.jpg'))
+  return `<picture><source media="(min-width: 768px)" srcset="${sm}" /><img src="${xs}" alt="" loading="lazy" decoding="async" /></picture>`
+}
+
+/** スタッフが撮った映像の表紙の左上に付ける札（その映像にだけ付ける。段の見出しだけでは、どの映像の話か伝わらないため） */
+const CAM =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg>'
+const staffChip = (extra = '', hidden = false) =>
+  `<span class="cat-staff-chip${extra}"${hidden ? ' hidden' : ''}>${CAM}<span>${esc(t('staffShot'))}</span></span>`
 
 export function createCatalog(store: FriendBookStore): CatalogView {
   const root = document.getElementById('catalog') as HTMLElement
@@ -170,7 +192,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   const fillSlideText = (el: HTMLElement, i: number) => {
     const sl = heroSlides[i]
     if (!sl) return
-    ;(el.querySelector('.cat-badge-staff') as HTMLElement).hidden = !sl.video.staff
+    ;(el.querySelector('.cat-hero-staff') as HTMLElement).hidden = !sl.video.staff
     ;(el.querySelector('.cat-hero-meta') as HTMLElement).textContent = sl.meta
     ;(el.querySelector('.cat-hero-title') as HTMLElement).textContent = sl.title
     const watch = el.querySelector<HTMLElement>('.cat-watch')
@@ -193,6 +215,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const img = pane.querySelector<HTMLImageElement>('.cat-hero-img')
     if (!sl || !img) return Promise.resolve()
     pane.classList.toggle('is-portrait', sl.video.portrait)
+    // 縦長の映像の左右は、あらかじめぼかした小さい表紙（160×90）で埋める（大きな面を filter でぼかさない。iPhone のメモリ）
+    if (sl.video.portrait) pane.style.setProperty('--blur', `url("${sl.video.poster.replace(/_poster\.jpg$/, '_poster-blur.jpg')}")`)
+    else pane.style.removeProperty('--blur')
     if (img.getAttribute('src') !== sl.video.poster) img.src = sl.video.poster
     const done = img.decode ? img.decode().catch(() => undefined) : Promise.resolve()
     return Promise.race([done, new Promise<void>((r) => window.setTimeout(r, 700))])
@@ -306,6 +331,11 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     )
   }
 
+  /**
+   * 新着の枠で音なしのプレビュー映像を流すか（11/8 くに: スコープの一覧を開いて 0.7 秒で iPhone がページを落とした件の第 2 弾）。
+   * 一覧を開いている間は <video> を 1 本も作らず、表紙の絵だけで切り替える。映像を読むのは「観察する」でモニターを開いた時だけ
+   */
+  const HERO_PREVIEW_VIDEO = false
   let heroVideoTimer = 0
   /** のぞく演出の間は映像を作らない（演出が終わる時刻。performance.now()） */
   let heroNotBefore = 0
@@ -331,7 +361,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     heroVideoTimer = 0
     const el = heroEl()
     const sl = heroSlides[heroIndex]
-    if (!el || !sl || !heroActive() || !heroRunning() || heroBusy) return
+    if (!HERO_PREVIEW_VIDEO || !el || !sl || !heroActive() || !heroRunning() || heroBusy) return
     const v = document.createElement('video')
     v.className = 'cat-hero-video'
     v.classList.toggle('is-portrait', sl.video.portrait)
@@ -370,7 +400,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const sl = heroSlides[heroIndex]
     if (el) {
       const v = el.querySelector<HTMLVideoElement>('.cat-hero-video')
-      if (running && sl) {
+      if (HERO_PREVIEW_VIDEO && running && sl) {
         if (v && v.dataset.src === sl.video.url) {
           if (v.paused) void v.play().catch(() => undefined)
         } else {
@@ -566,6 +596,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     title: string
     duration: string
     place: string
+    /** スタッフが撮った映像（表紙に「スタッフ撮影」の札を付ける） */
+    staff: boolean
   }
   const placeOf = (a: Animal) => {
     const w = a.world ? getWorld(a.world) : undefined
@@ -574,16 +606,16 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   const allVideoItems = (): VidItem[] => {
     const out: VidItem[] = []
     const main = getAnimal(FEATURED.animalId)
-    if (main) out.push({ key: videoKeyOf(main), animal: main, poster: FEATURED.poster, title: t('catRecTitle'), duration: FEATURED.duration, place: t('catSavanna') })
+    if (main) out.push({ key: videoKeyOf(main), animal: main, poster: FEATURED.poster, title: t('catRecTitle'), duration: FEATURED.duration, place: t('catSavanna'), staff: false })
     for (const v of SPECIES_VIDEOS) {
       const first = animalsInVideo(v.id)[0]
-      if (first) out.push({ key: v.id, animal: first, poster: v.poster, title: v.title[getLang()], duration: v.duration, place: placeOf(first) })
+      if (first) out.push({ key: v.id, animal: first, poster: v.poster, title: v.title[getLang()], duration: v.duration, place: placeOf(first), staff: false })
     }
     for (const v of STAFF_VIDEOS) {
       const named = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
       const a = named ?? listReadyAnimals().find((x) => x.videoId === v.id)
       if (!a) continue
-      out.push({ key: v.id, animal: a, poster: v.poster, title: named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()], duration: v.duration, place: placeOf(a) })
+      out.push({ key: v.id, animal: a, poster: v.poster, title: named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()], duration: v.duration, place: placeOf(a), staff: true })
     }
     return out
   }
@@ -599,7 +631,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   /** 横長の映像カード（数は出さない。👍・❤️ の状態はモニターと新着の枠のボタンで見る） */
   const videoCardHtml = (it: VidItem) =>
-    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
+    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb">${cardImg(it.poster)}${it.staff ? staffChip() : ''}<span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
 
   /** お気に入り（❤️ を押した映像、新しい順）の一覧 */
   const renderFavsPage = () => {
@@ -608,7 +640,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const cards = items
       .map(
         (it) =>
-          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
+          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async" />${it.staff ? staffChip() : ''}<span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
       )
       .join('')
     root.innerHTML = `
@@ -620,9 +652,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
           <div class="cat-top-right"><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
         <section class="cat-sec">
-          <p class="cat-fav-lead">${items.length ? meta('catFavsLead') : meta('catFavsEmpty')}</p>
+          <p class="cat-fav-lead">${withReactMarks(items.length ? meta('catFavsLead') : meta('catFavsEmpty'))}</p>
           ${items.length ? `<div class="cat-fav-grid">${cards}</div>` : ''}
-          <p class="cat-fav-note">${meta('reactLocal')}</p>
+          <p class="cat-fav-note">${withReactMarks(meta('reactLocal'))}</p>
         </section>
       </div>`
   }
@@ -646,7 +678,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
               .filter((a) => a.species === sp)
               .map((a) => {
                 const has = store.has(a.id)
-                return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
+                return `<button type="button" class="cat-face cat-face-l" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}${has ? esc(`（${t('inBook')}）`) : ''}">${faceMarkup(a, 'cat-face-img', true)}<span>${esc(animalName(a))}</span>${has ? `<span class="cat-face-check" aria-hidden="true">${CHECK}</span>` : ''}</button>`
               })
               .join('')
             const film = videoForSpecies(sp) || inSub.some((a) => a.species === sp && a.video.staff)
@@ -668,12 +700,75 @@ export function createCatalog(store: FriendBookStore): CatalogView {
           <h1 class="cat-logo"><span>${esc(worldName(w))}</span></h1>
           <div class="cat-top-right"><button type="button" class="cat-icon-btn cat-top-fav" data-favs="1" aria-label="${meta('catFavs')}" title="${meta('catFavs')}"><svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg></button><button type="button" class="cat-top-book" data-book="1"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg><span>${meta('book')}</span></button></div>
         </header>
-        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}">${w.key === 'africa' ? `<img class="cat-world-art" src="${SAVANNA_IMAGE}" alt="" style="object-fit:cover" />` : `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? ''}</svg>`}<span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
+        <div class="wp-banner" style="--w1:${w.colors[0]};--w2:${w.colors[1]}"><img class="cat-world-art" src="${worldImage(w.key)}" alt="" decoding="async" style="object-fit:cover" /><span class="cat-world-shade" aria-hidden="true"></span>${only}<p class="wp-lead">${meta('catWorldLead')}</p></div>
         ${body}
       </div>`
   }
 
-  const render = () => {
+  /**
+   * 開いた瞬間に全部の段を組み上げない（11/8 iPhone で一覧を開いて 0.7〜1.2 秒でページごと読み直された）。
+   * 開いた時は見出しと最初の段（ライブ）だけ作り、ほかの段は同じ高さの空の枠（.cat-lazy）にしておく。
+   * 枠が画面に入った時（IntersectionObserver）に、その段だけ組み上げる。一度に組むのは 1 回の知らせで入った枠だけ。
+   * のぞく演出の途中で足した段の「下から並ぶ」動きは、開いた時から数えた元の時刻に合わせる
+   */
+  const lazyHtml = new Map<string, string>()
+  let lazyIo: IntersectionObserver | null = null
+  let openedAt = 0
+  /** 空の枠の高さ（px、375px 幅で測った段の高さ。段が組み上がった時にずれが小さいように） */
+  const LAZY_H: Record<string, number> = { hero: 440, friends: 141, worlds: 175, animals: 168, recs: 215, staff: 214, zoos: 139 }
+  const stopLazy = () => {
+    lazyIo?.disconnect()
+    lazyIo = null
+    lazyHtml.clear()
+  }
+  const lazySlot = (key: string, html: string) => {
+    if (!html) return ''
+    lazyHtml.set(key, html)
+    return `<div class="cat-lazy" data-lazy="${key}" style="min-height:${LAZY_H[key] ?? 160}px" aria-hidden="true"></div>`
+  }
+  const fillLazy = (slot: HTMLElement) => {
+    const key = slot.dataset.lazy ?? ''
+    const html = lazyHtml.get(key)
+    lazyIo?.unobserve(slot)
+    lazyHtml.delete(key)
+    if (html === undefined || !slot.isConnected) return
+    const tpl = document.createElement('template')
+    tpl.innerHTML = html
+    const added = Array.from(tpl.content.children) as HTMLElement[]
+    slot.replaceWith(tpl.content)
+    if (root.classList.contains('is-scope-in')) {
+      const since = (performance.now() - openedAt) / 1000
+      for (const el of added) {
+        const d = parseFloat(getComputedStyle(el).animationDelay) || 0
+        el.style.animationDelay = `${(d - since).toFixed(2)}s`
+      }
+    }
+    if (key === 'hero') mountHero()
+  }
+  /** 残りの空の枠を全部組む（ジャンプ・👍❤️ の直し・閉じる前など、段がそろっている必要がある時） */
+  const fillAllLazy = () => {
+    root.querySelectorAll<HTMLElement>('.cat-lazy').forEach(fillLazy)
+    stopLazy()
+  }
+  const watchLazy = () => {
+    const sc = scrollEl()
+    const slots = root.querySelectorAll<HTMLElement>('.cat-lazy')
+    if (!sc || !slots.length) return
+    if (!('IntersectionObserver' in window)) {
+      fillAllLazy()
+      return
+    }
+    lazyIo = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) fillLazy(e.target as HTMLElement)
+      },
+      { root: sc, rootMargin: '0px 0px 120px 0px' },
+    )
+    slots.forEach((el) => lazyIo!.observe(el))
+  }
+
+  const render = (staged = false) => {
+    stopLazy()
     // 描き直す前に、今の枠の映像を要素ごと手放す（外れた <video> が読み続けないように）
     dropHeroVideo()
     window.clearTimeout(heroTimer)
@@ -703,11 +798,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const live = section(
       'live',
       `<span class="cat-live-dot"></span>${meta('catRowLive')}`,
-      `<div class="cat-row">${times(
-        5,
-        () =>
-          `<div class="cat-live" aria-hidden="true"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-tag">LIVE</span></div><span class="cat-bar-sil" style="width:52px"></span></div>`,
-      )}</div>`,
+      `<div class="cat-row">${LIVE_SPECIES.map(
+        (sp) =>
+          `<div class="cat-live" role="img" aria-label="${esc(`${sp[getLang()]}（${sp.away[getLang()]}）`)}"><div class="cat-live-ring"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-live-sign${getLang() === 'ja' ? ' is-art' : ''}" style="--sign:url(/ui/label-${sp.sign}.webp)" aria-hidden="true"><span>${esc(sp.away[getLang()])}</span></span></div><span class="cat-live-name">${esc(sp[getLang()])}</span></div>`,
+      ).join('')}</div>`,
     )
 
     // いちばん上: 新着の映像（アプリに足した新しい順）を最大 5 本、時間で切り替える。今の 1 本は音なしで流す（下の mountHero）
@@ -716,13 +810,15 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const hero = heroSlides.length
       ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero" aria-roledescription="carousel" aria-label="${meta('catNew')}">
-            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" /></div>
-            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" /></div>
+            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" decoding="async" /></div>
+            <div class="cat-hero-pane"><img class="cat-hero-img" alt="" decoding="async" /></div>
             <!-- 映像の <video> は表紙を見せて落ち着いてから 1 本だけ作る（startHeroVideo） -->
             <div class="cat-hero-shade" aria-hidden="true"></div>
-            <div class="cat-hero-corner">
-              <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
+            <!-- 再生・停止は映像の真ん中（くにの指示） -->
               ${heroSlides.length ? `<button type="button" class="cat-hero-ctl" data-hero-ctl="1" aria-pressed="false" aria-label="${meta('heroPause')}"><svg class="ico ico-fill" aria-hidden="true"><use href="#i-pause" /></svg></button>` : ''}
+            <div class="cat-hero-corner">
+              <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}</span>
+              ${staffChip(' cat-hero-staff', true)}
             </div>
             ${
               heroSlides.length > 1
@@ -746,7 +842,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       : main
         ? `<section class="cat-sec cat-hero-sec" data-sec="hero">
           <div class="cat-hero">
-            <img class="cat-hero-img" src="${esc(FEATURED.poster)}" alt="" />
+            <img class="cat-hero-img" src="${esc(FEATURED.poster)}" alt="" decoding="async" />
             <div class="cat-hero-shade" aria-hidden="true"></div>
             <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}</span>
             <div class="cat-hero-text">
@@ -767,7 +863,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       `<div class="cat-row cat-row-faces">${friends
         .map(
           (a) =>
-            `<button type="button" class="cat-face" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}">${faceMarkup(a, 'cat-face-img')}<span>${esc(animalName(a))}</span></button>`,
+            `<button type="button" class="cat-face" data-watch="${esc(a.id)}" aria-label="${esc(t('lookAt', { name: animalName(a) }))}">${faceMarkup(a, 'cat-face-img', true)}<span>${esc(animalName(a))}</span></button>`,
         )
         .join('')}<button type="button" class="cat-face cat-face-add" data-back="1"><span class="cat-face-plus" aria-hidden="true">+</span><span>${meta('catMeet')}</span></button></div>`,
       `<button type="button" class="cat-h-link" data-book="1">${meta('book')} ›</button>`,
@@ -775,7 +871,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
     const worldCard = (w: WorldInfo) => {
       const style = `--w1:${w.colors[0]};--w2:${w.colors[1]}`
-      const art = `<svg class="cat-world-art" viewBox="0 0 232 132" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${WORLD_ART[w.key] ?? '<path d="M0 132V96q58-20 116-6t116-4V132z" fill="rgba(255,255,255,.28)"/>'}</svg>`
+      const art = `<img src="${worldImage(w.key)}" alt="" loading="lazy" decoding="async" />`
       if (!w.open)
         return `<div class="cat-world cat-world-soon" style="${style}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span><span class="cat-world-tag">${meta('catWorldSoon')}</span></div>`
       return `<button type="button" class="cat-world cat-world-open" style="${style}" data-world="${w.key}" aria-label="${esc(t('catWorldEnter', { world: worldName(w) }))}">${art}<span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${esc(worldName(w))}</span></button>`
@@ -783,7 +879,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const worlds = section(
       'worlds',
       meta('catRowWorlds'),
-      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${SAVANNA_IMAGE}" alt="" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
+      `<div class="cat-row"><button type="button" class="cat-world" data-world="africa" aria-label="${esc(t('catWorldEnter', { world: t('catSavanna') }))}"><img src="${worldImage('africa')}" alt="" decoding="async" /><span class="cat-world-shade" aria-hidden="true"></span><span class="cat-world-name">${meta('catSavanna')}</span></button>${WORLDS.filter((w) => w.key !== 'africa')
         .map(worldCard)
         .join('')}</div>`,
     )
@@ -795,7 +891,9 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         const first = inVideo.find((a) => sub.species.includes(a.species))
         if (!first) return []
         const label = sub.label ? sub.label[getLang()] : speciesName(first.species)
-        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${faceMarkup(first, 'cat-face-img')}<span>${esc(label)}</span></button>`]
+        const icon = SPECIES_ICON[sub.species[0]]
+        const face = icon ? `<img class="cat-face-img" src="/species/${icon}.webp" alt="" loading="lazy" decoding="async" />` : faceMarkup(first, 'cat-face-img', true)
+        return [`<button type="button" class="cat-face cat-face-l" data-watch="${esc(first.id)}">${face}<span>${esc(label)}</span></button>`]
       })
     })
     // 段が寂しくならないよう、5 つに満たない分は形だけのシルエット
@@ -805,7 +903,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowAnimals'),
       `<div class="cat-row cat-row-faces">${
         lion
-          ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}">${faceMarkup(lion, 'cat-face-img')}<span>${esc(speciesName(lion.species))}</span></button>`
+          ? `<button type="button" class="cat-face cat-face-l" data-watch="${esc(FEATURED.animalId)}"><img class="cat-face-img" src="/species/lion.webp" alt="" loading="lazy" decoding="async" /><span>${esc(speciesName(lion.species))}</span></button>`
           : ''
       }${videoSpecies.join('')}${times(animalSils, () => `<div class="cat-face cat-face-l" aria-hidden="true"><div class="cat-sil cat-sil-round">${PAW}</div><span class="cat-bar-sil" style="width:48px"></span></div>`)}</div>`,
     )
@@ -821,7 +919,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       const w = first.world ? getWorld(first.world) : undefined
       const place = first.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(first.id)}"><span class="cat-thumb">${cardImg(v.poster)}<span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(v.title[getLang()])}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const recs = section(
@@ -829,7 +927,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       meta('catRowRecs'),
       `<div class="cat-row">${
         main
-          ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb"><img src="${esc(thumb(FEATURED.poster))}" alt="" /><span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
+          ? `<button type="button" class="cat-card" data-watch="${esc(main.id)}"><span class="cat-thumb">${cardImg(FEATURED.poster)}<span class="cat-dur">${FEATURED.duration}</span></span><span class="cat-card-title">${meta('catRecTitle')}</span><span class="cat-card-meta">${meta('recorded')} ・ ${meta('catSavanna')}</span></button>`
           : ''
       }${recCards.join('')}${times(
         Math.max(0, 3 - recCards.length),
@@ -848,7 +946,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       const place = a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
       const title = named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()]
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb"><img src="${esc(thumb(v.poster))}" alt="" loading="lazy" /><span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb">${cardImg(v.poster)}${staffChip()}<span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const staff = staffCards.length ? section('staff', meta('catRowStaff'), `<div class="cat-row">${staffCards.join('')}</div>`) : ''
@@ -856,10 +954,10 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const zoos = section(
       'zoos',
       meta('catRowZoos'),
-      `<div class="cat-row">${times(
-        4,
-        () => `<div class="cat-zoo" aria-hidden="true"><span class="cat-sil">${ZOO}</span><span class="cat-bar-sil" style="width:64%"></span></div>`,
-      )}</div>`,
+      `<div class="cat-row">${ZOO_ART.map(
+        (z) =>
+          `<div class="cat-zoo" role="img" aria-label="${meta('catZooWanted')}"><span class="cat-zoo-art"><img src="/zoos/${z}.webp" alt="" loading="lazy" decoding="async" /><span class="cat-world-tag">${meta('catZooWanted')}</span></span></div>`,
+      ).join('')}</div>`,
     )
 
     root.innerHTML = `
@@ -873,9 +971,14 @@ export function createCatalog(store: FriendBookStore): CatalogView {
         <nav class="cat-chips cat-row" aria-label="${meta('catCategories')}">
           ${chip('all', 'catAll', true)}${chip('live', 'catLive', false, true)}${chip('worlds', 'catWorlds')}${chip('animals', 'catAnimals')}${chip('zoos', 'catZoos')}
         </nav>
-        ${live}${hero}${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}
+        ${live}${
+          staged
+            ? `${lazySlot('hero', hero)}${lazySlot('friends', friendsRow)}${lazySlot('worlds', worlds)}${lazySlot('animals', animals)}${favRow}${lazySlot('recs', recs)}${lazySlot('staff', staff)}${lazySlot('zoos', zoos)}`
+            : `${hero}${friendsRow}${worlds}${animals}${favRow}${recs}${staff}${zoos}`
+        }
       </div>`
     mountHero()
+    if (staged) watchLazy()
   }
 
   const scrollEl = () => root.querySelector<HTMLElement>('.cat-scroll')
@@ -940,6 +1043,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     }
     const jump = target.dataset.jump
     if (jump) {
+      fillAllLazy()
       root.querySelectorAll<HTMLElement>('.cat-chip').forEach((c) => {
         const on = c === target
         c.classList.toggle('is-on', on)
@@ -1001,6 +1105,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   // 👍・❤️ が押された（ここでもモニターでもトークでも）: ボタンの状態と、おすすめの並び・お気に入りの一覧を直す（新着の枠は作り直さない）
   reactions.onChange(() => {
     if (!open) return
+    fillAllLazy()
     if (page === 'favs') {
       const top = scrollEl()?.scrollTop ?? 0
       const focusedKey = (document.activeElement as HTMLElement | null)?.dataset?.reactKey
@@ -1030,7 +1135,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       heroPaused = false
       heroPlayed = false
       heroNotBefore = withScope ? performance.now() + SCOPE_MS : 0
-      render()
+      openedAt = performance.now()
+      render(!page)
       root.classList.remove('is-leave')
       root.classList.toggle('is-scope-in', withScope)
       if (withScope) {
@@ -1040,6 +1146,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       } else showView(root)
       scrollEl()?.focus({ preventScroll: true })
     } else {
+      stopLazy()
       root.classList.remove('is-scope-in')
       root.classList.add('is-leave')
       hideView(root, () => root.classList.remove('is-leave'))

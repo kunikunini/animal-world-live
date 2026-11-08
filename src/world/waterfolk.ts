@@ -361,5 +361,9 @@ export function createWaterfolk(options: WaterfolkOptions): Lion {
       animFlaps = []
       swapped = true
     },
+    showPrimitive: (on) => {
+      built.body.visible = on
+      built.neck.visible = on
+    },
   }
 }

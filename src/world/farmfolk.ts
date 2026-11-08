@@ -382,5 +382,9 @@ export function createFarmfolk(options: FarmfolkOptions): Lion {
       animTail = parts.tail ?? new THREE.Object3D()
       animEars = parts.ears ?? []
     },
+    showPrimitive: (on) => {
+      body.visible = on
+      neck.visible = on
+    },
   }
 }

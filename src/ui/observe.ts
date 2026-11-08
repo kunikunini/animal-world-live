@@ -102,6 +102,22 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     posterFace.innerHTML = current ? faceMarkup(current) : ''
   }
 
+  /**
+   * 音なしに落ちた時: 次に画面のどこかをタップした時に音を出す（タップの中なら音を出せる）。
+   * スコープ専用モードで開き直した直後は、最初の映像が音なしに落ちることがあった（11/8 くにの実機）。「音声」がオフの時は出さない
+   */
+  const armUnmute = (seq: number) => {
+    const on = () => {
+      window.removeEventListener('touchend', on, true)
+      window.removeEventListener('click', on, true)
+      if (seq !== loadSeq || !hasVideo || video.paused || !video.muted || !sound.soundOn || unmuteBtn.hidden) return
+      video.muted = false
+      unmuteBtn.hidden = true
+    }
+    window.addEventListener('touchend', on, true)
+    window.addEventListener('click', on, true)
+  }
+
   /** まず音声付きで再生し（「音声」がオフなら音なし）、拒否されたらミュートで再生して「音を出す」を見せる */
   const play = async (seq: number) => {
     unmuteBtn.hidden = true
@@ -120,6 +136,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
         if (seq !== loadSeq) return
         poster.hidden = true
         unmuteBtn.hidden = false
+        armUnmute(seq)
       } catch (err2) {
         if (seq !== loadSeq) return
         console.warn('video play failed', err2)

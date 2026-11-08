@@ -94,7 +94,7 @@ const RESIDENTS: Resident[] = [
  * ふれあいワールドの子（D-32 ②のあと、デモ用に追加）。中心からの向きは、峠（原点）の向きを 0 として測る。
  * ヤギはヤギの岩場の段（rocks: 入り口の向きからの角度・岩場の半径に対する割合）と入り口の前の草地、
  * ポニーとヒツジは左右の放牧場の中（pen: 放牧場の番号・中心からのずれ m）、犬とブタは広場のまわり（plaza: 角度・距離）。
- * 向きは、岩場と放牧場の子は入り口（広場）の方、広場の子は峠から来た人の方。ギープは形の手がかりが無いので置かない
+ * 向きは、岩場と放牧場の子は入り口（広場）の方、広場の子は峠から来た人の方。ギープはヒツジの放牧場にヒツジの形で置く（生成モデルに差し替える）
  */
 interface FarmResident {
   species: string
@@ -123,6 +123,8 @@ const FARM_RESIDENTS: FarmResident[] = [
   { species: 'ヒツジ', pick: 1, kind: 'sheep', size: 1.1, pen: [2, -0.5, -1.8], turn: 0.4 },
   { species: 'ヒツジ', pick: 2, kind: 'sheep', size: 1.12, pen: [2, 1.8, 0.6], turn: -0.3 },
   { species: 'ヒツジ', pick: 3, kind: 'sheep', size: 1.05, pen: [2, 0.6, 3.0], turn: 0.7 },
+  // ギープ（レア）: 写真が無いので、ヒツジの放牧場の空いた所にヒツジの形で置き、生成モデル（一般的なギープの姿）に差し替える（main.ts）
+  { species: 'ギープ', pick: 0, kind: 'sheep', size: 1.1, pen: [2, -2.4, -3.6], turn: 0.2 },
   { species: 'セントバーナード', pick: 0, kind: 'stbernard', size: 1.15, plaza: [0.95, 7] },
   { species: 'ボーダーコリー', pick: 0, kind: 'collie', size: 1.15, plaza: [-1.3, 7] },
   { species: 'ピレネーシェパード', pick: 0, kind: 'pyrenean', size: 1.2, plaza: [-1.75, 9.5] },
@@ -264,7 +266,8 @@ const EXTRA: Extra[] = [
   { species: 'キンカジュー', region: 'jungle', at: [11, -5], spread: 4, size: 0.36, make: lionLike('kinkajou') },
   { species: 'ビントロング', region: 'jungle', at: [10, -13], spread: 2, size: 0.48, make: lionLike('binturong') },
   { species: 'アカハナグマ', region: 'jungle', at: [-11, -4], spread: 3.5, size: 1.2, make: wild('coati') },
-  { species: 'アメリカバク', region: 'jungle', at: [-3, -13], spread: 1, size: 1.0, make: wild('tapir') },
+  // - アメリカバク: 前は [-3, -13] で、大きな木の樹冠の影にずっと入って目立たなかった（11/8 くにの指示）。南へ寄せて、歩き回る半径 6 m がまるごと日なたになる所に
+  { species: 'アメリカバク', region: 'jungle', at: [-3, -8.3], spread: 1, size: 1.0, make: wild('tapir') },
   { species: 'コモンリスザル', region: 'jungle', at: [13, 4], spread: 1, size: 1.8, make: wild('squirrelmonkey') },
   { species: 'コモンマーモセット', region: 'jungle', at: [14, 8], spread: 1, size: 1.9, make: wild('marmoset') },
   { species: 'スローロリス', region: 'jungle', at: [15, 0], spread: 1, size: 1.9, make: wild('loris') },

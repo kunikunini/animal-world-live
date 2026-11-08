@@ -66,9 +66,37 @@
       <div class="splash-logo"><span class="sp-row"><span class="sp-word sp-w1"><i>A</i><i>N</i><i>I</i><i>M</i><i>A</i><i>L</i></span><span class="sp-word sp-w2"><i>W</i><i>O</i><i>R</i><i>L</i><i>D</i></span></span><span class="sp-live"><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><b class="sp-sray"><i></i></b><span class="sp-word sp-w3"><i>L</i><i>I</i><i>V</i><i>E</i></span></span></div>
       <!-- splash:end -->
     </div>
+    <!-- スコープとワールドの行き来の画面（双眼鏡をのぞく演出の続き）。src/scopeMode.ts。素の立ち上げの画面の代わりに出す -->
+    <div id="hop" class="hop is-solid" aria-hidden="true">
+      <div class="hop-view"></div>
+      <div class="hop-curtain"></div>
+      <i class="hop-rim hop-l"></i><i class="hop-rim hop-r"></i>
+      <img class="hop-scop" src="/splash-scop.webp" alt="" width="560" height="624" decoding="sync" />
+      <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span></p>
+      <p class="hop-hint"><span class="hop-to" lang="ja">タップで のぞいてみよう！</span><span class="hop-back" lang="ja">タップで ワールドに もどろう！</span><span class="hop-to-en" lang="en">Tap to take a look!</span><span class="hop-back-en" lang="en">Tap to go back to the world!</span></p>
+    </div>
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
       document.documentElement.classList.add('is-splash')
+      // スコープとワールドの行き来（?scope=1 で開いた時・戻り先 rx を持って戻った時）は、立ち上げの画面の代わりに行き来の画面を出す
+      try {
+        var hq = new URLSearchParams(location.search)
+        var hop = hq.get('scope') === '1' ? 'to' : hq.has('rx') ? 'back' : ''
+        if (hop) {
+          document.documentElement.classList.add('is-hop', 'hop-' + hop)
+          if (localStorage.getItem('awl.lang') === 'en') document.documentElement.classList.add('hop-en')
+          // ワールドへ戻る時: のぞき窓の中に、スコープへ入る前のワールドの小さな絵（引き伸ばしてぼやけて見える）を最初のコマから出す
+          var shot = hop === 'back' ? sessionStorage.getItem('awl.hopShot') : null
+          var hopEl = document.getElementById('hop')
+          if (shot && hopEl && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(shot)) {
+            hopEl.style.setProperty('--shot', 'url("' + shot + '")')
+            hopEl.classList.add('has-shot')
+            hopEl.classList.remove('is-solid')
+          }
+          // 本体（JS）が届く前ののぞき窓のタップも覚えておく（届いたら、準備ができ次第すぐ開く。src/scopeMode.ts）
+          if (hopEl) hopEl.addEventListener('click', function () { window.__awlHopTap = true })
+        }
+      } catch (e) {}
       // 動きが始まった時刻（消すのは、動きを見せ終えてから。src/ui/splash.ts）
       window.__awlSplashT0 = performance.now()
       try {

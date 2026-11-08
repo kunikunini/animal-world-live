@@ -83,8 +83,13 @@ export function faceSvg(animal: Animal): string {
 }
 
 /** 顔の HTML。写真があれば img、無ければ SVG。cls はサイズ用のクラス */
-export function faceMarkup(animal: Animal, cls = ''): string {
+export function faceMarkup(animal: Animal, cls = '', small = false): string {
   if (animal.photo) {
+    // small: スコープの一覧など 80px 前後で出す所は 256px の版（public/faces/sm/）。無ければ元の 480px に戻す
+    if (small && animal.photo.startsWith('/faces/')) {
+      const sm = animal.photo.replace('/faces/', '/faces/sm/')
+      return `<img class="${esc(cls)}" src="${esc(sm)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${esc(animal.photo)}'" />`
+    }
     return `<img class="${esc(cls)}" src="${esc(animal.photo)}" alt="" />`
   }
   return `<span class="face-svg ${esc(cls)}" aria-hidden="true">${faceSvg(animal)}</span>`

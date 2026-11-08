@@ -451,27 +451,36 @@ function stopNarration(): void {
   }
 }
 
-/** 最初のユーザー操作で呼ぶ。iOS はこの中で鳴らさないと解放されないので、無音を 1 回鳴らす */
+/**
+ * 最初のユーザー操作で呼ぶ。iOS はこの中で鳴らさないと解放されないので、無音を 1 回鳴らす。
+ * AudioContext が実際に動き出すまでは、操作のたびに試し直す（1 回目の操作で動かなかった時に、音が出ないまま残らないように。
+ * 11/8 スコープ専用モードで開き直した画面が無音だった件の対策のひとつ）
+ */
 function unlock(): void {
-  if (unlocked) return
   const ac = ensureContext()
   if (!ac) return
   try {
-    if (ac.state === 'suspended') void ac.resume()
-    const b = ac.createBuffer(1, 1, 22050)
-    const s = ac.createBufferSource()
-    s.buffer = b
-    s.connect(ac.destination)
-    s.start(0)
+    if (ac.state !== 'running') {
+      void ac.resume()
+      const b = ac.createBuffer(1, 1, 22050)
+      const s = ac.createBufferSource()
+      s.buffer = b
+      s.connect(ac.destination)
+      s.start(0)
+    }
   } catch {
     // 解放できなくても続ける
   }
+  if (ac.state === 'running') stopUnlockListeners()
+  if (unlocked) return
   unlocked = true
-  window.removeEventListener('pointerdown', unlock, true)
-  window.removeEventListener('keydown', unlock, true)
-  window.removeEventListener('touchend', unlock, true)
+  alog(`unlock ${audioState()}`)
   syncBgm()
   void syncLayer(amb)
+}
+const UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'keydown', 'touchend', 'click'] as const
+function stopUnlockListeners(): void {
+  for (const t of UNLOCK_EVENTS) window.removeEventListener(t, unlock, true)
 }
 
 let pendingTap = 0
@@ -509,8 +518,9 @@ let walkStart = 0
 let lastWalkStep = 0
 let lastBreath = 0
 
-function sayNow(line: VoiceLine): void {
-  if (!unlocked || !ctx || !seBus || seOff()) return
+/** 声を鳴らす。言い終わった時（鳴らさなかった時はすぐ）に解決する */
+function sayNow(line: VoiceLine): Promise<void> {
+  if (!unlocked || !ctx || !seBus || seOff()) return Promise.resolve()
   const skip = VOICE_SKIP[voiceHero] ?? []
   const all = VOICE_VARIANTS[line]
   const variants = all.filter((v) => !skip.includes(v)).length ? all.filter((v) => !skip.includes(v)) : all
@@ -522,11 +532,11 @@ function sayNow(line: VoiceLine): void {
     p = fetchBuffer(file)
     shots.set(file, p)
   }
-  void p.then((buf) => {
-    if (!buf || !ctx || !seBus) return
+  return p.then((buf) => new Promise<void>((done) => {
+    if (!buf || !ctx || !seBus) return done()
     // 前の声が残っていたら止める（息づかいは、ほかの声が鳴っている間は出さない）
     if (voiceSrc) {
-      if (line === 'breath') return
+      if (line === 'breath') return done()
       try {
         voiceSrc.stop()
       } catch {
@@ -541,11 +551,12 @@ function sayNow(line: VoiceLine): void {
     g.connect(seBus)
     src.onended = () => {
       if (voiceSrc === src) voiceSrc = null
+      done()
     }
     voiceSrc = src
     src.start()
     logPlayed(file)
-  })
+  }))
 }
 
 export const sound = {
@@ -553,9 +564,7 @@ export const sound = {
   init(): void {
     // 開発中だけ、検証用にコンソールから触れるようにする
     if (import.meta.env.DEV) (window as unknown as { __awlSound?: unknown }).__awlSound = sound
-    window.addEventListener('pointerdown', unlock, true)
-    window.addEventListener('keydown', unlock, true)
-    window.addEventListener('touchend', unlock, true)
+    for (const t of UNLOCK_EVENTS) window.addEventListener(t, unlock, true)
     // ブラウザが自動再生を許していれば（PC の Chrome でよく開くサイトなど）、AudioContext は最初から動いている。
     // その時は操作を待たずに鳴らす。許していなければ止まったままなので、最初の操作を待つ（曲の読み込みは先に進める）
     // 本体が届く前にタップされていた時（index.html で許可を取った時）も同じ。あとから動き出した時も拾う
@@ -563,7 +572,7 @@ export const sound = {
     if (ac && ac.state === 'running') queueMicrotask(unlock)
     ac?.addEventListener('statechange', () => {
       alog(`statechange ${audioState()}`)
-      if (ac.state === 'running' && !unlocked) unlock()
+      if (ac.state === 'running') unlock()
       // 止まった時（自分で止めた時も、iPhone がスリープ・電話などで止めた "interrupted" も）は全体の音量を 0 にしておき、
       // 動き出した時は 0 から上げる（止まる前の音のかけらが再開の瞬間にいきなり鳴らないように）
       if (!unlocked || !master) return
@@ -693,6 +702,10 @@ export const sound = {
   stopNarration(): void {
     stopNarration()
   },
+  /** ナレーションが鳴っている途中か */
+  narrating(): boolean {
+    return narrSrc !== null
+  },
   /** ナレーションが鳴る状態か（音が使えて、効果音を切っていない） */
   voiceOn(): boolean {
     return unlocked && !!ctx && !seOff()
@@ -777,12 +790,16 @@ export const sound = {
       if (now - lastJumpVoice < 1200) return
       lastJumpVoice = now
     }
-    if (delayMs > 0) window.setTimeout(() => sayNow(line), delayMs)
-    else sayNow(line)
+    if (delayMs > 0) window.setTimeout(() => void sayNow(line), delayMs)
+    else void sayNow(line)
+  },
+  /** 声を今すぐ鳴らし、言い終わるのを待つ（鳴らさない時はすぐ）。スコープへ移る前に「あっ、見つけた！」を言い切るため */
+  sayToEnd(line: VoiceLine): Promise<void> {
+    return sayNow(line)
   },
   /** 着地: 高い所から落ちた時だけ声を出す（drop は跳んだいちばん高い所からの落差 m） */
   landed(drop: number): void {
-    if (drop > LAND_VOICE_DROP_M) sayNow('land')
+    if (drop > LAND_VOICE_DROP_M) void sayNow('land')
   },
   /** 歩いた 1 歩ごとに呼ぶ。歩き続けている時だけ、ときどき息づかい */
   walkStep(): void {
@@ -791,7 +808,7 @@ export const sound = {
     lastWalkStep = now
     if (now - walkStart > BREATH_AFTER_S * 1000 && now - lastBreath > BREATH_EVERY_S * 1000) {
       lastBreath = now
-      sayNow('breath')
+      void sayNow('breath')
     }
   },
   /** 同じ操作で少し遅れて別の効果音を鳴らす時、先にタップ音だけ取り消す */

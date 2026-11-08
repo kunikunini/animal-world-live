@@ -150,6 +150,53 @@
       "animalIds": ["alex"],
       "title": { "ja": "アレックス", "en": "アレックス" },
       "subjects": []
+    },
+    {
+      "id": "staff-r-ska0lm-01",
+      "file": "staff_r-ska0lm_01.mp4",
+      "poster": "staff_r-ska0lm_01_poster.jpg",
+      "duration": "1:10",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": ["r-ska0lm"],
+      "title": { "ja": "ことか", "en": "ことか" },
+      "subjects": []
+    },
+    {
+      "id": "staff-r-h5a6qs-01",
+      "file": "staff_r-h5a6qs_01.mp4",
+      "poster": "staff_r-h5a6qs_01_poster.jpg",
+      "duration": "0:30",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": ["r-h5a6qs"],
+      "title": { "ja": "オーク", "en": "オーク" },
+      "subjects": []
+    },
+    {
+      "id": "staff-r-10pu0va-01",
+      "file": "staff_r-10pu0va_01.mp4",
+      "poster": "staff_r-10pu0va_01_poster.jpg",
+      "duration": "0:31",
+      "onR2": true,
+      "staff": true,
+      "animalIds": ["r-10pu0va"],
+      "title": { "ja": "パセリ", "en": "パセリ" },
+      "subjects": []
+    },
+    {
+      "id": "staff-goat-01",
+      "file": "staff_goat_01.mp4",
+      "poster": "staff_goat_01_poster.jpg",
+      "duration": "0:23",
+      "onR2": true,
+      "staff": true,
+      "portrait": true,
+      "animalIds": [],
+      "title": { "ja": "ヤギ", "en": "Goats" },
+      "subjects": [{ "species": ["ヤギ"] }]
     }
   ]
 }

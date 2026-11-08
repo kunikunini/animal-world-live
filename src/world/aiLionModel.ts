@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
+import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
 import { toonMaterial } from '../render/toon'
 
 /**
@@ -31,6 +33,11 @@ export interface AiLion {
   tick: (dt: number) => void
   /** 姿勢の補正の強さ（開発時の計測で書き換えると次のコマから効く） */
   posture: PostureFix
+  /** 座る（true）／立つ。歩いている間は座らない。1.2 秒かけて切り替わる */
+  setSitting: (on: boolean) => void
+  /** 座り姿の骨の角度（開発時に書き換えると次のコマから効く） */
+  sitPose: SitPose
+  sitWeight: () => number
   mixer: THREE.AnimationMixer | null
   action: THREE.AnimationAction | null
 }
@@ -47,7 +54,36 @@ export interface PostureFix {
   front: number
   /** 毎コマ、いちばん低い足裏が地面（y=0）に来るように体全体の高さを合わせる */
   ground: boolean
+  /**
+   * 後ろ脚は、クリップの 1 周ぶんの平均の曲がり（腰が落ちる原因）だけを取り除き、前後の振りは残す。
+   * この時の hind は「振りをどれだけ小さくするか」になる（0 = クリップの振りのまま）
+   */
+  hindCenter?: boolean
+  /** 前脚も同じく、平均の曲がりだけ取り除いて振りを残す（front は振りを小さくする強さになる） */
+  frontCenter?: boolean
 }
+
+/**
+ * 座り姿。体の横から見た面の中で、骨を立ち姿から回す角度（ラジアン、正は頭が下がる向き）。
+ * 腰の骨で胴を起こし、後ろ脚は折りたたんで地面へ、前脚は胴が起きたぶん戻して地面にまっすぐ立てる
+ */
+export interface SitPose {
+  hips: number
+  chest: number
+  head: number
+  thigh: number
+  knee: number
+  hock: number
+  toe: number
+  shoulder: number
+  elbow: number
+  wrist: number
+  tail: number
+}
+// アレックスで決めた値（腰の関節が地面から 0.47、前脚は肩・ひじ・足先がほぼ縦一列、後ろ脚はひざが前・かかとが腰の下・足先が前で地面、尾の先は地面）
+export const SIT_DEFAULT: SitPose = { hips: -0.6, chest: 0, head: 0.35, thigh: -0.45, knee: 1.7, hock: -1.6, toe: 0.25, shoulder: 0.6, elbow: 0.35, wrist: -0.25, tail: 1.55 }
+/** 座る・立つの切り替えの秒数 */
+const SIT_FADE = 1.2
 
 /** 4 頭（アンジー・ライリー・クレア・カーラ）で決めた標準の強さ */
 export const POSTURE_DEFAULT: PostureFix = { hind: 0.6, spine: 0.8, tail: 0.5, front: 0.5, ground: true }
@@ -58,11 +94,24 @@ const WALK_FADE = 0.35
 /**
  * upright: 直立の子（ペンギン、ヒューマノイドのリグ）。向きは書き出しのまま（前が +z）で、length は前後の長さではなく高さとして合わせる
  */
-export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean; /** 色の画像に掛ける明るさ（1 で書き出しのまま）。暗い毛色がワールドの光で沈む子だけ上げる */ brighten?: number }): Promise<AiLion> {
-  const loader = new GLTFLoader()
-  loader.setMeshoptDecoder(MeshoptDecoder)
-  const gltf = await loader.loadAsync(url)
-  const inner = gltf.scene
+// 同じ GLB は 1 回だけ読み、呼ぶたびに骨ごと複製して渡す（ペンギン 6 羽がリンリンの 1 ファイルを共有する。ジオメトリと色の画像は共有）。
+// 元の scene は向き・大きさを書き換えないよう型としてだけ持つ
+const gltfCache = new Map<string, Promise<GLTF>>()
+function loadShared(url: string): Promise<GLTF> {
+  let p = gltfCache.get(url)
+  if (!p) {
+    const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)
+    p = loader.loadAsync(url)
+    gltfCache.set(url, p)
+    p.catch(() => gltfCache.delete(url))
+  }
+  return p
+}
+
+export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean; /** 横たわる子（ヘビ、リグなし）: length を水平の長い方の辺に合わせる */ lie?: boolean; /** 色の画像に掛ける明るさ（1 で書き出しのまま）。暗い毛色がワールドの光で沈む子だけ上げる */ brighten?: number }): Promise<AiLion> {
+  const gltf = await loadShared(url)
+  const inner = cloneSkinned(gltf.scene)
   inner.traverse((o) => {
     const mesh = o as THREE.Mesh
     if (!mesh.isMesh) return
@@ -75,7 +124,6 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
       mat.map = src.map
       if (opts.brighten) mat.color.setScalar(opts.brighten)
       mesh.material = mat
-      src.dispose()
     }
   })
 
@@ -90,6 +138,13 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   const hips = find(/^hips$/i) ?? find(/hips|pelvis|root/i)
   const tailRoot = find(/^tail$/i) ?? find(/tail/i)
   const ears = [find(/^(L_)?earend$/i), find(/^R_earend$/i)]
+  // 座り姿で回す骨（四足リグの名前。無い骨は飛ばす）
+  const sitBones = {
+    chest: find(/^chest$/i),
+    hind: [['backleg', 'backleg0', 'backleg1', 'backleg2'], ['R_backleg', 'R_backleg0', 'R_backleg1', 'R_backleg2']].map((names) => names.map((n) => find(new RegExp(`^${n}$`, 'i')))),
+    front: [['frontleg', 'frontleg0', 'frontleg1'], ['R_frontleg', 'R_frontleg0', 'R_frontleg1']].map((names) => names.map((n) => find(new RegExp(`^${n}$`, 'i')))),
+    tail: find(/^tailstart$/i),
+  }
 
   // 向き: 頭の位置が腰より前（+z）になるように回す
   const wrap = new THREE.Group()
@@ -106,7 +161,7 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   // 大きさと接地（立ち姿で足が y=0）
   const box = new THREE.Box3().setFromObject(inner)
   const size = box.getSize(new THREE.Vector3())
-  const along = opts.upright ? size.y : size.z
+  const along = opts.lie ? Math.max(size.x, size.z) : opts.upright ? size.y : size.z
   const s = along > 0 ? opts.length / along : 1
   inner.scale.setScalar(s)
   inner.updateMatrixWorld(true)
@@ -124,9 +179,11 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   let action: THREE.AnimationAction | null = null
   // 立ち姿（バインドポーズ）と、前のコマでミキサーが書いた素の値（補正と生活感レイヤーを重ねないために控える）。
   // Meshy の書き出しは骨の初期値がバインドポーズ
-  const bones: { bone: THREE.Object3D; rest: THREE.Quaternion; raw: THREE.Quaternion; k: number }[] = []
+  // meanInv: 歩行 1 周ぶんの平均の曲がり（立ち姿からの差）の逆。脚の hindCenter・frontCenter で使う
+  const bones: { bone: THREE.Object3D; rest: THREE.Quaternion; raw: THREE.Quaternion; k: number; hind: boolean; front: boolean; meanInv: THREE.Quaternion }[] = []
   inner.traverse((o) => {
-    if ((o as THREE.Bone).isBone) bones.push({ bone: o, rest: o.quaternion.clone(), raw: o.quaternion.clone(), k: weightFor(o.name, posture) })
+    if ((o as THREE.Bone).isBone)
+      bones.push({ bone: o, rest: o.quaternion.clone(), raw: o.quaternion.clone(), k: weightFor(o.name, posture), hind: /backleg/i.test(o.name), front: /frontleg/i.test(o.name), meanInv: new THREE.Quaternion() })
   })
   // Meshy の「歩く」は腰の骨に、リグの寸法合わせの名残（位置のずれと一様な縮小 約 0.93）を入れてくる。
   // そのままだと歩き出した時に体が 7% 縮んで前にずれる（立ち姿と歩行の間でポップする）ので、腰の位置と大きさは常に立ち姿の値に戻す
@@ -142,10 +199,12 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   }
   const soles = posture.ground ? findSoles(wrap) : []
 
+  const qCenter = new THREE.Quaternion()
   /** 歩行の姿勢の補正: 骨の回転を立ち姿の方へ寄せる。腰の位置と大きさは寸法合わせの名残なので常に立ち姿へ */
-  const applyPosture = () => {
+  const applyPosture = (w = 1) => {
     for (const b of bones) {
       b.k = weightFor(b.bone.name, posture)
+      if ((b.hind && posture.hindCenter) || (b.front && posture.frontCenter)) b.bone.quaternion.multiply(qCenter.identity().slerp(b.meanInv, w))
       if (b.k > 0) b.bone.quaternion.slerp(b.rest, b.k)
     }
     if (hips && hipsRest) {
@@ -164,6 +223,23 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     const cur = new THREE.Vector3()
     let fastest = 0
     action.setEffectiveWeight(1)
+    // 脚の平均の曲がり: 1 周を同じ間隔で取り、立ち姿からの差（rest⁻¹ · 再生の値）を平均する
+    const legBones = bones.filter((b) => b.hind || b.front)
+    const sum = legBones.map(() => new THREE.Vector4())
+    const d = new THREE.Quaternion()
+    for (let k = 0; k < N; k++) {
+      mixer.setTime((k / N) * dur)
+      legBones.forEach((b, i) => {
+        d.copy(b.rest).invert().multiply(b.bone.quaternion)
+        const s4 = sum[i]
+        const sign = k > 0 && s4.x * d.x + s4.y * d.y + s4.z * d.z + s4.w * d.w < 0 ? -1 : 1
+        s4.x += d.x * sign
+        s4.y += d.y * sign
+        s4.z += d.z * sign
+        s4.w += d.w * sign
+      })
+    }
+    legBones.forEach((b, i) => b.meanInv.set(sum[i].x, sum[i].y, sum[i].z, sum[i].w).normalize().invert())
     for (let k = 0; k <= N; k++) {
       mixer.setTime((k / N) * dur)
       applyPosture()
@@ -184,6 +260,9 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
 
   let walkTarget = 0
   let walk = 0
+  let sitTarget = 0
+  let sit = 0
+  const sitPose: SitPose = { ...SIT_DEFAULT }
   let restWritten = false
   const v = new THREE.Vector3()
   const toWrap = new THREE.Matrix4()
@@ -207,6 +286,10 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     // 歩行の重みをなめらかに
     const step = dt / WALK_FADE
     walk += Math.max(-step, Math.min(step, walkTarget - walk))
+    // 座るのは止まっている時だけ（歩き出す前に立ち上がる）
+    const sstep = dt / SIT_FADE
+    const sitWant = walkTarget > 0 ? 0 : sitTarget
+    sit += Math.max(-sstep, Math.min(sstep, sitWant - sit))
     if (mixer && action) {
       // ミキサーは値が前のコマと同じだと骨に書き直さない。前のコマの補正と生活感レイヤーを先に戻しておく
       for (const b of bones) b.bone.quaternion.copy(b.raw)
@@ -225,7 +308,7 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
         hipsRaw.scale.copy(hips.scale)
       }
       // 姿勢の補正: 歩いている間だけ、立ち姿の方へ寄せる（腰の位置と大きさは重みが途中でも戻す）
-      if (walk > 0) applyPosture()
+      if (walk > 0) applyPosture(walk)
     }
 
     // 生活感レイヤー（首・耳・尾）。歩いている間はクリップの動きに任せ、止まるほど強く効かせる
@@ -240,8 +323,30 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
       rotateBone(tailRoot, UP, parts.tail.rotation.y * life)
     }
 
-    // 接地: 歩いている間、いちばん低い足裏の点を地面に合わせる（足裏の頂点だけスキンを計算する）。立ち姿は足が y=0 で作ってある
-    if (walk > 0 && soles.length) {
+    // 座り姿: 横から見た面の中で骨を回す。なめらかに出入りするよう重み（smoothstep）を掛ける
+    if (sit > 0.001 && wrap.parent && hips) {
+      const k = sit * sit * (3 - 2 * sit)
+      wrap.updateMatrixWorld(true)
+      wrap.parent.getWorldQuaternion(qGroup)
+      rotateBone(hips, RIGHT, sitPose.hips * k)
+      rotateBone(sitBones.chest, RIGHT, sitPose.chest * k)
+      rotateBone(head, RIGHT, sitPose.head * k)
+      for (const [hip, knee, hock, toe] of sitBones.hind) {
+        rotateBone(hip, RIGHT, sitPose.thigh * k)
+        rotateBone(knee, RIGHT, sitPose.knee * k)
+        rotateBone(hock, RIGHT, sitPose.hock * k)
+        rotateBone(toe, RIGHT, sitPose.toe * k)
+      }
+      for (const [shoulder, elbow, wrist] of sitBones.front) {
+        rotateBone(shoulder, RIGHT, sitPose.shoulder * k)
+        rotateBone(elbow, RIGHT, sitPose.elbow * k)
+        rotateBone(wrist, RIGHT, sitPose.wrist * k)
+      }
+      rotateBone(sitBones.tail, RIGHT, sitPose.tail * k)
+    }
+
+    // 接地: 歩いている間・座っている間、いちばん低い足裏の点を地面に合わせる（足裏の頂点だけスキンを計算する）。立ち姿は足が y=0 で作ってある
+    if ((walk > 0 || sit > 0.001) && soles.length) {
       wrap.updateMatrixWorld(true)
       let low = Infinity
       for (const s of soles) {
@@ -265,6 +370,11 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     setWalking: (on) => {
       walkTarget = on ? 1 : 0
     },
+    setSitting: (on) => {
+      sitTarget = on ? 1 : 0
+    },
+    sitPose,
+    sitWeight: () => sit,
     setWalkSpeed: (speed) => {
       if (action) action.timeScale = speed / clipSpeed
     },

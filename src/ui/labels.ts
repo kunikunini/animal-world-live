@@ -25,6 +25,8 @@ export interface WorldLabels {
   rename: (id: string, name: string) => void
   /** 見せるラベルだけ渡す。渡さなかった id は隠す。obstacles は避ける矩形（双眼鏡のアイコンなど）。戻り値は確定した位置 */
   layout: (entries: LabelEntry[], obstacles?: Rect[]) => Map<string, PlacedLabel>
+  /** 札をタップした時（その子のそばへ歩く）。指が少し動いてもタップとみなす。ドラッグは無視 */
+  onTap: (fn: (id: string) => void) => void
 }
 
 interface Item {
@@ -42,6 +44,8 @@ export interface Rect {
 }
 
 const GAP = 6
+/** これより指が動いたらタップではない（controller.ts の DRAG_THRESHOLD と同じ） */
+const TAP_SLOP = 8
 
 function overlaps(a: Rect, b: Rect): boolean {
   return a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t
@@ -49,6 +53,23 @@ function overlaps(a: Rect, b: Rect): boolean {
 
 export function createWorldLabels(): WorldLabels {
   const items = new Map<string, Item>()
+  const tapListeners: Array<(id: string) => void> = []
+
+  /** 見えている札のうち、見た目の四角が (x, y) にいちばん近い子 */
+  const nearestAt = (x: number, y: number): string | null => {
+    let best: string | null = null
+    let bestD = Infinity
+    for (const [id, item] of items) {
+      if (!item.visible) continue
+      const r = item.el.getBoundingClientRect()
+      const d = Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom))
+      if (d < bestD) {
+        bestD = d
+        best = id
+      }
+    }
+    return best
+  }
 
   const setVisible = (item: Item, visible: boolean) => {
     if (visible === item.visible) return
@@ -62,7 +83,34 @@ export function createWorldLabels(): WorldLabels {
       el.className = 'spot-label lion-label'
       el.dataset.id = id
       el.hidden = true
-      el.setAttribute('aria-hidden', 'true')
+      // 札は毎フレーム動くので click は使わない（押してから離すまでに札が指の下から外れると click が来ない）。
+      // 押した札で指をつかまえ、離した時に動きが小さければタップ。札は body の直下なので、下の canvas のタップ移動には届かない
+      // 押せる範囲は見た目より広いので、となりの札の範囲と重なることがある。その時は見た目の札がいちばん近い子にする
+      let downId: number | null = null
+      let downX = 0
+      let downY = 0
+      let tapId = id
+      el.addEventListener('pointerdown', (e) => {
+        if (downId !== null) return
+        downId = e.pointerId
+        downX = e.clientX
+        downY = e.clientY
+        tapId = nearestAt(e.clientX, e.clientY) ?? id
+        el.setPointerCapture(e.pointerId)
+      })
+      el.addEventListener('pointerup', (e) => {
+        if (e.pointerId !== downId) return
+        downId = null
+        if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId)
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) > TAP_SLOP) return
+        tapListeners.forEach((fn) => fn(tapId))
+      })
+      // 押している間に札が隠れる（重なって外された）と pointerup が来ないので、つかまえが外れたら忘れる
+      const forget = (e: PointerEvent) => {
+        if (e.pointerId === downId) downId = null
+      }
+      el.addEventListener('pointercancel', forget)
+      el.addEventListener('lostpointercapture', forget)
       const nameEl = document.createElement('span')
       nameEl.className = 'spot-label-name'
       nameEl.textContent = name
@@ -115,6 +163,9 @@ export function createWorldLabels(): WorldLabels {
         if (!shown.has(id)) setVisible(item, false)
       }
       return result
+    },
+    onTap: (fn) => {
+      tapListeners.push(fn)
     },
   }
 }

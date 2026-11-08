@@ -18,12 +18,14 @@ import { createAtmosphere } from './world/atmosphere'
 import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
+import { createGpuRelease } from './render/gpuRelease'
 import { getClay, setClay, vividToon } from './render/toon'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
-import { createLion } from './world/lions'
+import { createLion, type Lion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
 import { loadAiLion, POSTURE_DEFAULT, type AiLion, type PostureFix } from './world/aiLionModel'
 import { roamFor } from './data/roam'
+import { createLionShift } from './world/lionShift'
 import { createLionWander, type LionWander } from './world/lionWander'
 import { createObserveView } from './ui/observe'
 import { createBookView } from './ui/book'
@@ -44,6 +46,8 @@ import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
+import { armHop, focusHop, goScope, goWorld, hideHop, isScopeMode, primeHop, readHandoff, revealHop, saveHopShot, type ReturnSpot, type ScopeHandoff } from './scopeMode'
+import { dropSplash } from './ui/splash'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
 import { createRegionTitle } from './ui/regionTitle'
@@ -192,6 +196,8 @@ interface WorldHandle {
   heroReady: () => Promise<void>
   /** スタート地点（サバンナの南、コピエの方を向く）へ戻す。あそびかたツアーを設定から見返す時に使う */
   toStart: () => void
+  /** スコープ専用モードから戻った時: 前にいた場所と向きに立たせる */
+  placeAt: (x: number, z: number, heading: number) => void
 }
 
 /**
@@ -252,10 +258,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // ほかのワールドで会える子（トラ・オオカミ）も同じ伏せの体で作り、出会いの仕組みに乗せる
   const lions = [...LIONS.map((l) => createLion(l)), ...createResidents(props.colliders)]
   for (const lion of lions) {
+    growAnimal(lion)
     vividToon(lion.group)
     scene.add(lion.group)
     props.colliders.push(lion.collider)
   }
+  // ライオン 4 頭の丘と水辺の行き来（アレックスは丘のまま）
+  const lionShift = createLionShift(lions, props.colliders)
   // 実験: ?lion=v2 で Blender 製モデルに差し替える。読めなければプリミティブのまま
   if (new URLSearchParams(location.search).get('lion') === 'v2') {
     const angie = lions.find((l) => l.id === 'angie')
@@ -272,10 +281,25 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // ?model=primitive でプリミティブ版（伏せ）に戻せる。読めない時もプリミティブ版のまま続く
   const aiLions: Record<string, AiLion> = {}
   const wanderers: LionWander[] = []
+  // 遠景（11/7 夜、iPhone で全ワールド 26〜50 fps）: 生成モデルは境界箱がずれて消えないよう frustumCulled を切っているので、
+  // 視界の外でも遠くでも全員が毎フレーム描画・影・tick される。プレイヤーから LOD_FAR m より遠い子は tick（歩き回り・アニメ・接地）を止め、
+  // 同じ入れ物でプリミティブ版に戻せる子はプリミティブ版を出し、戻せない子（place・replaceHost で作った入れ物）は隠す（影からも外れる）。
+  // LOD_NEAR m まで近づいたら本物に戻す（差 8 m で境界の点滅を防ぐ）。名前の札は 45 m 以内にしか出ないので遠景の子には付かない。?lod=off で切る
+  const LOD_FAR = 80
+  const LOD_NEAR = 72
+  const lodOn = new URLSearchParams(location.search).get('lod') !== 'off'
+  // ?lodPrim=off: 遠景でプリミティブ版を出さず、全員隠す（見比べ用）
+  const lodPrim = new URLSearchParams(location.search).get('lodPrim') !== 'off'
+  const lod: { ai: AiLion; host: Lion; wander: LionWander | null; primOk: boolean; far: boolean }[] = []
+  const farHosts = new Set<Lion>()
+  const lodAdd = (ai: AiLion, host: Lion, primOk: boolean, wander: LionWander | null) => {
+    lod.push({ ai, host, wander, primOk: lodPrim && primOk && !!host.showPrimitive, far: false })
+  }
   let reduceMotionNow = shell.settings.reduceMotion
   if (new URLSearchParams(location.search).get('model') !== 'primitive') {
-    // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め
-    const posture: Record<string, PostureFix> = { alex: { hind: 0.9, spine: 1.0, tail: 0.5, front: 0.7, ground: true } }
+    // 姿勢の補正の強さ。アレックス（体が大きく腰が落ちやすい）だけ強め。
+    // 後ろ脚は平均の曲がりだけ取り、振りは前脚の歩幅にそろう強さ（0.65）で残す（立ち姿へ 0.9 寄せていた時は後ろ足がほぼ動かず、引きずって見えた）
+    const posture: Record<string, PostureFix> = { alex: { hind: 0.65, hindCenter: true, spine: 1.0, tail: 0.5, front: 0.7, ground: true } }
     // 歩き方は data/roam.ts（種ごとの範囲と、仔・雄の違い）
     for (const id of ['alex', 'angie', 'riley', 'claire', 'carla']) {
       const lion = lions.find((l) => l.id === id)
@@ -286,9 +310,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           lion.swapModel(ai.model, ai.parts)
           lion.headHeight = ai.headHeight
           aiLions[id] = ai
-          const w = createLionWander(lion, ai, props.colliders, roamFor('ライオン', id))
+          // アレックスは座っている時間が長く、ときどき立って歩く（雄のライオンは一日の大半を座るか寝て過ごす）
+          const w = createLionWander(lion, ai, props.colliders, { ...roamFor('ライオン', id), ...(id === 'alex' ? { sit: { sit: [70, 130] as [number, number], roam: [20, 35] as [number, number] } } : {}) })
           w.setReduceMotion(reduceMotionNow)
           wanderers.push(w)
+          lionShift?.setWander(id, w)
+          lodAdd(ai, lion, true, w)
         })
         .catch((err) => console.warn('[lion-ai] model not loaded; keeping primitive', id, err))
     }
@@ -297,6 +324,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 既定は生成モデル。?model=primitive（全部）か、種ごとの ?tiger=primitive・?capybara=primitive でプリミティブ版（伏せ）に戻して見比べられる。
   // place のある子は、モデルが読めた時だけ place の場所に置く。プリミティブ版の無い子（グラン）は読めなければ居ないまま（?zebra=off でも置かない）。
   // 群れの場所に自動で置いたプリミティブ版がいる子（銀牙・ピーター・ゆめこ・虎・テル）は、読めればそれと入れ替え、読めなければ・?<key>=primitive ならプリミティブ版のまま
+  // 歩き回る子の脚は hindCenter・frontCenter（平均の曲がりだけ取って振りを残す）。hind・front は前後の歩幅が腰の高さの 21〜24% にそろう強さを 1 頭ずつ測って決めた（11/8）
   {
     const q = new URLSearchParams(location.search)
     const AI_RESIDENTS: {
@@ -313,65 +341,210 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       upright?: boolean
       /** 歩かない子: 歩き回りを付けず、その場で呼吸・首・揺れだけ */
       still?: boolean
+      /** 体の長い子: 前足と後ろ足の間の半分（m）。斜面に沿って体を傾ける（lionWander.ts の slopeFit） */
+      slopeFit?: number
       /** 色の明るさ（1 で書き出しのまま）。?<key>Bright=<数> で試せる */
       brighten?: number
+      /** 大きさの倍率。?<key>Scale=<数> で試せる */
+      scale?: number
+      /** 大きさの基準にする別の子の key（その子のプリミティブ版の大きさ × scale）。無ければ自分のプリミティブ版 */
+      sizeOf?: string
       /** 群れのプリミティブ版の差し替え口が無い子（wildfolk など）: その子の今の場所・向き・体の長さで place と同じように入れ替える */
       replaceHost?: boolean
+      /** 横たわる子（ヘビ）: 大きさを水平の長い方の辺で合わせる */
+      lie?: boolean
+      /** ぶら下がる子（ナマケモノ）: 名前の札の高さは入れ物のまま（枝の下） */
+      hang?: boolean
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
-      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true } },
-      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロはプリミティブ版のまま）。
+      { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      // しずか: 南半球の西のカピバラ 2 頭のうち中心から遠い方（近い方のマロは夜間バッチの生成モデル）。
       // 写真参照で作り直したモデル（11/6）。接地だけだと腰 84〜87%。前の版の強さ（後ろ脚 0.6・背骨 0.9・前脚 0.9）だと腰の下限が 98.4% なので、
       // 後ろ脚 0.7・背骨 0.98 に上げる（前脚 0.9 はそのまま。腰 99.1〜100.7%）。
       // 尾は無い子なので、リグが付けた尾の骨（お尻の毛に付いている）は歩行でも止まっている間も動かさない
-      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, spine: 0.98, tail: 1, front: 0.9, ground: true }, noTail: true },
+      { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, hindCenter: true, spine: 0.98, tail: 1, front: 0.75, frontCenter: true, ground: true }, noTail: true },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
-      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.95, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 } },
+      // 体が長く、斜面では体の中心の高さだけに合わせると前足が浮いて見えた（11/8 くにの指摘）ので、前後の足の地面に合わせて体を傾ける（slopeFit）。
+      // グランの後ろ脚はアレックスと同じく平均の曲がりだけ取る（0.95 で立ち姿へ寄せていた時は後ろ足がほぼ動かなかった）。0.7 で前脚の歩幅・速さにそろう
+      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 }, slopeFit: 0.9 },
       // フェン: 北の世界の中心の北のホッキョクオオカミ 3 頭のうち、いちばん東の子（ネガ・マリはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 接地だけだと腰 86〜100% で前足が浮く。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.85 で腰 99.3〜103.3%（フェンで測って決めた値）
-      { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.85, ground: true } },
+      { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
       // 銀牙: 北の世界の中心の南西、サバンナから来た人が最初に見る雪原（キツネの東 15 m。名簿の全個体を置いた後、ハスキーの群れと重ならないよう東へ 5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ（鼻先〜尾の先）1.4 m は実物の成犬の目安。接地だけだと腰が 86〜89% の忍び足。
       // 後ろ脚 0.75・背骨 0.9・尾 0.5・前脚 0.7 で腰 99.1〜101.3%（銀牙で測って決めた値）
       { key: 'husky', species: 'シベリアンハスキー', name: '銀牙', file: 'husky-ginga', posture: { hind: 0.75, spine: 0.9, tail: 0.5, front: 0.7, ground: true }, place: { ...residentPlace('north', 'シベリアンハスキー'), yaw: 0.3, length: 1.4 } },
       // ピーター: サバンナの道（スタート → スポット）の右手の草原。グラン（道の左手）と道をはさんだ向かい、ライリー（40, 5）から 22 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ 1.7 m は実物の成獣の目安。接地だけだと腰 80〜83%。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8 で腰 99.1〜102.3%（ピーターで測って決めた値）
-      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.9, spine: 0.95, tail: 0.5, front: 0.8, ground: true }, place: { ...SAVANNA_HYENA, length: 1.7 } },
-      // ゆめこ: ジャングルの中心の西（ティガーの反対側。名簿の全個体を置いた後、アカハナグマの群れと重ならないよう南へ 4.5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 2.1 m は実物の成獣の目安。
+      { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.6, frontCenter: true, ground: true }, place: { ...SAVANNA_HYENA, length: 1.7 } },
+      // ゆめこ: ジャングルの中心の西（ティガーの反対側）。木の影に入らないよう、群れの拠点（residents.ts）を日なたへ動かした（11/8）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 2.1 m は実物の成獣の目安。
       // 色の画像が暗く、ジャングルの光では写真より黒く沈むので、明るさを 2.5 倍にする（1・1.35・1.7・2.5・3.5 を写真と並べて、毛の灰色がいちばん近い値）。
       // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
-      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.95, spine: 0.9, tail: 1, front: 0.8, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },
-      // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
+      { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.65, hindCenter: true, spine: 0.9, tail: 1, front: 0.65, frontCenter: true, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },
+      // かぼす: 南半球の中心の南のマーラ 2 頭のうち名簿の並びの最初の子（ゆずは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 尾はごく短いので尾の骨は動かさない。接地だけだと腰 82〜84%。後ろ脚 0.95・背骨 0.8・前脚 0.7 で腰 99.1〜100.2%（かぼすで測って決めた値）
-      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.95, spine: 0.8, tail: 1, front: 0.7, ground: true }, noTail: true },
-      // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
+      { key: 'mara', species: 'マーラ', name: 'かぼす', file: 'mara-kabosu', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 1, front: 0.7, frontCenter: true, ground: true }, noTail: true },
+      // めい: ふれあいワールドの放牧場（farmPens の 0 番）のポニー 3 頭のうち名簿の並びの最初の子（きのこ・サクラは夜間バッチの生成モデル）。大きさはプリミティブ版の体の長さにそろえる。
       // 放牧場（半径 15 m）の中で、まわり 2 m だけ歩く。接地だけだと腰 76〜88%。後ろ脚 0.95・背骨 0.9・尾 0.5・前脚 0.8 で腰 99.1〜101.8%（めいで測って決めた値）
-      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.95, spine: 0.9, tail: 0.5, front: 0.8, ground: true } },
-      // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽はプリミティブ版のまま）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
+      { key: 'pony', species: 'ポニー', name: 'めい', file: 'pony-mei', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      // リンリン: 水の世界の浜のケープペンギン 6 羽のうち pick 0（ほかの 5 羽も下でこの GLB の複製に差し替える）。四足リグは二本足の体に合わず、ヒューマノイドのリグの歩きは
       // ひれが人の腕のように振れて体が歪むので、歩かせない（静止＋呼吸・首・左右の揺れ。waterfolk.ts）。大きさはプリミティブ版の高さにそろえる
       { key: 'penguin', species: 'ケープペンギン', name: 'リンリン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      // ケープペンギンのほかの 5 羽（11/8 くにの指示）: 新しく生成せず、リンリンの GLB を 1 回だけ読んで骨ごと複製したものに差し替える（loadAiLion が URL ごとに共有）。
+      // 置き場所・名前の札・プロフィール・ともだちは各個体のまま。リンリンと同じく歩かず、その場で呼吸・首・揺れだけ。
+      // ことか・満は生まれて間もない子なので、リンリンの 0.65 倍（見た目の最終判断はくに。?penguinKotokaScale=・?penguinMitsuruScale= で試せる）
+      { key: 'penguinTenten', species: 'ケープペンギン', name: 'テンテン', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
+      { key: 'penguinSam', species: 'ケープペンギン', name: 'サム', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
+      { key: 'penguinPocchan', species: 'ケープペンギン', name: 'ポッちゃん', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
+      { key: 'penguinKotoka', species: 'ケープペンギン', name: 'ことか', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin', scale: 0.65 },
+      { key: 'penguinMitsuru', species: 'ケープペンギン', name: '満', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin', scale: 0.65 },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
-      { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.85, spine: 1, tail: 0.5, front: 0.95, ground: true } },
+      { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },
       // 虎: サバンナのスタート（0, 72）からスポットへ向かう途中、左手 4.5 m の踏み分け道の上（−4.5, 43.5）。背の高い草の中だと体が隠れるので、草の生えない道に置き、
       // まわり 1 m だけ歩く。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.55 m（鼻先〜尾の先）は実物の成獣の目安。
       // 接地だけだと腰 81〜85%。後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65 で腰 99.6〜102.8%（虎で測って決めた値）
       { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, place: { ...SAVANNA_MEERKAT, length: 0.55 } },
       // テル: ジャングルの中心の西、ゆめこ（南米）の北 13 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
       // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
-      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.95, spine: 0.95, tail: 0.5, front: 0.95, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
+      { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.6, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
       // ---- 夜間バッチ（exp/animals-night）: 群れの場所のプリミティブ版と入れ替える（読めなければ・?<key>=primitive ならプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる ----
       // ウーピー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 2 番目。コピー方式の試しでピーターの値（0.9／0.95／0.5／0.8）を流用すると腰の下限が 98.7% で届かず、
       // ウーピーで振って背骨だけ 1 に上げた（後ろ脚 0.9・背骨 1・尾 0.5・前脚 0.8 で腰 99.2〜101.6%）
       // ハイエナの群れのプリミティブ版（wildfolk）は差し替え口が無いので、その子の場所・向き・体の長さで入れ替える（replaceHost）
-      { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      { key: 'hyenaWhoopi', species: 'ブチハイエナ', name: 'ウーピー', file: 'hyena-whoopi', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
       // アンバー: サバンナのブチハイエナの群れ（3 頭）のうち名簿の 3 番目。ウーピーの値（0.9／1／0.5／0.8）の流用だけで腰 99.6〜103.0%。群れのプリミティブ版（wildfolk）と replaceHost で入れ替える
-      { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true }, replaceHost: true },
+      { key: 'hyenaAmber', species: 'ブチハイエナ', name: 'アンバー', file: 'hyena-amber', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 0.5, front: 0.75, frontCenter: true, ground: true }, replaceHost: true },
       // 夜間バッチ 2（11/7）。姿勢の補正値は各子で測って決めた値（LOG）
       // ラーテル・プレーリードッグ・ワオキツネザルの群れのプリミティブ版（wildfolk・直立の形）は差し替え口が無いので replaceHost
       { key: 'ratelWinnie', species: 'ラーテル', name: 'ウィニー', file: 'ratel-winnie', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'otterKent', species: 'コツメカワウソ', name: 'ケント', file: 'otter-kent', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'otterMinato', species: 'コツメカワウソ', name: 'ミナト', file: 'otter-minato', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      // マロ: 南半球の西のカピバラ 2 頭のうち中心に近い方（しずかの隣）。しずかの値（0.7／0.98／1／0.9）の流用は腰の下限 98.9% で届かず、背骨だけ 1 に上げた
+      // （後ろ脚 0.7・背骨 1・尾 1・前脚 0.9 で腰 99.3〜101.9%）。尾は無い子なので尾の骨は動かさない（noTail）
+      { key: 'capybaraMaro', species: 'カピバラ', name: 'マロ', file: 'capybara-maro', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 1, front: 0.65, frontCenter: true, ground: true }, noTail: true },
+      // ゆず: 南半球の中心の南のマーラ 2 頭のうちゆず（かぼすの隣）。かぼすの値（0.95／0.8／1／0.7）の流用は腰の下限 98.9% で届かず、後ろ脚だけ 1 に上げた（腰 99.9〜101.5%）。尾は無い子なので尾の骨は動かさない（noTail）
+      { key: 'maraYuzu', species: 'マーラ', name: 'ゆず', file: 'mara-yuzu', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 1, front: 0.7, frontCenter: true, ground: true }, noTail: true },
+      // ラピ: 南半球のカピバラ 3 頭のうちラピ。マロの値（0.7／1／1／0.9）の流用だけで腰 100.0〜101.4%。尾の骨は動かさない（noTail）
+      { key: 'capybaraRapi', species: 'カピバラ', name: 'ラピ', file: 'capybara-rapi', posture: { hind: 0.7, hindCenter: true, spine: 1, tail: 1, front: 0.7, frontCenter: true, ground: true }, noTail: true },
+      // ライム: 南半球のマーラ 5 頭のうちライム。ゆずの値（1／0.8／1／0.7）の流用だけで腰 100.3〜102.4%。尾の骨は動かさない（noTail）
+      { key: 'maraLime', species: 'マーラ', name: 'ライム', file: 'mara-lime', posture: { hind: 0.75, hindCenter: true, spine: 0.8, tail: 1, front: 0.8, frontCenter: true, ground: true }, noTail: true },
+      // レモン: 南半球のマーラ 5 頭のうちレモン。ゆずの値（1／0.8／1／0.7）の流用だけで腰 99.8〜100.5%。尾の骨は動かさない（noTail）
+      { key: 'maraLemon', species: 'マーラ', name: 'レモン', file: 'mara-lemon', posture: { hind: 0.8, hindCenter: true, spine: 0.8, tail: 1, front: 0.8, frontCenter: true, ground: true }, noTail: true },
+      // ライチ: 南半球のマーラ 5 頭のうちライチ。コピー方式でゆずの値（後ろ脚 1・背骨 0.8・尾 1・前脚 0.7）を流用。尾の骨は動かさない（noTail）
+      { key: 'maraLychee', species: 'マーラ', name: 'ライチ', file: 'mara-lychee', posture: { hind: 0.8, hindCenter: true, spine: 0.8, tail: 1, front: 0.8, frontCenter: true, ground: true }, noTail: true },
+      // きのこ: ふれあいワールドの放牧場のポニー 3 頭のうちきのこ。めいの値（0.95／0.9／0.5／0.8）の流用は腰 98.5〜105.2% で外れ、1／0.9／0.5／0.9 に（腰 99.9〜101.6%）
+      { key: 'ponyKinoko', species: 'ポニー', name: 'きのこ', file: 'pony-kinoko', posture: { hind: 0.75, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      // サクラ: ふれあいワールドの放牧場のポニー 3 頭のうちサクラ。コピー方式できのこの値（後ろ脚 1・背骨 0.9・尾 0.5・前脚 0.9）を流用
+      { key: 'ponySakura', species: 'ポニー', name: 'サクラ', file: 'pony-sakura', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'goatLatte', species: 'ヤギ', name: 'ラテ', file: 'goat-latte', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatShiki', species: 'ヤギ', name: 'シキ', file: 'goat-shiki', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatTwotone', species: 'ヤギ', name: 'ツートン', file: 'goat-twotone', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatMarble', species: 'ヤギ', name: 'マーブル', file: 'goat-marble', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatNatsume', species: 'ヤギ', name: 'ナツメ', file: 'goat-natsume', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatMifuyu', species: 'ヤギ', name: 'みふゆ', file: 'goat-mifuyu', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatBaum', species: 'ヤギ', name: 'バウム', file: 'goat-baum', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatMachiko', species: 'ヤギ', name: 'まちこ', file: 'goat-machiko', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'goatMarge', species: 'ヤギ', name: 'マージュ', file: 'goat-marge', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatFlow', species: 'ヤギ', name: 'フロー', file: 'goat-flow', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatLattejr', species: 'ヤギ', name: 'ラテjr', file: 'goat-lattejr', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'goatShizuru', species: 'ヤギ', name: 'しずる', file: 'goat-shizuru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepAsako', species: 'ヒツジ', name: 'あさこ', file: 'sheep-asako', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'collieShine', species: 'ボーダーコリー', name: 'シャイン', file: 'collie-shine', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'stbernardJosef', species: 'セントバーナード', name: 'ヨーゼフ', file: 'stbernard-josef', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'pigRose', species: 'ホットベリーピック（ブタ）', name: 'ローズ', file: 'pig-rose', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepPaul', species: 'ヒツジ', name: 'ポール', file: 'sheep-paul', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      // レア（ギープ）: 写真が無いので一般的なギープの姿（ヤギの体つき＋まだらの羊毛）。ヒツジの放牧場に新しく置いたヒツジの形（residents.ts）と入れ替える
+      { key: 'geepRhea', species: 'ギープ', name: 'レア', file: 'geep-rhea', posture: { hind: 0.9, spine: 1, tail: 0.5, front: 0.8, ground: true } },
+      { key: 'sheepBarbary', species: 'ヒツジ', name: 'バーバリー', file: 'sheep-barbary', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'sheepTae', species: 'ヒツジ', name: '妙', file: 'sheep-tae', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      { key: 'prairieCookie', species: 'プレーリードッグ', name: 'クッキー', file: 'prairie-cookie', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'foxDaichan', species: 'キタキツネ', name: 'だいちゃん', file: 'fox-daichan', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'bearGorou', species: 'ツキノワグマ', name: 'ゴロウ', file: 'bear-gorou', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
+      { key: 'bearMakkun', species: 'ツキノワグマ', name: 'まっ君', file: 'bear-makkun', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, noTail: true },
+      { key: 'prairieTanpopo', species: 'プレーリードッグ', name: 'たんぽぽ', file: 'prairie-tanpopo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'foxAzuki', species: 'キタキツネ', name: 'あずき', file: 'fox-azuki', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'prairieMarron', species: 'プレーリードッグ', name: 'マロン', file: 'prairie-marron', posture: { hind: 1, spine: 1, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      // めい（ギンギツネ）: 本人の写真から作ったクレイ風の絵で新しく生成（だいちゃんの複製は銀の毛色が違うので使わない）。北の世界の目印のキツネの形と入れ替える
+      { key: 'silverfoxMei', species: 'ギンギツネ', name: 'めい', file: 'silverfox-mei', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      // ハナ（ニホンザル）: 本人の写真から作ったクレイ風の四つ足で歩く絵で新しく生成し、四足のリグ（イヌ科）を試す。北の世界の目印のサルの形と入れ替える
+      { key: 'macaqueHana', species: 'ニホンザル', name: 'ハナ', file: 'macaque-hana', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true, scale: 1.4 },
+      { key: 'wolfNega', species: 'ホッキョクオオカミ', name: 'ネガ', file: 'wolf-nega', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
+      { key: 'wolfMari', species: 'ホッキョクオオカミ', name: 'マリ', file: 'wolf-mari', posture: { hind: 0.7, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
+      { key: 'huskyRock', species: 'シベリアンハスキー', name: 'ロック', file: 'husky-rock', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
+      { key: 'huskyFuga', species: 'シベリアンハスキー', name: '風牙', file: 'husky-fuga', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'huskyAnya', species: 'シベリアンハスキー', name: 'アーニャ', file: 'husky-anya', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'huskyOthello', species: 'シベリアンハスキー', name: 'オセロ', file: 'husky-othello', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'huskyYuki', species: 'シベリアンハスキー', name: 'ユキ', file: 'husky-yuki', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'huskyNoel', species: 'シベリアンハスキー', name: 'ノエル', file: 'husky-noel', posture: { hind: 0.7, hindCenter: true, spine: 0.9, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'wolfYua', species: 'ホッキョクオオカミ', name: 'ユア', file: 'wolf-yua', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
+      { key: 'wolfTeo', species: 'ホッキョクオオカミ', name: 'テオ', file: 'wolf-teo', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'wolfKamui', species: 'ホッキョクオオカミ', name: 'カムイ', file: 'wolf-kamui', posture: { hind: 0.7, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.75, frontCenter: true, ground: true } },
+      { key: 'tanukiTamtam', species: 'ホンドタヌキ', name: 'タムタム', file: 'tanuki-tamtam', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'beaverOak', species: 'アメリカビーバー', name: 'オーク', file: 'beaver-oak', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'woodchuckFas', species: 'ウッドチャック', name: 'ファス', file: 'woodchuck-fas', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'porcupineKogomi', species: 'ヤマアラシ', name: 'こごみ', file: 'porcupine-kogomi', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'kinkajouFig', species: 'キンカジュー', name: 'フィグ', file: 'kinkajou-fig', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'lemurJimin', species: 'ワオキツネザル', name: 'ジミン', file: 'lemur-jimin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'binturongBin', species: 'ビントロング', name: 'ビン', file: 'binturong-bin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'binturongBasil', species: 'ビントロング', name: 'バジル', file: 'binturong-basil', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'binturongParsley', species: 'ビントロング', name: 'パセリ', file: 'binturong-parsley', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'lemurPercy', species: 'ワオキツネザル', name: 'パーシー', file: 'lemur-percy', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'lemurSana', species: 'ワオキツネザル', name: 'サナ', file: 'lemur-sana', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'kinkajouKuko', species: 'キンカジュー', name: 'クコ', file: 'kinkajou-kuko', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'kinkajouCoco', species: 'キンカジュー', name: 'ココ', file: 'kinkajou-coco', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'kinkajouVilla', species: 'キンカジュー', name: 'ヴィラ', file: 'kinkajou-villa', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'lemurMomo', species: 'ワオキツネザル', name: 'モモ', file: 'lemur-momo', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'lemurGeorge', species: 'ワオキツネザル', name: 'ジョージ', file: 'lemur-george', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'lemurLuna', species: 'ワオキツネザル', name: 'ルナ', file: 'lemur-luna', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'kinkajouHazel', species: 'キンカジュー', name: 'ヘーゼル', file: 'kinkajou-hazel', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'kinkajouChirine', species: 'キンカジュー', name: 'チリーヌ', file: 'kinkajou-chirine', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'lemurJupiter', species: 'ワオキツネザル', name: 'ジュピター', file: 'lemur-jupiter', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'lemurSpacey', species: 'ワオキツネザル', name: 'スペイシー', file: 'lemur-spacey', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'kinkajouMia', species: 'キンカジュー', name: 'ミア', file: 'kinkajou-mia', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'coatiKanna', species: 'アカハナグマ', name: 'カンナ', file: 'coati-kanna', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'coatiMyu', species: 'アカハナグマ', name: 'みゅう', file: 'coati-myu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'coatiPuppe', species: 'アカハナグマ', name: 'ぷっぺ', file: 'coati-puppe', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'coatiPupu', species: 'アカハナグマ', name: 'ぷぷ', file: 'coati-pupu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'coatiRin', species: 'アカハナグマ', name: 'リン', file: 'coati-rin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'coatiRua', species: 'アカハナグマ', name: 'ルア', file: 'coati-rua', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatKai', species: 'ミーアキャット', name: 'かい', file: 'meerkat-kai', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatBine', species: 'ミーアキャット', name: 'ビネ', file: 'meerkat-bine', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatNerine', species: 'ミーアキャット', name: 'ネリネ', file: 'meerkat-nerine', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatSou', species: 'ミーアキャット', name: 'そう', file: 'meerkat-sou', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'sandcatSheri', species: 'スナネコ', name: 'シェリ', file: 'sandcat-sheri', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'tortoiseLeonardo', species: 'ケヅメリクガメ', name: 'レオナルド', file: 'tortoise-leonardo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'tortoiseLarc', species: 'ケヅメリクガメ', name: 'ラルク', file: 'tortoise-larc', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'tortoiseMeteo', species: 'ケヅメリクガメ', name: 'メテオ', file: 'tortoise-meteo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'tortoiseAruru', species: 'アルダブラゾウガメ', name: 'あるる', file: 'tortoise-aruru', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'tortoiseButter', species: 'パンケーキリクガメ', name: 'バター', file: 'tortoise-butter', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
+      { key: 'tortoiseSyrup', species: 'パンケーキリクガメ', name: 'シロップ', file: 'tortoise-syrup', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
+      { key: 'pyreneanElsa', species: 'ピレネーシェパード', name: 'エルサ', file: 'pyrenean-elsa', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true } },
+      // ビルマニシキヘビ 3 頭（ジャングル）: プリミティブ版のとぐろが茶色い塊に見えるので、模様のある生成モデルに。生成は写真がいちばん良い蛍の 1 体分だけ（リグなし、とぐろ＋ゆるい S 字の静止モデル）。
+      // のり次・吹雪はその GLB の複製で、大きさは蛍の 0.9／1.1 倍。プリミティブ版のとぐろの直径に合わせると草に埋もれて小さいので、蛍は 1.5 倍（のり次 1.35・吹雪 1.65）。
+      // ジャングルの光では黄色が茶色に沈むので明るさ 1.35。歩かせず、入れ物（Lion）の呼吸の拡縮だけ。それぞれの群れの場所・向きで入れ替える
+      { key: 'pythonHotaru', species: 'ビルマニシキヘビ', name: '蛍', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 1.5, brighten: 1.35 },
+      { key: 'pythonNoriji', species: 'ビルマニシキヘビ', name: 'のり次', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.35, brighten: 1.35 },
+      { key: 'pythonFubuki', species: 'ビルマニシキヘビ', name: '吹雪', file: 'python-hotaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, sizeOf: 'pythonHotaru', scale: 1.65, brighten: 1.35 },
+      // おやき（スローロリス、ジャングル）: 本人の写真から作ったクレイ風の、丸太にしがみつく絵で生成。リグなしの静止モデル（丸太ごと）。
+      // 今の場所の地面に丸太ごと置き、大きさは水平の長い方の辺（丸太の長さ）をプリミティブ版の体の長さに合わせる。歩かせず、入れ物の呼吸の拡縮だけ
+      { key: 'lorisOyaki', species: 'スローロリス', name: 'おやき', file: 'loris-oyaki', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 3.5 },
+      // ウリン（フタユビナマケモノ、ジャングル）: 本人の写真は無いので一般的なフタユビナマケモノの姿（11/8 くに：本人に似せるのは将来）。リグなしの静止モデル（4 本の手足で枝にぶら下がる）。
+      // 今の場所の枝にぶら下げたまま、手足の先を枝の高さに合わせる（sloth.ts の swapModel）。大きさはプリミティブ版の高さ。呼吸は胴の太さだけ。名前の札は枝の下のまま
+      { key: 'slothUrin', species: 'フタユビナマケモノ', name: 'ウリン', file: 'sloth-urin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, hang: true },
     ]
+    // 各子のプリミティブ版の、入れ物の倍率込みのワールドでの大きさ（読み込みの前、入れ物がまだプリミティブ版のうちに測る）。
+    // sizeOf の子は基準の子とワールドで同じ大きさになるよう、自分の入れ物の倍率（個体ごとに少し違う）で割り戻す
+    const baseWorld: Record<string, number> = {}
+    const sizeFor = (key: string, ref: string | undefined, own: number, hostScale: number) => {
+      baseWorld[key] = own * hostScale
+      return ref && baseWorld[ref] ? baseWorld[ref] / hostScale : own
+    }
     for (const r of AI_RESIDENTS) {
       if (q.get('model') === 'primitive' || q.get(r.key) === 'primitive' || q.get(r.key) === 'off') continue
       const animal = ANIMALS.find((a) => a.species === r.species && a.name === r.name)
@@ -380,13 +553,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, 'z') } : undefined)
       if (!host && !place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
-      loadAiLion(`/models/${r.file}.glb`, { length: place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), posture, upright: r.upright, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
+      loadAiLion(`/models/${r.file}.glb`, { length: sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1), posture, upright: r.upright, lie: r.lie, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
         .then((ai) => {
           if (place) {
             // place の子: place の場所に入れ物を作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる。
             // 名簿の全個体を置いた後（11/6）は、群れの場所に自動で置いたプリミティブ版がいるので、それを取り除いて入れ替える（読めなければそのまま残る）
             const old = host
             host = createLion({ id: animal.id, x: place.x, z: place.z, yaw: place.yaw })
+            growAnimal(host)
             vividToon(host.group)
             scene.add(host.group)
             props.colliders.push(host.collider)
@@ -405,13 +579,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           if (!host) return
           // 尾の無い子は、Lion.update が書く尾の揺れを使わない入れ物に向ける（ai.parts.tail は 0 のまま）
           host.swapModel(ai.model, r.noTail ? { ...ai.parts, tail: new THREE.Object3D() } : ai.parts)
-          host.headHeight = ai.headHeight
+          if (!r.hang) host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const roam = roamFor(r.species, animal.id)
-          if (r.still || roam.tier === 'still') return
-          const w = createLionWander(host, ai, props.colliders, roam)
-          w.setReduceMotion(reduceMotionNow)
-          wanderers.push(w)
+          const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, r.slopeFit ? { ...roam, slopeFit: r.slopeFit } : roam)
+          if (w) {
+            w.setReduceMotion(reduceMotionNow)
+            wanderers.push(w)
+          }
+          // place・replaceHost で作った入れ物の中のプリミティブはライオンの形なので、遠景でも出さない
+          lodAdd(ai, host, !place, w)
         })
         .catch((err) => console.warn(place && !host ? '[animals-ai] model not loaded; not placed' : '[animals-ai] model not loaded; keeping primitive', r.key, err))
     }
@@ -426,6 +603,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
   applyPostSize()
   window.addEventListener('resize', applyPostSize)
+  // 軽量モード: スコープの一覧を開いている間は、3D の絵と形の GPU の写しを手放す（戻ったら描く時に積み直す）
+  const gpuRelease = createGpuRelease(renderer, scene)
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
   // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
@@ -565,6 +744,32 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   }
 
   for (const lion of lions) labels.add(lion.id, nameOf(lion.id))
+  // 名前札のタップ: その子に向かって歩き、出会いの範囲（collider.r + 4.2）に入ったら止まる。
+  // 相手が動いたら行き先を直して追う（ミーアキャットなどはよく動く）。目的地は体に当たらない collider.r + 1.6。
+  // 別の所をタップした・スティックや WASD で動かした・20 秒たっても届かない時はやめる。
+  // 着いたら、群れの別の子のほうが近くても、出会いのピンはタップした子に出す（その子が範囲にいる間）
+  let labelWalk: { id: string; x: number; z: number; lx: number; lz: number; at: number; since: number } | null = null
+  let labelPick: string | null = null
+  const walkToAnimal = (id: string, since: number) => {
+    const lion = lions.find((l) => l.id === id)
+    if (!lion) return
+    const p = player.object.position
+    const dx = p.x - lion.position.x
+    const dz = p.z - lion.position.z
+    const d = Math.hypot(dx, dz) || 1
+    const stop = lion.collider.r + 1.6
+    const x = lion.position.x + (dx / d) * stop
+    const z = lion.position.z + (dz / d) * stop
+    player.goTo(routeTo({ x: p.x, z: p.z }, { x, z }))
+    // 岩をよける経路で最後の点がずれることがあるので、実際の目的地を覚える（別の所へのタップと見分ける）
+    const dest = player.destination() ?? { x, z }
+    labelWalk = { id, x: dest.x, z: dest.z, lx: lion.position.x, lz: lion.position.z, at: performance.now(), since }
+    labelPick = null
+  }
+  labels.onTap((id) => {
+    if (paused || introOn || observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen()) return
+    walkToAnimal(id, performance.now())
+  })
   onLangChange(() => {
     for (const lion of lions) labels.rename(lion.id, nameOf(lion.id))
   })
@@ -618,24 +823,45 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sound.cancelTap()
     if (animate) window.setTimeout(() => sound.play('scope-open'), 250)
     else sound.play('scope-open')
-    // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）
+    // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）。
+    // 声は演出の頭で鳴らし、言い終わってからページを入れ替える（入れ替えると音も止まるので、0.7 秒目からだと「見つけ」で切れていた。11/8 くにの実機）。
+    // 出会いの音は今までどおり 0.7 秒目
+    // のぞき窓（行き来の画面）に、戻る時にぼやけて見せるワールドの小さな絵を取っておく（描いた直後に読む）
+    try {
+      postfx.render()
+      const small = document.createElement('canvas')
+      small.width = 96
+      small.height = Math.max(1, Math.round((96 * canvas.height) / Math.max(1, canvas.width)))
+      small.getContext('2d')?.drawImage(canvas, 0, 0, small.width, small.height)
+      saveHopShot(small.toDataURL('image/jpeg', 0.6))
+    } catch {
+      // 取れなくても続ける（窓の中は紺のレンズ）
+    }
+    let voiceDone: Promise<void> = Promise.resolve()
     if (arrived) {
-      if (animate) window.setTimeout(cueFind, 700)
-      else cueFind()
+      voiceDone = sound.sayToEnd('find')
+      if (animate) window.setTimeout(() => sound.play('encounter'), 700)
+      else sound.play('encounter')
     }
-    // どのワールドのスポットからでも、同じアニマルスコープ（段の一覧）を開く
-    catalog.open(animate)
-    if (animate) {
-      const { skipped } = await scope.play()
-      if (skipped) catalog.settle()
-    }
-    body.classList.remove('is-scoping')
-    if (catalog.isOpen()) body.classList.add('is-viewing')
+    // スコープ専用モードで起動し直す（11/8 最終対策）。3D のページの中では一覧を開かない。
+    // 戻り先（いまの位置と向き・ワールド）と、あそびかたツアーの段を持っていく
+    const back: ReturnSpot = { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y, region: here.key }
+    // 移るのは、構えてピントが合うまで（約 1.9 秒。とばしたらそこまで）と、声の終わりの遅い方。
+    // 待つのは前より 1 秒まで（行き来の画面を出す 0.36 秒を足して、演出あり 2.8＋0.36 秒）。動きをへらす時は 1.15＋0.36 秒
+    // （声 1.4〜1.5 秒の語尾が切れないよう、くにの判断で 1 秒の上限から 0.25 秒延ばした）。
+    // 声は 1.4〜1.5 秒なので、演出ありの時はふつう前と同じ 1.9 秒で移る
+    const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms))
+    const anim = animate ? Promise.race([scope.play().then(() => undefined), wait(1900)]) : Promise.resolve()
+    await Promise.race([Promise.all([anim, voiceDone]), wait(animate ? 2800 : 1150)])
+    goScope(back, guide.at())
   }
   catalog.onOpenChange((open) => {
     guide.reach(open ? 'scope' : 'scopeClose')
     syncInput()
-    if (open) return
+    if (open) {
+      gpuRelease.release()
+      return
+    }
     // 一覧を閉じた: 世界がぼけた寄りから戻ってくる。HUD もふわっと戻る
     viewing = false
     sound.play('scope-close')
@@ -1364,8 +1590,25 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     fauna.update(time, dt)
     lions.forEach((l) => l.update(time, dt, player.object.position))
     // 生成モデルの群れ: 少し歩いては立ち止まる → 歩行の再生・姿勢の補正・生活感レイヤーを骨に写す
-    for (const w of wanderers) w.update(dt, time, player.object.position)
-    for (const ai of Object.values(aiLions)) ai.tick(dt)
+    {
+      const pp = player.object.position
+      for (const e of lod) {
+        const d = Math.hypot(e.host.group.position.x - pp.x, e.host.group.position.z - pp.z)
+        const far = lodOn && (e.far ? d > LOD_NEAR : d > LOD_FAR)
+        if (far !== e.far) {
+          e.far = far
+          e.ai.model.visible = !far
+          if (e.primOk) e.host.showPrimitive!(far)
+          if (far) farHosts.add(e.host)
+          else farHosts.delete(e.host)
+        }
+        if (far) continue
+        e.wander?.update(dt, time, pp)
+        e.ai.tick(dt)
+      }
+    }
+
+    lionShift?.update(dt, camera, player.object.position, guide.isActive())
 
     // いまいるワールド。変わったらスポットを切り替え、名前を知らせる（サバンナに戻った時も）
     const px = player.object.position.x
@@ -1469,12 +1712,34 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 着いたらボタンが「スコープをのぞく」に変わる。のぞくのは押した時だけ（勝手には開かない）
     hud.setSpotMode(arrived ? 'scope' : player.isAutoWalking() ? 'hidden' : 'go')
 
+    // 名前札から歩いている: 範囲に入ったら止まる。相手が動いたら追う
+    if (labelWalk) {
+      const w = labelWalk
+      const lion = lions.find((l) => l.id === w.id)
+      const p = player.object.position
+      const dest = player.destination()
+      const now = performance.now()
+      // 別の所へ歩き出した（タップ・地図）か、スティック・キーで止めた／岩で止まった（目的地に着いていない）か、時間切れ
+      const overridden = dest !== null && Math.hypot(dest.x - w.x, dest.z - w.z) > 0.5
+      const stopped = dest === null && Math.hypot(p.x - w.x, p.z - w.z) > 2
+      if (!lion || farHosts.has(lion) || overridden || stopped || now - w.since > 20000) {
+        labelWalk = null
+      } else if (Math.hypot(p.x - lion.position.x, p.z - lion.position.z) < lion.collider.r + 4.2 - 0.3) {
+        labelWalk = null
+        labelPick = w.id
+        player.goTo([])
+      } else if (dest === null || (Math.hypot(lion.position.x - w.lx, lion.position.z - w.lz) > 1.5 && now - w.at > 400)) {
+        walkToAnimal(w.id, w.since)
+      }
+    }
+
     // 出会い: そばにいる個体を決める。切り替えは「はっきり近い状態が少し続いたら」
     let closest: { id: string; d: number } | null = null
     // いま出会っている個体の距離と届く範囲（範囲外なら null）
     let currentD: number | null = null
     const heads = new Map<string, { x: number; y: number; d: number }>()
     for (const lion of lions) {
+      if (farHosts.has(lion)) continue
       const d = Math.hypot(player.object.position.x - lion.position.x, player.object.position.z - lion.position.z)
       const reach = lion.collider.r + 4.2
       if (lion.id === encounterId && d < reach) currentD = d
@@ -1490,8 +1755,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         })
       }
     }
+    // 名前札から歩いて着いた子が範囲にいれば、その子に出会う。範囲を出たら選び直しに戻す
+    const picked = labelPick !== null ? lions.find((l) => l.id === labelPick) : undefined
+    const pickedIn = picked !== undefined && !farHosts.has(picked) && Math.hypot(player.object.position.x - picked.position.x, player.object.position.z - picked.position.z) < picked.collider.r + 4.2
+    if (labelPick !== null && !pickedIn) labelPick = null
     let nextId = encounterId
-    if (encounterId !== null && currentD !== null) {
+    if (pickedIn) {
+      nextId = labelPick
+      candidateId = null
+    } else if (encounterId !== null && currentD !== null) {
       if (closest && closest.id !== encounterId && closest.d < currentD - SWITCH_MARGIN) {
         if (candidateId !== closest.id) {
           candidateId = closest.id
@@ -1609,6 +1881,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sky.position.copy(camera.position)
 
     postfx.render()
+    gpuRelease.markRendered()
     if (introOn) introAfterRender()
 
     // 簡易 FPS 計測と DPR の自動調整
@@ -1660,6 +1933,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       view: (name: Parameters<typeof applyView>[0]) => applyView(name, player),
       // 生成モデルの群れ（歩行の計測用: action を止めてコマ送り、posture を書き換え）
       aiLions: () => aiLions,
+      // 遠景で止めている生成モデルの数（確認用）
+      lodFar: () => lod.filter((e) => e.far).length,
+      lodTotal: () => lod.length,
       // 本編を描いた回数（スコープ・モニターの間に増えないことの確認用）
       frames: () => frames,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）
@@ -1677,6 +1953,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   return {
     toStart: () => {
       player.teleport(SPAWN.x, SPAWN.z, Math.PI)
+    },
+    placeAt: (x, z, heading) => {
+      player.teleport(x, z, heading)
     },
     pause: () => {
       paused = true
@@ -1746,9 +2025,47 @@ function nextFrames(n: number): Promise<void> {
   })
 }
 
+/**
+ * スコープ専用モード（?scope=1）: WebGL・3D シーン・動物モデル・テクスチャを一切作らず、アニマルスコープの画面だけを描く。
+ * 一覧を閉じたら（「ワールドにもどる」）通常起動に戻し、前にいた場所から続ける
+ */
+function startScopeMode(handoff: ScopeHandoff): void {
+  sound.setVoiceHero(getHeroId())
+  const region = (handoff.spot?.region ?? 'africa') as RegionKey
+  sound.setBgm(REGION_BGM[region] ?? 'savanna')
+  sound.setAmb(REGION_AMB[region] ?? null)
+  document.body.classList.add('scope-mode', 'is-viewing')
+  // 一覧ができる前ののぞき窓のタップも受ける（済んだらすぐ開く）
+  armHop()
+  const shell = createShell()
+  shell.home.hide()
+  // あそびかたツアーの途中なら続きから（「スコープをのぞく」の段は、一覧が開いたことで次へ進む）
+  if (handoff.guide !== null) {
+    shell.guide.setInWorld(true)
+    shell.guide.resume(handoff.guide)
+  }
+  shell.catalog.onOpenChange((open) => {
+    if (open) return
+    shell.guide.reach('scopeClose')
+    goWorld(handoff.spot, shell.guide.at())
+  })
+  shell.catalog.open(false)
+  shell.guide.reach('scope')
+  dropSplash(false)
+  // のぞき窓の中に一覧がうすく見え、タップで窓が広がる（自動では広げない。そのタップで音を解放して BGM が鳴った状態で一覧を開く）
+  revealHop()
+}
+
 function main(): void {
   applyStatic()
   sound.init()
+  const handoff = readHandoff()
+  // 行き来の画面のスコップの絵を先に読み終えておく（スコープをのぞく・世界に戻る時に遅れて現れないように）
+  window.setTimeout(() => void primeHop(), 1500)
+  if (isScopeMode()) {
+    startScopeMode(handoff)
+    return
+  }
   sound.setBgm('home')
   sound.setVoiceHero(getHeroId())
   const canvas = document.getElementById('world') as HTMLCanvasElement
@@ -1838,6 +2155,41 @@ function main(): void {
     world?.setHero(id)
   })
 
+  // スコープ専用モードから戻った: ホームを通らず、前にいた場所からワールドを続ける（立ち上げの画面のうしろで組み立てる）
+  const returnToWorld = async (spot: ReturnSpot) => {
+    busy = true
+    // 組み立ての途中でのぞき窓をタップしたら、済み次第すぐ入る（タップが無ければ、ピントが合ったあとタップを待つ）
+    armHop()
+    try {
+      await nextFrames(2)
+      world = startWorld(canvas, shell)
+      world.placeAt(spot.x, spot.z, spot.heading)
+      await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
+      shell.home.hide()
+      document.body.classList.add('in-world')
+      dropSplash(false)
+      // 本物のワールドを 1 コマ描いてから、のぞき窓のピントを合わせ、タップで窓を広げて入る（ぼけた寄りから戻る演出はのぞき窓が受け持つ）
+      await nextFrames(1)
+      focusHop()
+      canvas.focus()
+      if (handoff.guide !== null) shell.guide.resume(handoff.guide)
+      else shell.guide.autoStart(shell.store.list().length > 0)
+      shell.guide.setInWorld(true)
+    } catch (err) {
+      console.error(err)
+      world = null
+      document.body.classList.remove('in-world')
+      shell.home.show()
+      shell.home.showFallback()
+      dropSplash(false)
+      hideHop()
+    } finally {
+      busy = false
+    }
+  }
+  const returning = !!handoff.spot && webgl
+  if (returning && handoff.spot) void returnToWorld(handoff.spot)
+
   // ホームが表示されて落ち着いたら、裏でワールドを組み立てておく（ホームの絵が不透明で隠している）。
   // 失敗しても world は null のままにして、「のぞいてみる」の時にもう一度試し、だめなら案内を出す
   const prewarm = () => {
@@ -1851,12 +2203,14 @@ function main(): void {
   }
   // 立ち上げの画面（スプラッシュ）が出ている間に組み立てる（約 2 秒止まるのを、ホームが出たあとにしない）。
   // スプラッシュが先に消えた時（ホームの絵が 4 秒で届かない等）は、下の後回しの準備で組み立てる
-  hideSplash(prewarm)
-  const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => void }).requestIdleCallback
-  window.setTimeout(() => {
-    if (idle) idle(prewarm, { timeout: 1500 })
-    else prewarm()
-  }, 1200)
+  if (!returning) {
+    hideSplash(prewarm)
+    const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => void }).requestIdleCallback
+    window.setTimeout(() => {
+      if (idle) idle(prewarm, { timeout: 1500 })
+      else prewarm()
+    }, 1200)
+  }
   // 帳の出口: ワールドからならそのまま閉じて戻る。ホームからなら閉じてワールドへ入る
   shell.book.onGoWorld((from) => {
     shell.book.close()
@@ -1877,6 +2231,27 @@ function main(): void {
 main()
 
 /** プリミティブ版の体の長さ（群れの座標系の z 方向、頭から尾の先まで）。生成モデルの大きさをこれにそろえる */
+/**
+ * 動物の大きさの倍率。主人公の子が 2m ほどあり、実物どおりの寸法の動物が並ぶと小さく感じる（11/8 くにの指摘）。
+ * 実物に近い大きさで作ってある種だけ大きくする。もともと実物より大きめにできている種（オオカミ・ハスキー・カピバラ・クマ・キツネ・
+ * カワウソ・マーラ・ミーアキャットなど）と、鳥・木の上の子は今のまま。
+ * 置き場所は変えず、入れ物ごと（プリミティブ版・生成モデル・名前の札の高さ・当たり判定）大きくする
+ */
+const ANIMAL_SCALE = 1.3
+const GROW_SPECIES = new Set([
+  'ライオン', 'グラントシマウマ', 'ブチハイエナ', 'ベンガルトラ', 'アメリカバク', 'ラーテル', 'スナネコ',
+  'アルダブラゾウガメ', 'ケヅメリクガメ', 'パンケーキリクガメ', 'シャムワニ', 'メガネカイマン', 'ビルマニシキヘビ',
+  'ビントロング', 'キンカジュー', 'アカハナグマ', 'コモンリスザル', 'ニホンザル', 'ヤマアラシ', 'アメリカビーバー',
+  'オオカンガルー', 'アカカンガルー', 'パルマワラビー', 'モモイロペリカン',
+  'ポニー', 'ヤギ', 'ヒツジ', 'ギープ', 'ホットベリーピック（ブタ）', 'ピレネーシェパード',
+])
+function growAnimal(animal: { id: string; group: THREE.Object3D; collider: { r: number } }): void {
+  const species = getAnimal(animal.id)?.species
+  if (!species || !GROW_SPECIES.has(species)) return
+  animal.group.scale.multiplyScalar(ANIMAL_SCALE)
+  animal.collider.r *= ANIMAL_SCALE
+}
+
 function primitiveLength(group: THREE.Object3D, axis: 'y' | 'z' = 'z'): number {
   group.updateMatrixWorld(true)
   const inv = group.matrixWorld.clone().invert()
