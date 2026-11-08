@@ -375,7 +375,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // ピーター: サバンナの道（スタート → スポット）の右手の草原。グラン（道の左手）と道をはさんだ向かい、ライリー（40, 5）から 22 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。
       // 体の長さ 1.7 m は実物の成獣の目安。接地だけだと腰 80〜83%。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.8 で腰 99.1〜102.3%（ピーターで測って決めた値）
       { key: 'hyena', species: 'ブチハイエナ', name: 'ピーター', file: 'hyena-peter', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.6, frontCenter: true, ground: true }, place: { ...SAVANNA_HYENA, length: 1.7 } },
-      // ゆめこ: ジャングルの中心の西（ティガーの反対側。名簿の全個体を置いた後、アカハナグマの群れと重ならないよう南へ 4.5 m ずらした）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 2.1 m は実物の成獣の目安。
+      // ゆめこ: ジャングルの中心の西（ティガーの反対側）。木の影に入らないよう、群れの拠点（residents.ts）を日なたへ動かした（11/8）。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 2.1 m は実物の成獣の目安。
       // 色の画像が暗く、ジャングルの光では写真より黒く沈むので、明るさを 2.5 倍にする（1・1.35・1.7・2.5・3.5 を写真と並べて、毛の灰色がいちばん近い値）。
       // 尾はごく短いので、尾の骨は動かさない（noTail・尾 1）。接地だけだと腰 79〜82%。後ろ脚 0.95・背骨 0.9・前脚 0.8 で腰 99.4〜102.8%（ゆめこで測って決めた値）
       { key: 'tapir', species: 'アメリカバク', name: 'ゆめこ', file: 'tapir-yumeko', posture: { hind: 0.65, hindCenter: true, spine: 0.9, tail: 1, front: 0.65, frontCenter: true, ground: true }, noTail: true, brighten: 2.5, place: { ...residentPlace('jungle', 'アメリカバク'), yaw: 1.3, length: 2.1 } },

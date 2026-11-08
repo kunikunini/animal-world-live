@@ -266,7 +266,8 @@ const EXTRA: Extra[] = [
   { species: 'キンカジュー', region: 'jungle', at: [11, -5], spread: 4, size: 0.36, make: lionLike('kinkajou') },
   { species: 'ビントロング', region: 'jungle', at: [10, -13], spread: 2, size: 0.48, make: lionLike('binturong') },
   { species: 'アカハナグマ', region: 'jungle', at: [-11, -4], spread: 3.5, size: 1.2, make: wild('coati') },
-  { species: 'アメリカバク', region: 'jungle', at: [-3, -13], spread: 1, size: 1.0, make: wild('tapir') },
+  // - アメリカバク: 前は [-3, -13] で、大きな木の樹冠の影にずっと入って目立たなかった（11/8 くにの指示）。南へ寄せて、歩き回る半径 6 m がまるごと日なたになる所に
+  { species: 'アメリカバク', region: 'jungle', at: [-3, -8.3], spread: 1, size: 1.0, make: wild('tapir') },
   { species: 'コモンリスザル', region: 'jungle', at: [13, 4], spread: 1, size: 1.8, make: wild('squirrelmonkey') },
   { species: 'コモンマーモセット', region: 'jungle', at: [14, 8], spread: 1, size: 1.9, make: wild('marmoset') },
   { species: 'スローロリス', region: 'jungle', at: [15, 0], spread: 1, size: 1.9, make: wild('loris') },
