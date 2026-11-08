@@ -833,11 +833,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 戻り先（いまの位置と向き・ワールド）と、あそびかたツアーの段を持っていく
     const back: ReturnSpot = { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y, region: here.key }
     // 移るのは、構えてピントが合うまで（約 1.9 秒。とばしたらそこまで）と、声の終わりの遅い方。
-    // 待つのは前より 1 秒まで（行き来の画面を出す 0.36 秒を足して、演出あり 2.8＋0.36 秒・動きをへらす時 0.9＋0.36 秒）。
+    // 待つのは前より 1 秒まで（行き来の画面を出す 0.36 秒を足して、演出あり 2.8＋0.36 秒）。動きをへらす時は 1.15＋0.36 秒
+    // （声 1.4〜1.5 秒の語尾が切れないよう、くにの判断で 1 秒の上限から 0.25 秒延ばした）。
     // 声は 1.4〜1.5 秒なので、演出ありの時はふつう前と同じ 1.9 秒で移る
     const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms))
     const anim = animate ? Promise.race([scope.play().then(() => undefined), wait(1900)]) : Promise.resolve()
-    await Promise.race([Promise.all([anim, voiceDone]), wait(animate ? 2800 : 900)])
+    await Promise.race([Promise.all([anim, voiceDone]), wait(animate ? 2800 : 1150)])
     goScope(back, guide.at())
   }
   catalog.onOpenChange((open) => {
