@@ -115,6 +115,12 @@ const cardImg = (poster: string) => {
   return `<picture><source media="(min-width: 768px)" srcset="${sm}" /><img src="${xs}" alt="" loading="lazy" decoding="async" /></picture>`
 }
 
+/** スタッフが撮った映像の表紙の左上に付ける札（その映像にだけ付ける。段の見出しだけでは、どの映像の話か伝わらないため） */
+const CAM =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg>'
+const staffChip = (extra = '', hidden = false) =>
+  `<span class="cat-staff-chip${extra}"${hidden ? ' hidden' : ''}>${CAM}<span>${esc(t('staffShot'))}</span></span>`
+
 export function createCatalog(store: FriendBookStore): CatalogView {
   const root = document.getElementById('catalog') as HTMLElement
   let open = false
@@ -186,7 +192,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   const fillSlideText = (el: HTMLElement, i: number) => {
     const sl = heroSlides[i]
     if (!sl) return
-    ;(el.querySelector('.cat-badge-staff') as HTMLElement).hidden = !sl.video.staff
+    ;(el.querySelector('.cat-hero-staff') as HTMLElement).hidden = !sl.video.staff
     ;(el.querySelector('.cat-hero-meta') as HTMLElement).textContent = sl.meta
     ;(el.querySelector('.cat-hero-title') as HTMLElement).textContent = sl.title
     const watch = el.querySelector<HTMLElement>('.cat-watch')
@@ -590,6 +596,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     title: string
     duration: string
     place: string
+    /** スタッフが撮った映像（表紙に「スタッフ撮影」の札を付ける） */
+    staff: boolean
   }
   const placeOf = (a: Animal) => {
     const w = a.world ? getWorld(a.world) : undefined
@@ -598,16 +606,16 @@ export function createCatalog(store: FriendBookStore): CatalogView {
   const allVideoItems = (): VidItem[] => {
     const out: VidItem[] = []
     const main = getAnimal(FEATURED.animalId)
-    if (main) out.push({ key: videoKeyOf(main), animal: main, poster: FEATURED.poster, title: t('catRecTitle'), duration: FEATURED.duration, place: t('catSavanna') })
+    if (main) out.push({ key: videoKeyOf(main), animal: main, poster: FEATURED.poster, title: t('catRecTitle'), duration: FEATURED.duration, place: t('catSavanna'), staff: false })
     for (const v of SPECIES_VIDEOS) {
       const first = animalsInVideo(v.id)[0]
-      if (first) out.push({ key: v.id, animal: first, poster: v.poster, title: v.title[getLang()], duration: v.duration, place: placeOf(first) })
+      if (first) out.push({ key: v.id, animal: first, poster: v.poster, title: v.title[getLang()], duration: v.duration, place: placeOf(first), staff: false })
     }
     for (const v of STAFF_VIDEOS) {
       const named = v.animalIds.map((id) => getAnimal(id)).find((x): x is Animal => !!x && x.status === 'ready')
       const a = named ?? listReadyAnimals().find((x) => x.videoId === v.id)
       if (!a) continue
-      out.push({ key: v.id, animal: a, poster: v.poster, title: named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()], duration: v.duration, place: placeOf(a) })
+      out.push({ key: v.id, animal: a, poster: v.poster, title: named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()], duration: v.duration, place: placeOf(a), staff: true })
     }
     return out
   }
@@ -623,7 +631,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
 
   /** 横長の映像カード（数は出さない。👍・❤️ の状態はモニターと新着の枠のボタンで見る） */
   const videoCardHtml = (it: VidItem) =>
-    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb">${cardImg(it.poster)}<span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
+    `<button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb">${cardImg(it.poster)}${it.staff ? staffChip() : ''}<span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${esc(t('recorded'))}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>`
 
   /** お気に入り（❤️ を押した映像、新しい順）の一覧 */
   const renderFavsPage = () => {
@@ -632,7 +640,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
     const cards = items
       .map(
         (it) =>
-          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async" /><span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
+          `<div class="cat-fav-card"><button type="button" class="cat-card" data-watch="${esc(it.animal.id)}"><span class="cat-thumb"><img src="${esc(thumb(it.poster))}" alt="" loading="lazy" decoding="async" />${it.staff ? staffChip() : ''}<span class="cat-dur">${esc(it.duration)}</span></span><span class="cat-card-title">${esc(it.title)}</span><span class="cat-card-meta">${meta('recorded')}${it.place ? ` ・ ${esc(it.place)}` : ''}</span></button>${reactButtonsMarkup(it.key)}</div>`,
       )
       .join('')
     root.innerHTML = `
@@ -809,7 +817,8 @@ export function createCatalog(store: FriendBookStore): CatalogView {
             <!-- 再生・停止は映像の真ん中（くにの指示） -->
               ${heroSlides.length ? `<button type="button" class="cat-hero-ctl" data-hero-ctl="1" aria-pressed="false" aria-label="${meta('heroPause')}"><svg class="ico ico-fill" aria-hidden="true"><use href="#i-pause" /></svg></button>` : ''}
             <div class="cat-hero-corner">
-              <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}<span class="cat-badge-staff" hidden>・${meta('staffShot')}</span></span>
+              <span class="cat-badge"><svg class="ico" aria-hidden="true"><use href="#i-film" /></svg>${meta('recorded')}</span>
+              ${staffChip(' cat-hero-staff', true)}
             </div>
             ${
               heroSlides.length > 1
@@ -937,7 +946,7 @@ export function createCatalog(store: FriendBookStore): CatalogView {
       const place = a.world === 'africa' ? t('catSavanna') : w ? worldName(w) : ''
       const title = named ? `${animalName(a)}（${speciesName(a.species)}）` : v.title[getLang()]
       return [
-        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb">${cardImg(v.poster)}<span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
+        `<button type="button" class="cat-card" data-watch="${esc(a.id)}"><span class="cat-thumb">${cardImg(v.poster)}${staffChip()}<span class="cat-dur">${esc(v.duration)}</span></span><span class="cat-card-title">${esc(title)}</span><span class="cat-card-meta">${meta('recorded')}${place ? ` ・ ${esc(place)}` : ''}</span></button>`,
       ]
     })
     const staff = staffCards.length ? section('staff', meta('catRowStaff'), `<div class="cat-row">${staffCards.join('')}</div>`) : ''
