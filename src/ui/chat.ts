@@ -13,6 +13,10 @@ import { animalName, getLang, speciesName, t } from './i18n'
 import { refreshIn } from './transition'
 import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
 import { reactions, videoKeyOf } from '../data/reactions'
+import talkPhotosRaw from '../data/talkPhotos.json'
+
+/** トークに出すスタッフ撮影の写真（src/data/talkPhotos.json）。撮影日は確かめていないので時刻・日付は付けない */
+const TALK_PHOTOS = (talkPhotosRaw as { photos: Array<{ file: string; animalIds: string[]; w: number; h: number }> }).photos
 
 /**
  * ともだち帳のトーク画面。LINE のトークに似た見た目だが、会話をする場所ではなく「手紙」に近い。
@@ -164,6 +168,14 @@ export function createChatView({ letters, notices, read, friendSince }: ChatDeps
     if (since) items.push(`<li class="ch-item ch-sys"><span>${esc(t('sysFriend', { date: formatMetDate(since) }))}</span></li>`)
     const card = videoCard(a)
     if (card) items.push(bubbleLeft(card, since ? esc(formatWhen(since)) : ''))
+    for (const p of TALK_PHOTOS.filter((x) => x.animalIds.includes(a.id))) {
+      const html = `
+        <div class="ch-card">
+          <img class="ch-photo ch-photo-staff" src="${esc(p.file)}" alt="${esc(t('staffPhoto'))}: ${esc(animalName(a))}" width="${p.w}" height="${p.h}" />
+          <p class="ch-card-kind">${esc(t('staffPhoto'))}</p>
+        </div>`
+      items.push(bubbleLeft(html, '', esc(t('staffNotice'))))
+    }
     const published = notices.publishedFor(a.id)
     if (published.length === 0) {
       // 本物のお知らせがまだ無い子には「みほん」1 通だけ。時刻は付けない（届いたお知らせではないので）

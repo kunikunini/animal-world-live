@@ -1,0 +1,13 @@
+{
+  "$comment": "ともだち帳のトークに出す写真（スタッフ撮影）。元は受け取りフォルダ media-inbox/ともだち帳用写真。どの子の写真かはファイル名が名簿の個体名と完全一致した時だけ決め（2 枚目からの _2・-2 は外して照合）、複数の子が写っている物はファイル名に書かれた子みんなに出す。撮影した人の名前と撮影日は書かない（日付は確かめていない）。人の顔・名札が写っている物は入れない。画像は public/talk/ に長い辺 1200 以下・メタデータなしで置く。新しく足した物は下へ。",
+  "photos": [
+    {"file": "/talk/alex-2.jpg", "animalIds": ["alex"], "w": 900, "h": 1200},
+    {"file": "/talk/r-zuotzx-2.jpg", "animalIds": ["r-zuotzx"], "w": 902, "h": 1200},
+    {"file": "/talk/r-4g2csd-2.jpg", "animalIds": ["r-4g2csd"], "w": 1200, "h": 1200},
+    {"file": "/talk/r-4g2csd-3.jpg", "animalIds": ["r-4g2csd"], "w": 1000, "h": 564},
+    {"file": "/talk/claire-2.jpg", "animalIds": ["claire"], "w": 1200, "h": 676},
+    {"file": "/talk/r-lpd7lb-2.jpg", "animalIds": ["r-lpd7lb"], "w": 750, "h": 1000},
+    {"file": "/talk/r-5p9jcc-2.jpg", "animalIds": ["r-5p9jcc"], "w": 900, "h": 1200},
+    {"file": "/talk/lion-family-1.jpg", "animalIds": ["angie", "claire", "carla"], "w": 1200, "h": 676}
+  ]
+}
