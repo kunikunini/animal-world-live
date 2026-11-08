@@ -4971,7 +4971,9 @@ div.cat-card { cursor: default; }
       0 26px 40px -14px rgba(0, 0, 0, 0.65);
   }
 }
-body.is-reduce-motion .cat-thumb:not(.cat-sil) { transition: none; transform: none; }
+body.is-reduce-motion .cat-thumb:not(.cat-sil),
+body.is-reduce-motion .cat-card:active .cat-thumb:not(.cat-sil),
+body.is-reduce-motion .cat-card:hover .cat-thumb:not(.cat-sil) { transition: none; transform: none; }
 /* 横に流れる段は上下にはみ出す影が切れるので、段の中に余白を取り、外の余白で打ち消す */
 .cat-row:has(> .cat-card) { padding-top: 6px; padding-bottom: 26px; margin-top: -6px; margin-bottom: -22px; }
 /* スタッフが撮った映像の札（その映像の表紙の左上だけ）。橙は主役ボタン専用なので、濃い地に金の文字 */
