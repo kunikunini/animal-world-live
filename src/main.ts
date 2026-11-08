@@ -341,6 +341,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       upright?: boolean
       /** 歩かない子: 歩き回りを付けず、その場で呼吸・首・揺れだけ */
       still?: boolean
+      /** 体の長い子: 前足と後ろ足の間の半分（m）。斜面に沿って体を傾ける（lionWander.ts の slopeFit） */
+      slopeFit?: number
       /** 色の明るさ（1 で書き出しのまま）。?<key>Bright=<数> で試せる */
       brighten?: number
       /** 大きさの倍率。?<key>Scale=<数> で試せる */
@@ -363,8 +365,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'capybara', species: 'カピバラ', name: 'しずか', file: 'capybara-shizuka', posture: { hind: 0.7, hindCenter: true, spine: 0.98, tail: 1, front: 0.75, frontCenter: true, ground: true }, noTail: true },
       // グラン: サバンナの西、スタートからスポットへ向かう道の左手の草原。体の長さはアンジーの 1.15 倍（実物の比）。
       // 接地だけだと腰が 85〜90% の忍び足。ティガーと同じ強さで寄せる
+      // 体が長く、斜面では体の中心の高さだけに合わせると前足が浮いて見えた（11/8 くにの指摘）ので、前後の足の地面に合わせて体を傾ける（slopeFit）。
       // グランの後ろ脚はアレックスと同じく平均の曲がりだけ取る（0.95 で立ち姿へ寄せていた時は後ろ足がほぼ動かなかった）。0.7 で前脚の歩幅・速さにそろう
-      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 } },
+      { key: 'zebra', species: 'グラントシマウマ', name: 'グラン', file: 'zebra-gran', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, ground: true }, place: { ...SAVANNA_ZEBRA, length: 3.3 }, slopeFit: 0.9 },
       // フェン: 北の世界の中心の北のホッキョクオオカミ 3 頭のうち、いちばん東の子（ネガ・マリはプリミティブ版のまま）。大きさはプリミティブ版の体の長さにそろえる。
       // 接地だけだと腰 86〜100% で前足が浮く。後ろ脚 0.9・背骨 0.95・尾 0.5・前脚 0.85 で腰 99.3〜103.3%（フェンで測って決めた値）
       { key: 'wolf', species: 'ホッキョクオオカミ', name: 'フェン', file: 'wolf-fen', posture: { hind: 0.65, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true } },
@@ -579,7 +582,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           if (!r.hang) host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const roam = roamFor(r.species, animal.id)
-          const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, roam)
+          const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, r.slopeFit ? { ...roam, slopeFit: r.slopeFit } : roam)
           if (w) {
             w.setReduceMotion(reduceMotionNow)
             wanderers.push(w)
