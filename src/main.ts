@@ -46,7 +46,7 @@ import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
-import { goScope, goWorld, hideHop, isScopeMode, readHandoff, type ReturnSpot, type ScopeHandoff } from './scopeMode'
+import { goScope, goWorld, hideHop, isScopeMode, primeHop, readHandoff, type ReturnSpot, type ScopeHandoff } from './scopeMode'
 import { dropSplash } from './ui/splash'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
 import type { Lang } from './ui/i18n'
@@ -820,16 +820,24 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     sound.cancelTap()
     if (animate) window.setTimeout(() => sound.play('scope-open'), 250)
     else sound.play('scope-open')
-    // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）
+    // 観察スポットからのぞく時だけ「あっ、見つけた！」（ふだん動物に会った時には鳴らさない）。
+    // 声は演出の頭で鳴らし、言い終わってからページを入れ替える（入れ替えると音も止まるので、0.7 秒目からだと「見つけ」で切れていた。11/8 くにの実機）。
+    // 出会いの音は今までどおり 0.7 秒目
+    let voiceDone: Promise<void> = Promise.resolve()
     if (arrived) {
-      if (animate) window.setTimeout(cueFind, 700)
-      else cueFind()
+      voiceDone = sound.sayToEnd('find')
+      if (animate) window.setTimeout(() => sound.play('encounter'), 700)
+      else sound.play('encounter')
     }
     // スコープ専用モードで起動し直す（11/8 最終対策）。3D のページの中では一覧を開かない。
     // 戻り先（いまの位置と向き・ワールド）と、あそびかたツアーの段を持っていく
     const back: ReturnSpot = { x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y, region: here.key }
-    // 構えてピントが合うまで（約 1.9 秒）はここで見せる。とばした時・動きをへらす時はすぐ移る
-    if (animate) await Promise.race([scope.play(), new Promise((r) => window.setTimeout(r, 1900))])
+    // 移るのは、構えてピントが合うまで（約 1.9 秒。とばしたらそこまで）と、声の終わりの遅い方。
+    // 待つのは前より 1 秒まで（行き来の画面を出す 0.36 秒を足して、演出あり 2.8＋0.36 秒・動きをへらす時 0.9＋0.36 秒）。
+    // 声は 1.4〜1.5 秒なので、演出ありの時はふつう前と同じ 1.9 秒で移る
+    const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms))
+    const anim = animate ? Promise.race([scope.play().then(() => undefined), wait(1900)]) : Promise.resolve()
+    await Promise.race([Promise.all([anim, voiceDone]), wait(animate ? 2800 : 900)])
     goScope(back, guide.at())
   }
   catalog.onOpenChange((open) => {
@@ -2035,6 +2043,8 @@ function main(): void {
   applyStatic()
   sound.init()
   const handoff = readHandoff()
+  // 行き来の画面のスコップの絵を先に読み終えておく（スコープをのぞく・世界に戻る時に遅れて現れないように）
+  window.setTimeout(() => void primeHop(), 1500)
   if (isScopeMode()) {
     startScopeMode(handoff)
     return

@@ -69,9 +69,11 @@ let leaving = false
  * 行き来の画面（index.html の #hop）。to = スコープへ、back = ワールドへ。
  * 出す時は 0.25 秒でふわっと出し、出しきってからページを入れ替える（入れ替わった先は最初から同じ画面が出ている）
  */
-function showHop(dir: 'to' | 'back'): Promise<void> {
+async function showHop(dir: 'to' | 'back'): Promise<void> {
   const root = document.documentElement
   const el = document.getElementById('hop')
+  // スコップの絵を先に読み終えておく（出した瞬間に遅れて現れて、カクついて見えないように）
+  await Promise.race([primeHop(), new Promise((r) => window.setTimeout(r, 150))])
   root.classList.remove('hop-to', 'hop-back')
   try {
     if (localStorage.getItem('awl.lang') === 'en') root.classList.add('hop-en')
@@ -80,12 +82,21 @@ function showHop(dir: 'to' | 'back'): Promise<void> {
   }
   root.classList.add('is-hop', `hop-${dir}`)
   if (!el) return Promise.resolve()
-  el.classList.remove('is-out')
+  el.classList.remove('is-out', 'is-fade-in')
+  void el.offsetWidth
   el.classList.add('is-fade-in')
-  return new Promise((r) => window.setTimeout(r, 260))
+  // 出しきってから入れ替える（スコップが広がり終わる 0.35 秒）
+  return new Promise((r) => window.setTimeout(r, 360))
 }
 
-/** 行き来の画面を消す（次の画面が出せるようになったら呼ぶ）。0.45 秒で薄れる */
+/** 行き来の画面のスコップの絵を、見えない間に読み終えておく（起動時に呼ぶ） */
+export function primeHop(): Promise<void> {
+  const img = document.querySelector<HTMLImageElement>('#hop .hop-scop')
+  if (!img?.decode) return Promise.resolve()
+  return img.decode().catch(() => undefined)
+}
+
+/** 行き来の画面を消す（次の画面が出せるようになったら呼ぶ）。0.3 秒で薄れる */
 export function hideHop(): void {
   const root = document.documentElement
   const el = document.getElementById('hop')
@@ -94,7 +105,7 @@ export function hideHop(): void {
   window.setTimeout(() => {
     root.classList.remove('is-hop', 'hop-to', 'hop-back')
     el.classList.remove('is-out', 'is-fade-in')
-  }, 500)
+  }, 350)
 }
 
 /** 3D のワールドから、スコープ専用モードへ */

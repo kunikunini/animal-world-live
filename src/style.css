@@ -6299,13 +6299,21 @@ body.is-reduce-motion .rx-btn.is-pop .ico { animation: none; }
   background: radial-gradient(120% 80% at 50% 44%, #1d2640 0%, #0d1222 70%);
   color: #fff6e6;
   font-family: var(--font-logo);
-  transition: opacity 0.45s ease;
+  transition: opacity 0.3s ease;
 }
 html.is-hop .hop { display: flex; }
 html.is-hop #splash { display: none; }
+/* 出す時（移る前のページ）: 地は 0.25 秒でふわっと、レンズと文字は少し小さい所から、スコップはさらに小さい所から広がって出る */
 .hop.is-fade-in { animation: hop-in 0.25s ease both; }
+.hop.is-fade-in :is(.hop-lens, .hop-text) { animation: hop-pop 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.hop.is-fade-in .hop-scop { animation: hop-scop-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both, hop-bob 1.1s ease-in-out 0.35s infinite alternate; }
+/* 消す時（入れ替わった先のページ）: 0.3 秒で薄れながら、レンズが少しだけ縮む */
 .hop.is-out { opacity: 0; pointer-events: none; }
+.hop-lens, .hop-text { transition: transform 0.3s ease; }
+.hop.is-out :is(.hop-lens, .hop-text) { transform: scale(0.96); }
 @keyframes hop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hop-pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes hop-scop-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.78); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 .hop-lens { position: relative; width: calc((var(--off) + var(--r)) * 2); height: calc(var(--r) * 2); }
 .hop-rim {
   position: absolute;
@@ -6341,8 +6349,13 @@ html.hop-back.hop-en .hop-back-en { display: inline; }
 .hop-dots i:nth-child(2) { animation-delay: 0.15s; }
 .hop-dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes hop-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
+/* 動きをへらす時: 広がる・揺れる・縮むはやめて、フェードだけ */
 @media (prefers-reduced-motion: reduce) {
-  .hop-scop, .hop-dots i { animation: none; }
+  .hop .hop-scop, .hop-dots i { animation: none !important; }
+  .hop.is-fade-in :is(.hop-lens, .hop-text) { animation: hop-in 0.25s ease both; }
+  .hop.is-out :is(.hop-lens, .hop-text) { transform: none; }
 }
-body.is-reduce-motion .hop-scop,
-body.is-reduce-motion .hop-dots i { animation: none; }
+body.is-reduce-motion .hop .hop-scop,
+body.is-reduce-motion .hop-dots i { animation: none !important; }
+body.is-reduce-motion .hop.is-fade-in :is(.hop-lens, .hop-text) { animation: hop-in 0.25s ease both; }
+body.is-reduce-motion .hop.is-out :is(.hop-lens, .hop-text) { transform: none; }

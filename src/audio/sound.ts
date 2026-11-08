@@ -518,8 +518,9 @@ let walkStart = 0
 let lastWalkStep = 0
 let lastBreath = 0
 
-function sayNow(line: VoiceLine): void {
-  if (!unlocked || !ctx || !seBus || seOff()) return
+/** 声を鳴らす。言い終わった時（鳴らさなかった時はすぐ）に解決する */
+function sayNow(line: VoiceLine): Promise<void> {
+  if (!unlocked || !ctx || !seBus || seOff()) return Promise.resolve()
   const skip = VOICE_SKIP[voiceHero] ?? []
   const all = VOICE_VARIANTS[line]
   const variants = all.filter((v) => !skip.includes(v)).length ? all.filter((v) => !skip.includes(v)) : all
@@ -531,11 +532,11 @@ function sayNow(line: VoiceLine): void {
     p = fetchBuffer(file)
     shots.set(file, p)
   }
-  void p.then((buf) => {
-    if (!buf || !ctx || !seBus) return
+  return p.then((buf) => new Promise<void>((done) => {
+    if (!buf || !ctx || !seBus) return done()
     // 前の声が残っていたら止める（息づかいは、ほかの声が鳴っている間は出さない）
     if (voiceSrc) {
-      if (line === 'breath') return
+      if (line === 'breath') return done()
       try {
         voiceSrc.stop()
       } catch {
@@ -550,11 +551,12 @@ function sayNow(line: VoiceLine): void {
     g.connect(seBus)
     src.onended = () => {
       if (voiceSrc === src) voiceSrc = null
+      done()
     }
     voiceSrc = src
     src.start()
     logPlayed(file)
-  })
+  }))
 }
 
 export const sound = {
@@ -788,12 +790,16 @@ export const sound = {
       if (now - lastJumpVoice < 1200) return
       lastJumpVoice = now
     }
-    if (delayMs > 0) window.setTimeout(() => sayNow(line), delayMs)
-    else sayNow(line)
+    if (delayMs > 0) window.setTimeout(() => void sayNow(line), delayMs)
+    else void sayNow(line)
+  },
+  /** 声を今すぐ鳴らし、言い終わるのを待つ（鳴らさない時はすぐ）。スコープへ移る前に「あっ、見つけた！」を言い切るため */
+  sayToEnd(line: VoiceLine): Promise<void> {
+    return sayNow(line)
   },
   /** 着地: 高い所から落ちた時だけ声を出す（drop は跳んだいちばん高い所からの落差 m） */
   landed(drop: number): void {
-    if (drop > LAND_VOICE_DROP_M) sayNow('land')
+    if (drop > LAND_VOICE_DROP_M) void sayNow('land')
   },
   /** 歩いた 1 歩ごとに呼ぶ。歩き続けている時だけ、ときどき息づかい */
   walkStep(): void {
@@ -802,7 +808,7 @@ export const sound = {
     lastWalkStep = now
     if (now - walkStart > BREATH_AFTER_S * 1000 && now - lastBreath > BREATH_EVERY_S * 1000) {
       lastBreath = now
-      sayNow('breath')
+      void sayNow('breath')
     }
   },
   /** 同じ操作で少し遅れて別の効果音を鳴らす時、先にタップ音だけ取り消す */
