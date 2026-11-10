@@ -3,15 +3,34 @@ import { faceMarkup } from './faces'
 import { esc } from './html'
 import { animalName, getLang, speciesName, t } from './i18n'
 
+/** {漢字|よみ} をふりがな付きで出す（ほかはエスケープしたまま） */
+function ruby(s: string): string {
+  return esc(s).replace(/\{([^|}]+)\|([^}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>')
+}
+
 /** 項目カード。空の必須項目は「準備中」と正直に出す（埋めない）。任意項目は空なら出さない */
-function field(icon: string, label: string, value: string, options: { required?: boolean; keeper?: boolean } = {}): string {
+function field(
+  icon: string,
+  label: string,
+  value: string,
+  options: { required?: boolean; keeper?: boolean; extra?: string } = {},
+): string {
   if (!value && !options.required) return ''
-  const body = value ? esc(value) : `<span class="pending">${esc(t('pending'))}</span>`
+  const body = value ? ruby(value) : `<span class="pending">${esc(t('pending'))}</span>`
   return `
     <div class="field${options.keeper ? ' keeper' : ''}">
       <svg class="ico" aria-hidden="true"><use href="#i-${icon}" /></svg>
-      <div><h4>${label}</h4><p>${body}</p></div>
+      <div><h4>${label}</h4><p>${body}</p>${options.extra || ''}</div>
     </div>`
+}
+
+/** 種の説明の出典（小さなリンク） */
+function sources(list: { title: string; url: string }[] | undefined): string {
+  if (!list?.length) return ''
+  const links = list
+    .filter((s) => /^https:\/\//.test(s.url))
+    .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title || s.url)}</a>`)
+  return links.length ? `<p class="field-src">${esc(t('fSources'))}: ${links.join(' / ')}</p>` : ''
 }
 
 /** 見出し: 顔 + 名前 + 種名（・年齢）。担当飼育員の氏名は扱わない（データにも無い） */
@@ -34,6 +53,7 @@ export function renderProfile(animal: Animal): string {
       field('family', t('fFamily'), animal.family),
       field('sparkle', t('fPersonality'), animal.personality),
       field('heart', t('fFavorites'), animal.favorites),
+      field('book', t('fSpecies'), animal.speciesInfo || '', { extra: sources(animal.speciesSources) }),
       field('bubble', t('fKeeper'), animal.keeperComment, { required: true, keeper: true }),
     ].join('')
   )

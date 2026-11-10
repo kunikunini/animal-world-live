@@ -1,0 +1,2989 @@
+{
+ "$comment": "個体ごとのプロフィール（子ども向け、案内役スコップの語り）。personality・favorites・identifyingMarks は北海道アニマルワールドの飼育日誌から AI（Claude Opus 5.5）が下書きし、病気・治療・職員名・飼育の手順を除いて書き直したもので、施設側（くに）が全頭を確認済み（2026-11-11）。speciesInfo はその種の一般的な説明で、AI が Web 検索で確かめた出典を speciesSources に残す。同じ種が複数いる時は個体ごとに別の話題。{漢字|よみ} はふりがな。元の飼育日誌はこのリポジトリに入れていない",
+ "profiles": {
+  "angie": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ライオンのひみつを、ひとつ{教|おし}えるね。ライオンは、アフリカなどの{草原|そうげん}にすんでいるんだ。{木|き}がまばらな{林|はやし}にもすんでいるよ。ネコのなかまでは、めずらしいことがあるんだ。「プライド」というむれでくらすんだって。むれのメスたちは、{力|ちから}をあわせて{子|こ}そだてをするんだ。オスは、むれを{守|まも}るのが{役|やく}わりなんだって。チームワークばつぐんでしょ？それに、1{日|にち}の{半分|はんぶん}{以上|いじょう}を、ねてすごすんだって。",
+   "speciesSources": [
+    {
+     "title": "千葉市：千葉市動物公園 アフリカライオン",
+     "url": "https://www.city.chiba.jp/zoo/zone/lion.html"
+    },
+    {
+     "title": "ライオン|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/Lion/"
+    }
+   ]
+  },
+  "claire": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ライオンのオスの{首|くび}のまわりには、ふさふさの{毛|け}があるでしょ？この{毛|け}を「たてがみ」というんだ。たてがみは、1{才|さい}{半|はん}ごろから{生|は}えはじめるんだよ。そして、5〜6{才|さい}でりっぱにそろうんだって。",
+   "speciesSources": [
+    {
+     "title": "ライオン｜群馬サファリパーク",
+     "url": "https://safari.co.jp/animal/lion/"
+    }
+   ]
+  },
+  "carla": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ライオンの{赤|あか}ちゃんって、どんな{見|み}た{目|め}だと{思|おも}う？じつは、{体|からだ}にこい{色|いろ}のもようがあるんだ。おとなとは、ちょっとちがう{見|み}た{目|め}なんだよ。このもようは、{生|う}まれて10か{月|げつ}くらいで{消|き}えるんだって。",
+   "speciesSources": [
+    {
+     "title": "ライオン｜群馬サファリパーク",
+     "url": "https://safari.co.jp/animal/lion/"
+    },
+    {
+     "title": "African Lion - Denver Zoo Conservation Alliance",
+     "url": "https://denverzoo.org/animals/african-lion/"
+    }
+   ]
+  },
+  "alex": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ライオンのほえ{声|ごえ}は、{大|おお}きなネコのなかまでいちばん{大|おお}きいんだ。8キロメートルもはなれた{所|ところ}までとどくんだって。オスもメスもほえるんだ。ほえて、なかまとれんらくをとりあうよ。ほえ〜っとおどろいちゃうでしょ？",
+   "speciesSources": [
+    {
+     "title": "African Lion - Denver Zoo Conservation Alliance",
+     "url": "https://denverzoo.org/animals/african-lion/"
+    },
+    {
+     "title": "Lion | National Geographic Kids",
+     "url": "https://kids.nationalgeographic.com/animals/mammals/facts/lion"
+    }
+   ]
+  },
+  "riley": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ライオンのむれでは、ごはんをとる「かり」は、おもにメスの{仕事|しごと}なんだ。メスたちは{協力|きょうりょく}して、かりをするんだよ。{仲間|なかま}どうしで、ちゃんと{役割|やくわり}が{決|き}まっているんだって。",
+   "speciesSources": [
+    {
+     "title": "福岡市動物園｜ライオン",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/24"
+    },
+    {
+     "title": "African Lion - Denver Zoo Conservation Alliance",
+     "url": "https://denverzoo.org/animals/african-lion/"
+    }
+   ]
+  },
+  "r-184v168": {
+   "personality": "ウィニーは、{春|はる}になるとよく{動|うご}き{回|まわ}る、{元気|げんき}なラーテルなんだ。ときどき、{気|き}が{強|つよ}いところも{見|み}せるんだって。",
+   "favorites": "ウィニーは、サツマイモが{大|だい}すきなんだ。よく{食|た}べるよ。ごはんのうち1つだけを、あとで{食|た}べるためにとっておくことがあるんだって。おいしいものは、あとのおたのしみなのかな？",
+   "identifyingMarks": "",
+   "speciesInfo": "ラーテルは、おもにかわいた{土地|とち}にすんでいるんだ。{虫|むし}や{小|ちい}さな{動物|どうぶつ}を{食|た}べるよ。{植物|しょくぶつ}も{食|た}べるんだ。なんでも{食|た}べる{動物|どうぶつ}なんだね。なかでも、ハチミツが{大|だい}すきなんだって。だから{英語|えいご}では「ハニーバジャー」とよばれているよ。つよい{前|まえ}あしとつめで、あなをすばやくほれるんだ。{木|き}のぼりもできちゃうんだって。すごい{力|ちから}もちでしょ？",
+   "speciesSources": [
+    {
+     "title": "ラーテルのエサ｜オフィシャルブログ｜東山動植物園",
+     "url": "https://www.higashiyama.city.nagoya.jp/blog/2021/11/post-4629.html"
+    },
+    {
+     "title": "ラーテル - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%83%BC%E3%83%86%E3%83%AB"
+    }
+   ]
+  },
+  "r-1v1pqub": {
+   "personality": "グランは、ふだんおだやかにすごしていることが{多|おお}い{子|こ}なんだって。でも、{急|きゅう}なものおとやゆれには、びっくりしやすいんだ。シマウマだけに、ドキッとしまうま…なんてね！",
+   "favorites": "グランは、{牧草|ぼくそう}をよく{食|た}べる{子|こ}なんだ。かためたブロックの{牧草|ぼくそう}より、ふつうの{牧草|ぼくそう}のほうがすきみたい。ふんわりした{牧草|ぼくそう}が、おきにいりなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "グラントシマウマは、アフリカの{草原|そうげん}やサバンナにすんでいるんだ。{食|た}べものは、おもに{草|くさ}なんだ。{木|き}の{芽|め}を{食|た}べることもあるんだって。おとうさんと、{何頭|なんとう}かのおかあさん、そして{子|こ}どもたちで、{家族|かぞく}のむれをつくってくらすんだ。むれどうしがあつまることもあるんだって。なんと、{何万頭|なんまんとう}もの{大|おお}きなむれになるんだよ。それに、{立|た}ったままねむることができるんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "グラントシマウマ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/014-b.html"
+    },
+    {
+     "title": "福岡市動物園｜グラントシマウマ",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/29"
+    },
+    {
+     "title": "グラントシマウマ（池田動物園）",
+     "url": "https://ikedazoo.jp/animal/mammalian/grants-zebra/"
+    }
+   ]
+  },
+  "r-18xm0fl": {
+   "personality": "ブチハイエナのピーターは、ふだんは{落|お}ち{着|つ}いてすごしている{子|こ}なんだって。でも、{部屋|へや}にもどる{前|まえ}には、ちょっぴりそわそわすることがあるんだ。",
+   "favorites": "ピーターは、シカの{肉|にく}をよく{食|た}べるんだって。シカの{骨|ほね}が{出|で}る{日|ひ}もあるんだ。いろいろなところのお{肉|にく}を{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ブチハイエナは、アフリカのサバンナにすんでいるよ。{体|からだ}のブチもようが、{名前|なまえ}のもとになったんだって。{夜|よる}に{動|うご}く{動物|どうぶつ}なんだ。「クラン」とよばれるむれでくらすよ。このむれは、メスが{中心|ちゅうしん}なんだ。12{種類|しゅるい}もの{鳴|な}き{声|ごえ}を{使|つか}い{分|わ}けていると{考|かんが}えられているんだって。おしゃべり{上手|じょうず}でしょ？",
+   "speciesSources": [
+    {
+     "title": "千葉市：千葉市動物公園 ブチハイエナ",
+     "url": "https://www.city.chiba.jp/zoo/zone/spotted_hyena.html"
+    },
+    {
+     "title": "ブチハイエナ（池田動物園）",
+     "url": "https://ikedazoo.jp/animal/mammalian/spottedhyena/"
+    },
+    {
+     "title": "ブチハイエナ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/012-b.html"
+    }
+   ]
+  },
+  "r-3zknaw": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ブチハイエナのあごは、とても{強|つよ}いんだ。かたい{骨|ほね}も、{歯|は}でかみくだけるんだって。おなかの{中|なか}で、{骨|ほね}のかけらまでとかして、{栄養|えいよう}にできるよ。のこさず{食|た}べる{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "Columbus Zoo - Spotted Hyena",
+     "url": "https://www.columbuszoo.org/animals/spotted-hyena"
+    },
+    {
+     "title": "Bone Appetite: 6 Animals That Eat Bones",
+     "url": "https://www.worldwildlife.org/resources/facts/bone-appetite-meet-6-animals-that-eat-bones/"
+    }
+   ]
+  },
+  "r-zuotzx": {
+   "personality": "アンバーは、{力|ちから}もちのブチハイエナなんだ。まわりのものをかじることがあるんだって。こわしたりすることもあるんだ。{気|き}になるものが、いっぱいなのかな？",
+   "favorites": "アンバーの{大|だい}すきな{食|た}べものは、シカの{肉|にく}なんだ。ニワトリもよく{食|た}べるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ブチハイエナの{赤|あか}ちゃんは、{生|う}まれたときから{目|め}があいているんだって。{歯|は}も、もうはえているんだ。しばらくすると、なかまのお{母|かあ}さんたちといっしょのすあなにおひっこしするんだよ。{赤|あか}ちゃんの{毛|け}は、こい{茶色|ちゃいろ}なんだ。{大|おお}きくなると、ブチもようにかわっていくんだって。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Spotted Hyena | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/spotted-hyena"
+    }
+   ]
+  },
+  "r-1f1rjrh": {
+   "personality": "シェリは、{人|ひと}になれているスナネコなんだって。なでられても、いやがらないんだよ。ひざに、スリっと{体|からだ}をよせてくることもあるんだって。",
+   "favorites": "シェリは、なでてもらうのが{好|す}きな{子|こ}なんだ。{人|ひと}のひざに、{体|からだ}をスリっとよせることもあるんだよ。{人|ひと}なつっこいんだ。スリスリがすてきでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？スナネコは、{野生|やせい}のネコなんだ。アフリカの{北|きた}や、アジアの{砂漠|さばく}にすんでいるんだよ。ネコのなかまでは、いちばん{小|ちい}さい{種類|しゅるい}のひとつなんだって。{足|あし}のうらには、{長|なが}い{毛|け}がはえているんだ。この{毛|け}が、あつい{砂|すな}から{足|あし}をまもっているんだよ。{耳|みみ}がとてもいいんだって。ネズミや{虫|むし}の{小|ちい}さな{音|おと}も{聞|き}きつけるんだ。{昼|ひる}は{巣穴|すあな}で{休|やす}んでいるよ。{夜|よる}になると、えものをさがしに{出|で}かけるんだ。{砂漠|さばく}でくらす{工夫|くふう}がいっぱいでしょ？",
+   "speciesSources": [
+    {
+     "title": "スナネコ ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/mammal/sandcat.html"
+    },
+    {
+     "title": "スナネコ（那須どうぶつ王国）",
+     "url": "https://nasu-oukoku.com/?p=3744"
+    },
+    {
+     "title": "スナネコ（公益財団法人 東京動物園協会など parks.or.jp 動物ガイド）",
+     "url": "https://www.parks.or.jp/sczoo/guide/004/004271.html"
+    }
+   ]
+  },
+  "r-11x317i": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ミーアキャットは、{名前|なまえ}に「キャット」とつくんだ。なんと、ネコではなく、マングースのなかまなんだって。アフリカの{南|みなみ}のほうにすんでいるんだ。すなや{石|いし}のおおい{土地|とち}なんだよ。じょうぶな{前足|まえあし}のつめで、{地面|じめん}にあなをほるんだ。そして、{家族|かぞく}でくらすんだって。むれの1ぴきが、{後|うし}ろ{足|あし}で{立|た}つんだ。まわりを{見|み}はってくれるんだよ。{朝|あさ}は{太陽|たいよう}にむかって{立|た}つんだって。{体|からだ}をあたためるためなんだ。{食|た}べものは{虫|むし}やサソリ、くだものなど、いろいろなんだよ。",
+   "speciesSources": [
+    {
+     "title": "ミーアキャット（のいち動物公園）",
+     "url": "https://noichizoo.or.jp/park/zoo/savanna/meerkat.html"
+    },
+    {
+     "title": "ミーアキャット（池田動物園）",
+     "url": "https://ikedazoo.jp/animal/mammalian/meerkat/"
+    },
+    {
+     "title": "ミーアキャット - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%9F%E3%83%BC%E3%82%A2%E3%82%AD%E3%83%A3%E3%83%83%E3%83%88/"
+    },
+    {
+     "title": "ミーアキャット｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
+     "url": "https://www.tobuzoo.com/zoo/list/2476.html"
+    }
+   ]
+  },
+  "r-gv7h2o": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ミーアキャットの{目|め}のまわりには、{黒|くろ}っぽいもようがあるんだ。このもようが、まぶしい{日|ひ}の{光|ひかり}をやわらげてくれるんだって。まるでサングラスみたいでしょ？ひとみは{横|よこ}に{長|なが}いんだ。だから、ひろいところを{見|み}わたせるんだよ。",
+   "speciesSources": [
+    {
+     "title": "Meerkat | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/meerkat"
+    },
+    {
+     "title": "Meerkat | Brookfield Zoo Chicago",
+     "url": "https://www.brookfieldzoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-1rr0bkq": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ミーアキャットは、あなをほるときに{耳|みみ}をとじられるんだ。すなが{入|はい}らないようにするためなんだ。{目|め}にも{特別|とくべつ}なまくがあるんだって。ほるときに、そのまくが{目|め}をまもるんだ。すなあそびの{準備|じゅんび}ばんぜんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Meerkat | Oakland Zoo",
+     "url": "https://www.oaklandzoo.org/animals/meerkat/"
+    },
+    {
+     "title": "Meerkat | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-14eo9as": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ミーアキャットのひみつを、ひとつ{教|おし}えるね。ミーアキャットの{背中|せなか}には、しまもようがあるんだ。このもようのならび{方|かた}は、1ぴき1ぴきちがうんだって。みんなの{顔|かお}が、それぞれちがうのとにているでしょ？",
+   "speciesSources": [
+    {
+     "title": "Meerkat | Happy Hollow Park & Zoo",
+     "url": "https://happyhollow.org/explore/zoo/zoo-in-the-hollow/meerkat-2/"
+    }
+   ]
+  },
+  "r-1pkduzr": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ミーアキャットの{赤|あか}ちゃんは、{目|め}も{耳|みみ}もとじて{生|う}まれてくるんだ。{毛|け}も、ほとんど{生|は}えていないんだよ。{目|め}は、2{週間|しゅうかん}くらいでひらくんだって。4{週間|しゅうかん}くらいたつと、はじめて{巣穴|すあな}の{外|そと}へ{出|で}てくるんだ。",
+   "speciesSources": [
+    {
+     "title": "Meerkat | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-1iq7z27": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ミーアキャットって、どんな{動物|どうぶつ}だと{思|おも}う？{答|こた}えは、みんなで{子|こ}そだてをする{動物|どうぶつ}なんだ。ミーアキャットのむれには、{子|こ}もりをするなかまがいるんだよ。お{母|かあ}さんが{食|た}べものをさがしに{行|い}く{間|あいだ}、ほかのなかまが{子|こ}どものせわをするんだ。すあなをひっこすときは、{子|こ}どもを{運|はこ}ぶんだって。{子|こ}どもの{首|くび}のうしろをくわえて{運|はこ}ぶんだ。みんなで{子|こ}そだて、たのもしいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Meerkat | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-dcy6ez": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ミーアキャットのおとなは、{子|こ}どもにいろいろなことを{教|おし}えるんだ。かくれかたも{教|おし}えるよ。かりのしかたも{教|おし}えるんだ。あなのほりかたも{教|おし}えるんだって。お{母|かあ}さんは、{食|た}べものをくわえるんだ。そして、{子|こ}どもの{前|まえ}でぴょんぴょんはねるよ。{子|こ}どもが{口|くち}から{受|う}け{取|と}るまで、つづけるんだって。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Meerkat | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/meerkat"
+    },
+    {
+     "title": "Meerkat, Habitat Location & Meerkat Facts | Chester Zoo",
+     "url": "https://www.chesterzoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-dvwd1j": {
+   "personality": "ミーアキャットのそうは、{毎日|まいにち}おだやかにすごしている{子|こ}なんだって。だっこされると、はじめはそわそわしちゃうんだ。でも、ふれあっているうちに、だんだん{落|お}ち{着|つ}いてくるんだよ。",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ミーアキャットのすあなには、{出入|でい}り{口|ぐち}が15こくらいあるんだって。すあなの{深|ふか}いところは、ちょうどいいあたたかさなんだ。{外|そと}があつくても、さむくても、そうなんだよ。トイレのへやもあるんだ。ねるへやもあるんだよ。むれは、すあなをいくつかもっているんだって。だから、ときどきおひっこしするんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Meerkat | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-svhl8o": {
+   "personality": "ビネは、{毎日|まいにち}おだやかにすごしている{子|こ}なんだって。ごはんをゆっくり{食|た}べる{日|ひ}もあるんだ。のんびりやさんでしょ？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ミーアキャットは{目|め}がとてもいいんだ。まわりを{広|ひろ}く{見|み}られるんだよ。みはりの{仲間|なかま}は、あぶないものを{見|み}つけると{大|おお}きな{声|こえ}で{知|し}らせるんだ。ほえたり、くちぶえのような{声|こえ}を{出|だ}したりするんだよ。{声|こえ}の{出|だ}しかたは6とおりもあるんだって。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Meerkat, Habitat Location & Meerkat Facts | Chester Zoo",
+     "url": "https://www.chesterzoo.org/animals/meerkat"
+    }
+   ]
+  },
+  "r-e1fyhj": {
+   "personality": "あるるは、{寒|さむ}い{日|ひ}はゆっくりめな{子|こ}なんだ。あたたかくなってから{動|うご}き{出|だ}すんだって。{好|す}きなくわの{葉|は}を{見|み}せると、{自分|じぶん}から{近|ちか}づいてくるんだよ。",
+   "favorites": "あるるは、くわの{葉|は}や{野草|やそう}が{大好|だいす}きなんだ。バナナやりんごなどの{果物|くだもの}も、よくえらんで{食|た}べるんだって。くいしんぼうさんでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、アルダブラゾウガメは、こうらの{長|なが}さが1メートルをこえることもある、{大|おお}きなカメなんだって。{住|す}んでいるのは、インド{洋|よう}のセーシェルという{国|くに}の{島|しま}なんだ。{草|くさ}や{木|き}の{葉|は}っぱを{食|た}べるよ。{若|わか}い{枝|えだ}も{食|た}べるんだ。{水|みず}は、おもに{食|た}べものからとっているんだって。{暑|あつ}い{昼|ひる}は、{日陰|ひかげ}ですごすんだ。{動|うご}くのは、{朝|あさ}がたと{夕|ゆう}がたなんだよ。のんびりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "アルダブラゾウガメ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/052-j.html"
+    },
+    {
+     "title": "アルダブラゾウガメ｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
+     "url": "https://www.tobuzoo.com/zoo/list/2457.html"
+    },
+    {
+     "title": "アルダブラゾウガメ - 神奈川県川崎市にある夢見ヶ崎動物公園",
+     "url": "https://www.yumemizoo.com/animal/aldabra-giant-tortoise/"
+    }
+   ]
+  },
+  "r-pyzioz": {
+   "personality": "",
+   "favorites": "バターは、{毎日|まいにち}{野菜|やさい}を{食|た}べている{子|こ}なんだって。こまつなを{食|た}べた{記録|きろく}もあるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "パンケーキリクガメは、アフリカの{東|ひがし}がわの{岩場|いわば}にすんでいるんだ。サバンナや、かわいたやぶの{岩場|いわば}だよ。{食|た}べものは{植物|しょくぶつ}なんだ。いろいろな{草|くさ}を{食|た}べるんだって。こうらがひらたくて、やわらかいんだ。だから、パンケーキ（ホットケーキ）という{名前|なまえ}がついたんだよ。こわいときは、すごい{速|はや}さで{岩|いわ}のすきまにもぐりこむんだって。すきまの{中|なか}で、こうらをふくらませるんだ。そうして、ひっぱりだされないようにするんだよ。まさに、ぺったんこのかくれんぼ{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "どうぶつ図鑑「パンケーキリクガメ」 ｜ 東京ズーネット",
+     "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?species_code=208"
+    },
+    {
+     "title": "パンケーキリクガメ（京都市動物園 どうぶつ図鑑）",
+     "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/m_tornieri"
+    }
+   ]
+  },
+  "r-1b2qxoi": {
+   "personality": "",
+   "favorites": "シロップのおもなごはんは、{野菜|やさい}なんだ。{毎日|まいにち}、{野菜|やさい}を{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。パンケーキリクガメのお{母|かあ}さんは、{一度|いちど}に{卵|たまご}を1こしか{産|う}まないんだって。{卵|たまご}がかえるまでには、100{日|にち}から300{日|にち}もかかるそうだよ。とっても{長|なが}い{時間|じかん}でしょ？だから、{赤|あか}ちゃんが{生|う}まれるのは、とても{大切|たいせつ}なことなんだって。",
+   "speciesSources": [
+    {
+     "title": "パンケーキリクガメ（東山動植物園 飼育係へのインタビュー）",
+     "url": "https://sdgsstory.global.brother/j/special/minna/678/"
+    }
+   ]
+  },
+  "r-wo6arh": {
+   "personality": "レオナルドは、あたたかいところが{大|だい}すきなケヅメリクガメなんだ。さむい{日|ひ}は、ぽかぽかしたところでじっとすごしていることがあるんだって。のんびりやさんでしょ？",
+   "favorites": "レオナルドは、{野草|やそう}などの{青|あお}い{草|くさ}が{好|す}きな{子|こ}なんだ。かわいた{草|くさ}やバナナの{皮|かわ}も{食|た}べるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ケヅメリクガメは、アフリカの{砂漠|さばく}のまわりや、サバンナにすんでいるんだ。{草|くさ}や{花|はな}、サボテンのような{植物|しょくぶつ}を{食|た}べるんだって。{暑|あつ}い{昼間|ひるま}は、{自分|じぶん}でほった{穴|あな}の{中|なか}で{休|やす}むんだ。すずしい{朝|あさ}や{夕方|ゆうがた}になると、{元気|げんき}に{動|うご}きだすんだって。{後|うし}ろ{足|あし}のつけねには、つめのような{大|おお}きなうろこがあるんだ。それが{名前|なまえ}のひみつなんだよ。",
+   "speciesSources": [
+    {
+     "title": "ケヅメリクガメ - 池田動物園",
+     "url": "https://ikedazoo.jp/animal/reptiles/%E3%82%B1%E3%83%85%E3%83%A1%E3%83%AA%E3%82%AF%E3%82%AC%E3%83%A1/"
+    },
+    {
+     "title": "ケヅメリクガメ - 甲府市遊亀公園附属動物園",
+     "url": "https://www.city.kofu.yamanashi.jp/zoo/animal/kame.html"
+    },
+    {
+     "title": "ケヅメリクガメ - 京都市動物園 どうぶつ図鑑",
+     "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/g_sulcata"
+    },
+    {
+     "title": "ケヅメリクガメ ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/reptiles/africanspurredtortoise.html"
+    }
+   ]
+  },
+  "r-w8jr1o": {
+   "personality": "ラルクは、{朝|あさ}から{元気|げんき}に{動|うご}きまわる{日|ひ}もある{子|こ}なんだ。なかまのカメたちと、となりにならんでごはんを{食|た}べることもあるんだって。なかよしさんでしょ？",
+   "favorites": "ラルクは、かためた{牧草|ぼくそう}（チモシー）が{大好|だいす}きなんだ。くわの{葉|は}も{大好|だいす}きだよ。{低|ひく}いところにのびた{葉|は}を、よく{食|た}べるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ケヅメリクガメは、{世界|せかい}で3{番目|ばんめ}に{大|おお}きくなるリクガメなんだ。{大|おお}きいものだと、こうらの{長|なが}さが90センチメートルくらいになるんだって。{体重|たいじゅう}は80キログラムをこえることもあるんだ。どっしりさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "ケヅメリクガメ｜秋田市公式サイト（秋田市大森山動物園）",
+     "url": "https://www.city.akita.lg.jp/zoo/information/1003682/1005304/1003885.html"
+    },
+    {
+     "title": "【小諸市動物園だより】大きさは世界で何番目？「ケヅメリクガメ」",
+     "url": "https://www.ecochil.net/article/56156/"
+    }
+   ]
+  },
+  "r-1dc1imy": {
+   "personality": "ケヅメリクガメのメテオは、{食|た}べものにきょうみしんしんな{子|こ}なんだ。ほかのカメのごはんまで、{食|た}べたそうにすることがあるんだって。くいしんぼうさんでしょ？",
+   "favorites": "メテオは、やさいや{野草|やそう}、くだものをよく{食|た}べるんだ。スイカのかわも{食|た}べるんだって。ぼくそうをかためた「ブロックチモシー」も{食|た}べるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ケヅメリクガメのひみつを、ひとつ{教|おし}えるね。ケヅメリクガメのおかあさんは、{地面|じめん}にあなをほるんだ。そして、{一回|いっかい}にたくさんの{卵|たまご}をうむんだって。うまれたばかりの{赤|あか}ちゃんは、こうらの{長|なが}さが4〜5センチメートルくらいなんだ。とても{小|ちい}さいでしょ？でも、すごくはやく{大|おお}きくなるんだって。",
+   "speciesSources": [
+    {
+     "title": "【京都市動物園だより】野生個体を守るため国際的な保護の対象「ケヅメリクガメ」",
+     "url": "https://www.ecochil.net/article/72802/"
+    },
+    {
+     "title": "ケヅメリクガメ（富士サファリパーク）",
+     "url": "https://www.safari.co.jp/animal/330/"
+    },
+    {
+     "title": "ケヅメリクガメ｜エコファミリーWEB",
+     "url": "https://ecofami.com/hyakka/detail/48351/"
+    }
+   ]
+  },
+  "r-6s8gun": {
+   "personality": "ティガーは、ベンガルトラの{子|こ}なんだ。のんびり、まったりすごしていることが{多|おお}いんだって。おちついたトラなんだ。のんびりやさんでしょ？",
+   "favorites": "ティガーがいちばんよく{食|た}べるのは、シカのお{肉|にく}なんだって。ツメとぎの{木|き}で、ツメをとぐこともあるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ベンガルトラは、インドやネパールの{森|もり}にすんでいるんだ。ふだんは1ぴきでくらしているんだって。でも、{子|こ}{育|そだ}て{中|ちゅう}のおかあさんは、{子|こ}どもといっしょにいるんだ。{昼間|ひるま}は、しげみのなかで{休|やす}んでいることが{多|おお}いんだって。{体|からだ}のしましま{模様|もよう}は、しげみにかくれるのにぴったりなんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "トラ（ベンガル系／白変種） - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%99%E3%83%B3%E3%82%AC%E3%83%AB%E3%83%88%E3%83%A9/"
+    }
+   ]
+  },
+  "r-miy3ij": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "シャムワニのひみつを、ひとつ{教|おし}えるね。シャムワニは、{東南|とうなん}アジアにすむワニなんだ。{流|なが}れのゆるやかな{川|かわ}や{湖|みずうみ}、ぬまちなどでくらしているんだって。しおからくない{水|みず}べがすみかなんだ。おもに{魚|さかな}やヘビを{食|た}べるよ。おかあさんワニは、{草|くさ}やかれ{枝|えだ}とどろをまぜるんだ。それで、こんもりした{巣|す}をつくるんだって。そして、{生|う}んだ{卵|たまご}をまもるんだ。やさしいおかあさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "シャムワニ - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%A3%E3%83%A0%E3%83%AF%E3%83%8B"
+    }
+   ]
+  },
+  "r-1l14bjb": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、スローロリスはサルのなかまなんだ。{東南|とうなん}アジアの{森|もり}にすんでいるんだよ。{名前|なまえ}に「リス」とつくけど、リスのなかまではないんだって。スローロリスは{夜|よる}に{木|き}の{上|うえ}でくらしているんだ。まんまるの{大|おお}きな{目|め}をしているよ。だから、くらいところでもよく{見|み}えるんだ。{好|す}きな{食|た}べものは、{木|き}のしる、{花|はな}のみつ、くだもの、{虫|むし}などなんだって。{手|て}と{足|あし}で、えだをしっかりにぎるんだ。そして、ほとんど{音|おと}を{立|た}てずに、ゆっくり{動|うご}くんだよ。ジャンプはできないんだ。のんびりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "【日本平動物園だより】絶滅の危機「スンダスローロリス」",
+     "url": "https://www.ecochil.net/article/72242/"
+    },
+    {
+     "title": "【円山動物園だより】動きがゆっくり！「スンダスローロリス」",
+     "url": "https://www.ecochil.net/article/53194/"
+    },
+    {
+     "title": "レッサースローロリス（沖縄こどもの国）",
+     "url": "https://www.okzm.jp/animal_book/1071/"
+    }
+   ]
+  },
+  "r-14a9x66": {
+   "personality": "ビンは、ビントロングの{子|こ}なんだ。まわりの{様子|ようす}がかわると、そわそわしちゃうことがあるんだって。あついのは、ちょっとにがてなんだよ。",
+   "favorites": "ビンは、ごはんの{中|なか}で、ふくさいをよくえらんで{食|た}べているんだって。メインより、おかずが{気|き}になるのかな？",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ビントロングは、{東南|とうなん}アジアなどの{森|もり}にすんでいるんだ。おもに{木|き}の{上|うえ}でくらしているよ。しっぽは{太|ふと}くて{長|なが}いんだ。このしっぽを{木|き}にまきつけて、{体|からだ}をささえられるんだって。{好|す}きな{食|た}べものは{果物|くだもの}なんだ。{虫|むし}なども{食|た}べるよ。{昼|ひる}はねているんだ。そして、{夜|よる}にうごきだすよ。それに、{体|からだ}からポップコーンみたいなにおいがするんだって。ふしぎでしょ？",
+   "speciesSources": [
+    {
+     "title": "福岡市動物園｜ビントロング",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/22"
+    },
+    {
+     "title": "ビントロング - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%93%E3%83%B3%E3%83%88%E3%83%AD%E3%83%B3%E3%82%B0/"
+    },
+    {
+     "title": "ビントロング（那須どうぶつ王国）",
+     "url": "https://nasu-oukoku.com/?p=3882"
+    }
+   ]
+  },
+  "r-fgmwjt": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ビントロングのひみつを、ひとつ{教|おし}えるね。ビントロングは、イチジクのなかまの{実|み}が{大好|だいす}きなんだ。{食|た}べた{実|み}の{種|たね}は、うんちといっしょに{森|もり}のあちこちにまかれるよ。おなかのなかで、{種|たね}のかわがやわらかくなるんだって。だから、{芽|め}が{出|で}やすくなるんだ。{森|もり}を{育|そだ}てるおてつだいさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Binturong - Georgia Aquarium",
+     "url": "https://www.georgiaaquarium.org/animal/binturong/"
+    },
+    {
+     "title": "Binturong - Zoo Atlanta",
+     "url": "https://zooatlanta.org/animal/binturong/"
+    },
+    {
+     "title": "Binturong - Arctictis binturong (Marwell Zoo)",
+     "url": "https://www.marwell.org.uk/animals/binturong/"
+    }
+   ]
+  },
+  "r-10pu0va": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ビントロングの{赤|あか}ちゃんは、1{回|かい}に1〜2{頭|とう}{生|う}まれることが{多|おお}いんだ。{生|う}まれたときは、{目|め}がとじているんだよ。さいしょの{数日|すうじつ}は、お{母|かあ}さんの{毛|け}にしっかりつかまってすごすんだって。あまえんぼうさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Binturong - Georgia Aquarium",
+     "url": "https://www.georgiaaquarium.org/animal/binturong/"
+    }
+   ]
+  },
+  "r-1c6ro7x": {
+   "personality": "のり{次|じ}は、ビルマニシキヘビの{子|こ}なんだ。ふだんは{落|お}ち{着|つ}いていて、のんびりすごしているんだって。でも、ごはんを{見|み}つけると、すばやく{飛|と}びつくこともあるんだよ。",
+   "favorites": "よく{食|た}べるごはんは、ラットなんだって。それから、ときどきだっぴをするんだ。{古|ふる}い{皮|かわ}をぬぐんだよ。おきがえじょうずでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ビルマニシキヘビは、{東南|とうなん}アジアの{森|もり}や、しめった{草|くさ}はらにすむ、とても{大|おお}きなヘビなんだ。{水|みず}べの{近|ちか}くでよく{見|み}られるんだよ。{泳|およ}ぐのがとくいなんだって。{息|いき}つぎなしで、30{分|ぷん}も{水|みず}の{中|なか}にもぐっていられるんだ。すごいでしょ？{若|わか}いころは、{木|き}の{上|うえ}ですごすことが{多|おお}いよ。{大|おお}きくなると{体|からだ}が{重|おも}くなるんだ。だから、{地面|じめん}でくらすことが{多|おお}くなるんだって。{食|た}べものは、{小|ちい}さな{動物|どうぶつ}や{鳥|とり}なんだ。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "ビルマニシキヘビ（ナショナル ジオグラフィック日本版 動物大図鑑）",
+     "url": "https://natgeo.nikkeibp.co.jp/nng/article/20141218/429012/"
+    },
+    {
+     "title": "ビルマニシキヘビ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/056-j.html"
+    },
+    {
+     "title": "ビルマニシキヘビ - 神戸市（神戸どうぶつ王国）",
+     "url": "https://www.kobe-oukoku.com/animals/92"
+    }
+   ]
+  },
+  "r-t4rjs9": {
+   "personality": "ホタルちゃんは、およそ4{週間|しゅうかん}に1{回|かい}、まとめてごはんを{食|た}べる{子|こ}なんだ。ふだんは、ごはんを{食|た}べない{日|ひ}がつづくんだって。でも、それはヘビにとって、ふつうのくらし{方|かた}なんだよ。",
+   "favorites": "ホタルちゃんのごはんは、マウスやラットなんだって。どちらもネズミのなかまなんだ。まとめて、しっかり{食|た}べるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ビルマニシキヘビのおかあさんは、{体|からだ}を{卵|たまご}にまきつけてまもるんだ。なんと、{体|からだ}をぶるぶるふるわせて、{卵|たまご}をあたためるんだって。{卵|たまご}がかえるまで、2か{月|げつ}{以上|いじょう}そばにいることもあるんだ。ヘビのなかまではめずらしい、しっかりもののおかあさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Burmese python",
+     "url": "https://nationalzoo.si.edu/animals/burmese-python"
+    }
+   ]
+  },
+  "r-9f3yvx": {
+   "personality": "{吹雪|ふぶき}は、ゆったりしたリズムでくらしている{子|こ}なんだ。ごはんを{食|た}べるのは、だいたい4しゅうかんに1{回|かい}なんだって。のんびりやさんでしょ？",
+   "favorites": "{吹雪|ふぶき}のごはんは、マウスやラットなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ビルマニシキヘビの{体|からだ}は、とても{長|なが}いでしょ？ヘビの{肺|はい}は、ふつう1つだけなんだって。でも、ビルマニシキヘビには{肺|はい}が2つあるんだ。そのうち1つは、とても{小|ちい}さいんだって。",
+   "speciesSources": [
+    {
+     "title": "Burmese python",
+     "url": "https://nationalzoo.si.edu/animals/burmese-python"
+    }
+   ]
+  },
+  "r-1bcp4qe": {
+   "personality": "ジミンは、{子|こ}どものジュピターのお{母|かあ}さんなんだ。ジュピターが{赤|あか}ちゃんのころは、しっかりだっこしていたんだって。おせわもしていたんだって。やさしいお{母|かあ}さんでしょ？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ワオキツネザルは、マダガスカルという{島|しま}の{南|みなみ}のほうにすんでいるんだ。しっぽには、{輪|わ}のもようがあるんだよ。だから「わお」ってよばれているんだって。ワオ！おぼえやすい{名前|なまえ}でしょ？くだものや{木|き}の{芽|め}、{葉|は}っぱ、{虫|むし}などを{食|た}べるんだ。なんと、{寒|さむ}い{日|ひ}は、ひなたぼっこをするんだって。{太陽|たいよう}にむかって、{手足|てあし}を{大|おお}きくひろげるんだ。",
+   "speciesSources": [
+    {
+     "title": "ワオキツネザル／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/107-m.html"
+    },
+    {
+     "title": "ワオキツネザル｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
+     "url": "https://www.tobuzoo.com/zoo/list/2454.html"
+    },
+    {
+     "title": "ワオキツネザル",
+     "url": "https://www.toyama-familypark.jp/zukan/750"
+    }
+   ]
+  },
+  "r-ki6bjv": {
+   "personality": "サナは、{赤|あか}ちゃんを{育|そだ}てているおかあさんなんだ。{赤|あか}ちゃんを、しっかりだっこしているんだって。{赤|あか}ちゃんも、サナにぎゅっとしがみついているんだ。",
+   "favorites": "サナは、タンポポが{好|す}きな{子|こ}みたいなんだ。おいしそうに{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ワオキツネザルの{群|む}れでは、メスがオスより{強|つよ}いんだ。いちばん{下|した}のメスでも、オスより{強|つよ}いんだって。サルのなかまでは、めずらしいことなんだよ。",
+   "speciesSources": [
+    {
+     "title": "ワオキツネザル（高知県立のいち動物公園）",
+     "url": "https://noichizoo.or.jp/park/zoo/tropical/ring-tailed-lemur.html"
+    },
+    {
+     "title": "Ring-tailed Lemur - Singapore Zoo",
+     "url": "https://www.mandai.com/en/singapore-zoo/animals-and-zones/ring-tailed-lemur.html"
+    }
+   ]
+  },
+  "r-dp4mxx": {
+   "personality": "",
+   "favorites": "ルナは、タンポポが{大|だい}すきみたいなんだ。おいしそうに{食|た}べる{様子|ようす}が{見|み}られているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ワオキツネザルは、においで{仲間|なかま}とお{話|はなし}するんだ。{逆立|さかだ}ちのようなかっこうで、{枝|えだ}や{壁|かべ}ににおいをつけるんだって。オスは、しっぽににおいをつけるんだ。そして、しっぽを{振|ふ}り{回|まわ}してくらべっこするんだよ。くさいけど、{大切|たいせつ}なお{知|し}らせなんだ。",
+   "speciesSources": [
+    {
+     "title": "【日立市かみね動物園だより】他のサルと何がちがう？「ワオキツネザル」",
+     "url": "https://www.ecochil.net/article/18815/"
+    },
+    {
+     "title": "Ring-tailed Lemur Lemur catta (Denver Zoo)",
+     "url": "https://www.denverzoo.org/wp-content/uploads/2018/09/Ring-tailed-Lemur.pdf"
+    }
+   ]
+  },
+  "r-1yvwqhs": {
+   "personality": "",
+   "favorites": "モモは、タンポポが{大|だい}すきな{子|こ}なんだって。おいしそうに{食|た}べるようすが{見|み}られているんだ。タンポポを{見|み}つけたら、モモもにっこりかもね。",
+   "identifyingMarks": "",
+   "speciesInfo": "ワオキツネザルのひみつを、ひとつ{教|おし}えるね。ワオキツネザルの{赤|あか}ちゃんは、{生|う}まれたとき{青|あお}い{目|め}をしているんだ。{大|おお}きくなると、{金色|きんいろ}っぽい{茶色|ちゃいろ}にかわるんだって。むれのおとなのメスは、みんなで{赤|あか}ちゃんをそだてるんだ。やさしいおばさんがいっぱいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Ring-tailed Lemur - Potter Park Zoo",
+     "url": "https://potterparkzoo.org/animals/ring-tailed-lemur/"
+    },
+    {
+     "title": "Ring-tailed Lemur - Saint Louis Zoo",
+     "url": "https://stlzoo.org/animals/mammals/lemurs-monkeys-apes/ring-tailed-lemur"
+    }
+   ]
+  },
+  "r-lau52a": {
+   "personality": "",
+   "favorites": "パーシーは、タンポポが{大|だい}すきな{子|こ}なんだって。{食|た}べるときは、とってもおいしそうなんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ワオキツネザルのしっぽには、わのもようがあるんだ。{黒|くろ}と{白|しろ}が13こずつあるんだよ。かぞえてみたくなるでしょ？しっぽで{枝|えだ}にまきつくことは、できないんだ。{木|き}の{上|うえ}でバランスをとるのに{使|つか}うんだって。",
+   "speciesSources": [
+    {
+     "title": "Ring-tailed Lemur - Saint Louis Zoo",
+     "url": "https://stlzoo.org/animals/mammals/lemurs-monkeys-apes/ring-tailed-lemur"
+    },
+    {
+     "title": "Ring-Tailed Lemur - Reid Park Zoo",
+     "url": "https://reidparkzoo.org/animals/ring-tailed-lemur/"
+    }
+   ]
+  },
+  "r-ljyirp": {
+   "personality": "ジョージは、{年|とし}をとったワオキツネザルなんだって。いつもゆったりすごしているんだ。{南米|なんべい}がわの{入口|いりぐち}のちかくにいることが{多|おお}いんだよ。{右上|みぎうえ}のたなで、じっとしているんだって。",
+   "favorites": "ジョージは、タンポポが{大|だい}すきな{子|こ}なんだ。おいしそうに{食|た}べるようすが{見|み}られているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ワオキツネザルって、どんな{動物|どうぶつ}だと{思|おも}う？ ほかのキツネザルより、{地面|じめん}にいる{時間|じかん}が{長|なが}い{動物|どうぶつ}なんだ。{地面|じめん}では、4{本|ほん}の{足|あし}でとことこ{歩|ある}くよ。そのとき、{長|なが}いしっぽをぴんと{立|た}てて{歩|ある}くんだって。",
+   "speciesSources": [
+    {
+     "title": "ワオキツネザル（高知県立のいち動物公園）",
+     "url": "https://noichizoo.or.jp/park/zoo/tropical/ring-tailed-lemur.html"
+    },
+    {
+     "title": "Ring-tailed lemur - San Francisco Zoo & Gardens",
+     "url": "https://www.sfzoo.org/animals-exhibits/a-to-z/ring-tailed-lemur/"
+    }
+   ]
+  },
+  "r-1po87o6": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ワオキツネザルは、サルのなかまでもよく{声|こえ}を{出|だ}すほうなんだ。{声|こえ}や{顔|かお}のようすで、なかまに{気|き}もちを{伝|つた}えるんだって。なわばりでもめたときも、たいてい{大|おお}きな{声|こえ}で{話|はなし}がつくんだ。",
+   "speciesSources": [
+    {
+     "title": "Ring-tailed Lemur - Saint Louis Zoo",
+     "url": "https://stlzoo.org/animals/mammals/lemurs-monkeys-apes/ring-tailed-lemur"
+    },
+    {
+     "title": "Ring-tailed Lemur - Potter Park Zoo",
+     "url": "https://potterparkzoo.org/animals/ring-tailed-lemur/"
+    }
+   ]
+  },
+  "r-lqrtyq": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ワオキツネザルは、ジャンプが{得意|とくい}なんだ。{力|ちから}もちの{後|うし}ろ{足|あし}で、{木|き}をけるんだよ。{木|き}から{木|き}へ、{何|なん}メートルも{跳|と}べるんだって。すごいジャンプ{力|りょく}でしょ？",
+   "speciesSources": [
+    {
+     "title": "Ring-tailed lemur - Whipsnade Zoo",
+     "url": "https://www.whipsnadezoo.org/whats-here/animals/ring-tailed-lemur"
+    }
+   ]
+  },
+  "r-1s6jkqg": {
+   "personality": "キンカジューのフィグは、{暖|あたた}かいところが{大|だい}すきな{子|こ}なんだって。おなじへやのヴィラと、くっついてすごしていたこともあるんだよ。なかよしで、ほっこりするでしょ？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "キンカジューは、{南|みなみ}アメリカやメキシコのあたりにいる{動物|どうぶつ}なんだ。……ちがった、もう{一度|いちど}ていねいに{言|い}うね。キンカジューは、メキシコの{南|みなみ}からブラジルまでの、あたたかい{森|もり}にすんでいるんだ。アライグマのなかまなんだって。{夜|よる}に{動|うご}いて、{昼|ひる}は{木|き}のあなでねむるんだ。{大好|だいす}きな{食|た}べものはくだものなんだ。とくにイチジクがお{気|き}に{入|い}りなんだって。{長|なが}いしっぽと{後|うし}ろあしで、えだにつかまれるんだ。さかさまにぶらさがったまま、{食|た}べることもできるんだって。すごいでしょ？あまいものが{好|す}きなんだ。だから「ハニーベア」とよばれることもあるんだって。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/kinkajou"
+    },
+    {
+     "title": "Kinkajou | Oregon Zoo",
+     "url": "https://www.oregonzoo.org/animals/kinkajou"
+    }
+   ]
+  },
+  "r-1mdrnso": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "キンカジューの{舌|した}は、13センチくらいもあるんだ。{花|はな}のおくや、ハチの{巣|す}の{中|なか}までとどくんだって。なんと、{花|はな}のみつをなめながら、{花粉|かふん}を{運|はこ}ぶ{役目|やくめ}もしているんだ。のびのび{舌|した}で、まさに「{下手|したて}に{出|で}ない」はたらきものでしょ？",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/kinkajou"
+    }
+   ]
+  },
+  "r-tcxh6y": {
+   "personality": "",
+   "favorites": "ココは、とろっとした{木|き}のしるが{好|す}きな{子|こ}みたいなんだって。あまいにおいに、さそわれちゃうのかな？",
+   "identifyingMarks": "",
+   "speciesInfo": "キンカジューの{毛|け}は、みじかくて、ぎっしり{生|は}えているんだ。この{毛|け}が、レインコートのかわりになるんだって。だから、{雨|あめ}の{多|おお}い{森|もり}でも、からだがぬれにくいんだ。ハチにさされるのも、ふせいでくれるんだよ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/kinkajou"
+    }
+   ]
+  },
+  "r-1hzv6wt": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。キンカジューには、{学名|がくめい}という{世界|せかい}{共通|きょうつう}の{名前|なまえ}もあるんだ。「ポトス・フラブス」というんだよ。「{金色|きんいろ}ののみや」といういみにちかいんだって。{金色|きんいろ}っぽい{毛|け}で、{花|はな}のみつが{好|す}きだからなんだ。",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | San Diego Zoo Animals & Plants",
+     "url": "https://animals.sandiegozoo.org/animals/kinkajou"
+    }
+   ]
+  },
+  "r-lz1a5j": {
+   "personality": "",
+   "favorites": "キンカジューのチリーヌは、{木|き}のしるが{好|す}きみたいなんだって。{木|き}から{出|で}るあまいしるじゃないんだ。{木|き}のしるそのものが、おきにいりなんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "キンカジューのひみつを、ひとつ{教|おし}えるね。キンカジューは、{小|ちい}さなグループをつくるんだ。メス1{頭|とう}とオス2{頭|とう}、それに{子|こ}どもたちが{多|おお}いんだって。{昼|ひる}は、いっしょにねむるんだ。ゆうがたには、{毛|け}づくろいをしあうんだよ。そのあと、ばらばらにごはんをさがしにいくんだ。なかよしでしょ？",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | Zoo Ekzo",
+     "url": "https://www.zoo-ekzo.com/en/node/2978"
+    }
+   ]
+  },
+  "r-mn414n": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？キンカジューの{赤|あか}ちゃんは、たいてい1{頭|とう}ずつ{生|う}まれるんだ。{生|う}まれたときは、{目|め}がとじているんだよ。10{日|か}くらいで、{目|め}が{見|み}えるようになるんだって。お{母|かあ}さんは、{赤|あか}ちゃんをおなかにつけて{運|はこ}ぶんだ。かわいいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | The Belize Zoo",
+     "url": "https://www.belizezoo.org/kinkajou/"
+    },
+    {
+     "title": "Kinkajou | Zoo Ekzo",
+     "url": "https://www.zoo-ekzo.com/en/node/2978"
+    }
+   ]
+  },
+  "r-vsruwx": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "キンカジューって、どんな{動物|どうぶつ}だと{思|おも}う？じつは、とってもにぎやかな{動物|どうぶつ}なんだ。「シャー」といったり、ほえたりするんだよ。{高|たか}い{声|こえ}で{鳴|な}くこともあるんだって。{夜|よる}の{森|もり}の{上|うえ}のほうで、{大|おお}さわぎになることもあるんだ。にぎやかでしょ？",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | The Belize Zoo",
+     "url": "https://www.belizezoo.org/kinkajou/"
+    }
+   ]
+  },
+  "r-r3eia6": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、キンカジューは、においで{自分|じぶん}のなわばりをしらせるんだ。においを{出|だ}すところは、{口|くち}のはしとのど、それにおなかにあるんだって。まいばん、だいたい{同|おな}じ{道|みち}をとおるんだって。きちょうめんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Kinkajou | The Belize Zoo",
+     "url": "https://www.belizezoo.org/kinkajou/"
+    },
+    {
+     "title": "Kinkajou | Zoo Ekzo",
+     "url": "https://www.zoo-ekzo.com/en/node/2978"
+    }
+   ]
+  },
+  "r-2js3ns": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？コモンマーモセットは、{南|みなみ}アメリカのブラジルの{森|もり}にすむ{小|ちい}さなサルなんだ。{木|き}の{上|うえ}でくらしているんだって。{地面|じめん}には、めったにおりないんだ。くだものや{虫|むし}を{食|た}べるよ。{木|き}から{出|で}る{樹液|じゅえき}なども{食|た}べるんだって。{耳|みみ}のまわりの{白|しろ}いふさふさの{毛|け}が、めじるしなんだ。{家族|かぞく}でいっしょにくらしているんだよ。お{父|とう}さんも、{子|こ}そだてをよく{手伝|てつだ}うんだって。なかよし{家族|かぞく}でしょ？",
+   "speciesSources": [
+    {
+     "title": "千葉市：千葉市動物公園 コモンマーモセット",
+     "url": "https://www.city.chiba.jp/zoo/zone/common_marmoset.html"
+    },
+    {
+     "title": "川崎市 : コモンマーモセット",
+     "url": "https://www.city.kawasaki.jp/530/page/0000021610.html"
+    },
+    {
+     "title": "那須どうぶつ王国 コモンマーモセット",
+     "url": "https://nasu-oukoku.com/?p=3907"
+    }
+   ]
+  },
+  "r-1i3blrn": {
+   "personality": "ウリンは、フタユビナマケモノの{子|こ}なんだ。ふだんは、おだやかな{子|こ}なんだって。でも、ときどき、ごきげんななめな{日|ひ}もあるんだよ。",
+   "favorites": "ウリンは、ズッキーニを{食|た}べたことがあるんだって。とうもろこしは、あまりすきではないみたい。",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、フタユビナマケモノは{南|みなみ}アメリカの{北|きた}のほうの{森|もり}にすんでいるんだ。{木|き}の{上|うえ}でくらしているよ。{長|なが}いつめを{枝|えだ}にひっかけて、ぶらさがるんだ。{木|き}の{葉|は}や{新|しん}め、くだものを{食|た}べるんだって。{夜|よる}に{動|うご}くどうぶつなんだ。{一日|いちにち}に15〜18{時間|じかん}もねむるといわれているよ。のんびりやさんでしょ？でもじつは、{泳|およ}ぐのがとくいなんだって。",
+   "speciesSources": [
+    {
+     "title": "フタユビナマケモノ（京都市動物園 どうぶつ図鑑）",
+     "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/c_didactylus"
+    },
+    {
+     "title": "フタユビナマケモノ - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%95%E3%82%BF%E3%83%A6%E3%83%93%E3%83%8A%E3%83%9E%E3%82%B1%E3%83%A2%E3%83%8E/"
+    },
+    {
+     "title": "【京都市動物園だより】１日の半分以上は樹の上でねているよ「フタユビナマケモノ」",
+     "url": "https://www.ecochil.net/article/49590/"
+    }
+   ]
+  },
+  "r-1nsptjq": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？アカハナグマは、{南|みなみ}アメリカの{森|もり}にすんでいるんだ。はなは{細長|ほそなが}くて、よく{曲|ま}がるんだって。そのはなと、するどいつめで、{地面|じめん}をほるんだ。{虫|むし}などの{小|ちい}さな{生|い}きものや、くだものを{食|た}べるよ。しっぽは、{体|からだ}とおなじくらい{長|なが}いんだ。そのしっぽで、{木|き}の{上|うえ}でもバランスをとるんだって。メスと{子|こ}どもは、むれでくらしているんだ。{小|ちい}さくはなをならして、おしゃべりするんだって。なかよしでしょ？",
+   "speciesSources": [
+    {
+     "title": "アカハナグマ|アマゾンの密林|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/amazon/post_51/"
+    },
+    {
+     "title": "アカハナグマ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/129-o.html"
+    },
+    {
+     "title": "千葉市：千葉市動物公園 アカハナグマ",
+     "url": "https://www.city.chiba.jp/zoo/zone/coati.html"
+    }
+   ]
+  },
+  "r-7s4luj": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "アカハナグマって、どんな{動物|どうぶつ}だと{思|おも}う？{足首|あしくび}が、とてもよくまがる{動物|どうぶつ}なんだ。だから、{木|き}からおりるとき、{頭|あたま}を{下|した}にしておりられるんだって。さかさまでもへっちゃらでしょ？",
+   "speciesSources": [
+    {
+     "title": "Coatimundi Facts and Information",
+     "url": "https://seaworld.org/animals/facts/mammals/coatimundi/"
+    },
+    {
+     "title": "South American Coati",
+     "url": "https://elmwoodparkzoo.org/animal/south-american-coati/"
+    }
+   ]
+  },
+  "r-kjb7ow": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、アカハナグマのお{母|かあ}さんは、{木|き}の{上|うえ}に{巣|す}をつくるんだ。そこで{赤|あか}ちゃんをうむんだって。{赤|あか}ちゃんは5〜6{週間|しゅうかん}、{巣|す}でお{母|かあ}さんとすごすんだ。そのあと、いっしょにむれにもどるんだって。",
+   "speciesSources": [
+    {
+     "title": "Coatimundi Facts and Information",
+     "url": "https://seaworld.org/animals/facts/mammals/coatimundi/"
+    },
+    {
+     "title": "South american coati - Jungle Park",
+     "url": "https://www.junglepark.es/en/especies/mammals/south-american-coati/"
+    }
+   ]
+  },
+  "r-kwuyay": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。アカハナグマは、{名前|なまえ}に「クマ」とついているでしょ？でも、クマのなかまではないんだ。アライグマやレッサーパンダのなかまなんだって。とくに、アライグマとよくにているんだ。",
+   "speciesSources": [
+    {
+     "title": "アカハナグマ｜いきもの図鑑｜ZOO CAN DREAM PROJECT",
+     "url": "http://www.zoocan.jp/zukan/index.cgi?193="
+    },
+    {
+     "title": "South American Coati",
+     "url": "https://elmwoodparkzoo.org/animal/south-american-coati/"
+    }
+   ]
+  },
+  "r-m9wrko": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、アカハナグマのしっぽには、しましまもようがあるんだ。{草|くさ}むらでは、しっぽをぴんと{立|た}てるんだって。しっぽが「ここにいるよ」の{合図|あいず}になるんだ。これならなかまとはぐれないでしょ？",
+   "speciesSources": [
+    {
+     "title": "アカハナグマ｜いきもの図鑑｜ZOO CAN DREAM PROJECT",
+     "url": "http://www.zoocan.jp/zukan/index.cgi?193="
+    }
+   ]
+  },
+  "r-1kbzhj5": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "アカハナグマのむれでは、ごはんのときも{何頭|なんとう}かがまわりを{見|み}はっているんだ。みんなで{交代|こうたい}して、まもりあうんだって。だから、なかまは{安心|あんしん}して{食|た}べられるんだ。チームワークばつぐんで、すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "アカハナグマ｜いきもの図鑑｜ZOO CAN DREAM PROJECT",
+     "url": "http://www.zoocan.jp/zukan/index.cgi?193="
+    }
+   ]
+  },
+  "r-1cb853": {
+   "personality": "ゆめこは、アメリカバクの{女|おんな}の{子|こ}なんだ。ほかのバクたちと、いっしょにくらしているよ。いろいろな{草|くさ}や{木|き}の{葉|は}を{食|た}べて、すごしているんだって。",
+   "favorites": "ゆめこは、ヤナギの{葉|は}が{大好|だいす}きなんだ。スイレンの{葉|は}も、よく{食|た}べるよ。{牧草|ぼくそう}や{野草|やそう}も{食|た}べるんだって。{木|き}のえだや{葉|は}も{食|た}べるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？アメリカバクは、{南|みなみ}アメリカにすんでいるんだ。{水|みず}べに{近|ちか}い{林|はやし}や{草|くさ}はらがすみかなんだよ。{長|なが}い{鼻|はな}は、{上|うわ}くちびるとくっついてのびたものなんだって。この{鼻|はな}を、ゾウみたいに{上手|じょうず}に{動|うご}かすんだ。そうして、{木|き}の{葉|は}っぱや{草|くさ}、くだものを{食|た}べるんだよ。{泳|およ}ぐのもとくいなんだ。5{分|ふん}くらい{水|みず}にもぐれるんだって。すごいでしょ？それに、{赤|あか}ちゃんの{体|からだ}には、たてじまのもようがあるんだよ。",
+   "speciesSources": [
+    {
+     "title": "アメリカバク - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%96%E3%83%A9%E3%82%B8%E3%83%AB%E3%83%90%E3%82%AF/"
+    },
+    {
+     "title": "アメリカバク ｜アメリカストリート ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/000483.html"
+    },
+    {
+     "title": "アメリカバク（池田動物園）",
+     "url": "https://ikedazoo.jp/animal/mammalian/%E3%82%A2%E3%83%A1%E3%83%AA%E3%82%AB%E3%83%90%E3%82%AF/"
+    }
+   ]
+  },
+  "r-lpd7lb": {
+   "personality": "テルは、{食|た}べものにこだわりがあるリスザルなんだ。{好|す}きなものをえらんで{食|た}べるんだって。なかまのえさをとっちゃうこともあるんだ。{元気|げんき}でつよきな{子|こ}なんだよ。",
+   "favorites": "テルは、ワームやヒマワリのたね、クワの{実|み}、オレンジが{大|だい}すきなんだ。クマザサや{野草|やそう}も、よく{食|た}べるんだって。オレンジを{食|た}べたら、{顔|かお}もオーレンジ…なんてね！",
+   "identifyingMarks": "",
+   "speciesInfo": "コモンリスザルって、どんな{動物|どうぶつ}だと{思|おも}う？{南|みなみ}アメリカの{森|もり}にすむ、{小|ちい}さなサルなんだ。{体|からだ}の{大|おお}きさや{色|いろ}がリスににているんだって。だから、この{名前|なまえ}がついたんだ。ほとんど{木|き}の{上|うえ}でくらしているよ。{長|なが}いしっぽで、バランスをとるんだ。くだものや{木|き}の{実|み}、こんちゅうなどを{食|た}べるんだよ。{何|なん}{十|じゅっ}ぴきものむれで、くらしているんだ。メスどうしが{力|ちから}をあわせて、{子|こ}そだてをするんだって。なかよしチームでしょ？",
+   "speciesSources": [
+    {
+     "title": "コモンリスザル（札幌市円山動物園）",
+     "url": "https://www.city.sapporo.jp/zoo/048-f.html"
+    },
+    {
+     "title": "【長野市城山動物園だより】大きな群れを作り声で意思を伝え合う「コモンリスザル」",
+     "url": "https://www.ecochil.net/article/21270/"
+    },
+    {
+     "title": "【円山動物園だより】リスに似た小さなサル「コモンリスザル」",
+     "url": "https://www.ecochil.net/article/56513/"
+    }
+   ]
+  },
+  "r-1d0nygf": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "メガネカイマンは、ワニのなかまなんだ。{目|め}と{目|め}の{間|あいだ}に、もりあがったすじがあるんだよ。それがメガネみたいに{見|み}えるから、この{名前|なまえ}になったんだって。おもしろいよね！すんでいるのは、メキシコの{南|みなみ}からアルゼンチンまでの{川|かわ}や{湖|みずうみ}、ぬまなんだ。おもに{魚|さかな}やカニなどを{食|た}べるんだって。{水|みず}の{中|なか}から{頭|あたま}だけ{出|だ}して、プカプカうかぶんだ。そのすがたが、かわいいでしょ？",
+   "speciesSources": [
+    {
+     "title": "メガネカイマン ｜スネークハウス ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/000682.html"
+    },
+    {
+     "title": "メガネカイマン - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%A1%E3%82%AC%E3%83%8D%E3%82%AB%E3%82%A4%E3%83%9E%E3%83%B3/"
+    },
+    {
+     "title": "メガネカイマン（池田動物園）",
+     "url": "https://ikedazoo.jp/animal/reptiles/%E3%83%A1%E3%82%AC%E3%83%8D%E3%82%AB%E3%82%A4%E3%83%9E%E3%83%B3/"
+    }
+   ]
+  },
+  "r-sb6b8": {
+   "personality": "フェンは、{春|はる}になると、にこにこしたかおに{見|み}えることが{多|おお}い{子|こ}なんだって。{元気|げんき}いっぱいに{見|み}えるんだ。{食|た}べものを{地面|じめん}にうめておくこともあるんだって。",
+   "favorites": "フェンは、シカの{肉|にく}をよく{食|た}べるんだ。レバーも{好|す}きみたいなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ホッキョクオオカミは、カナダやグリーンランドなど、{北極|ほっきょく}に{近|ちか}い{寒|さむ}いところにすんでいるんだ。{体|からだ}は{真|ま}っ{白|しろ}な{長|なが}い{毛|け}におおわれているんだって。ほかのオオカミより、{口|くち}もとが{短|みじか}いんだ。{耳|みみ}も{小|ちい}さいよ。これは、{寒|さむ}さの{中|なか}でも{体|からだ}をあたたかくしておくためのひみつなんだって。ジャコウウシやホッキョクウサギなどを{食|た}べているよ。{仲間|なかま}とむれでくらしているんだ。{子|こ}どもも、みんなでいっしょにそだてるんだって。チームワークばつぐんで、すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "ホッキョクオオカミ｜秋田市公式サイト（秋田市大森山動物園）",
+     "url": "https://www.city.akita.lg.jp/zoo/information/1003682/1005302/1035788.html"
+    },
+    {
+     "title": "ホッキョクオオカミ（那須どうぶつ王国 動物紹介）",
+     "url": "https://nasu-oukoku.com/?p=805"
+    }
+   ]
+  },
+  "r-u1jc9u": {
+   "personality": "ネガは、お{母|かあ}さんオオカミなんだ。{名前|なまえ}を{呼|よ}ばれると、{部屋|へや}へやって{来|く}ることがあるんだって。ごはんをもらいに{来|く}るんだ。",
+   "favorites": "ネガは、「フエガラミ」というないぞうのお{肉|にく}が{好|す}きなんだ。とくに、ホースみたいなところをよく{食|た}べるんだって。レバーも{大好|だいす}きなんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ホッキョクオオカミの{毛|け}は、{長|なが}い{毛|け}の{下|した}に、やわらかい{毛|け}がぎっしり{生|は}えているんだ。{冬|ふゆ}が{近|ちか}づくと、{毛|け}はもっと{厚|あつ}くなるんだって。なんと、{春|はる}になると{毛|け}がぬけて、{短|みじか}めの{毛|け}にかわるんだ。{季節|きせつ}にあわせて、ころもがえするんだね。",
+   "speciesSources": [
+    {
+     "title": "Toronto Zoo - Arctic wolf",
+     "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
+    },
+    {
+     "title": "Colorado Wolf and Wildlife Center - Arctic Wolves",
+     "url": "https://www.wolfeducation.org/arctic-wolves"
+    }
+   ]
+  },
+  "r-dehppj": {
+   "personality": "マリは、{自分|じぶん}で{地面|じめん}にあなをほりすすめることがある{子|こ}なんだ。いっしょにくらすネガがちかづくと、さっとはなれることもあるんだって。マイペースな{子|こ}なのかな？",
+   "favorites": "マリは、フエガラミやミノ、レバーをよく{食|た}べるんだ。シカのおにくも{好|この}んで{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ホッキョクオオカミは、「ウォーン」と{遠|とお}ぼえをするんだ。その{声|こえ}は、{何|なん}キロも{先|さき}までとどくんだって。だから、{雪|ゆき}やくらやみの{中|なか}でも、なかまとはなれずにいられるんだ。{声|こえ}でよびあうなんて、すてきでしょ？",
+   "speciesSources": [
+    {
+     "title": "Arctic Wolf - Five Sisters Zoo",
+     "url": "https://fivesisterszoo.co.uk/our-zoo/animals-a-to-z/arctic-wolf/"
+    },
+    {
+     "title": "Toronto Zoo - Arctic wolf",
+     "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
+    }
+   ]
+  },
+  "r-1o4g48n": {
+   "personality": "ユアは、かむ{力|ちから}がとっても{強|つよ}い{子|こ}なんだ。{木|き}でできたものを、こわしちゃうこともあるんだって。おかれたまるたにも、よくきょうみをしめしていたんだよ。",
+   "favorites": "ユアは、シカのおにくをよく{食|た}べるんだ。カモのおにくを、のこさずぜんぶ{食|た}べたこともあるんだって。まるたもお{気|き}に{入|い}りなんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。{北極|ほっきょく}の{地面|じめん}は、ずっとこおっているんだ。だから、かちかちなんだよ。ホッキョクオオカミは、あなをほるのがむずかしいんだって。そのかわり、{岩|いわ}のかげやほらあなをすみかにするんだ。かしこいくふうでしょ？",
+   "speciesSources": [
+    {
+     "title": "Arctic wolf - WWF",
+     "url": "https://wwf.panda.org/discover/our_focus/wildlife_practice/profiles/mammals/arcticwolf/"
+    },
+    {
+     "title": "Toronto Zoo - Arctic wolf",
+     "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
+    }
+   ]
+  },
+  "r-m8zvr3": {
+   "personality": "テオは、マイペースなホッキョクオオカミの{子|こ}なんだ。なげられたエサを、すぐにはうけとらないこともあるんだって。あとから{自分|じぶん}でひろって{食|た}べるんだ。のんびりやさんでしょ？",
+   "favorites": "テオは、レバーやミノが{大好|だいす}きなんだ。よく{食|た}べるんだって。シカの{肉|にく}のほかに、{魚|さかな}やうずらなど、いろいろなものを{食|た}べているよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ホッキョクオオカミのひみつを、ひとつ{教|おし}えるね。ホッキョクオオカミのお{母|かあ}さんは、{毎年|まいとし}{赤|あか}ちゃんを{生|う}むんだ。{一度|いちど}に{生|う}まれるのは、2〜3{頭|とう}くらいなんだって。ほかのオオカミより、{少|すく}ない{数|かず}なんだよ。",
+   "speciesSources": [
+    {
+     "title": "Arctic wolf - WWF",
+     "url": "https://wwf.panda.org/discover/our_focus/wildlife_practice/profiles/mammals/arcticwolf/"
+    },
+    {
+     "title": "Toronto Zoo - Arctic wolf",
+     "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
+    }
+   ]
+  },
+  "r-tbv8ac": {
+   "personality": "カムイは、ちょっぴり{不器用|ぶきよう}なところがある{子|こ}なんだって。{投|な}げてもらったごはんを、うまくキャッチできないこともあるんだ。{鼻|はな}にぶつけて、{落|お}としちゃうこともあるんだって。",
+   "favorites": "カムイの{好|す}きなものは、フエガラミやミノなんだって。シカの{肉|にく}より、ミノのほうが{好|す}きみたいなんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？{北極|ほっきょく}の{冬|ふゆ}は、{一日|いちにち}じゅうまっくらな{日|ひ}がつづくんだ。まっくらな{日|ひ}は、{多|おお}いと5か{月|げつ}もつづくんだって。でも、ホッキョクオオカミはへっちゃらなんだ。{寒|さむ}さにもくらさにもまけない、つよい{動物|どうぶつ}でしょ？",
+   "speciesSources": [
+    {
+     "title": "Arctic wolf - WWF",
+     "url": "https://wwf.panda.org/discover/our_focus/wildlife_practice/profiles/mammals/arcticwolf/"
+    }
+   ]
+  },
+  "r-6jyoop": {
+   "personality": "ハナは、はじめての{場所|ばしょ}がちょっぴりにがてな{子|こ}だったんだって。{動|うご}くとびらも、ちょっぴりにがてだったんだ。でも、{少|すこ}しずつなれたんだよ。{今|いま}では、{自分|じぶん}で{出|で}たり{入|はい}ったりできるんだ。{朝|あさ}、{外|そと}に{出|で}たいときは、{水|みず}のおさらをポーンとなげることもあるんだって。",
+   "favorites": "ハナは、バナナやパンをよく{食|た}べる{子|こ}なんだ。ヨーグルトを{食|た}べたこともあるんだって。マスカットやプラムも{食|た}べたことがあるんだよ。いろいろ{食|た}べられて、すごいでしょ？",
+   "identifyingMarks": "ハナは、{首|くび}わをつけている{子|こ}なんだ。{首|くび}もとをよく{見|み}てみてね！",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ニホンザルは、{日本|にほん}の{本州|ほんしゅう}、{四国|しこく}、{九州|きゅうしゅう}の{山|やま}や{森|もり}にすんでいるんだ。ヒトをのぞくと、{世界|せかい}のサルのなかまでいちばん{北|きた}にすんでいるんだって。{顔|かお}とおしりが{赤|あか}いのが{特徴|とくちょう}なんだ。{食|た}べものは、{木|き}の{実|み}や{葉|は}っぱ、こん{虫|ちゅう}など、いろいろなんだよ。ほっぺたには「ほおぶくろ」があるんだ。そこに{食|た}べものをしばらくしまっておけるんだって。たくさんのなかまとむれをつくって、くらしているんだよ。",
+   "speciesSources": [
+    {
+     "title": "どうぶつ図鑑「ニホンザル」 ｜ 東京ズーネット",
+     "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?code=66"
+    },
+    {
+     "title": "ニホンザル（大内山動物園）",
+     "url": "http://www.oouchiyama-zoo.com/animals/6557/"
+    }
+   ]
+  },
+  "r-109oir3": {
+   "personality": "",
+   "favorites": "ゴロウは、りんごやバナナ、にんじんを{食|た}べている{子|こ}なんだ。{季節|きせつ}ごとに、ぶどうやかき、もも、スイカも{食|た}べるんだって。いろんな{味|あじ}が{楽|たの}しめて、いいでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ツキノワグマの{名前|なまえ}は、むねにある{三日月|みかづき}のもようからついたんだって。でも、もようがかけていたり、ないクマもいるんだよ。{好|す}きな{食|た}べものは、どんぐりなどの{木|き}の{実|み}や、くだものなんだ。{木|き}のぼりが{上手|じょうず}なんだって。およぎも{上手|じょうず}なんだよ。{冬|ふゆ}は、{大|おお}きな{木|き}のあなや{岩|いわ}のあなですごすんだ。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "ツキノワグマ｜八木山動物公園フジサキの杜",
+     "url": "https://www.city.sendai.jp/zoo/animals/mammal/kuma/018.html"
+    },
+    {
+     "title": "ツキノワグマ（ニホンツキノワグマ） - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%84%E3%82%AD%E3%83%8E%E3%83%AF%E3%82%B0%E3%83%9E/"
+    },
+    {
+     "title": "東京のツキノワグマ|ツキノワグマについて|東京都環境局",
+     "url": "https://www.kankyo.metro.tokyo.lg.jp/nature/animals_plants/bear/tokyos"
+    }
+   ]
+  },
+  "r-1pz6900": {
+   "personality": "まっ{君|くん}は、{毎日|まいにち}のんびり{過|す}ごしているツキノワグマなんだ。タイヤやロープのまわりにいることもあるんだって。のんびりやさんでしょ？",
+   "favorites": "まっ{君|くん}は、バナナやにんじんが{大|だい}すきなんだ。{夏|なつ}は、ももやスイカを{食|た}べるんだって。{秋|あき}は、かきを{食|た}べるんだって。{季節|きせつ}のくだものを{楽|たの}しんでいるんだね。",
+   "identifyingMarks": "",
+   "speciesInfo": "ツキノワグマは、{木|き}の{上|うえ}で{実|み}を{食|た}べるとき、{枝|えだ}を{手|て}でひきよせるんだ。なんと、{折|お}れた{枝|えだ}がかさなって、{鳥|とり}の{巣|す}みたいになるんだって。これを「クマだな」とよぶんだよ。",
+   "speciesSources": [
+    {
+     "title": "ニッポンツキノワグマ（東山動植物園 飼育員によるしょうかい）",
+     "url": "https://sdgsstory.global.brother/j/special/minna/787/"
+    },
+    {
+     "title": "ツキノワグマ舎のクマ棚（福岡市動物園ブログ）",
+     "url": "http://fukuokazoo.blogspot.com/2021/03/blog-post.html"
+    }
+   ]
+  },
+  "r-y5gzah": {
+   "personality": "だいちゃんは、{元気|げんき}で{人|ひと}なつこいキタキツネなんだ。{人|ひと}になでてもらうのが{大|だい}すきみたいだよ。じめんをほるのもとくいなんだ。{大|おお}きなあなをつくることもあるんだって。",
+   "favorites": "だいちゃんは、{肉|にく}やドッグフード、やさいなどを{食|た}べているんだ。ときどき、{魚|さかな}やシカの{肉|にく}ももらえるんだって。ゆでたまごや、くだもの、サツマイモももらえるんだ。ごちそうがいっぱいで、うれしいでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "キタキツネって、どんな{動物|どうぶつ}だと{思|おも}う？{日本|にっぽん}では、{北海道|ほっかいどう}だけにすんでいるキツネなんだ。{耳|みみ}のうらと{足|あし}のさきが{黒|くろ}いのが、めじるしなんだって。{食|た}べものは、いろいろなんだ。ネズミや{虫|むし}、{魚|さかな}、{木|き}の{実|み}なども{食|た}べるよ。えものをつかまえるときは、ぴょーんとジャンプするんだって。すあなには、でいりぐちがたくさんあるんだ。キツネだけに、みんなをつままれた{気分|きぶん}にさせちゃう{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "【旭山動物園だより】身近な野生動物「キタキツネ」",
+     "url": "https://www.ecochil.net/article/51104/"
+    },
+    {
+     "title": "キタキツネ｜ 帯広市ホームページ 十勝",
+     "url": "https://www.city.obihiro.hokkaido.jp/zoo/shokai/honyurui/1005317.html"
+    },
+    {
+     "title": "キタキツネ / 国立環境研究所 侵入生物DB",
+     "url": "https://www.nies.go.jp/biodiversity/invasive/DB/detail/10300.html"
+    }
+   ]
+  },
+  "r-1dxjmk7": {
+   "personality": "あずきは、{大|おお}きな{音|おと}がすこしにがてな{子|こ}なんだ。こうじの{音|おと}がしたときは、{小屋|こや}の{中|なか}でじっとしていたよ。でも、{時間|じかん}がたつと、おちついたんだって。",
+   "favorites": "あずきは、おにくややさいを{食|た}べているんだ。ニンジンやドッグフードから{先|さき}に{食|た}べることもあるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、キタキツネはふだん、むれをつくらないんだ。1{頭|とう}でくらしているんだって。でも、{子|こ}どもをうむきせつは{特別|とくべつ}なんだ。オスとメスがいっしょにすごすんだって。{子|こ}どもは{春|はる}に{生|う}まれるんだ。そして{秋|あき}のおわりには{親|おや}ばなれするんだって。ひとりだちするなんて、すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "【旭山動物園だより】身近な野生動物「キタキツネ」｜地球にやさしい子ども達を育む環境教育メディア",
+     "url": "https://www.ecochil.net/article/51104/"
+    }
+   ]
+  },
+  "r-17tlnq1": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ギンギツネは、アカギツネのなかまなんだ。{毛|け}の{色|いろ}がかわったキツネなんだって。{灰色|はいいろ}っぽい{毛|け}をしているよ。シルバーフォックスともよばれるんだ。アカギツネは、{北半球|きたはんきゅう}のひろい{所|ところ}にすんでいるんだ。{日本|にほん}の{北海道|ほっかいどう}でも、ギンギツネがときどき{見|み}られるんだって。ネズミや{鳥|とり}、{虫|むし}、くだものなどを{食|た}べるよ。ふさふさの{長|なが}いしっぽもすてきでしょ？",
+   "speciesSources": [
+    {
+     "title": "キタキツネの雑種のはく製【コラムリレー第38回】",
+     "url": "http://www.hk-curators.jp/archives/2130"
+    },
+    {
+     "title": "ギンギツネ - 小動物 - ペット - Yahoo!きっず図鑑",
+     "url": "https://kids.yahoo.co.jp/zukan/pet/smallanimal/cat/0016.html"
+    },
+    {
+     "title": "イヌ科 アカギツネ｜動物｜バーチャル収蔵庫",
+     "url": "https://www.yamahaku.pref.yamaguchi.lg.jp/gallery/storage_animal/Mammals/2024-11-021/"
+    },
+    {
+     "title": "アカギツネ ｜ 哺乳類図鑑 ｜ 図鑑 ｜ 大阪府立環境農林水産総合研究所",
+     "url": "https://www.knsk-osaka.jp/zukan/zukan_database/mammal/f0de16a243c8957/cfb2dc4738ae560.html"
+    }
+   ]
+  },
+  "r-1wj5osd": {
+   "personality": "タムタムは、ふだん{落|お}ち{着|つ}いてすごしているタヌキなんだって。まわりの{音|おと}や{作業|さぎょう}に{気|き}がつくと、そわそわすることもあるんだよ。{耳|みみ}がいいのかな？",
+   "favorites": "タムタムは、お{肉|にく}が{大好|だいす}きな{子|こ}なんだって。{野菜|やさい}も{食|た}べているよ。ドッグフードやレバー、ゆでたまごも{食|た}べるんだ。いろいろ{食|た}べられて、えらいでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ホンドタヌキは、{日本|にほん}の{本州|ほんしゅう}・{四国|しこく}・{九州|きゅうしゅう}の{森|もり}や{里山|さとやま}にすんでいるんだ。おもに{夜|よる}に{動|うご}く{動物|どうぶつ}なんだよ。{木|き}の{実|み}やくだもの、{虫|むし}など、なんでも{食|た}べるんだって。イヌのなかまなのに、{木|き}に{登|のぼ}ることができるんだ。イヌのなかまでは、めずらしいんだって。それから、「ためふん」というくせもあるんだ。{決|き}まった{場所|ばしょ}にうんちをするんだって。おもしろいでしょ？",
+   "speciesSources": [
+    {
+     "title": "ホンドタヌキ（京都市動物園 どうぶつ図鑑）",
+     "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/n_procyonoides"
+    },
+    {
+     "title": "ホンドタヌキ（高岡古城公園動物園）",
+     "url": "https://www.takaokakojyozoo.jp/page-22/page-241/"
+    },
+    {
+     "title": "どうぶつ図鑑「ホンドタヌキ」｜東京ズーネット",
+     "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?code=89"
+    }
+   ]
+  },
+  "r-1vmqxs9": {
+   "personality": "ファスは、{自分|じぶん}の{場所|ばしょ}を{大切|たいせつ}にするウッドチャックの{子|こ}なんだ。{食|た}べものを{部屋|へや}のすみっこに{運|はこ}んでおくくせがあるんだって。お{気|き}に{入|い}りのねどこは、{部屋|へや}のおくにあるんだ。",
+   "favorites": "ファスは、ニンジンとタンポポが{大|だい}すきなんだ。タンポポは、いきおいよくパクパク{食|た}べるんだって。ニンジンは、ほかのものより{先|さき}に{食|た}べきっちゃうんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ウッドチャックは、リスのなかまなんだ。{北|きた}アメリカの、カナダやアメリカにすんでいるんだって。{食|た}べものは、クローバーなどのやわらかい{草|くさ}なんだ。{夏|なつ}には、たくさん{食|た}べるんだよ。そして、{体|からだ}にしぼうをためるんだ。{冬|ふゆ}は、{土|つち}の{中|なか}のあなで、ずっとねむってすごすんだって。のんびりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Groundhog, facts and photos",
+     "url": "https://www.nationalgeographic.com/animals/mammals/facts/groundhog"
+    },
+    {
+     "title": "Woodchuck",
+     "url": "https://portal.ct.gov/DEEP/Wildlife/Fact-Sheets/Woodchuck"
+    },
+    {
+     "title": "Groundhog (Woodchuck) North Carolina Wildlife Profiles",
+     "url": "https://www.ncwildlife.gov/media/2189/download?attachment="
+    }
+   ]
+  },
+  "r-1m221tq": {
+   "personality": "クッキーは、{人|ひと}によくなれている{子|こ}なんだって。あまえんぼうなところもあるんだ。かわいいでしょ？",
+   "favorites": "クッキーは、{野草|やそう}を{食|た}べることがあるんだって。{野|の}はらの{草|くさ}をもぐもぐするんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "プレーリードッグは、{北|きた}アメリカの{草原|そうげん}にすんでいるんだ。「ドッグ」という{名前|なまえ}だけど、じつはリスのなかまなんだって。{食|た}べものは{草|くさ}なんだ。{地面|じめん}の{下|した}に{大|おお}きなすあなをほるんだ。そこで{家族|かぞく}といっしょにくらしているんだよ。なんと、すあなには{子|こ}ども{部屋|べや}があるんだって。ねる{部屋|へや}もあるんだ。トイレまであるんだって。あなどれないあなほり{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "プレーリードッグ（ナショナル ジオグラフィック日本版）",
+     "url": "https://natgeo.nikkeibp.co.jp/nng/article/20141218/428895/"
+    },
+    {
+     "title": "オグロプレーリードッグ／須坂市ホームページ",
+     "url": "https://www.city.suzaka.nagano.jp/suzaka_zoo/animal/1/2347.html"
+    }
+   ]
+  },
+  "r-1svvkx9": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "プレーリードッグの{巣穴|すあな}の{入|い}り{口|ぐち}には、{土|つち}を{盛|も}り{上|あ}げた{見|み}はり{台|だい}があるんだ。{見|み}はりの{係|かかり}は、{後|うし}ろ{足|あし}で{立|た}って、まわりをよく{見|み}るんだって。いろいろな{鳴|な}き{声|ごえ}で、まわりのようすを{仲間|なかま}に{教|おし}えるんだ。たよれる{見|み}はり{番|ばん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "オグロプレーリードッグ ｜リトルワールド ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/007557.html"
+    },
+    {
+     "title": "オグロプレーリードッグ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/030-e.html"
+    }
+   ]
+  },
+  "r-168gt41": {
+   "personality": "たんぽぽは、{甘|あま}えんぼうなプレーリードッグなんだって。{飼育員|しいくいん}さんのそばに、よってくることもあるんだ。かわいいでしょ？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。プレーリードッグは、なかまと{口|くち}と{口|くち}をくっつけてあいさつするんだ。まるでキスみたいでしょ？だきあってあいさつすることもあるんだって。{毛|け}づくろいでも、なかまとやりとりするんだ。しっぽの{動|うご}きや{鳴|な}き{声|ごえ}でも、やりとりするんだよ。",
+   "speciesSources": [
+    {
+     "title": "オグロプレーリードッグ／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/030-e.html"
+    },
+    {
+     "title": "プレーリードッグ - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%97%E3%83%AC%E3%83%BC%E3%83%AA%E3%83%BC%E3%83%89%E3%83%83%E3%82%B0"
+    }
+   ]
+  },
+  "r-trs08o": {
+   "personality": "",
+   "favorites": "こごみは、{野草|やそう}が{大好|だいす}きな{子|こ}なんだ。{野草|やそう}をもらうと、よく{食|た}べるんだって。{草|くさ}をもらうと、くさくさしないで、ごきげんかもね！",
+   "identifyingMarks": "",
+   "speciesInfo": "ヤマアラシは、ネズミのなかまなんだ。{世界|せかい}の{森|もり}や{草|くさ}はらにすんでいるんだって。{草|くさ}や{木|き}の{根|ね}っこを{食|た}べるよ。{木|き}の{皮|かわ}や、くだものも{食|た}べるんだ。{前歯|まえば}は、ずっとのびつづけるんだって。だから、かたい{木|き}をかじって{長|なが}さをととのえるんだ。せなかのはりは、{毛|け}がかわってできたものなんだよ。びっくりすると、はりをピンと{立|た}てるんだ。そうやって{体|からだ}をまもるんだって。ハリきってるでしょ？",
+   "speciesSources": [
+    {
+     "title": "ヤマアラシ ｜リトルワールド ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/000897.html"
+    },
+    {
+     "title": "アフリカタテガミヤマアラシ - 静岡市立 日本平動物園｜動物紹介",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=91"
+    },
+    {
+     "title": "千葉市：千葉市動物公園 アフリカタテガミヤマアラシ",
+     "url": "https://www.city.chiba.jp/zoo/zone/crested_porcupine.html"
+    },
+    {
+     "title": "タテガミヤマアラシ｜【公式】のんほいパーク（豊橋総合動植物公園）",
+     "url": "https://www.nonhoi.jp/animal/p12891/"
+    }
+   ]
+  },
+  "r-h5a6qs": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "アメリカビーバーって、どんな{動物|どうぶつ}だと{思|おも}う？{北|きた}アメリカの{川|かわ}や{湖|みずうみ}にすんでいる{動物|どうぶつ}なんだ。{食|た}べものは、{木|き}の{葉|は}っぱや{小|こ}えだ、{木|き}の{皮|かわ}なんだって。うしろ{足|あし}には{水|みず}かきがあるんだ。だから、{泳|およ}ぐのがとってもじょうずなんだよ。{歯|は}がじょうぶで、{木|き}をたおすこともできるんだって。すごいでしょ？{木|き}のえだや{泥|どろ}で、{川|かわ}の{流|なが}れをせきとめるんだ。そうやって「ダム」をつくるのがとくいなんだよ。その{中|なか}には、へやがいくつかあるんだ。そこで、{家族|かぞく}でなかよくくらしているんだって。",
+   "speciesSources": [
+    {
+     "title": "どうぶつ図鑑「アメリカビーバー」 ｜ 東京ズーネット",
+     "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?species_code=12"
+    },
+    {
+     "title": "アメリカビーバー（札幌市円山動物園）",
+     "url": "https://www.city.sapporo.jp/zoo/046-f.html"
+    },
+    {
+     "title": "千葉市：千葉市動物公園 アメリカビーバー",
+     "url": "https://www.city.chiba.jp/zoo/zone/data-american_beaver.html"
+    }
+   ]
+  },
+  "r-1wuyhat": {
+   "personality": "ユウトは、オオカンガルーの{子|こ}なんだ。ほかのカンガルーといっしょになると、すこし{興奮|こうふん}しやすいんだって。{元気|げんき}いっぱいでしょ？",
+   "favorites": "ユウトは、ニンジンやキャベツを{食|た}べているんだ。カンガルー{用|よう}のフードも{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "オオカンガルーは、オーストラリアの{草原|そうげん}や{森|もり}にすんでいるんだ。{好|す}きな{食|た}べものは{草|くさ}なんだって。{暑|あつ}い{昼|ひる}は{木|こ}かげでやすむんだ。そして、{夕方|ゆうがた}にうごきだすんだよ。{生|う}まれたての{赤|あか}ちゃんは、1グラムくらいなんだ。お{母|かあ}さんのおなかのふくろの{中|なか}で{大|おお}きくなるんだよ。{後|うし}ろ{足|あし}が{強|つよ}いんだ。ひとっとびで8メートルもとべるんだって。ジャンプの{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "オオカンガルー（ハイイロカンガルー）／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/023-e.html"
+    },
+    {
+     "title": "千葉市：千葉市動物公園 オオカンガルー",
+     "url": "https://www.city.chiba.jp/zoo/zone/data-eastern_gray_kangaroo.html"
+    },
+    {
+     "title": "オオカンガルー - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%82%AA%E3%82%AA%E3%82%AB%E3%83%B3%E3%82%AC%E3%83%AB%E3%83%BC/"
+    }
+   ]
+  },
+  "r-1xq14tb": {
+   "personality": "シゲコは、{仲間|なかま}のことがとっても{気|き}になる{子|こ}なんだ。いっしょにくらすツユとは、なかよくなりたそうにしているんだって。ちょっぴりびっくりしやすいところもあるんだ。",
+   "favorites": "シゲコは、{仲間|なかま}のカンガルーたちといっしょにすごすことに、きょうみしんしんみたいなんだ。みんなといっしょだと、うれしいのかな？",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。オオカンガルーのしっぽは、{太|ふと}くて{長|なが}いんだ。ゆっくり{進|すす}むときは、{前|まえ}{足|あし}と{後|うし}ろ{足|あし}としっぽで{体|からだ}をささえるんだって。しっぽの{先|さき}は、{黒|くろ}っぽいことが{多|おお}いんだよ。",
+   "speciesSources": [
+    {
+     "title": "オーストラリアの平原｜展示動物紹介｜園内ガイド｜いしかわ動物園",
+     "url": "https://www.ishikawazoo.jp/guide/animal/australia.html"
+    },
+    {
+     "title": "Macropus giganteus Shaw, 1790, Eastern Grey Kangaroo (Museums Victoria)",
+     "url": "https://collections.museumsvictoria.com.au/species/8419"
+    }
+   ]
+  },
+  "r-gfu6yx": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "オオカンガルーのひみつを、ひとつ{教|おし}えるね。オオカンガルーは、なかまとむれでくらすんだ。むれは10{頭|とう}くらいが{多|おお}いんだって。でも、100{頭|とう}くらいの{大|おお}きなむれになることもあるんだ。にぎやかでしょ？",
+   "speciesSources": [
+    {
+     "title": "オオカンガルー（ハイイロカンガルー）／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/023-e.html"
+    }
+   ]
+  },
+  "r-1betead": {
+   "personality": "オオカンガルーのソウタは、エリアに{出|で}てすごす{時間|じかん}が{長|なが}い{子|こ}なんだ。なかまのユウトといっしょに{出|で}ていることもあるんだって。なかよしでいいでしょ？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "オオカンガルーって、どんな{動物|どうぶつ}だと{思|おも}う？カンガルーのなかまでも、{大|おお}きいほうなんだ。{学名|がくめい}には、「とても{大|おお}きい」といういみのことばが{入|はい}っているんだって。{毛|け}が{灰色|はいいろ}なんだ。だから、「ハイイロカンガルー」ともよばれるんだって。",
+   "speciesSources": [
+    {
+     "title": "オオカンガルー（ハイイロカンガルー）／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/023-e.html"
+    },
+    {
+     "title": "オーストラリアの平原｜展示動物紹介｜園内ガイド｜いしかわ動物園",
+     "url": "https://www.ishikawazoo.jp/guide/animal/australia.html"
+    }
+   ]
+  },
+  "r-fcbxri": {
+   "personality": "カンタは、オオカンガルーの{子|こ}なんだ。まわりで{音|おと}がすると、{気|き}になってそわそわすることもあるんだって。",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、オオカンガルーの{子|こ}どもは、9か{月|げつ}くらいでふくろの{外|そと}に{出|で}はじめるんだ。でも、すぐにははなれないんだよ。1{年|ねん}{半|はん}くらいで、ひとりだちするんだって。ゆっくり{大|おお}きくなるんだね。",
+   "speciesSources": [
+    {
+     "title": "Fact File: Eastern grey kangaroo (Macropus giganteus) - Australian Geographic",
+     "url": "https://www.australiangeographic.com.au/fact-file/eastern-grey-kangaroo-macropus-giganteus/"
+    },
+    {
+     "title": "オオカンガルー（ハイイロカンガルー）／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/023-e.html"
+    }
+   ]
+  },
+  "r-1w3sm1x": {
+   "personality": "ユイは、{毎日|まいにち}おそとのエリアに{出|で}て、{長|なが}い{時間|じかん}をすごしているんだ。なかまのシゲコがツユのほうへ{走|はし}ってくることがあるでしょ？そんなとき、ユイはいやがって{向|む}かっていくことがあるんだって。ユイは、{気持|きも}ちがはっきりした{子|こ}なんだ。",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。オオカンガルーは、オスとメスで{大|おお}きさがちがうんだ。{大|おお}きなオスは、60キログラムより{重|おも}くなるんだって。メスは20〜30キログラムくらいなんだ。オスは、ずいぶんがっしりしているでしょ？",
+   "speciesSources": [
+    {
+     "title": "オーストラリアの平原｜展示動物紹介｜園内ガイド｜いしかわ動物園",
+     "url": "https://www.ishikawazoo.jp/guide/animal/australia.html"
+    }
+   ]
+  },
+  "r-1idja4d": {
+   "personality": "ツユは、オオカンガルーの{女|おんな}の{子|こ}なんだ。{外|そと}のエリアで{長|なが}い{時間|じかん}をすごしているんだって。{大胆|だいたん}なところを{見|み}せてくれたこともあるんだよ。",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、オオカンガルーの{後|うし}ろ{足|あし}には、ふしぎなひみつがあるんだ。よく{見|み}てみよう。{大|おお}きなゆびは、{薬|くすり}ゆびと{小|こ}ゆびなんだって。{親|おや}ゆびは、ないんだよ。ふしぎな{足|あし}でしょ？",
+   "speciesSources": [
+    {
+     "title": "どうぶつ図鑑「オオカンガルー」 ｜ 東京ズーネット",
+     "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?species_code=348"
+    }
+   ]
+  },
+  "r-xeb8kq": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "アカカンガルーのひみつを、ひとつ{教|おし}えるね。アカカンガルーは、オーストラリアの{草原|そうげん}などにすんでいるんだ。おもに{草|くさ}を{食|た}べるんだって。おかあさんのおなかには、ふくろがあるんだ。{赤|あか}ちゃんは、そのふくろの{中|なか}で{大|おお}きくなるんだよ。{走|はし}るときは、{前足|まえあし}をつかわないんだ。{後|うし}ろ{足|あし}をそろえて、ぴょんぴょんとぶんだって。あつい{日|ひ}は、{前足|まえあし}をぬらすんだ。そうやって、{体|からだ}をひやすんだよ。くふうばつぐんでしょ？",
+   "speciesSources": [
+    {
+     "title": "アカカンガルー|動物たち｜バーチャルひがしやま動物園＆植物園",
+     "url": "https://www.ci.sugiyama-u.ac.jp/vhzbg/z-aka-kangaru.html"
+    },
+    {
+     "title": "アカカンガルー - 盛岡市動物公園 ZOOMO【公式】",
+     "url": "https://zoomo.co.jp/animals/r-kangaroo/"
+    },
+    {
+     "title": "アカカンガルー｜ハイブリッド・レジャーランド東武動物公園公式Webサイト",
+     "url": "https://www.tobuzoo.com/zoo/list/2453.html"
+    }
+   ]
+  },
+  "r-1ptt844": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、パルマワラビーは、カンガルーのなかまの{小|ちい}さなワラビーなんだ。オーストラリアのしめった{森|もり}にすんでいるんだって。{夜|よる}に{活動|かつどう}するどうぶつなんだ。ふだんは1ぴきでくらしているよ。{草|くさ}や{木|き}の{葉|は}を{食|た}べるんだ。お{母|かあ}さんのおなかには、ふくろがあるんだ。{赤|あか}ちゃんは、そのふくろの{中|なか}で{大|おお}きくそだつんだって。",
+   "speciesSources": [
+    {
+     "title": "パルマワラビー ｜オーストラリアストリート ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/005189.html"
+    },
+    {
+     "title": "パルマワラビー - 動物紹介（周南市徳山動物園）",
+     "url": "https://tokuyama-zoo.jp/as/cms/view.php?id=20&m=cel&k=A08KMGERmh"
+    },
+    {
+     "title": "どうぶつ図鑑「パルマワラビー」 ｜ 東京ズーネット",
+     "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?code=76"
+    }
+   ]
+  },
+  "r-1jg2d5r": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。パルマワラビーは、ネコくらいの{大|おお}きさなんだって。しっぽは、{体|からだ}と{同|おな}じくらい{長|なが}いんだ。{口|くち}のまわりには、{白|しろ}いひげのようなもようがあるんだよ。おしゃれさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Shy little wallaby has been overlooked for decades",
+     "url": "https://phys.org/news/2021-09-shy-wallaby-overlooked-decades.html"
+    }
+   ]
+  },
+  "r-nms5nq": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、「パルマ」という{名前|なまえ}は、オーストラリアにむかしからくらす{人|ひと}たちの{言葉|ことば}からきているんだって。{英語|えいご}では、「のどが{白|しろ}いワラビー」という{意味|いみ}の{名前|なまえ}でもよばれるんだ。{名前|なまえ}がいくつもあるんだね。",
+   "speciesSources": [
+    {
+     "title": "Parma Wallaby (Notamacropus parma) Fact Sheet: Summary",
+     "url": "https://ielc.libguides.com/sdzg/factsheets/parmawallaby"
+    },
+    {
+     "title": "Parma Wallaby (Notamacropus parma) Fact Sheet: Taxonomy & History",
+     "url": "https://ielc.libguides.com/sdzg/factsheets/parmawallaby/taxonomy"
+    }
+   ]
+  },
+  "r-jlmnhe": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "パルマワラビーは、ぴょんぴょんはねて{進|すす}むんだ。{地面|じめん}の{近|ちか}くを、{体|からだ}をほとんど{横|よこ}にしてはねるんだって。これが、パルマワラビーの{大事|だいじ}なめじるしなんだ。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "Parma Wallaby (Notamacropus parma) Fact Sheet: Behavior & Ecology",
+     "url": "https://ielc.libguides.com/sdzg/factsheets/parmawallaby/behavior"
+    }
+   ]
+  },
+  "r-wzy6il": {
+   "personality": "キキは、まだ{若|わか}いパルマワラビーの{子|こ}なんだ。{大人|おとな}のなかまと{同|おな}じくらい、すいすい{動|うご}けるようになったんだって。がんばりやさんでしょ？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "パルマワラビーは、むかし、どこにもいなくなったと{思|おも}われていたんだ。でも、なんと、1965{年|ねん}にニュージーランドのカワウという{島|しま}で{見|み}つかったんだって。1967{年|ねん}には、オーストラリアでも{見|み}つかったんだ。また{会|あ}えてよかったね。",
+   "speciesSources": [
+    {
+     "title": "Macropus parma (Parma wallaby)",
+     "url": "https://animaldiversity.org/accounts/Macropus_parma/"
+    },
+    {
+     "title": "Parma wallabies: a history of translocations and reintroductions",
+     "url": "https://meridian.allenpress.com/australian-zoologist/article/44/2/322/504836/Parma-wallabies-a-history-of-translocations-and"
+    }
+   ]
+  },
+  "r-17s4cuf": {
+   "personality": "カピバラのマロは、とってものんびりやさんなんだ。{動|うご}きもまったりしているよ。{見|み}ていると、ほっとするんだ。あたたかいところですごしている{姿|すがた}も{見|み}られるんだって。",
+   "favorites": "マロは、{野草|やそう}やクマザサが{大|だい}すきな{子|こ}なんだ。よく{食|た}べているよ。あたたかい{風|かぜ}の{前|まえ}で、ぬくぬくあたたまるのもすきみたい。{気|き}もちよさそうでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。カピバラは、{南|みなみ}アメリカの{水辺|みずべ}の{草|くさ}はらや{林|はやし}にすんでいるんだ。ネズミのなかまで、いちばん{大|おお}きいんだって。{体重|たいじゅう}が50キログラム{以上|いじょう}になることもあるんだよ。{野生|やせい}では、{水辺|みずべ}に{生|は}える{草|くさ}を{食|た}べているんだ。{足|あし}の{指|ゆび}には、{小|ちい}さな{水|みず}かきがあるんだ。だから、{水|みず}の{中|なか}でもくらしやすいんだって。10{頭|とう}くらいの{群|む}れでくらしているんだ。みんなで{子育|こそだ}てをするんだって。なかよし{家族|かぞく}でしょ？",
+   "speciesSources": [
+    {
+     "title": "カピバラ ｜ 長崎バイオパーク - ZOOっと近くにふれあえる九州の動物園&植物園",
+     "url": "https://www.biopark.co.jp/animals/mammal/capybara.html"
+    },
+    {
+     "title": "カピバラ - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%82%AB%E3%83%94%E3%83%90%E3%83%A9/"
+    },
+    {
+     "title": "カピバラ｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
+     "url": "https://www.tobuzoo.com/zoo/list/2220.html"
+    }
+   ]
+  },
+  "r-tixr54": {
+   "personality": "",
+   "favorites": "しずかは、{草|くさ}やクマザサ、ササの{新|しん}めが{大好|だいす}きな{子|こ}なんだ。{草|くさ}をたくさん{食|た}べるんだよ。ゆかにしいたマットの{上|うえ}で{休|やす}むのも{好|す}きなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "カピバラのひみつを、ひとつ{教|おし}えるね。カピバラの{目|め}と{耳|みみ}と{鼻|はな}は、{顔|かお}の{上|うえ}のほうにならんでいるんだ。{一直線|いっちょくせん}にならんでいるんだよ。だから{水|みず}の{中|なか}でも、{顔|かお}をすこし{出|だ}すだけでいいんだ。それで、まわりを{見|み}たり、いきをしたりできるんだって。カバと{同|おな}じつくりなんだって。{毛|け}は、たわしみたいにかたいんだ。ぬれても、すぐかわくんだよ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "カピバラ（伊豆シャボテン動物公園）",
+     "url": "https://izushaboten.com/animal/kapibara/"
+    },
+    {
+     "title": "【金沢動物園だより】カピバラ",
+     "url": "https://www.ecochil.net/article/1550/"
+    }
+   ]
+  },
+  "r-setw77": {
+   "personality": "",
+   "favorites": "ラピは、{野草|やそう}やクマザサが{大好|だいす}きな{子|こ}なんだ。{野草|やそう}がたくさんある{日|ひ}は、よく{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？カピバラには、{学者|がくしゃ}がつけた「{学名|がくめい}」という{名前|なまえ}があるんだ。その{意味|いみ}は「{水|みず}のブタ」なんだって。それくらい、{水|みず}となかよしの{動物|どうぶつ}なんだ。ブタじゃないのにブタだなんて、ぶーっとびっくりでしょ？",
+   "speciesSources": [
+    {
+     "title": "【金沢動物園だより】カピバラ",
+     "url": "https://www.ecochil.net/article/1550/"
+    },
+    {
+     "title": "Capybara - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Capybara"
+    }
+   ]
+  },
+  "r-uwzwij": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、マーラは{南|みなみ}アメリカの「パンパ」という{草|くさ}はらにすんでいるんだ。{耳|みみ}が{大|おお}きくて、ウサギみたいに{見|み}えるでしょ？でも、じつはネズミのなかまなんだって。{食|た}べるのは、おもに{草|くさ}なんだ。{昼|ひる}に{元気|げんき}に{動|うご}くんだよ。ひなたぼっこが{大好|だいす}きなんだって。{夜|よる}は、{地面|じめん}にほったあなで{休|やす}むんだ。ぽかぽかのひなたで、のんびりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "小動物プロムナード｜展示動物紹介｜園内ガイド｜いしかわ動物園",
+     "url": "https://www.ishikawazoo.jp/guide/animal/promenade.html"
+    },
+    {
+     "title": "マーラ｜日立市公式ウェブサイト",
+     "url": "https://www.city.hitachi.lg.jp/zoo/dobutsu_shokai/1004071/1004077.html"
+    }
+   ]
+  },
+  "r-5q5tar": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。マーラは、{走|はし}るのがとても{速|はや}いんだ。{自動車|じどうしゃ}くらいの{速|はや}さで{走|はし}れるんだって。ジャンプして、{空中|くうちゅう}でくるっと{後|うし}ろを{向|む}くこともできるんだ。すごいジャンプ{力|りょく}でしょ？",
+   "speciesSources": [
+    {
+     "title": "マーラ ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/mammal/patagonianmara.html"
+    }
+   ]
+  },
+  "r-d66tme": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、マーラはオスとメスのペアでくらすんだ。{一度|いちど}ペアになると、{一生|いっしょう}いっしょなんだって。いつもならんですごしているんだ。なかよしふうふでしょ？",
+   "speciesSources": [
+    {
+     "title": "マーラ - 富士サファリパーク 公式サイト",
+     "url": "https://www.fujisafari.co.jp/animal-fureai/mara/"
+    },
+    {
+     "title": "マーラ│マザー牧場の動物たち│マザー牧場",
+     "url": "https://www.motherfarm.co.jp/animal/breed/detail.php?CN=199463"
+    }
+   ]
+  },
+  "r-bl12jq": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "マーラは、{穴|あな}の{中|なか}で{子|こ}そだてをするんだ。おかあさんがおちちをあげているあいだ、おとうさんはまわりを{見|み}はるんだって。おちちのときは、{親子|おやこ}でちょこんとすわるんだよ。おぎょうぎがいいでしょ？",
+   "speciesSources": [
+    {
+     "title": "マーラ - 富士サファリパーク 公式サイト",
+     "url": "https://www.fujisafari.co.jp/animal-fureai/mara/"
+    },
+    {
+     "title": "マーラ ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/mammal/patagonianmara.html"
+    }
+   ]
+  },
+  "r-4kj549": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、マーラは{南|みなみ}アメリカの「パンパ」という{草|くさ}はらにすんでいるんだ。{耳|みみ}が{大|おお}きくて、ウサギみたいに{見|み}えるでしょ？でも、じつはネズミのなかまなんだって。{食|た}べるのは、おもに{草|くさ}なんだ。{昼|ひる}に{元気|げんき}に{動|うご}くんだよ。ひなたぼっこが{大好|だいす}きなんだって。{夜|よる}は、{地面|じめん}にほったあなで{休|やす}むんだ。ぽかぽかのひなたで、のんびりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "小動物プロムナード｜展示動物紹介｜園内ガイド｜いしかわ動物園",
+     "url": "https://www.ishikawazoo.jp/guide/animal/promenade.html"
+    },
+    {
+     "title": "マーラ｜日立市公式ウェブサイト",
+     "url": "https://www.city.hitachi.lg.jp/zoo/dobutsu_shokai/1004071/1004077.html"
+    }
+   ]
+  },
+  "r-1bxc2hn": {
+   "personality": "",
+   "favorites": "クンは、お{魚|さかな}が{大|だい}すきな{子|こ}なんだ。アジやニシン、スプラットなど、いろいろな{種類|しゅるい}を{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。モモイロペリカンは、ヨーロッパやアジア、アフリカの{湖|みずうみ}や{川|かわ}のそばにすんでいるんだ。ふだんは{白|しろ}いんだよ。でも、{子|こ}そだての{季節|きせつ}になると、{体|からだ}がモモいろになるんだって。くちばしの{下|した}には「のどぶくろ」があるんだ。のびたりちぢんだりするんだよ。{食|た}べものは{魚|さかな}なんだ。むれで{半円|はんえん}のかたちにならぶんだって。そして、{魚|さかな}をあさい{所|ところ}へおいこむんだ。チームワークばつぐんでしょ？",
+   "speciesSources": [
+    {
+     "title": "モモイロペリカン／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/141-b.html"
+    },
+    {
+     "title": "モモイロペリカン｜宮崎市フェニックス自然動物園",
+     "url": "https://www.miyazaki-city-zoo.jp/animals_t/%E3%83%A2%E3%83%A2%E3%82%A4%E3%83%AD%E3%83%9A%E3%83%AA%E3%82%AB%E3%83%B3/"
+    }
+   ]
+  },
+  "r-19hi6qt": {
+   "personality": "ポンは、{食|た}べる{魚|さかな}のこのみが、はっきりしているモモイロペリカンなんだ。{魚|さかな}のしゅるいによって、{食|た}べ{方|かた}がかわることもあるんだって。こだわりやさんでしょ？",
+   "favorites": "ポンは、アジやホッケを{食|た}べるんだ。スプラットという{小|ちい}さな{魚|さかな}も{食|た}べるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "モモイロペリカンのひみつを、ひとつ{教|おし}えるね。モモイロペリカンは、{空|そら}をとぶ{鳥|とり}のなかでも、とても{大|おお}きいんだ。つばさを{広|ひろ}げると、3メートルちかくにもなるよ。くちばしは、{鳥|とり}のなかでいちばん{長|なが}いんだって。{長|なが}さは50センチくらいあるんだ。びっくりサイズでしょ？",
+   "speciesSources": [
+    {
+     "title": "モモイロペリカン／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/141-b.html"
+    }
+   ]
+  },
+  "r-mxbjt1": {
+   "personality": "{白鳳|はくほう}は、{仲間|なかま}といっしょにいるとき、あまり{前|まえ}に{出|で}ない{子|こ}なんだ。ひかえめな{性格|せいかく}なんだって。ごはんの{時間|じかん}には、じぶんのペースで{魚|さかな}を{食|た}べているんだ。",
+   "favorites": "{白鳳|はくほう}のお{気|き}に{入|い}りは、アジとスプラットなんだ。どちらも{小|ちい}さな{魚|さかな}だよ。ニシンやコマイは、あまり{好|す}きじゃないみたい。{魚|さかな}にも{好|この}みがあるなんて、おもしろいでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？モモイロペリカンは、じめんの{上|うえ}にすをつくるんだ。すは、{草|くさ}や{木|き}の{枝|えだ}をつみかさねてつくるんだって。たくさんのなかまが{同|おな}じばしょにあつまって、すをつくるんだ。ご{近所|きんじょ}さんがいっぱいで、にぎやかでしょ？",
+   "speciesSources": [
+    {
+     "title": "静岡市立 日本平動物園｜飼育日誌 モモイロペリカン",
+     "url": "https://www.nhdzoo.jp/sp/animals/naka.php?animal_uid=168"
+    }
+   ]
+  },
+  "r-15mc14s": {
+   "personality": "モネは、まわりがにぎやかになると、そわそわしやすい{子|こ}なんだって。おなかがいっぱいのときは、{魚|さかな}であそびながら{食|た}べるすがたも{見|み}られるよ。",
+   "favorites": "モネは、{魚|さかな}を{食|た}べる{子|こ}なんだ。アジやニシン、スプラット、ホッケなどを{食|た}べるんだって。いろんな{魚|さかな}を{食|た}べるなんて、すごいでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "モモイロペリカンって、どんな{動物|どうぶつ}だと{思|おも}う？{冬|ふゆ}になると、{遠|とお}くへ{旅|たび}をするなかまがいる{鳥|とり}なんだ。アフリカの{南|みなみ}のほうや、インドなどへとんでいくんだって。むれでいっしょに、あたたかいところへ{行|い}くんだ。でも、もともとあたたかいところにいるなかまは、{旅|たび}をしないこともあるんだって。",
+   "speciesSources": [
+    {
+     "title": "モモイロペリカン／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/141-b.html"
+    },
+    {
+     "title": "モモイロペリカンってどんな生き物？ 長いくちばしと大きな喉袋の秘密に迫る！",
+     "url": "https://onlineshop.sunshinecity.jp/blog/post-3828/"
+    }
+   ]
+  },
+  "r-1te1kpb": {
+   "personality": "ハルトは、{水|みず}にうかんでいるごはんを、{手|て}でたぐりよせて{食|た}べる{子|こ}なんだ。じょうずな{手|て}つきでしょ？",
+   "favorites": "ハルトの{好|す}きな{食|た}べものは、ワカサギなんだって。{水|みず}にぷかぷかうかんだワカサギを、{手|て}でたぐりよせて{食|た}べるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "コツメカワウソは、カワウソの{仲間|なかま}でいちばん{小|ちい}さいんだって。{名前|なまえ}のとおり、つめが{小|ちい}さいのが{特徴|とくちょう}なんだ。アジアの{川|かわ}やぬまなど、{水|みず}べにすんでいるんだ。カニや{貝|かい}、カエルや{魚|さかな}を{食|た}べるよ。{家族|かぞく}でグループをつくってくらしているんだ。12{種類|しゅるい}{以上|いじょう}の{鳴|な}き{声|ごえ}で、おしゃべりするんだって。なかよし{家族|かぞく}で、にぎやかでしょ？",
+   "speciesSources": [
+    {
+     "title": "コツメカワウソ ｜リトルワールド ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/000899.html"
+    },
+    {
+     "title": "千葉市：千葉市動物公園 コツメカワウソ",
+     "url": "https://www.city.chiba.jp/zoo/zone/asian_small-clawed_otter.html"
+    },
+    {
+     "title": "コツメカワウソ｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
+     "url": "https://www.tobuzoo.com/zoo/list/292.html"
+    }
+   ]
+  },
+  "r-z8b2b9": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。コツメカワウソは、えものを{口|くち}ではなく{前足|まえあし}でつかまえるんだって。ほかのカワウソとはちがうんだ。にごった{水|みず}やどろの{中|なか}も、{前足|まえあし}でさわってえものをさがすんだ。{手|て}さぐりじょうずでしょ？",
+   "speciesSources": [
+    {
+     "title": "Asian Small-Clawed Otter - Denver Zoo Conservation Alliance",
+     "url": "https://denverzoo.org/animals/asian-small-clawed-otter/"
+    },
+    {
+     "title": "Meet the Asian Small-Clawed Otter, an Adorable and Social Carnivore",
+     "url": "https://nationalzoo.si.edu/animals/news/meet-asian-small-clawed-otter-adorable-and-social-carnivore"
+    }
+   ]
+  },
+  "r-14fwtpy": {
+   "personality": "ミナトは、{食|た}べることが{大|だい}すきなコツメカワウソなんだ。ごはんの{時間|じかん}が{近|ちか}づくと、ごはんをほしがるようすを{見|み}せることがあるんだって。くいしんぼうさんでしょ？",
+   "favorites": "ミナトは、エビを{食|た}べるよ。お{部屋|へや}に{入|い}れてもらったあさぶくろが、お{気|き}に{入|い}りみたいなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "コツメカワウソのひみつを、ひとつ{教|おし}えるね。コツメカワウソの{赤|あか}ちゃんは、{目|め}をとじたまま{生|う}まれるんだって。{目|め}があくのは、{生|う}まれて40{日|にち}くらいたってからなんだ。{泳|およ}ぎをおぼえるのは、9{週|しゅう}くらいのころなんだって。すこしずつ{大|おお}きくなるんだね。",
+   "speciesSources": [
+    {
+     "title": "Columbus Zoo - Asian Small-Clawed Otter",
+     "url": "https://www.columbuszoo.org/animals/asian-small-clawed-otter"
+    },
+    {
+     "title": "Asian Small-Clawed Otter - Denver Zoo Conservation Alliance",
+     "url": "https://denverzoo.org/animals/asian-small-clawed-otter/"
+    },
+    {
+     "title": "Asian small-clawed otter at Point Defiance Zoo & Aquarium in Asian Forest",
+     "url": "https://www.pdza.org/animals/asian-forest-sanctuary/asian-otter/"
+    }
+   ]
+  },
+  "r-wnbrx6": {
+   "personality": "リンリンは、たくさん{食|た}べるときと、あまり{食|た}べないときが、はっきりしているペンギンなんだ。すのざいりょうをあつめるすがたも{見|み}られたんだって。",
+   "favorites": "リンリンは、アジとスプラットという{魚|さかな}を{食|た}べるんだ。スプラットのほうを、よく{食|た}べるみたいなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ケープペンギンは、アフリカ{大陸|たいりく}にすむ、ただひとつのペンギンなんだ。{南|みなみ}アフリカの{海|うみ}べでくらしているんだって。ペンギンなのに、あたたかいところがすみかなんだ。{好|す}きな{食|た}べものは、イワシなどの{小|ちい}さな{魚|さかな}なんだ。{水中|すいちゅう}でつかまえるよ。それに、ロバみたいな{鳴|な}き{声|ごえ}を{出|だ}すんだって。おもしろいでしょ？",
+   "speciesSources": [
+    {
+     "title": "“空飛ぶペンギン”と都会のオアシス。草原で暮らす本来の姿も必見！| 水族館の生き物たち（サンシャイン水族館）",
+     "url": "https://sunshinecity.jp/aquarium/animals/penguin.html"
+    },
+    {
+     "title": "ペンギンにも個性がある！京都水族館で暮らすケープペンギンたち",
+     "url": "https://www.kyoto-aquarium.com/column/details/669.html"
+    },
+    {
+     "title": "ケープペンギンってどんな生き物？特徴や生息地を紹介| カワスイ アクア&アニマルスクール",
+     "url": "https://school.kawa-sui.com/creature-book/863/"
+    }
+   ]
+  },
+  "r-1g92q4q": {
+   "personality": "テンテンは、{食|た}べることが{大|だい}すきな{元気|げんき}なケープペンギンなんだ。お{魚|さかな}をたくさん{食|た}べようとするんだよ。なれないところでは、ちょっぴりとまどうこともあるんだって。",
+   "favorites": "テンテンは、アジが{大|だい}すきなんだ。スプラットという{小|ちい}さなお{魚|さかな}も{食|た}べるんだよ。アジをもらうと、テンテンも{大|だい}まんぞく。なんてアジなことを{言|い}いたくなるでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ケープペンギンって、どんな{動物|どうぶつ}だと{思|おも}う？{目|め}の{上|うえ}に、ピンクのところがあるペンギンなんだ。あつくなると、そこに{血|ち}がたくさん{流|なが}れるんだって。まわりの{空気|くうき}で、{体|からだ}をひやすんだ。だから、あつい{日|ひ}ほどピンクがこくなるんだよ。おもしろいでしょ？",
+   "speciesSources": [
+    {
+     "title": "African penguin - Toronto Zoo",
+     "url": "https://www.torontozoo.com/animals/African%20Penguin"
+    },
+    {
+     "title": "African Penguin - Aquarium of the Pacific",
+     "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/african_penguin"
+    }
+   ]
+  },
+  "r-vngj3f": {
+   "personality": "サムは、{食|た}べることが{大好|だいす}きなケープペンギンなんだ。ときには、なかまのごはんまで{食|た}べちゃうんだって。{元気|げんき}いっぱいでしょ？",
+   "favorites": "サムの{大|だい}こうぶつは、アジなんだ。スプラットも、よく{食|た}べるんだって。でも、ワカサギはあまりすきじゃないみたい。",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ケープペンギンの{胸|むね}には、{黒|くろ}い{点|てん}のもようがあるんだ。このもようは、1わずつぜんぶちがうんだって。{人|ひと}の{指|ゆび}のもようとにているでしょ？もようを{見|み}れば、だれだかわかるんだ。",
+   "speciesSources": [
+    {
+     "title": "African penguin - Toronto Zoo",
+     "url": "https://www.torontozoo.com/animals/African%20Penguin"
+    },
+    {
+     "title": "African Penguin - Aquarium of the Pacific",
+     "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/african_penguin"
+    }
+   ]
+  },
+  "r-rg3fdf": {
+   "personality": "ポッちゃんは、サムというペンギンとペアでくらしている{女|おんな}の{子|こ}なんだ。たまに、サムのごはんをよこどりしちゃうんだって。ちゃっかりやさんでしょ？",
+   "favorites": "ポッちゃんの{好|す}きな{食|た}べものは、アジやスプラットという{魚|さかな}なんだ。{地面|じめん}におかれた{魚|さかな}を{食|た}べるのも{好|す}きみたいなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ケープペンギンは、あなをほって{巣|す}をつくるのが{好|す}きなんだ。いちばん{好|す}きなのは、{鳥|とり}のふんがつもったところなんだって。すなをほったあさいあなに{巣|す}をつくることもあるよ。{岩|いわ}の{下|した}につくることもあるんだ。",
+   "speciesSources": [
+    {
+     "title": "African penguin - Center for Biological Diversity",
+     "url": "https://www.biologicaldiversity.org/species/birds/penguins/African_penguin.html"
+    },
+    {
+     "title": "African Penguin - Aquarium of the Pacific",
+     "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/african_penguin"
+    }
+   ]
+  },
+  "r-ska0lm": {
+   "personality": "",
+   "favorites": "ことかは、{魚|さかな}がだいすきな{子|こ}なんだって。アジやスプラットを{食|た}べているんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ケープペンギンは、オスとメスのペアで{子育|こそだ}てをするんだ。{卵|たまご}は{1回|いっかい}に2こ{産|う}むんだって。{卵|たまご}をあたためるのは、オスとメスの{交代|こうたい}なんだ。チームワークばつぐんでしょ？",
+   "speciesSources": [
+    {
+     "title": "この春 ４羽のケープペンギンの赤ちゃんが誕生しました！ - アドベンチャーワールド",
+     "url": "https://www.aws-s.com/en/topics/detail?id=top2368"
+    }
+   ]
+  },
+  "r-2o3hoy": {
+   "personality": "",
+   "favorites": "{満|みつる}くんは、アジやワカサギを{食|た}べている{子|こ}なんだ。スプラットというお{魚|さかな}も{食|た}べているんだって。お{魚|さかな}がだいすきなんだね。",
+   "identifyingMarks": "",
+   "speciesInfo": "ケープペンギンの{赤|あか}ちゃんは、{生|う}まれてしばらくは{親|おや}にまもられてすごすんだ。{生|う}まれて3か{月|げつ}ごろに、おとなの{羽|はね}に{生|は}えかわるんだって。そうすると、{泳|およ}げるようになるんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "ケープペンギン - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%B1%E3%83%BC%E3%83%97%E3%83%9A%E3%83%B3%E3%82%AE%E3%83%B3"
+    },
+    {
+     "title": "この春 ４羽のケープペンギンの赤ちゃんが誕生しました！ - アドベンチャーワールド",
+     "url": "https://www.aws-s.com/en/topics/detail?id=top2368"
+    }
+   ]
+  },
+  "r-1woitmt": {
+   "personality": "プティは、ちょっとかわったくせをもつオウムなんだ。ごはんをもらうと、おさらをすぐに{水|みず}の{中|なか}にしずめちゃうことがあるんだって。おさら、どこにいっちゃったのかな？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、タイハクオウムは、インドネシアのモルッカ{諸島|しょとう}という{島|しま}じまにすんでいるんだ。{体|からだ}は、{全身|ぜんしん}まっ{白|しろ}なんだよ。{頭|あたま}には、{白|しろ}くて{長|なが}いかざりの{羽|はね}があるんだって。そのかざりの{羽|はね}は、うしろにまがっているんだ。つばさとしっぽの{羽|はね}は、うらがわが{黄色|きいろ}いんだよ。{食|た}べものは、{木|き}の{実|み}やたね、{虫|むし}などなんだって。ねるときは、{木|き}にとまったままねむるんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "福岡市動物園｜タイハクオウム",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/221"
+    },
+    {
+     "title": "タイハクオウム（海の中道海浜公園 動物の森）",
+     "url": "https://uminaka-park.jp/animal/bird/white-cockatoo.html"
+    },
+    {
+     "title": "【小諸市動物園だより】フレンドリーな鳥「タイハクオウム」",
+     "url": "https://www.ecochil.net/article/32715/"
+    }
+   ]
+  },
+  "r-smint8": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。キバタンは、{大|おお}きなオウムのなかまなんだ。オーストラリアやニューギニアのあたりにすんでいるんだよ。{体|からだ}は{白|しろ}い{羽|はね}でおおわれているんだって。{頭|あたま}の{上|うえ}には、{黄色|きいろ}くくるんとした{羽|はね}があるよ。この{羽|はね}は、{上|あ}げたり{下|さ}げたりできるんだって。すてきなおしゃれさんでしょ？{好|す}きな{食|た}べものは、{木|き}の{実|み}やくだものなんだ。",
+   "speciesSources": [
+    {
+     "title": "キバタン（おびひろ動物園）",
+     "url": "https://www.city.obihiro.hokkaido.jp/zoo/animal/birds/cockatoo.html"
+    },
+    {
+     "title": "キバタン - 甲府市遊亀公園附属動物園",
+     "url": "https://www.city.kofu.yamanashi.jp/zoo/animal/kibatan.html"
+    },
+    {
+     "title": "キバタン ｜リトルワールド ｜愛媛県立とべ動物園",
+     "url": "https://www.tobezoo.com/animals/library/article/000541.html"
+    }
+   ]
+  },
+  "r-1ctlljj": {
+   "personality": "",
+   "favorites": "こばちは、ヒマワリの{種|たね}が{大|だい}すきな{子|こ}なんだって。よく{食|た}べているみたいだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、キバタンのむれが{地面|じめん}でごはんを{食|た}べているあいだ、{何羽|なんわ}かが{近|ちか}くの{木|き}の{上|うえ}で{見|み}はりをするんだって。あぶないときは、{大|おお}きな{声|こえ}でなかまに{知|し}らせるんだ。チームワークばつぐんでしょ？",
+   "speciesSources": [
+    {
+     "title": "キバタンとは - 生態や形態の特徴解説 - ZUKAN（図鑑）",
+     "url": "https://www.zukan.earth/descriptions/6/1141992"
+    }
+   ]
+  },
+  "r-15qlj3k": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ヨウムは、アフリカの{森|もり}にすむインコのなかまなんだ。{体|からだ}はほとんど{灰色|はいいろ}なんだって。しっぽだけが{赤|あか}いんだ。{野生|やせい}では、{木|き}の{実|み}や{種|たね}を{食|た}べるんだって。{大|おお}きなむれでくらすんだ。なかよしさんでしょ？それに、とてもかしこいんだ。{人|ひと}の{言葉|ことば}をよく{覚|おぼ}えることで{有名|ゆうめい}なんだよ。",
+   "speciesSources": [
+    {
+     "title": "ヨウム ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/birds/greyparrot.html"
+    },
+    {
+     "title": "ヨウム｜日立市公式ウェブサイト（日立市かみね動物園）",
+     "url": "https://www.city.hitachi.lg.jp/zoo/dobutsu_shokai/1004123/1004124.html"
+    },
+    {
+     "title": "ヨウム|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/GreyParrot/"
+    },
+    {
+     "title": "ヨウム（富山市ファミリーパーク 動物図鑑）",
+     "url": "https://www.toyama-familypark.jp/zukan/6100"
+    }
+   ]
+  },
+  "r-qrb0xd": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ヒメコンゴウインコは、{南|みなみ}アメリカの{北|きた}のほうや、パナマにすんでいるんだ。コンゴウインコのなかまでは、{小|ちい}さめのインコなんだって。{体|からだ}は{緑色|みどりいろ}なんだ。つばさとしっぽには、{赤|あか}や{青|あお}の{羽|はね}があるよ。{顔|かお}は{白|しろ}いんだ。くちばしの{上|うえ}は{茶色|ちゃいろ}なんだって。{食|た}べものは、{木|き}の{実|み}やたね、{花|はな}などだよ。ふだんは2わや{小|ちい}さなむれでくらしているんだ。なかよしさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Chestnut-fronted macaw — Profile, Facts and Conservation (Loro Parque)",
+     "url": "https://www.loroparque.com/en/datasheet-animals-chestnut-fronted-macaw/"
+    },
+    {
+     "title": "Chestnut-fronted macaw (Instituto Arara Azul)",
+     "url": "https://www.institutoararaazul.org.br/en/especie/chestnut-fronted-macaw/"
+    },
+    {
+     "title": "Chestnut-fronted Macaw - Ara severus - Birds of the World",
+     "url": "https://birdsoftheworld.org/bow/species/chfmac1/cur/introduction"
+    }
+   ]
+  },
+  "r-1kt5wgo": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "オカメインコは、{オーストラリア}に{住|す}んでいる{鳥|とり}なんだ。{名前|なまえ}はインコだけど、じつはオウムの{仲間|なかま}なんだって。ほっぺにオレンジの{模様|もよう}があるでしょ？その{模様|もよう}が「おかめ」のお{面|めん}に{似|に}ているんだ。だから、この{名前|なまえ}になったんだよ。{頭|あたま}の{上|うえ}には{羽|はね}があるんだ。あぶないと{感|かん}じたときは、その{羽|はね}をピンと{立|た}てるんだ。のんびりしているときは、{羽|はね}をねかせるんだよ。むれでくらしているんだって。{草|くさ}のたねや{果物|くだもの}を{食|た}べるんだ。",
+   "speciesSources": [
+    {
+     "title": "オカメインコ／須坂市ホームページ - 長野県須坂市",
+     "url": "https://www.city.suzaka.nagano.jp/suzaka_zoo/animal/2/2369.html"
+    },
+    {
+     "title": "福岡市動物園｜オカメインコ",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/101"
+    }
+   ]
+  },
+  "r-1hoh9sb": {
+   "personality": "テチは、{人|ひと}が{近|ちか}くにいると、すこしようすを{見|み}てから{動|うご}く{子|こ}なんだ。よく{考|かんが}える、しんちょうやさんでしょ？いまは、なでてもらうれんしゅうもしているんだって。",
+   "favorites": "テチは、オレンジや{野|の}の{草|くさ}がすきみたいだよ。{木|き}をかじることもあるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ベニコンゴウインコのひみつを、ひとつ{教|おし}えるね。ベニコンゴウインコは、とっても{大|おお}きなインコなんだ。{南|みなみ}アメリカのあつい{森|もり}にすんでいるよ。{体|からだ}は、きれいな{赤|あか}い{色|いろ}なんだ。つばさには、{赤|あか}・{緑|みどり}・{青|あお}の{色|いろ}があるんだって。おもに{木|き}の{実|み}やくだものを{食|た}べるよ。くちばしは、ペンチみたいにつよいんだ。だから、かたい{木|き}の{実|み}もわっちゃうんだよ。むれでくらしているんだって。{大|おお}きな{声|こえ}で、なかまとおしゃべりするんだ。にぎやかでたのしそうでしょ？",
+   "speciesSources": [
+    {
+     "title": "ベニコンゴウインコ|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/GreenWingedMacaw/"
+    },
+    {
+     "title": "ベニコンゴウインコ（池田動物園）",
+     "url": "https://ikedazoo.jp/animal/birds/red-and-green-macaw/"
+    },
+    {
+     "title": "ベニコンゴウインコ - 動植物園データベース",
+     "url": "https://www.ezooko.jp/rel_dgram/pub/detail.aspx?c_id=30&id=6&pg=1&bk=1"
+    },
+    {
+     "title": "ベニコンゴウインコ（ヒノトントンZOO 羽村市動物公園）",
+     "url": "https://hamurazoo.jp/animals/detail.html?CN=336181"
+    }
+   ]
+  },
+  "r-180v9vk": {
+   "personality": "エレナは、ちょっぴり{気|き}が{強|つよ}いインコなんだって。でもさいきんは、えさがあると、うでに{乗|の}ってくれることもあるんだよ。なかよしになってきたのかな？",
+   "favorites": "エレナは、トマトが{好|す}きな{子|こ}みたいなんだ。{野草|やそう}を{食|た}べることもあるんだって。バナナを{手|て}から{受|う}け{取|と}って{食|た}べることもあるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ベニコンゴウインコは、いちどペアになると、{一生|いっしょう}いっしょにくらすんだって。{巣|す}は、{高|たか}い{木|き}にできた{穴|あな}をつかうんだ。たまごからかえったひなは、お{父|とう}さんとお{母|かあ}さんが{力|ちから}をあわせてそだてるんだよ。なかよしふうふでしょ？",
+   "speciesSources": [
+    {
+     "title": "福岡市動物園｜ベニコンゴウインコ",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/214"
+    },
+    {
+     "title": "ベニコンゴウインコ - 動植物園データベース",
+     "url": "https://www.ezooko.jp/rel_dgram/pub/detail.aspx?c_id=30&id=6&pg=1&bk=1"
+    }
+   ]
+  },
+  "r-1k8zija": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "メンフクロウは、お{面|めん}をつけたような{顔|かお}から、その{名前|なまえ}がついたんだって。なんと、この{顔|かお}は、パラボラアンテナのように{音|おと}を{集|あつ}めるんだ。だから、とても{小|ちい}さな{音|おと}にも{気|き}づけるんだって。{耳|みみ}をすませる{名人|めいじん}でしょ？{夜|よる}に{動|うご}くんだ。ネズミなどの{小|ちい}さな{動物|どうぶつ}を{食|た}べるよ。{日本|にほん}にはいないんだ。でも、{世界|せかい}のいろいろなところにすんでいるんだよ。",
+   "speciesSources": [
+    {
+     "title": "メンフクロウ - 生きもの図鑑 鳥羽水族館",
+     "url": "https://aquarium.co.jp/picturebook/tyto-alba.html"
+    },
+    {
+     "title": "メンフクロウ（富山市ファミリーパーク 動物図鑑）",
+     "url": "https://www.toyama-familypark.jp/zukan/809"
+    }
+   ]
+  },
+  "r-17co4v7": {
+   "personality": "",
+   "favorites": "たけぞうのごはんは、ひよこの{日|ひ}が{多|おお}いんだって。うずらを{食|た}べる{日|ひ}もあるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "メンフクロウは、ほとんど{音|おと}を{立|た}てずに{空|そら}を{飛|と}べるんだ。つばさのいちばん{外|そと}がわの{羽|はね}は、ふちがギザギザになっているんだって。{羽|はね}の{表面|ひょうめん}も、ふわふわなんだ。だから、こすれる{音|おと}が{小|ちい}さくなるんだって。そっと{飛|と}ぶひみつが、いっぱいでしょ？",
+   "speciesSources": [
+    {
+     "title": "メンフクロウの羽根",
+     "url": "https://www.parks.or.jp/sczoo/blog/entry/002419.html"
+    }
+   ]
+  },
+  "r-18eo2hu": {
+   "personality": "",
+   "favorites": "ピースが{主|おも}に{食|た}べているのは、ひよこなんだって。ときどき、うずらも{食|た}べるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "アカアシモリフクロウは、{南|みなみ}アメリカのチリやアルゼンチンにすんでいるんだ。{森|もり}の{中|なか}でくらしているんだって。{食|た}べものは、{小|ちい}さなけものや{鳥|とり}、{虫|むし}なんだ。{体|からだ}の{大|おお}きさは30〜40センチくらいなんだ。{小|こ}がたのフクロウなんだって。{近|ちか}づくと、くちばしをパチパチ{鳴|な}らすんだ。「こないで！」って{知|し}らせているんだって。これにはみんな「ホー！」っておどろいちゃうでしょ？",
+   "speciesSources": [
+    {
+     "title": "アカアシモリフクロウ（聖徳大学 掛川花鳥園の鳥）",
+     "url": "http://www.ha.shotoku.ac.jp/~kawa/KYO/SEIBUTSU/DOUBUTSU/tori/japan/fukurou/akaashi/index.html"
+    },
+    {
+     "title": "アカアシモリフクロウ - 世界のフクロウ 富士花鳥園 -",
+     "url": "http://www.kamoltd.co.jp/fuji/rufous-leggedowl.htm"
+    }
+   ]
+  },
+  "r-19kt440": {
+   "personality": "",
+   "favorites": "ピース２がよく{食|た}べているごはんは、ひよこなんだって。ときどき、うずらも{食|た}べるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。アカアシモリフクロウの{名前|なまえ}は、{足|あし}の{色|いろ}からついたんだ。{足|あし}は、オレンジがかった{茶色|ちゃいろ}なんだって。{顔|かお}のまわりも、{赤|あか}っぽい{茶色|ちゃいろ}なんだよ。{頭|あたま}はまるいんだ。{耳|みみ}みたいに{立|た}つ{羽|はね}は、ないんだって。",
+   "speciesSources": [
+    {
+     "title": "Rufous-legged Owl (Strix rufipes) · iNaturalist",
+     "url": "https://www.inaturalist.org/taxa/19948-Strix-rufipes"
+    },
+    {
+     "title": "Rufous-legged owl - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Rufous-legged_owl"
+    }
+   ]
+  },
+  "r-1d9v83x": {
+   "personality": "",
+   "favorites": "くくのごはんは、ひよこやうずらなんだって。モリフクロウは、お{肉|にく}を{食|た}べる{鳥|とり}なんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、モリフクロウは、ヨーロッパやアフリカの{北西|ほくせい}の{森|もり}にすんでいるんだ。{夜|よる}にげんきにうごく、{夜|よ}ふかしさんなんだって。{好|す}きな{食|た}べものは、ネズミやカエル、{小|ちい}さな{鳥|とり}なんだ。{体|からだ}の{色|いろ}は、{灰色|はいいろ}のなかまと{茶色|ちゃいろ}のなかまがいるんだよ。それに、{一年|いちねん}じゅう、ふうふでいっしょにくらすんだって。なかよしさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "モリフクロウってどんな生き物？特徴や生息地を紹介| 淡水魚のいきもの図鑑| カワスイ アクア&アニマルスクール",
+     "url": "https://school.kawa-sui.com/creature-book/1071/"
+    },
+    {
+     "title": "モリフクロウ - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%A2%E3%83%AA%E3%83%95%E3%82%AF%E3%83%AD%E3%82%A6"
+    }
+   ]
+  },
+  "r-1uid875": {
+   "personality": "",
+   "favorites": "りりがよく{食|た}べるごはんは、ひよこなんだって。ときどき、うずらも{食|た}べるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ナンベイヒナフクロウは、{中南米|ちゅうなんべい}の{森|もり}にすむフクロウなんだ。そこは、あつくてじめじめした{森|もり}なんだって。{体|からだ}の{長|なが}さは30〜36センチくらいだよ。フクロウのなかでは{中|ちゅう}くらいの{大|おお}きさなんだ。ネズミなどの{小|ちい}さなどうぶつや、トカゲのなかま、{虫|むし}を{食|た}べるんだって。いろいろ{食|た}べるくいしんぼうさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "ナンベイヒナフクロウ｜八木山動物公園フジサキの杜",
+     "url": "https://www.city.sendai.jp/zoo/animals/birds/fukuro/090.html"
+    }
+   ]
+  },
+  "r-tfcb9w": {
+   "personality": "",
+   "favorites": "{王|おう}は、ひよこが いちばん{好|す}きな{子|こ}なんだ。いつも、のこさずしっかり{食|た}べるんだって。ときどき、うずらを{食|た}べることもあるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "オオフクロウは、インドから{東南|とうなん}アジアの{森|もり}にすんでいるんだ。{名前|なまえ}に「オオ」とつくけれど、フクロウのなかまでは{中|ちゅう}ぐらいの{大|おお}きさなんだって。{羽|はね}は{木|き}のはだのような{茶色|ちゃいろ}なんだ。だから、{森|もり}の{木|き}にとけこめるんだよ。かくれんぼじょうずでしょ？{目|め}は、ほんのすこしの{光|ひかり}でも{見|み}えるように、よくできているんだって。{小|ちい}さなけものや{鳥|とり}、{魚|さかな}などを{食|た}べるんだ。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "オオフクロウ（神戸どうぶつ王国 どうぶつ&植物図鑑）",
+     "url": "https://www.kobe-oukoku.com/animals/19"
+    },
+    {
+     "title": "オオフクロウってどんな生き物？特徴や生息地を紹介| カワスイ アクア&アニマルスクール",
+     "url": "https://school.kawa-sui.com/creature-book/1024/"
+    }
+   ]
+  },
+  "r-v7v5nl": {
+   "personality": "",
+   "favorites": "クイーンのごはんは、ひよこの{日|ひ}が{多|おお}いんだって。うずらを{食|た}べる{日|ひ}もあるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "オオフクロウは、{森|もり}の{木|き}と{木|き}の{間|あいだ}をとぶのがとくいなんだ。なんと、とても{静|しず}かにとべるんだって。しかも、すばやくとべるんだ。にんじゃみたいでしょ？",
+   "speciesSources": [
+    {
+     "title": "オオフクロウ（神戸どうぶつ王国）",
+     "url": "https://www.kobe-oukoku.com/animals/19"
+    }
+   ]
+  },
+  "r-1ifdb8f": {
+   "personality": "",
+   "favorites": "{雅|みやび}は、ひよこをよく{食|た}べる{子|こ}なんだって。うずらを{食|た}べることもあるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ベンガルワシミミズクは、インドなどにすんでいるんだ。{岩|いわ}が{多|おお}いところや{森|もり}でくらしているんだよ。オレンジ{色|いろ}の{目|め}が{特徴|とくちょう}なんだって。{昼|ひる}は、ねぐらで{休|やす}んでいるんだ。{夜|よる}になると、{食|た}べものをさがすんだよ。{音|おと}をたよりにさがすんだって。{好|す}きな{食|た}べものは、ネズミなんだ。{鳥|とり}やカエル、トカゲのなかまも{食|た}べるんだって。{夜|よる}に{活躍|かつやく}する、かっこいい{鳥|とり}でしょ？",
+   "speciesSources": [
+    {
+     "title": "ベンガルワシミミズク|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/post_108/"
+    },
+    {
+     "title": "ベンガルワシミミズク（那須どうぶつ王国 動物紹介）",
+     "url": "https://nasu-oukoku.com/?p=4686"
+    }
+   ]
+  },
+  "r-lt3s2t": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ベンガルワシミミズクは、{毎年|まいとし}{同|おな}じ{場所|ばしょ}を{巣|す}につかうんだ。たまごは3〜4こなんだって。{色|いろ}は、クリーム{色|いろ}っぽい{白|しろ}なんだ。33{日|にち}くらいで、ヒナがうまれるよ。ヒナは6か{月|げつ}ちかく、{親|おや}におせわしてもらうんだって。",
+   "speciesSources": [
+    {
+     "title": "Indian eagle-owl - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Indian_eagle-owl"
+    }
+   ]
+  },
+  "r-20y5ed": {
+   "personality": "うっちゃんは、まわりの{様子|ようす}が{変|か}わると、しばらく{落|お}ち{着|つ}かないことがあるんだって。いつもとおなじだと、あんしんするんだ。デリケートな{子|こ}なんだね。",
+   "favorites": "うっちゃんの{大|だい}すきなごはんは、ひよこなんだって。ときどき、うずらも{食|た}べるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ウラルフクロウは、{日本|にほん}では「フクロウ」とよばれている{鳥|とり}なんだ。ヨーロッパの{北|きた}のほうから{日本|にほん}まで、{広|ひろ}いところの{森|もり}にすんでいるんだって。{夜|よる}に{動|うご}くんだ。ネズミなどをつかまえて{食|た}べるよ。なんと、ハートの{形|かたち}の{顔|かお}は、パラボラアンテナみたいに{音|おと}を{集|あつ}めるんだって。{羽|はね}がやわらかいんだ。だから、{音|おと}を{立|た}てずに{飛|と}べるんだよ。それで「{森|もり}のにんじゃ」ともよばれているんだって。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "フクロウ - 甲府市遊亀公園附属動物園",
+     "url": "https://www.city.kofu.yamanashi.jp/zoo/animal/fukurou.html"
+    },
+    {
+     "title": "フクロウ（ホンドフクロウ）｜八木山動物公園フジサキの杜",
+     "url": "https://www.city.sendai.jp/zoo/animals/birds/fukuro/088.html"
+    },
+    {
+     "title": "フクロウ|亜寒帯の森|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/subarctic/post_68/"
+    }
+   ]
+  },
+  "r-8kxpb7": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ユーラシアワシミミズクは、フクロウのなかまでもとくに{大|おお}きい{鳥|とり}なんだ。なんと、{羽|はね}を{広|ひろ}げると、{大|おお}きいもので1.8メートルにもなるんだって。アフリカの{北|きた}のほうや、ヨーロッパ、アジアの{広|ひろ}いところにすんでいるよ。{夜|よる}にうごく{鳥|とり}なんだ。ネズミやノウサギなどを{食|た}べるんだって。あたまの{耳|みみ}みたいな{羽|はね}が{特徴|とくちょう}だよ。オレンジ{色|いろ}の{目|め}も{特徴|とくちょう}なんだ。かっこいいでしょ？",
+   "speciesSources": [
+    {
+     "title": "ユーラシアワシミミズク／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/134-p.html"
+    },
+    {
+     "title": "ワシミミズク（京都市動物園 どうぶつ図鑑）",
+     "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/b_bubo"
+    }
+   ]
+  },
+  "r-agcxtp": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ユーラシアワシミミズクは、{耳|みみ}で{狩|か}りをする{鳥|とり}なんだって。{音|おと}だけで、えものがいる{場所|ばしょ}がわかるんだ。くらやみで、じっと{待|ま}つんだって。そして、{音|おと}をたてずに{飛|と}んでいくんだ。{耳|みみ}をすませる{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "【円山動物園だより】耳でかりをする最強ハンター「ユーラシアワシミミズク」",
+     "url": "https://www.ecochil.net/article/64081/"
+    }
+   ]
+  },
+  "r-1k82p5k": {
+   "personality": "",
+   "favorites": "レラのふだんのごはんは、おもにひよこなんだ。うずらを{食|た}べる{日|ひ}もあるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ワシミミズクは、とても{大|おお}きなフクロウのなかまなんだ。つばさを{広|ひろ}げると、{大|おお}きいものでは1.8メートルにもなるんだって。ヨーロッパやアジアなど、とても{広|ひろ}いところにすんでいるよ。なんと、{日本|にっぽん}では{北海道|ほっかいどう}でひなを{育|そだ}てていることがわかっているんだって。{夜|よる}に{動|うご}くんだ。ネズミやノウサギ、{鳥|とり}などを{食|た}べるよ。{夜|よ}ふかしの{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "ワシミミズク（京都市動物園 どうぶつ図鑑）",
+     "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/b_bubo"
+    },
+    {
+     "title": "ユーラシアワシミミズク／札幌市円山動物園",
+     "url": "https://www.city.sapporo.jp/zoo/134-p.html"
+    },
+    {
+     "title": "福岡市動物園｜ワシミミズク",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/105"
+    }
+   ]
+  },
+  "r-x7famq": {
+   "personality": "エヴァは、ごはんの{時間|じかん}になると、いきおいよく{食|た}べるヒメコンドルなんだ。{同|おな}じ{部屋|へや}で、レラという{仲間|なかま}とくらしているよ。ふたりでなかよくすごしているんだって。",
+   "favorites": "エヴァの{大好|だいす}きな{食|た}べものは、ひよこなんだって。うずらを{食|た}べる{日|ひ}もあるよ。ごはんの{時間|じかん}がまちどおしいんだろうね。",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ヒメコンドルは{北|きた}アメリカと{南|みなみ}アメリカにすむ{鳥|とり}なんだ。{頭|あたま}が{赤|あか}いんだよ。シチメンチョウの{頭|あたま}に{似|に}ているんだって。{鳥|とり}のなかまではめずらしく、においをかぐ{力|ちから}がとても{強|つよ}いんだ。においをたよりに、{動物|どうぶつ}の{残|のこ}りを{見|み}つけて{食|た}べるんだよ。{自然|しぜん}をきれいにする、おそうじやさんなんだって。あたたかい{空気|くうき}の{流|なが}れにのって{空|そら}をとぶんだ。ほとんどはばたかないんだよ。とぶのがじょうずでしょ？",
+   "speciesSources": [
+    {
+     "title": "ヒメコンドル - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%92%E3%83%A1%E3%82%B3%E3%83%B3%E3%83%89%E3%83%AB"
+    },
+    {
+     "title": "ヒメコンドル（Midpeninsula Regional Open Space District）",
+     "url": "https://ja.openspace.org/turkey-vulture"
+    }
+   ]
+  },
+  "r-1iywx6s": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "クロワシミミズクは、アフリカにすむ{大|おお}きなフクロウなんだ。アフリカにいるフクロウのなかで、いちばん{大|おお}きいんだって。いちばんの{特徴|とくちょう}は、ピンク{色|いろ}のまぶた！まぶたがピンクのフクロウは、{世界|せかい}でこのなかまだけなんだって。おしゃれさんでしょ？{夜|よる}になると、かりに{出|で}かけるんだ。ネズミやハリネズミなどを{食|た}べるよ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Verreaux's Eagle-owl",
+     "url": "https://peregrinefund.org/explore-raptors-species/owls/verreauxs-eagle-owl"
+    },
+    {
+     "title": "Verreaux's Eagle-Owl - Ketupa lactea - Birds of the World",
+     "url": "https://birdsoftheworld.org/bow/species/veeowl1/cur/introduction"
+    },
+    {
+     "title": "Milky Eagle Owl",
+     "url": "https://www.banhamzoo.co.uk/animals/milky-eagle-owl"
+    }
+   ]
+  },
+  "r-1hdd551": {
+   "personality": "",
+   "favorites": "マックは、ひよこをよく{食|た}べる{子|こ}なんだって。うずらを{食|た}べる{日|ひ}もあるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "「ベンガル×ワシミミズク」って、どんな{動物|どうぶつ}だと{思|おも}う？ベンガルワシミミズクとワシミミズクがまざったミミズクなんだ。ベンガルワシミミズクは、インドなどの{岩場|いわば}や{森|もり}にすんでいるんだって。ワシミミズクは、{世界|せかい}でいちばん{大|おお}きいなかまに{入|はい}るフクロウなんだ。どちらも{夜|よる}に{動|うご}くんだよ。ネズミや{鳥|とり}をつかまえて{食|た}べるんだ。{頭|あたま}に{耳|みみ}みたいな{羽|はね}があるでしょ？あれは、ほんとうの{耳|みみ}じゃないんだって。かざりの{羽|はね}なんだ。",
+   "speciesSources": [
+    {
+     "title": "ベンガルワシミミズク|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/post_108/"
+    },
+    {
+     "title": "ベンガルワシミミズク（那須どうぶつ王国）",
+     "url": "https://nasu-oukoku.com/?p=4686"
+    },
+    {
+     "title": "ワシミミズク｜八木山動物公園フジサキの杜",
+     "url": "https://www.city.sendai.jp/zoo/animals/birds/fukuro/089.html"
+    },
+    {
+     "title": "ユーラシアワシミミズク（大内山動物園）",
+     "url": "http://www.oouchiyama-zoo.com/animals/6640/"
+    }
+   ]
+  },
+  "r-2spanw": {
+   "personality": "チッチは、マイペースなのんびりやさんなんだ。となりには、{仲間|なかま}のカッチがいるんだ。でも、おたがい{気|き}にしないんだって。はなれて、のんびりすごしているんだ。",
+   "favorites": "チッチの{好|す}きな{食|た}べものは、ひよこなんだ。よく{食|た}べるんだって。ときどき、うずらも{食|た}べるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "アビシニアンワシミミズクは、アフリカにすむフクロウのなかまなんだ。{木|き}がまばらに{生|は}えた、からからの{荒|あ}れ{地|ち}でくらしているんだって。{食|た}べものは{虫|むし}や{小|ちい}さなけものなどだよ。{夕方|ゆうがた}や{夜|よる}によく{動|うご}く、{夜型|よるがた}さんなんだ。アフリカワシミミズクとそっくりなんだって。でも、{目|め}の{色|いろ}で{見分|みわ}けられるんだ。なんと、アフリカワシミミズクの{目|め}は{黄色|きいろ}で、アビシニアンワシミミズクの{目|め}はこげ{茶色|ちゃいろ}なんだって。おもしろいでしょ？",
+   "speciesSources": [
+    {
+     "title": "アビシニアンワシミミズク|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト｜公益財団法人 横浜市緑の協会",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/post_18/"
+    }
+   ]
+  },
+  "r-1eujohi": {
+   "personality": "カッチは、ごはんの{時間|じかん}になると、{近|ちか}くまでよってくる{子|こ}なんだ。ふだんは、{止|と}まり{木|ぎ}でじっとおちついてすごすこともあるんだって。",
+   "favorites": "カッチの{大好物|だいこうぶつ}は、ひよこなんだって。ときどき、うずらも{食|た}べているよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "アビシニアンワシミミズクは、{地面|じめん}のくぼみや{岩|いわ}のあいだに{卵|たまご}をうむんだって。がけのかげのような、かくれやすい{場所|ばしょ}も{使|つか}うよ。ときには、{木|き}の{上|うえ}にある{大|おお}きな{鳥|とり}の{古|ふる}い{巣|す}をかりることもあるんだ。{卵|たまご}は2〜3こなんだって。",
+   "speciesSources": [
+    {
+     "title": "Grayish Eagle-Owl (Bubo cinerascens) · iNaturalist United Kingdom",
+     "url": "https://uk.inaturalist.org/taxa/144593-Bubo-cinerascens"
+    },
+    {
+     "title": "Greyish eagle-owl - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Greyish_eagle-owl"
+    }
+   ]
+  },
+  "r-9vwjox": {
+   "personality": "しずかは、{新|あたら}しい{場所|ばしょ}だと、はじめはちょっとようじんぶかくなる{子|こ}なんだ。まわりをよく{見|み}るんだよ。でも、すぐにおちつくんだって。そして、ごはんを{食|た}べはじめるんだ。しずかは、いつもくいしんぼうさんなんだよ。",
+   "favorites": "しずかの{大好|だいす}きなごはんは、ひよこなんだって。ときどき、うずらも{食|た}べるんだ。いつも、のこさずぜんぶ{食|た}べちゃうんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "アフリカワシミミズクのひみつを、ひとつ{教|おし}えるね。アフリカワシミミズクは、フクロウのなかまなんだ。アフリカやサウジアラビアなどにすんでいるよ。ワシミミズクのなかまでは、{小|ちい}さめなんだって。あたまには、{耳|みみ}みたいな{羽|はね}がぴょこんと{立|た}っているよ。でも、これはほんとうの{耳|みみ}じゃないんだ。「{羽角|うかく}」という{羽|はね}なんだ。{目|め}は{黄色|きいろ}なんだ。きりっとかっこいいでしょ？{小|ちい}さなどうぶつや{鳥|とり}を{食|た}べるんだって。トカゲのなかまなども{食|た}べるんだって。",
+   "speciesSources": [
+    {
+     "title": "アフリカワシミミズク（千葉市動物公園・とくしま動物園などを運営する公園協会 いきもの紹介）",
+     "url": "https://www.parks.or.jp/chikozan/guide/000/000921.html"
+    },
+    {
+     "title": "アビシニアンワシミミズク|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
+     "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/post_18/"
+    }
+   ]
+  },
+  "r-1y24uhx": {
+   "personality": "シトリンは、{元気|げんき}いっぱいのアフリカオオコノハズクなんだ。{気|き}が{強|つよ}い{子|こ}なんだよ。ごはんの{時間|じかん}には、いきおいよくとびかかってくることもあるんだって。",
+   "favorites": "シトリンは、ごはんが{大好|だいす}きな{子|こ}なんだ。いきおいよくとびつくほど、よく{食|た}べるんだって。{食|た}べっぷりばつぐんでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。アフリカオオコノハズクは、アフリカにすむ{小|ちい}さなフクロウのなかまなんだ。{白|しろ}い{顔|かお}に、オレンジ{色|いろ}の{大|おお}きな{目|め}がめじるしなんだよ。{目|め}をとじてじっとしていると、まわりの{木|き}にとけこむんだって。だから、{見|み}えにくくなるんだ。にがてなあいてを{見|み}つけると、{体|からだ}をぎゅっと{細|ほそ}くするんだ。それでもあいてが{近|ちか}づくと、はねを{広|ひろ}げるんだって。そうして、{体|からだ}を{大|おお}きく{見|み}せるんだ。{細|ほそ}くなったり{大|おお}きくなったり、へんしんのめいじんでしょ？",
+   "speciesSources": [
+    {
+     "title": "アフリカオオコノハズク ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/birds/post_14.html"
+    },
+    {
+     "title": "アフリカオオコノハズク - 鳥 - ペット - Yahoo!きっず図鑑",
+     "url": "https://kids.yahoo.co.jp/zukan/pet/bird/raptores/0003.html"
+    }
+   ]
+  },
+  "r-1syq5nu": {
+   "personality": "インドオオコノハズクのインディーは、{食|た}べることが{大好|だいす}きな{子|こ}なんだ。ごはんが{来|く}ると、いきおいよく{飛|と}びかかるんだって。{元気|げんき}いっぱいの{子|こ}でしょ？",
+   "favorites": "インディーの{大好物|だいこうぶつ}は、ひよこなんだって。ときどき、うずらも{食|た}べるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。インドオオコノハズクは、{小|ちい}さなフクロウのなかまなんだ。{頭|あたま}には、{耳|みみ}みたいな{羽|はね}があるんだよ。パキスタンやインド、スリランカなどにすんでいるんだって。{昼|ひる}は、あまり{動|うご}かないんだ。{木|き}の{枝|えだ}にまぎれて、じっとしているよ。だから、{見|み}つけるのがむずかしいんだって。{夜|よる}になると、{元気|げんき}に{動|うご}きだすんだ。カブトムシやバッタ、{小|ちい}さな{動物|どうぶつ}などをつかまえて{食|た}べるんだよ。{夜|よる}にがんばる「{夜|よ}ふかしやさん」でしょ？",
+   "speciesSources": [
+    {
+     "title": "インドオオコノハズクってどんな生き物？特徴や生息地を紹介| 淡水魚のいきもの図鑑| カワスイ アクア&アニマルスクール",
+     "url": "https://school.kawa-sui.com/creature-book/1012/"
+    },
+    {
+     "title": "インドオオコノハズク - 世界のフクロウ 富士花鳥園 -",
+     "url": "http://www.kamoltd.co.jp/fuji/indianscopsowl.htm"
+    }
+   ]
+  },
+  "r-j05jec": {
+   "personality": "{樹|いつき}は、インドオオコノハズクの{子|こ}なんだ。いつもとちがう{場所|ばしょ}にいても、おちついてすごせたことがあるんだって。おちつきやさんでしょ？",
+   "favorites": "{樹|いつき}は、ひよこをよく{食|た}べるんだ。うずらは、のこすことがあるんだって。うずらは、あまり{好|す}きではないみたい。",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、インドオオコノハズクの{目|め}は、まっくろでまんまるなんだ。{黒|くろ}い{目|め}がとくちょうのフクロウなんだって。{鳴|な}き{声|ごえ}は、とても{小|ちい}さいんだ。それに、かぼそいんだよ。{目|め}は{大|おお}きいけど、{声|こえ}はひかえめでしょ？",
+   "speciesSources": [
+    {
+     "title": "インドオオコノハズク - 生きもの図鑑 鳥羽水族館",
+     "url": "https://aquarium.co.jp/picturebook/otus-bakkamoena.html"
+    }
+   ]
+  },
+  "r-hx4flt": {
+   "personality": "スピックスコノハズクのカカオを{紹介|しょうかい}するね。カカオは、あしに{目印|めじるし}のわっかをつけている{子|こ}なんだ。でも、あまり{気|き}にしていないようすなんだって。",
+   "favorites": "カカオのごはんは、ひよこが{多|おお}いんだって。ときどき、うずらも{食|た}べているんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "スピックスコノハズクって、どんな{動物|どうぶつ}だと{思|おも}う？{小|ちい}さなフクロウのなかまなんだ。{中央|ちゅうおう}アメリカや{南|みなみ}アメリカの{森|もり}にすんでいるんだって。はねのもようは、{茶色|ちゃいろ}に{黒|くろ}っぽいたてじまなんだ。{木|き}の{葉|は}っぱみたいでしょ？{昼|ひる}は{木|き}にとまっているんだ。{葉|は}っぱになりきって、じっとしているよ。{夜|よる}になると、うごきだすんだって。{虫|むし}がうごく{小|ちい}さな{音|おと}を{聞|き}いて、つかまえるんだ。{耳|みみ}がいいなんて、すごいわざでしょ？",
+   "speciesSources": [
+    {
+     "title": "スピックスコノハズク（東京都公園協会 井の頭自然文化園系サイト／いきもの・植物）",
+     "url": "https://www.parks.or.jp/chikozan/guide/000/000941.html"
+    },
+    {
+     "title": "スピックスコノハズク - 世界のフクロウ 富士花鳥園 -",
+     "url": "http://www.kamoltd.co.jp/fuji/tropicalscreech-owl.htm"
+    }
+   ]
+  },
+  "r-134r3jy": {
+   "personality": "",
+   "favorites": "ごもくがよく{食|た}べるごはんは、ひよこなんだって。ときどき、うずらを{食|た}べる{日|ひ}もあるんだよ。",
+   "identifyingMarks": "",
+   "speciesInfo": "コキンメフクロウは、ヨーロッパやアフリカの{北|きた}、アジアにすむ{小|ちい}さなフクロウなんだ。{体|からだ}の{長|なが}さは22センチくらい。{黄色|きいろ}い{目|め}が、とってもきれいなんだよ。{好|す}きな{食|た}べものは、{虫|むし}やミミズなんだって。{朝|あさ}と{夕方|ゆうがた}に、いちばん{元気|げんき}なんだ。{昼|ひる}{間|ま}に{姿|すがた}を{見|み}せることもあるよ。{巣|す}は、{木|き}や{岩|いわ}の{穴|あな}につくるんだ。なんと、ペアはおたがいの{羽|はね}をととのえあうんだって。なかよしさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "コキンメフクロウ - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%B3%E3%82%AD%E3%83%B3%E3%83%A1%E3%83%95%E3%82%AF%E3%83%AD%E3%82%A6"
+    },
+    {
+     "title": "Athene noctua (little owl) - Animal Diversity Web",
+     "url": "https://animaldiversity.org/accounts/Athene_noctua/"
+    },
+    {
+     "title": "Understanding the Little Owl: Key Information - Hawk and Owl Trust",
+     "url": "https://hawkandowltrust.org/learn-and-discover/about-birds-of-prey/little-owl"
+    }
+   ]
+  },
+  "r-o7h1ff": {
+   "personality": "{琥珀|こはく}は、{呼|よ}ぶと{飛|と}んでもどってくる{練習|れんしゅう}をしている{子|こ}なんだ。じめんよりも、すこし{高|たか}いところから{呼|よ}ばれたときのほうが、よくこたえてくれるんだって。{高|たか}いところがすきなのかな？",
+   "favorites": "{琥珀|こはく}は、うずらやひよこを{食|た}べるんだって。{練習|れんしゅう}{中|ちゅう}に、{野生|やせい}のネズミをつかまえたこともあるんだ。かりのうでまえ、なかなかでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ハリスホークのひみつを、ひとつ{教|おし}えるね。ハリスホークは、タカのなかまなんだ。{北|きた}アメリカの{南|みなみ}のほうから{南|みなみ}アメリカにかけての、かわいた{土地|とち}にすんでいるんだよ。サボテンのあるあれちや{草|くさ}はらで、よく{見|み}られるんだって。{家族|かぞく}で、なかよくくらしているんだ。みんなで{力|ちから}をあわせて、えものをつかまえるんだよ。チームワークばつぐんでしょ？とまる{場所|ばしょ}がすくないと、なかまのせなかの{上|うえ}に{乗|の}って、かさなることもあるんだって。{食|た}べるのは、ネズミやウサギ、トカゲなどなんだ。",
+   "speciesSources": [
+    {
+     "title": "Harris's Hawk - Beardsley Zoo",
+     "url": "https://beardsleyzoo.org/plan-your-visit/animals/harriss-hawk/"
+    },
+    {
+     "title": "Harris's Hawk - Maryland Zoo",
+     "url": "https://www.marylandzoo.org/animal/harris-hawk/"
+    },
+    {
+     "title": "Harris's Hawk - Audubon Guide to North American Birds",
+     "url": "https://www.audubon.org/field-guide/bird/harriss-hawk"
+    },
+    {
+     "title": "Harris's Hawk - Plumpton Park Zoo",
+     "url": "https://plumptonparkzoo.org/birds/harriss-hawk/"
+    }
+   ]
+  },
+  "r-9677mx": {
+   "personality": "{天明|てんめい}は、とっても{気|き}づきやさんな{子|こ}なんだ。まわりの{音|おと}や、ほかの{動物|どうぶつ}に、すぐ{気|き}がつくんだって。{気|き}になることがあると、そっちをじっと{見|み}るんだ。",
+   "favorites": "{天明|てんめい}は、ひよこやうずらを{食|た}べるんだって。おちつける{部屋|へや}の{中|なか}だと、よく{食|た}べるんだ。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ハリスホークの{体|からだ}は、こげ{茶色|ちゃいろ}なんだ。かたと、あしのつけねは、くりのような{赤|あか}っぽい{茶色|ちゃいろ}なんだって。しっぽのねもとは{白|しろ}いんだ。しっぽのさきっぽも{白|しろ}いんだよ。あしは{長|なが}いんだ。それに、{黄色|きいろ}いんだって。メスのほうが、オスより{大|おお}きいんだって。びっくりでしょ？",
+   "speciesSources": [
+    {
+     "title": "Harris's hawk - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Harris's_hawk"
+    },
+    {
+     "title": "Harris Hawk - Canadian Raptor Conservancy",
+     "url": "https://canadianraptorconservancy.com/harris-hawk/"
+    }
+   ]
+  },
+  "r-pk1orh": {
+   "personality": "ハリスホークのハリーは、{人|ひと}のそばへすぐ{来|き}たがる{子|こ}なんだ。たくさんれんしゅうをして、そうなったんだって。ごはんをもらったあとに、{羽|はね}を{広|ひろ}げることもあるんだよ。",
+   "favorites": "ハリーは、うずらやひよこを{食|た}べるんだって。ごはんをもらったあとには、{羽|はね}を{広|ひろ}げるしぐさが{見|み}られるよ。ハリーのすがた、{見|み}てみたいでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ハリスホークって、どんな{動物|どうぶつ}だと{思|おも}う？じつは、{名前|なまえ}にひとの{名前|なまえ}が{入|はい}っているんだ。{鳥|とり}の{学者|がくしゃ}のオーデュボンさんがつけたんだって。{友|とも}だちのエドワード・ハリスさんから{名前|なまえ}をとったんだ。ハリスさんは、オーデュボンさんをささえてくれた{人|ひと}なんだって。なかよしの{名前|なまえ}って、すてきでしょ？",
+   "speciesSources": [
+    {
+     "title": "Harris Hawk - Canadian Raptor Conservancy",
+     "url": "https://canadianraptorconservancy.com/harris-hawk/"
+    },
+    {
+     "title": "Harris's hawk - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Harris's_hawk"
+    }
+   ]
+  },
+  "r-1yfbvz7": {
+   "personality": "",
+   "favorites": "{昴|すばる}の{好|す}きなごはんは、ひよこやうずらなんだって。{食|た}べるときは、くちばしをじょうずにつかおうとするんだよ。くちばしが{大|だい}かつやくでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ワシノスリはタカのなかまの{鳥|とり}なんだ。{南|みなみ}アメリカの{高|たか}い{山|やま}にすんでいるんだって。つばさを{広|ひろ}げると、1.2メートルより{大|おお}きいんだ。{青|あお}っぽいはいいろの{羽|はね}がとくちょうなんだよ。{空|そら}の{高|たか}いところをぐるぐるまわるんだ。そして、よい{目|め}でえものをさがすんだって。{足|あし}でつかむ{力|ちから}も、とってもつよいんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "ワシノスリ - 神戸どうぶつ王国",
+     "url": "https://www.kobe-oukoku.com/animals/85"
+    }
+   ]
+  },
+  "r-1efv2h2": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ワシノスリは、{翼|つばさ}が{広|ひろ}くて、しっぽがとても{短|みじか}いんだ。{木|き}などに{止|と}まると、しっぽがほとんど{見|み}えないくらいなんだって。{若|わか}いころは、{赤|あか}っぽい{茶色|ちゃいろ}の{羽|はね}をしているんだ。おとなの{色|いろ}とは、ずいぶんちがうんだね。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "Black-chested Buzzard-eagle - Palmitos Park",
+     "url": "https://palmitospark.es/en/especies/birds/black-chested-buzzard-eagle/"
+    }
+   ]
+  },
+  "r-1sqvpu3": {
+   "personality": "",
+   "favorites": "{疾風|はやて}は、ラナーハヤブサの{子|こ}なんだ。うずらや、ひよこを{食|た}べているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ラナーハヤブサは、ハヤブサの{仲間|なかま}なんだ。アフリカのほとんどの{所|ところ}や、ヨーロッパの{南東|なんとう}のほうにすんでいるんだって。{食|た}べものは、おもにハトやカモなどの{鳥|とり}なんだって。オスとメスのペアで、{力|ちから}を{合|あ}わせてえものをとるんだ。チームワークばつぐんでしょ？じぶんで{巣|す}はつくらないんだって。がけの{上|うえ}や、ほかの{鳥|とり}の{古|ふる}い{巣|す}に、たまごをうむんだって。",
+   "speciesSources": [
+    {
+     "title": "Lanner Falcon - The Peregrine Fund",
+     "url": "https://peregrinefund.org/explore-raptors-species/falcons/lanner-falcon"
+    },
+    {
+     "title": "Lanner falcon - Blair Drummond Safari Park",
+     "url": "https://blairdrummond.com/animals/our-animals/lanner-falcon/"
+    }
+   ]
+  },
+  "r-13xwtgn": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、シベリアンハスキーはイヌの{仲間|なかま}なんだ。ずっと{北|きた}のシベリアというところで{生|う}まれたんだよ。そこにすむ{人|ひと}たちが、ソリをひっぱるイヌとして{大切|たいせつ}に{育|そだ}ててきたんだって。{体|からだ}は、ふかふかでみっしりした{毛|け}につつまれているんだ。それに、{体|からだ}の{大|おお}きさのわりに、すこしのごはんで{長|なが}い{道|みち}を{走|はし}れるんだって。ソリ{上手|じょうず}で、そりゃすごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Siberian Husky | Britannica",
+     "url": "https://www.britannica.com/animal/Siberian-husky"
+    },
+    {
+     "title": "About — Siberian Husky Club of America, Inc",
+     "url": "https://www.shca.org/the-siberian-husky"
+    },
+    {
+     "title": "Siberian Husky History: From Arctic Protector to Active Companion",
+     "url": "https://www.akc.org/expert-advice/dog-breeds/siberian-husky-history/"
+    }
+   ]
+  },
+  "r-1swc4st": {
+   "personality": "ロックは、{元気|げんき}なシベリアンハスキーの{子|こ}なんだ。となりにいるなかまのライに、さくごしに{近|ちか}づいていくことがあるんだって。なかまが{気|き}になるのかな？",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。シベリアンハスキーの{目|め}は、{青|あお}か{茶色|ちゃいろ}なんだ。{右|みぎ}と{左|ひだり}で、{色|いろ}がちがう{子|こ}もいるんだって。１つの{目|め}の{中|なか}に、{青|あお}と{茶色|ちゃいろ}がまざる{子|こ}もいるんだ。どんな{色|いろ}か、のぞいてみたくなるでしょ？",
+   "speciesSources": [
+    {
+     "title": "Official Standard of the Siberian Husky",
+     "url": "https://images.akc.org/pdf/breeds/standards/SiberianHusky.pdf"
+    },
+    {
+     "title": "Siberian Husky Standard — Siberian Husky Club of America, Inc",
+     "url": "https://www.shca.org/siberian-husky-standard"
+    }
+   ]
+  },
+  "r-17snyj3": {
+   "personality": "シベリアンハスキーの{風牙|ふうが}くんを{紹介|しょうかい}するね。{風牙|ふうが}くんは、お{外|そと}に{出|で}ると、{元気|げんき}に{走|はし}る{姿|すがた}が{見|み}られることがあるんだって。かぜみたいに{速|はや}いかな？",
+   "favorites": "{風牙|ふうが}くんは、ドッグフードを{食|た}べる{子|こ}なんだ。いぬ{用|よう}のかんづめも{好|す}きなんだって。かんづめを{食|た}べることもあるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、シベリアンハスキーは、ワンワンとほえることがあまりないんだって。そのかわり、「ウー」という{声|こえ}を{出|だ}すんだ。{小鳥|ことり}のような{声|こえ}も{出|だ}すんだって。{遠|とお}ぼえもするんだって。おしゃべりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Siberian Husky | Britannica",
+     "url": "https://www.britannica.com/animal/Siberian-husky"
+    }
+   ]
+  },
+  "r-1fja9y0": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "シベリアンハスキーの{毛|け}の{色|いろ}は、{灰色|はいいろ}や{茶色|ちゃいろ}、{黒|くろ}と{白|しろ}などが{多|おお}いんだ。{頭|あたま}にもようがある{子|こ}もいるんだよ。そのもようが、ぼうしやおめん、めがねみたいに{見|み}えるんだって。おしゃれさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "Siberian Husky | Britannica",
+     "url": "https://www.britannica.com/animal/Siberian-husky"
+    }
+   ]
+  },
+  "r-ic0n02": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "シベリアンハスキーの{耳|みみ}は、ぴんと{立|た}っているんだ。{耳|みみ}の{先|さき}は、とがっているよ。なんと、オオカミみたいなんだって。しっぽは{長|なが}くて、ふさふさなんだ。せなかの{上|うえ}で、ゆるくまがっているんだよ。",
+   "speciesSources": [
+    {
+     "title": "Siberian husky - Britannica Kids",
+     "url": "https://kids.britannica.com/students/article/Siberian-husky/313529"
+    }
+   ]
+  },
+  "r-25xxux": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "シベリアンハスキーは、なかまとチームで{働|はたら}くイヌとして{育|そだ}てられたんだって。{人|ひと}が{大|だい}すきなんだ。しらない{人|ひと}にも、なつきやすいんだよ。だから、{家|いえ}をまもる{番犬|ばんけん}にはむかないんだって。だれとでもなかよしでしょ？",
+   "speciesSources": [
+    {
+     "title": "Siberian Husky Dog Breed Information",
+     "url": "https://www.akc.org/dog-breeds/siberian-husky/"
+    },
+    {
+     "title": "Siberian Husky | VCA Animal Hospitals",
+     "url": "https://vcahospitals.com/know-your-pet/dog-breeds/siberian-husky"
+    },
+    {
+     "title": "Siberian Husky | Britannica",
+     "url": "https://www.britannica.com/animal/Siberian-husky"
+    }
+   ]
+  },
+  "r-4gn843": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。{今|いま}から{百年|ひゃくねん}くらい{前|まえ}、シベリアンハスキーが{大活躍|だいかつやく}したんだ。{遠|とお}いアラスカの{町|まち}へ、{大切|たいせつ}なくすりをはこんだんだよ。{約|やく}550キロを、{六日|むいか}でとどけたんだって。{先頭|せんとう}を{走|はし}ったのは、バルトとトーゴなんだ。ふたりは、ヒーローになったんだよ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Siberian Husky | VCA Animal Hospitals",
+     "url": "https://vcahospitals.com/know-your-pet/dog-breeds/siberian-husky"
+    }
+   ]
+  },
+  "r-5p9jcc": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。セントバーナードは、{犬|いぬ}のなかまなんだ。スイスで{生|う}まれた、とても{大|おお}きな{犬|いぬ}なんだよ。{体|からだ}の{重|おも}さが90キロになることもあるんだって。むかしは、アルプスの{雪山|ゆきやま}で{仕事|しごと}をしていたんだ。{道|みち}にまよった{人|ひと}を{助|たす}けていたんだよ。{名前|なまえ}は、{山|やま}の{修道院|しゅうどういん}からついたんだって。そこで{人|ひと}といっしょにくらしていたんだ。{毛|け}があつくて、{寒|さむ}さに{強|つよ}いんだ。だから、{雪|ゆき}の{中|なか}でもへっちゃらでしょ？",
+   "speciesSources": [
+    {
+     "title": "セントバーナードとは何？ わかりやすく解説 Weblio辞書",
+     "url": "https://www.weblio.jp/content/%E3%82%BB%E3%83%B3%E3%83%88%E3%83%90%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%89"
+    },
+    {
+     "title": "セントバーナードの特徴は？性格や飼い方、平均寿命、歴史も紹介！ - 東京ECOいきもの図鑑",
+     "url": "https://www.tcaeco.ac.jp/contents/animalbook/st-bernard/"
+    }
+   ]
+  },
+  "r-1vvrrpa": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ボーダーコリーは、{犬|いぬ}のなかまのひとつの{種類|しゅるい}なんだ。イギリスで{生|う}まれたんだって。スコットランドとイングランドの{境目|さかいめ}なんだ。およそ300{年|ねん}も{前|まえ}から、おしごとをしてきたんだ。{羊|ひつじ}を{集|あつ}めたり、{動|うご}かしたりするおしごとだよ。とても{頭|あたま}がいいんだ。{世界|せかい}でいちばんかしこい{犬|いぬ}とも{言|い}われているよ。おしごとが{大好|だいす}きな{働|はたら}き{者|もの}でしょ？",
+   "speciesSources": [
+    {
+     "title": "Border Collie | Britannica",
+     "url": "https://www.britannica.com/animal/Border-Collie"
+    }
+   ]
+  },
+  "r-4g2csd": {
+   "personality": "ピレネーシェパードのエルサは、ちょっぴりせんさいな{子|こ}なんだ。かみなりの{音|おと}に、びっくりしやすいんだって。",
+   "favorites": "エルサは、ドッグフードを{食|た}べるのが{大|だい}すきなんだ。おさんぽの{時間|じかん}も、たのしみにしているんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ピレネーシェパードって、どんな{動物|どうぶつ}だと{思|おも}う？ じつは、{犬|いぬ}のなかまなんだ。ピレネー{山脈|さんみゃく}は、フランスとスペインのあいだにあるんだよ。ピレネーシェパードは、そこでむかしから{羊|ひつじ}のむれをまとめる{仕事|しごと}をしてきたんだって。フランスで{羊|ひつじ}をまとめる{犬|いぬ}のなかでは、いちばん{小|ちい}さいんだよ。{毛|け}には、{2|ふた}つのタイプがあるんだ。{顔|かお}の{毛|け}が{長|なが}いタイプと、{短|みじか}いタイプだよ。とっても{元気|げんき}なんだ。それに、かしこいんだよ。つかれ{知|し}らずなんだって。{小|ちい}さくても、はたらきものでしょ？",
+   "speciesSources": [
+    {
+     "title": "Pyrenean Shepherd Dog Breed Information (American Kennel Club)",
+     "url": "https://www.akc.org/dog-breeds/pyrenean-shepherd/"
+    },
+    {
+     "title": "Pyrenean Sheepdog (Wikipedia)",
+     "url": "https://en.wikipedia.org/wiki/Pyrenean_Sheepdog"
+    }
+   ]
+  },
+  "r-ajq9z9": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ポニーのひみつを、ひとつ{教|おし}えるね。ポニーは、せの{高|たか}さが147センチより{小|ちい}さい{馬|うま}のことなんだって。ポニーというべつの{動物|どうぶつ}がいるわけではないんだよ。{食|た}べものは、{草|くさ}や{木|き}の{葉|は}、くだものなどだよ。{体|からだ}は{小|ちい}さいんだ。でも、とてもじょうぶなんだ。{自分|じぶん}の{体重|たいじゅう}の2{倍|ばい}もの{荷物|にもつ}を、ひっぱれるんだって。ちからもちでしょ？",
+   "speciesSources": [
+    {
+     "title": "ポニー - 甲府市遊亀公園附属動物園",
+     "url": "https://www.city.kofu.yamanashi.jp/zoo/animal/pony.html"
+    },
+    {
+     "title": "ポニー - 動植物園データベース",
+     "url": "https://www.ezooko.jp/rel_dgram/pub/detail.aspx?c_id=30&id=64&pg=3&bk=1"
+    },
+    {
+     "title": "ポニー｜岡崎市公式ホームページ",
+     "url": "https://www.city.okazaki.lg.jp/zoo/nakama/1002138.html"
+    }
+   ]
+  },
+  "r-1a86s4o": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ポニーは、{大|おお}きな{馬|うま}にくらべて、{毛|け}があついことが{多|おお}いんだって。たてがみやしっぽの{毛|け}も、ふさふさなんだ。{足|あし}はみじかめなんだよ。{首|くび}はがっしりしているんだ。もこもこで、あったかそうでしょ？",
+   "speciesSources": [
+    {
+     "title": "Pony - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Pony"
+    }
+   ]
+  },
+  "r-1xvaqaj": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ポニーって、どんな{名前|なまえ}の{動物|どうぶつ}だと{思|おも}う？じつは、むかしのフランスのことばからきているんだって。もとのことばは、{子馬|こうま}をあらわすことばなんだ。{小|ちい}さな{体|からだ}にぴったりの{名前|なまえ}でしょ？",
+   "speciesSources": [
+    {
+     "title": "Pony - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Pony"
+    }
+   ]
+  },
+  "r-6pa8e7": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ヤギは、{世界|せかい}じゅうで{人|ひと}といっしょにくらしている{動物|どうぶつ}なんだ。{草|くさ}や{木|き}のはっぱを{食|た}べるんだって。ヤギは、いつも{口|くち}をモグモグ{動|うご}かしているよ。のみこんだ{草|くさ}を{口|くち}にもどしているんだ。そして、もういちどかんでいるんだって。それから、ヤギは{高|たか}いところにのぼるのが{大|だい}すきなんだ。{見|み}はらしのよいところが{好|す}きなんだって。{山|やま}のぼりのめいじんでしょ？",
+   "speciesSources": [
+    {
+     "title": "福岡市動物園｜ヤギ",
+     "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/37"
+    },
+    {
+     "title": "ヤギ（日本平動物園）",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
+    },
+    {
+     "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
+     "url": "https://www.ecochil.net/article/63089/"
+    },
+    {
+     "title": "ヤギ｜到津の動物たち｜到津の森公園",
+     "url": "https://www.itozu-zoo.jp/friends/entry/77.php"
+    }
+   ]
+  },
+  "r-iq24z1": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ヤギのひとみは、{横|よこ}に{長|なが}い{形|かたち}なんだ。このひとみのおかげで、まわりを{広|ひろ}く{見|み}わたせるんだって。{下|した}を{向|む}いて{草|くさ}を{食|た}べるときもあるでしょ？そんなときも、ひとみがくるっとまわるんだ。そして、{地面|じめん}と{平行|へいこう}になるんだよ。くらいところでは、まんまるのひとみにかわるんだって。",
+   "speciesSources": [
+    {
+     "title": "7月28日 ヤギの目の秘密② - 飼育員ブログ - ときわ動物園",
+     "url": "https://www.tokiwapark.jp/zoo/staffblog/diary/post-560.html"
+    },
+    {
+     "title": "飼育日誌（3月7日～3月21日）シバヤギ - 市川市動植物園サイト",
+     "url": "https://www.city.ichikawa.lg.jp/site/zoo/56919.html"
+    }
+   ]
+  },
+  "r-155c4r9": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ヤギは、オスにもメスにも{角|つの}が2{本|ほん}あるんだ。シカの{角|つの}は{生|は}えかわるけど、ヤギの{角|つの}は{生|は}えかわらないんだって。ずっと{同|おな}じ{角|つの}といっしょなんだね。ヤギの{角|つの}は、{大|おお}きくなるにつれてのびていくんだ。おもしろいよね！",
+   "speciesSources": [
+    {
+     "title": "ヤギ（トカラヤギ） - 平川動物公園公式サイト",
+     "url": "https://hirakawazoo.jp/zookan/%E3%83%88%E3%82%AB%E3%83%A9%E3%83%A4%E3%82%AE/"
+    },
+    {
+     "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
+     "url": "https://www.ecochil.net/article/63089/"
+    }
+   ]
+  },
+  "r-kwmsg2": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ヤギは、あごにひげが{生|は}えている{子|こ}が{多|おお}いんだ。とくにオスは、{大|おお}きなひげがあるんだって。なんと、あごの{下|した}に{皮|かわ}がぶらさがっているヤギもいるんだ。あごをよく{見|み}てごらん。おしゃれさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
+     "url": "https://www.ecochil.net/article/63089/"
+    },
+    {
+     "title": "ヤギ - 日本平動物園",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
+    }
+   ]
+  },
+  "r-1bz26by": {
+   "personality": "バウムは、「お{手|て}」ができるヤギなんだ。すごいでしょ？{昼間|ひるま}は、ほかのヤギたちといっしょにすごすこともあるんだって。",
+   "favorites": "バウムは、ミネラルが{入|はい}った{塩|しお}のかたまりが{好|す}きなんだ。「{鉱塩|こうえん}」っていうんだよ。{自分|じぶん}からぺろぺろなめている{姿|すがた}が{見|み}られるんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ヤギは、{仲間|なかま}と{群|む}れをつくって{暮|く}らすんだ。{群|む}れを{導|みちび}くのは、{強|つよ}いメスのリーダーなんだって。だから、{仲間|なかま}と{仲|なか}よく{暮|く}らすのが{得意|とくい}なんだ。{人|ひと}とも{仲|なか}よくなりやすいんだって。",
+   "speciesSources": [
+    {
+     "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
+     "url": "https://www.ecochil.net/article/63089/"
+    }
+   ]
+  },
+  "r-1biqhym": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ここだけの{話|はなし}だよ。ヤギの{赤|あか}ちゃんは、お{母|かあ}さんのおなかの{中|なか}で{育|そだ}つんだ。{生|う}まれるまで、だいたい150{日|にち}かかるんだって。ヤギは、ふたごで{生|う}まれることが{多|おお}いんだよ。にぎやかなきょうだいでしょ？",
+   "speciesSources": [
+    {
+     "title": "出会いの季節ですよ！ - 埼玉県こども動物自然公園",
+     "url": "https://www.parks.or.jp/sczoo/blog/entry/001903.html"
+    }
+   ]
+  },
+  "r-7b8o7t": {
+   "personality": "ツートンは、{飼育員|しいくいん}さんのあとをついてまわる{子|こ}なんだ。とってもあまえんぼうさんでしょ？ほかのヤギがかまわれていると、{気|き}になっちゃうみたい。",
+   "favorites": "ツートンは、{飼育員|しいくいん}さんのそばにいるのが{好|す}きみたい。そばであまえるのが{大好|だいす}きなんだって。",
+   "identifyingMarks": "",
+   "speciesInfo": "ヤギのひみつを、ひとつ{教|おし}えるね。ヤギの{赤|あか}ちゃんは、{生|う}まれてすぐに{自分|じぶん}で{立|た}ちあがるんだ。ウマやウシも、{生|う}まれてすぐに{立|た}てるなかまなんだって。{生|う}まれて2{週間|しゅうかん}くらいたつと、お{母|かあ}さんの{食|た}べものを{口|くち}にくわえるんだ。そうやって、まねをはじめるんだよ。がんばりやさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "福岡市動物園｜性格さまざまに成長／ヤギ",
+     "url": "https://zoo.city.fukuoka.lg.jp/articles/detail/128"
+    },
+    {
+     "title": "出会いの季節ですよ！ - 埼玉県こども動物自然公園",
+     "url": "https://www.parks.or.jp/sczoo/blog/entry/001903.html"
+    }
+   ]
+  },
+  "r-1pf5sq8": {
+   "personality": "",
+   "favorites": "シキが{食|た}べているのは、{牧草|ぼくそう}や、ほしくさなんだ。それに、ルーサンも{食|た}べているんだって。{草|くさ}のメニューが、いろいろあるんだね。",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ヤギは、とても{古|ふる}くから{人|ひと}とくらしてきた{動物|どうぶつ}なんだ。{家畜|かちく}になったのは、イヌのつぎに{早|はや}かったんだって。{家畜|かちく}のヤギのごせんぞは、{野生|やせい}のヤギだと{考|かんが}えられているんだ。9000{年|ねん}ほど{前|まえ}に、{山|やま}や{草原|そうげん}にいたヤギなんだって。{長|なが}いおつきあいでしょ？",
+   "speciesSources": [
+    {
+     "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
+     "url": "https://www.ecochil.net/article/63089/"
+    },
+    {
+     "title": "ヤギ - 日本平動物園",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
+    }
+   ]
+  },
+  "r-fu4fft": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ヤギって、どんな{動物|どうぶつ}だと{思|おも}う？じつは、{名前|なまえ}にもなぞがある{動物|どうぶつ}なんだ。ヤギは、{漢字|かんじ}で「{山|やま}」と「{羊|ひつじ}」と{書|か}くんだよ。「ヤギ」という{名前|なまえ}がどこからきたかは、2つの{考|かんが}えがあるんだって。1つは、「やぎゅう」ということばがかわったという{考|かんが}えなんだ。もう1つは、となりの{国|くに}のことばからきたという{考|かんが}えだよ。{名前|なまえ}にもなぞがあるなんて、ふしぎでしょ？",
+   "speciesSources": [
+    {
+     "title": "ヤギ - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%A4%E3%82%AE"
+    },
+    {
+     "title": "文献にみる長崎のヒツジ・ヤギなどについて（畜産の研究）",
+     "url": "https://agriknowledge.affrc.go.jp/RN/2010872587.pdf"
+    }
+   ]
+  },
+  "r-si9hsm": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ヤギの{毛|け}の{色|いろ}は、{白|しろ}だけじゃないんだ。{黒|くろ}や{茶色|ちゃいろ}など、いろいろな{色|いろ}のヤギがいるんだって。{毛|け}をとるための{種類|しゅるい}もいるよ。「アンゴラ」という{種類|しゅるい}がいるんだって。{白|しろ}い{糸|いと}のような{毛|け}をしているんだ。",
+   "speciesSources": [
+    {
+     "title": "ヤギ - 日本平動物園",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
+    }
+   ]
+  },
+  "r-ablwzr": {
+   "personality": "ラテjrは、むれですごす{時間|じかん}を{大切|たいせつ}にしている{子|こ}なんだ。{仲間|なかま}のヤギたちといっしょだと、ずっとごはんを{食|た}べていることがあるんだって。",
+   "favorites": "ラテjrは、{仲間|なかま}といっしょにごはんを{食|た}べる{時間|じかん}が{好|す}きみたいなんだ。のんびりもぐもぐ、しあわせそうでしょ？",
+   "identifyingMarks": "",
+   "speciesInfo": "ぼくのお{気|き}に{入|い}りの{話|はなし}をするね。ヤギの{足|あし}のさきには、かたいひづめがあるんだ。1{本|ぽん}の{足|あし}に、ひづめが2こあるんだって。ひづめは、{岩|いわ}をのぼりおりしたり、{歩|ある}きまわったりして、ちょうどよくけずれていくんだ。だから{動物園|どうぶつえん}では、ひづめをきってあげることがあるんだよ。のびすぎないようにするためなんだ。",
+   "speciesSources": [
+    {
+     "title": "2010年06月の自然動物園ぶろぐ - えどがわ環境財団",
+     "url": "https://www.edogawa-kankyozaidan.jp/zoo/blog/2010-06/?locale=ja"
+    },
+    {
+     "title": "ヤギ（山羊）【かぎけんWEB】",
+     "url": "https://www.kagiken.co.jp/new/kojimachi/animal-yagi_large.html"
+    }
+   ]
+  },
+  "r-dvxqve": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、{元気|げんき}なヤギにも、{苦手|にがて}なものがあるんだ。ヤギは、じめじめした{湿気|しっけ}と{暑|あつ}さに{弱|よわ}いんだって。ヤギのご{先祖|せんぞ}は、かわいた{土地|とち}でくらしていたんだ。だから、からっとした{天気|てんき}が{好|す}きなんだね。",
+   "speciesSources": [
+    {
+     "title": "ヤギ - 日本平動物園",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
+    },
+    {
+     "title": "ヤギ（山羊）【かぎけんWEB】",
+     "url": "https://www.kagiken.co.jp/new/kojimachi/animal-yagi_large.html"
+    }
+   ]
+  },
+  "r-ebp1us": {
+   "personality": "ローズは、{人|ひと}のそばによってくることがある{子|こ}なんだって。{名前|なまえ}をよぶと、ちかづいてくるんだ。{足|あし}のあいだに{入|はい}ってくることもあるんだって。はなで、ぐいっとおしてくることもあるんだよ。",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ホットベリーピックは、ブタのなかまなんだ。ブタはイノシシとおなじで、いろいろなものを{食|た}べるんだって。じょうぶな{鼻|はな}で{地面|じめん}をほるよ。そして、{土|つち}の{中|なか}の{虫|むし}や{根|ね}っこをさがすんだ。なんと、{鼻|はな}はにおいにとてもびんかんなんだ。さわったかんじにも、とてもびんかんなんだって。{暑|あつ}いときは、どろあびをするよ。そうやって{体|からだ}をひやすんだって。どろんこあそびの{名人|めいじん}でしょ？",
+   "speciesSources": [
+    {
+     "title": "ブタ - Wikipedia",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%BF"
+    }
+   ]
+  },
+  "r-au3nhc": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ヒツジのひみつを、ひとつ{教|おし}えるね。ヒツジは、{人|ひと}にかわれる{動物|どうぶつ}なんだ。{世界|せかい}じゅうでくらしているんだよ。{草|くさ}を{食|た}べる{動物|どうぶつ}なんだ。ヒツジの{毛|け}は、{生|は}えかわらないんだって。ずっとのびつづけるんだって。だから、{毎年|まいとし}{毛|け}をかってあげるんだよ。それから、{大|おお}きなむれでくらすんだ。みんなでいっしょにうごくんだよ。なかよしさんでしょ？",
+   "speciesSources": [
+    {
+     "title": "ヒツジ ｜ 長崎バイオパーク",
+     "url": "https://www.biopark.co.jp/animals/mammal/corriedalesheep.html"
+    },
+    {
+     "title": "ヒツジ（日本平動物園）",
+     "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=155"
+    },
+    {
+     "title": "ヒツジ - 周南市徳山動物園",
+     "url": "https://tokuyama-zoo.jp/as/cms/view.php?id=21&m=cel&k=A08KMGERmh"
+    }
+   ]
+  },
+  "r-1g237i4": {
+   "personality": "バーバリーは、いっしょに{暮|く}らすマージュと、{頭|あたま}をぶつけあうことがある{子|こ}なんだ。これを「ずつき」っていうんだって。ふたりは、なかよしなんだ。",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "ねえねえ、しってる？ヒツジには、{胃|い}が4つもあるんだ。{一|いち}どのみこんだ{草|くさ}を、{口|くち}にもどすんだよ。そして、もう{一|いち}どかむんだ。これを「はんすう」というんだって。のんびりしているときに、よくするんだよ。",
+   "speciesSources": [
+    {
+     "title": "反芻中のヒツジ【SCZOOの一コマ】（埼玉県こども動物自然公園）",
+     "url": "https://www.youtube.com/watch?v=03Uf5izQlLk"
+    },
+    {
+     "title": "ヤギ・ヒツジのウンチのお話（板橋区立こども動物園）",
+     "url": "https://itabashi-park-zoo.com/cat_cmn/%E3%83%A4%E3%82%AE%E3%83%BB%E3%83%92%E3%83%84%E3%82%B8%E3%81%AE%E3%82%A6%E3%83%B3%E3%83%81%E3%81%AE%E3%81%8A%E8%A9%B1/"
+    }
+   ]
+  },
+  "r-1wu0bkc": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "{ヒツジ|ひつじ}って、どんな{動物|どうぶつ}だと{思|おも}う？{目|め}がとってもおもしろい{動物|どうぶつ}なんだ。{目|め}のまん{中|なか}の{黒|くろ}いところは、{横|よこ}に{長|なが}い{形|かたち}なんだよ。この{形|かたち}のおかげで、{広|ひろ}いところを{見|み}わたせるんだって。{草|くさ}を{食|た}べようとして、{頭|あたま}をさげることがあるでしょ？そんなときも、{目|め}がくるっとまわるんだ。だから、{黒|くろ}いところは{横|よこ}{長|なが}のままなんだよ。{地面|じめん}と{同|おな}じ{向|む}きのままなんだ。",
+   "speciesSources": [
+    {
+     "title": "Hunters have vertical slits; the hunted, horizontal（UC Berkeley News）",
+     "url": "https://news.berkeley.edu/2015/08/07/pupil-shape-and-ecological-niche/"
+    }
+   ]
+  },
+  "r-31ilah": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "びっくりするかもしれないけど、ヒツジは{顔|かお}を{覚|おぼ}えるのがとくいなんだ。なかまのヒツジの{顔|かお}を、50{頭|とう}ぶんも{覚|おぼ}えられるという{研究|けんきゅう}があるんだって。2{年|ねん}たっても、わすれなかったんだって。{人|ひと}の{顔|かお}も、{写真|しゃしん}で{見|み}わけられるんだ。すごいでしょ？",
+   "speciesSources": [
+    {
+     "title": "Study Shows Sheep Have Keen Memory for Faces（Scientific American）",
+     "url": "https://www.scientificamerican.com/article/study-shows-sheep-have-ke/"
+    },
+    {
+     "title": "Sheep are able to recognise human faces from photographs（University of Cambridge）",
+     "url": "https://www.cam.ac.uk/research/news/sheep-are-able-to-recognise-human-faces-from-photographs"
+    }
+   ]
+  },
+  "r-1ha5jn": {
+   "personality": "",
+   "favorites": "",
+   "identifyingMarks": "",
+   "speciesInfo": "じつはね、ギープは、ヒツジとヤギの{両方|りょうほう}の{特徴|とくちょう}をもつ{動物|どうぶつ}の{呼|よ}び{名|な}なんだって。1984{年|ねん}に、{研究|けんきゅう}する{人|ひと}たちが{生|う}みだしたんだ。ヒツジとヤギの{赤|あか}ちゃんのもとを、あわせたんだよ。{体|からだ}の{毛|け}は、まだらになっているんだって。ヒツジみたいなもこもこのところと、ヤギみたいな{毛|け}のところがあるんだ。ヒツジとヤギのあいだに{生|う}まれた{子|こ}も、ギープと{呼|よ}ばれるよ。でも、とってもめずらしいんだって。ふたつの{動物|どうぶつ}がいっしょになった、ふしぎな{体|からだ}でしょ？",
+   "speciesSources": [
+    {
+     "title": "Sheep–goat hybrid - Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Sheep%E2%80%93goat_hybrid"
+    },
+    {
+     "title": "Interspecific chimaerism between sheep and goat - Nature",
+     "url": "https://www.nature.com/articles/307634a0"
+    },
+    {
+     "title": "Interspecific chimaerism between sheep and goat - PubMed",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/6694751/"
+    },
+    {
+     "title": "Production of sheep-goat chimeras by inner cell mass transplantation",
+     "url": "https://www.academia.edu/51650130/Production_of_sheep_goat_chimeras_by_inner_cell_mass_transplantation"
+    },
+    {
+     "title": "Spring Rose the Geep: a Goat-Sheep Hybrid - Goat Journal",
+     "url": "https://goatjournal.iamcountryside.com/goat-breeds/geep-goat-sheep-hybrid/"
+    }
+   ]
+  }
+ }
+}

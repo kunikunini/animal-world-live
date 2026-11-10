@@ -3877,6 +3877,17 @@ button.bk-tab:hover {
   line-height: 1.5;
 }
 
+.field rt { font-size: 0.5em; }
+.field p ruby { ruby-position: over; }
+.field p:has(ruby) { line-height: 2; }
+.field .field-src {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  opacity: 0.75;
+  overflow-wrap: anywhere;
+}
+.field .field-src a { color: inherit; }
 .field.keeper {
   background: var(--gold-tint);
 }

@@ -170,6 +170,8 @@ const DICT = {
   fFamily: { ja: '家族', en: 'Family' },
   fPersonality: { ja: '性格', en: 'Personality' },
   fFavorites: { ja: '好きなもの', en: 'Favorites' },
+  fSpecies: { ja: 'どんな動物？', en: 'About this animal' },
+  fSources: { ja: '出典', en: 'Sources' },
   fKeeper: { ja: '飼育員コメント', en: 'Keeper’s note' },
   profileInJa: { ja: '', en: 'Profile notes are shown in the original Japanese.' },
   reduceMotion: { ja: '動きをへらす', en: 'Reduce motion' },

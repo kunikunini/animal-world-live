@@ -2,6 +2,7 @@ import raw from './animals.json'
 import rosterRaw from './roster.json'
 import { staffVideoForSpecies, staffVideosFor, videoForSpecies } from './videos'
 import photosRaw from './photos.json'
+import profilesRaw from './profiles.json'
 import type { VideoSubject } from './videos'
 import type { WorldKey } from './worlds'
 
@@ -36,6 +37,10 @@ export interface Animal {
   favorites: string
   identifyingMarks: string
   keeperComment: string
+  /** その種の一般的な説明（子ども向け。{漢字|よみ} はふりがな）。同じ種でも個体ごとに話題が違う */
+  speciesInfo?: string
+  /** speciesInfo の出典 */
+  speciesSources?: { title: string; url: string }[]
   /** ready: プロフィールと映像がそろっている。preparing: 準備中（一覧に出さない） */
   status: 'ready' | 'preparing'
   /** 任意。写真がなくても UI は成立させる */
@@ -75,7 +80,7 @@ interface RosterRow {
 const rosterRows = (rosterRaw as { animals: RosterRow[] }).animals
 
 /**
- * ライオン以外の個体。プロフィールの本文はまだ無いので空のまま（埋めない）。
+ * ライオン以外の個体。プロフィールの本文は下の profiles.json から入れる（無い項目は空のまま、埋めない）。
  * 映像は種ごと（videos.json）。その種の映像が無ければ url は空で、モニターは「映像はじゅんびちゅう」を出し、
  * 収録映像のバッジも出さない。
  */
@@ -121,6 +126,28 @@ const lions: Animal[] = data.animals.map((a) => {
   // 映像がそろったので「準備中」（一覧に出さない）から外す
   return { ...a, video, videoId: staff?.id ?? a.videoId, status: staff ? 'ready' : a.status, world: 'africa', subArea: '', representative: true }
 })
+
+/**
+ * 子ども向けのプロフィール（profiles.json）。飼育日誌から下書きし、施設側が確認したもの。
+ * animals.json に既に文がある項目（クレアの見分けポイントなど）は上書きしない
+ */
+interface ProfileRow {
+  personality: string
+  favorites: string
+  identifyingMarks: string
+  speciesInfo: string
+  speciesSources: { title: string; url: string }[]
+}
+const PROFILES = (profilesRaw as { profiles: Record<string, ProfileRow> }).profiles
+for (const a of [...lions, ...rosterAnimals]) {
+  const p = PROFILES[a.id]
+  if (!p) continue
+  a.personality ||= p.personality
+  a.favorites ||= p.favorites
+  a.identifyingMarks ||= p.identifyingMarks
+  a.speciesInfo = p.speciesInfo
+  a.speciesSources = p.speciesSources
+}
 
 /** 顔の写真（tools/photos-import.mjs が書く。id → public/faces の画像）。無い子は自作の顔のまま */
 const PHOTOS = (photosRaw as { photos: Record<string, string> }).photos
