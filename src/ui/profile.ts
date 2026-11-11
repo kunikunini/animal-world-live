@@ -1,4 +1,4 @@
-import type { Animal } from '../data/animals'
+import type { Animal, ProfileText } from '../data/animals'
 import { faceMarkup } from './faces'
 import { esc } from './html'
 import { animalName, getLang, speciesName, t } from './i18n'
@@ -44,17 +44,19 @@ export function renderHero(animal: Animal): string {
 
 /** プロフィールの項目カード */
 export function renderProfile(animal: Animal): string {
-  // 本文は施設からいただいた日本語の原文のまま。英語表示ではその旨を添える
-  const note = getLang() === 'en' ? `<p class="note-small fields-note">${esc(t('profileInJa'))}</p>` : ''
+  // 英語表示では英語版の本文（animal.en）を出す。英語版が無い子だけ、日本語のままである旨を添える
+  const en = getLang() === 'en' ? animal.en : undefined
+  const note = getLang() === 'en' && !en ? `<p class="note-small fields-note">${esc(t('profileInJa'))}</p>` : ''
+  const v = (k: keyof ProfileText): string => (en ? en[k] : (animal[k] ?? '')) || ''
   return (
     note +
     [
-      field('find', t('fIdentify'), animal.identifyingMarks, { required: true }),
-      field('family', t('fFamily'), animal.family),
-      field('sparkle', t('fPersonality'), animal.personality),
-      field('heart', t('fFavorites'), animal.favorites),
-      field('book', t('fSpecies'), animal.speciesInfo || '', { extra: sources(animal.speciesSources) }),
-      field('bubble', t('fKeeper'), animal.keeperComment, { required: true, keeper: true }),
+      field('find', t('fIdentify'), v('identifyingMarks'), { required: true }),
+      field('family', t('fFamily'), v('family')),
+      field('sparkle', t('fPersonality'), v('personality')),
+      field('heart', t('fFavorites'), v('favorites')),
+      field('book', t('fSpecies'), v('speciesInfo'), { extra: sources(animal.speciesSources) }),
+      field('bubble', t('fKeeper'), v('keeperComment'), { required: true, keeper: true }),
     ].join('')
   )
 }

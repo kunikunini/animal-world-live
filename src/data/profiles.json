@@ -1,5 +1,5 @@
 {
- "$comment": "個体ごとのプロフィール（子ども向け、案内役スコップの語り）。personality・favorites・identifyingMarks は北海道アニマルワールドの飼育日誌から AI（Claude Opus 5.5）が下書きし、病気・治療・職員名・飼育の手順を除いて書き直したもので、施設側（くに）が全頭を確認済み（2026-11-11）。speciesInfo はその種の一般的な説明で、AI が Web 検索で確かめた出典を speciesSources に残す。同じ種が複数いる時は個体ごとに別の話題。{漢字|よみ} はふりがな。元の飼育日誌はこのリポジトリに入れていない",
+ "$comment": "個体ごとのプロフィール（子ども向け、案内役スコップの語り）。personality・favorites・identifyingMarks は北海道アニマルワールドの飼育日誌から AI（Claude Opus 5.5）が下書きし、病気・治療・職員名・飼育の手順を除いて書き直したもので、施設側（くに）が全頭を確認済み（2026-11-11）。speciesInfo はその種の一般的な説明で、AI が Web 検索で確かめた出典を speciesSources に残す。同じ種が複数いる時は個体ごとに別の話題。{漢字|よみ} はふりがな。元の飼育日誌はこのリポジトリに入れていない en は確認済みの日本語（ライオンは animals.json の文も）を、スコップの口調のまま子ども向けの英語にしたもの（Claude Opus 5.5）。nameEn はライオン以外の子の英語表記",
  "profiles": {
   "angie": {
    "personality": "",
@@ -15,7 +15,15 @@
      "title": "ライオン|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
      "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/Lion/"
     }
-   ]
+   ],
+   "en": {
+    "family": "Mother of the twins Claire and Carla (1 year old), born to her and Alex",
+    "personality": "Angie is calm and easygoing. When she relaxes, she flops over and shows her tummy. Even when she goes out in the same area as other lions, she doesn't get tense.",
+    "favorites": "Flopping down and relaxing in her room",
+    "identifyingMarks": "She's the most laid-back of them all. Even when everyone around her is moving, she relaxes like she knows it's all fine.",
+    "keeperComment": "On the day she went out in the same area as Riley, the two of them flopped down far apart from each other and stayed calm.",
+    "speciesInfo": "Let me tell you a lion secret! Lions live in grasslands in places like Africa. They also live in woods where the trees are few and far apart. Lions do something rare for the cat family. They live in a group called a \"pride.\" The females in the pride work together to raise the cubs. The male's job is to protect the pride. Great teamwork, right? And guess what? Lions spend more than half the day sleeping!"
+   }
   },
   "claire": {
    "personality": "",
@@ -27,7 +35,15 @@
      "title": "ライオン｜群馬サファリパーク",
      "url": "https://safari.co.jp/animal/lion/"
     }
-   ]
+   ],
+   "en": {
+    "family": "Child of Alex and Angie. Twin of Carla (1 year old).",
+    "personality": "Claire loves to eat and digs right into food. When Claire finds something interesting, it becomes the only thing that matters!",
+    "favorites": "Watching the tiller (a machine that digs up the soil) in the farm field",
+    "identifyingMarks": "Lots of tiny black spots on the forehead. Claire's eyes are a little closer together than twin Carla's.",
+    "keeperComment": "On days with a full tummy, Claire was busy watching the tiller in the farm field.",
+    "speciesInfo": "Hey, guess what? You know the fluffy hair around a male lion's neck? It's called a \"mane.\" A lion's mane starts to grow at about one and a half years old. Then, by age 5 or 6, it's all grown in and looks great!"
+   }
   },
   "carla": {
    "personality": "",
@@ -43,7 +59,15 @@
      "title": "African Lion - Denver Zoo Conservation Alliance",
      "url": "https://denverzoo.org/animals/african-lion/"
     }
-   ]
+   ],
+   "en": {
+    "family": "Child of Alex and Angie. Twin of Claire (1 year old).",
+    "personality": "Eats slowly and chews food really well",
+    "favorites": "Eating slowly and chewing well",
+    "identifyingMarks": "A few scattered spots on the forehead",
+    "keeperComment": "Carla eats more slowly than Claire, but chews food really well.",
+    "speciesInfo": "What do you think a baby lion looks like? Actually, baby lions have dark spots and patterns on their bodies. They look a little different from grown-ups! I heard these patterns fade away when they are about 10 months old."
+   }
   },
   "alex": {
    "personality": "",
@@ -59,7 +83,15 @@
      "title": "Lion | National Geographic Kids",
      "url": "https://kids.nationalgeographic.com/animals/mammals/facts/lion"
     }
-   ]
+   ],
+   "en": {
+    "family": "Father of twins Claire and Kara (1 year old), born to him and Angie",
+    "personality": "Alex loves Angie very much. He is so crazy about her that some days he hardly comes out into the area. Sometimes he even eats the food the kids leave behind.",
+    "favorites": "Sunbathing",
+    "identifyingMarks": "The only male of the five lions. He has a mane.",
+    "keeperComment": "On sunny days, he looked like he was really enjoying sunbathing.",
+    "speciesInfo": "This might surprise you, but a lion's roar is the loudest of all the big cats! They say it can be heard as far as 8 kilometers away. Both males and females roar. They roar to keep in touch with each other. Pretty roar-some, right?"
+   }
   },
   "riley": {
    "personality": "",
@@ -75,7 +107,15 @@
      "title": "African Lion - Denver Zoo Conservation Alliance",
      "url": "https://denverzoo.org/animals/african-lion/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Riley has the biggest heart of all and is very kind. Riley loves to play, and takes good care of the lion cubs by playing with them too. On a day when Riley and Angie were out in the same area, Riley seemed to be the one who wanted to get closer.",
+    "favorites": "Playing! On snowy days, if you invite Riley to play, Riley comes jumping right over the snow piles.",
+    "identifyingMarks": "A little piece is missing from the tip of the tail.",
+    "keeperComment": "When we invite Riley to play, Riley comes jumping over the snow piles to us. So cute.",
+    "speciesInfo": "Let me tell you one of my favorite facts! In a group of lions, hunting, which means catching food, is mostly the females' job. The females work together to hunt. Each member of the group has its own job to do!"
+   }
   },
   "r-184v168": {
    "personality": "ウィニーは、{春|はる}になるとよく{動|うご}き{回|まわ}る、{元気|げんき}なラーテルなんだ。ときどき、{気|き}が{強|つよ}いところも{見|み}せるんだって。",
@@ -91,7 +131,16 @@
      "title": "ラーテル - Wikipedia",
      "url": "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%83%BC%E3%83%86%E3%83%AB"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Winnie is a lively honey badger who moves around a lot in spring. I hear Winnie can be pretty bold and feisty sometimes, too!",
+    "favorites": "Winnie loves sweet potatoes and eats lots of them. Sometimes Winnie saves just one piece of food to eat later. Maybe Winnie is saving the yummy stuff for a treat?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Honey badgers mostly live in dry places. They eat bugs and small animals. They eat plants, too. They eat almost anything! Most of all, they love honey. That's why their English name is \"honey badger.\" With their strong front legs and claws, they can dig holes really fast. I hear they can even climb trees. Aren't they super strong?"
+   },
+   "nameEn": "Winnie"
   },
   "r-1v1pqub": {
    "personality": "グランは、ふだんおだやかにすごしていることが{多|おお}い{子|こ}なんだって。でも、{急|きゅう}なものおとやゆれには、びっくりしやすいんだ。シマウマだけに、ドキッとしまうま…なんてね！",
@@ -111,7 +160,16 @@
      "title": "グラントシマウマ（池田動物園）",
      "url": "https://ikedazoo.jp/animal/mammalian/grants-zebra/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "I hear Gran is usually calm and relaxed. But sudden sounds or shaking can give Gran a big scare. Talk about a zebra-sized jump... just kidding!",
+    "favorites": "Gran eats lots of grass hay. Gran seems to like regular hay better than hay pressed into hard blocks. I hear soft, fluffy hay is Gran's favorite!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Grant's zebras live in the grasslands and savannas of Africa. They mostly eat grass. Sometimes they eat new buds from trees, too. They live in family groups called herds, with a father, a few mothers, and their babies. Sometimes these herds come together. Wow, they can make a giant herd of tens of thousands of zebras! And guess what? Zebras can sleep standing up. Isn't that amazing?"
+   },
+   "nameEn": "Gran"
   },
   "r-18xm0fl": {
    "personality": "ブチハイエナのピーターは、ふだんは{落|お}ち{着|つ}いてすごしている{子|こ}なんだって。でも、{部屋|へや}にもどる{前|まえ}には、ちょっぴりそわそわすることがあるんだ。",
@@ -131,7 +189,16 @@
      "title": "ブチハイエナ／札幌市円山動物園",
      "url": "https://www.city.sapporo.jp/zoo/012-b.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Peter the spotted hyena is usually calm and relaxed, I hear. But before going back to the indoor room, Peter sometimes gets a little fidgety.",
+    "favorites": "Peter often eats deer meat, I hear. On some days, there are deer bones too! Peter gets to eat meat from lots of different parts of the body.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite stories! Spotted hyenas live on the savannas of Africa. They got their name from the spots on their bodies. They are animals that move around at night. They live in groups called \"clans.\" In these groups, the females are in charge. People think they use as many as 12 different kinds of calls. Great at chatting, right?"
+   },
+   "nameEn": "Peter"
   },
   "r-3zknaw": {
    "personality": "",
@@ -147,7 +214,16 @@
      "title": "Bone Appetite: 6 Animals That Eat Bones",
      "url": "https://www.worldwildlife.org/resources/facts/bone-appetite-meet-6-animals-that-eat-bones/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Spotted hyenas have super strong jaws. They can crunch up hard bones with their teeth! Inside their tummies, they can even melt the little bits of bone and turn them into food for their bodies. They're champions at not leaving any leftovers, right?"
+   },
+   "nameEn": "Whoopi"
   },
   "r-zuotzx": {
    "personality": "アンバーは、{力|ちから}もちのブチハイエナなんだ。まわりのものをかじることがあるんだって。こわしたりすることもあるんだ。{気|き}になるものが、いっぱいなのかな？",
@@ -159,7 +235,16 @@
      "title": "Spotted Hyena | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/spotted-hyena"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Amber is a strong spotted hyena. I hear Amber sometimes chews on things nearby, and even breaks them sometimes! Maybe there are lots of things Amber wants to check out?",
+    "favorites": "Amber's very favorite food is deer meat. I hear Amber often eats chicken, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Spotted hyena babies have their eyes open from the day they are born. They already have teeth, too! After a while, they move into a den (an animal's home in the ground) with the other moms in their group. A baby's fur is dark brown. As they grow up, it slowly changes into a spotted pattern. Isn't that amazing?"
+   },
+   "nameEn": "Amber"
   },
   "r-1f1rjrh": {
    "personality": "シェリは、{人|ひと}になれているスナネコなんだって。なでられても、いやがらないんだよ。ひざに、スリっと{体|からだ}をよせてくることもあるんだって。",
@@ -179,7 +264,16 @@
      "title": "スナネコ（公益財団法人 東京動物園協会など parks.or.jp 動物ガイド）",
      "url": "https://www.parks.or.jp/sczoo/guide/004/004271.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "I heard that Cheri is a sand cat who is used to people. Cheri doesn't mind being petted at all. Sometimes Cheri even snuggles up against someone's lap!",
+    "favorites": "Cheri loves being petted. Sometimes Cheri snuggles up against people's laps. Cheri is so friendly! Isn't that snuggling sweet?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Sand cats are wild cats! They live in the deserts of North Africa and Asia. They are one of the smallest kinds of cats. Long fur grows on the bottoms of their feet. This fur keeps their feet safe from the hot sand. I heard their hearing is really, really good. They can hear the tiny sounds of mice and bugs! In the daytime, they rest in their burrows. At night, they go out to look for food. They have lots of clever ways to live in the desert, don't they?"
+   },
+   "nameEn": "Cheri"
   },
   "r-11x317i": {
    "personality": "",
@@ -203,7 +297,16 @@
      "title": "ミーアキャット｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
      "url": "https://www.tobuzoo.com/zoo/list/2476.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Meerkats have \"cat\" in their name. But guess what? They aren't cats at all. They're part of the mongoose family! They live in the south of Africa, in places with lots of sand and stones. They dig holes in the ground with the strong claws on their front feet. And they live together as a family. One meerkat in the group stands up on its back legs. It keeps watch all around for everyone! In the morning, meerkats stand facing the sun. That's to warm up their bodies. They eat all sorts of food, like bugs, scorpions, and fruit."
+   },
+   "nameEn": "Tora"
   },
   "r-gv7h2o": {
    "personality": "",
@@ -219,7 +322,16 @@
      "title": "Meerkat | Brookfield Zoo Chicago",
      "url": "https://www.brookfieldzoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Meerkats have dark patches around their eyes. People say these patches help soften bright sunlight. Just like sunglasses, right? Their pupils are long and wide from side to side. That's why they can look out over big, wide places!"
+   },
+   "nameEn": "Moa"
   },
   "r-1rr0bkq": {
    "personality": "",
@@ -235,7 +347,16 @@
      "title": "Meerkat | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! Meerkats can close their ears when they dig holes. That keeps sand from getting in. Their eyes have a special thin cover, too. When they dig, that cover protects their eyes. They're all set for sand play, right?"
+   },
+   "nameEn": "Nerine"
   },
   "r-14eo9as": {
    "personality": "",
@@ -247,7 +368,16 @@
      "title": "Meerkat | Happy Hollow Park & Zoo",
      "url": "https://happyhollow.org/explore/zoo/zoo-in-the-hollow/meerkat-2/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a meerkat secret! Meerkats have stripes on their backs. The pattern of the stripes is different on every single meerkat. That's a lot like how everyone's face looks different, right?"
+   },
+   "nameEn": "Yomogi"
   },
   "r-1pkduzr": {
    "personality": "",
@@ -259,7 +389,16 @@
      "title": "Meerkat | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Meerkat babies are born with their eyes and ears closed. They have almost no fur, too! Their eyes open when they are about 2 weeks old. At about 4 weeks old, they come out of their burrow (their home under the ground) for the very first time."
+   },
+   "nameEn": "Suzu"
   },
   "r-1iq7z27": {
    "personality": "",
@@ -271,7 +410,16 @@
      "title": "Meerkat | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a meerkat is? The answer: meerkats raise their babies together as a team! In a meerkat group, there are babysitters. While a mom goes out to look for food, other group members take care of the babies. When the group moves to a new burrow, they carry the babies. They hold a baby gently by the back of its neck in their mouth. Raising babies all together. Isn't that great teamwork?"
+   },
+   "nameEn": "Haruka"
   },
   "r-dcy6ez": {
    "personality": "",
@@ -287,7 +435,16 @@
      "title": "Meerkat, Habitat Location & Meerkat Facts | Chester Zoo",
      "url": "https://www.chesterzoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but grown-up meerkats teach their kids lots of things! They teach them how to hide. They teach them how to hunt. I heard they even teach them how to dig holes! A mom holds some food in her mouth. Then she hops and hops in front of her kid. She keeps going until the kid takes the food from her mouth. Isn't that amazing?"
+   },
+   "nameEn": "Kai"
   },
   "r-dvwd1j": {
    "personality": "ミーアキャットのそうは、{毎日|まいにち}おだやかにすごしている{子|こ}なんだって。だっこされると、はじめはそわそわしちゃうんだ。でも、ふれあっているうちに、だんだん{落|お}ち{着|つ}いてくるんだよ。",
@@ -299,7 +456,16 @@
      "title": "Meerkat | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Sou the meerkat spends every day calmly, I hear. When someone holds Sou, Sou gets a little fidgety at first. But while they spend time together, Sou slowly calms down.",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite facts! A meerkat burrow has about 15 ways in and out, I hear. Deep inside the burrow, it stays just the right warmth. That's true even when it's hot or cold outside! There's a toilet room, too. There's a sleeping room as well! A group of meerkats has a few burrows, they say. So sometimes they move house. Isn't that amazing?"
+   },
+   "nameEn": "Sou"
   },
   "r-svhl8o": {
    "personality": "ビネは、{毎日|まいにち}おだやかにすごしている{子|こ}なんだって。ごはんをゆっくり{食|た}べる{日|ひ}もあるんだ。のんびりやさんでしょ？",
@@ -311,7 +477,16 @@
      "title": "Meerkat, Habitat Location & Meerkat Facts | Chester Zoo",
      "url": "https://www.chesterzoo.org/animals/meerkat"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Bine spends every day calmly and peacefully. Some days, Bine eats food nice and slowly. What a laid-back meerkat, right?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Meerkats have really good eyes. They can see far all around them! When a lookout meerkat spots something dangerous, it calls out loudly to warn the others. Meerkats can bark, or make sounds like a whistle. They have 6 different ways of calling! Isn't that amazing?"
+   },
+   "nameEn": "Bine"
   },
   "r-e1fyhj": {
    "personality": "あるるは、{寒|さむ}い{日|ひ}はゆっくりめな{子|こ}なんだ。あたたかくなってから{動|うご}き{出|だ}すんだって。{好|す}きなくわの{葉|は}を{見|み}せると、{自分|じぶん}から{近|ちか}づいてくるんだよ。",
@@ -331,7 +506,16 @@
      "title": "アルダブラゾウガメ - 神奈川県川崎市にある夢見ヶ崎動物公園",
      "url": "https://www.yumemizoo.com/animal/aldabra-giant-tortoise/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Aruru takes it slow on cold days. I hear Aruru gets moving once it warms up. If you show Aruru the mulberry leaves they love, they'll come right over to you!",
+    "favorites": "Aruru loves mulberry leaves and wild plants. I hear Aruru often picks fruits like bananas and apples to eat, too. What a little foodie, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but the Aldabra giant tortoise is a big tortoise. Its shell can be more than 1 meter long! They live on islands in a country called Seychelles, in the Indian Ocean. They eat grass and leaves from trees. They eat young branches, too. I hear they get most of their water from their food. On hot afternoons, they stay in the shade. They move around in the early morning and in the evening. Such easygoing animals, right?"
+   },
+   "nameEn": "Aruru"
   },
   "r-pyzioz": {
    "personality": "",
@@ -347,7 +531,16 @@
      "title": "パンケーキリクガメ（京都市動物園 どうぶつ図鑑）",
      "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/m_tornieri"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "I hear Butter eats vegetables every day. There's even a record of Butter eating komatsuna, a leafy green vegetable!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Pancake tortoises live in rocky places in the east of Africa. They live among rocks in savannas and dry bushland. They eat plants. I hear they eat many kinds of grass. Their shell is flat and soft. That's how they got the name \"pancake\"! When they are scared, they zoom super fast into a crack in the rocks. Inside the crack, they puff up their shell. That way, nobody can pull them out. They're flat-out hide-and-seek champs, right?"
+   },
+   "nameEn": "Butter"
   },
   "r-1b2qxoi": {
    "personality": "",
@@ -359,7 +552,16 @@
      "title": "パンケーキリクガメ（東山動植物園 飼育係へのインタビュー）",
      "url": "https://sdgsstory.global.brother/j/special/minna/678/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Syrup mostly eats vegetables. I heard Syrup eats veggies every single day!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just between us. A pancake tortoise mom lays only one egg at a time! And it takes 100 to 300 days for the egg to hatch. That's a really long time, right? So when a baby is born, it's a very special thing."
+   },
+   "nameEn": "Syrup"
   },
   "r-wo6arh": {
    "personality": "レオナルドは、あたたかいところが{大|だい}すきなケヅメリクガメなんだ。さむい{日|ひ}は、ぽかぽかしたところでじっとすごしていることがあるんだって。のんびりやさんでしょ？",
@@ -383,7 +585,16 @@
      "title": "ケヅメリクガメ ｜ 長崎バイオパーク",
      "url": "https://www.biopark.co.jp/animals/reptiles/africanspurredtortoise.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Leonardo is an African spurred tortoise who loves warm places. I heard that on cold days, Leonardo sometimes stays very still in a nice, cozy warm spot. What a laid-back tortoise, right?",
+    "favorites": "Leonardo loves fresh green grass, like wild plants. I heard Leonardo eats dry grass and banana peels too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "African spurred tortoises live around the deserts of Africa and in the savanna. They eat grass, flowers, and plants like cactuses. In the hot daytime, they rest inside holes they dig by themselves. When it gets cool in the morning and evening, they start moving around with lots of energy! At the top of their back legs, they have big scales that look like claws. These are called \"spurs,\" and that's the secret behind their name!"
+   },
+   "nameEn": "Leonardo"
   },
   "r-w8jr1o": {
    "personality": "ラルクは、{朝|あさ}から{元気|げんき}に{動|うご}きまわる{日|ひ}もある{子|こ}なんだ。なかまのカメたちと、となりにならんでごはんを{食|た}べることもあるんだって。なかよしさんでしょ？",
@@ -399,7 +610,16 @@
      "title": "【小諸市動物園だより】大きさは世界で何番目？「ケヅメリクガメ」",
      "url": "https://www.ecochil.net/article/56156/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "On some days, Laruku is busy moving around from the morning on! Laruku sometimes eats side by side with the other tortoises, too. What good friends, right?",
+    "favorites": "Laruku loves pressed hay (a grass called timothy). Laruku loves mulberry leaves, too. I hear Laruku often eats the leaves that grow down low.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! The African spurred tortoise is the third biggest kind of tortoise in the world. The big ones can have a shell about 90 centimeters long. They can even weigh more than 80 kilograms. Now that's one heavy, solid tortoise, right?"
+   },
+   "nameEn": "Laruku"
   },
   "r-1dc1imy": {
    "personality": "ケヅメリクガメのメテオは、{食|た}べものにきょうみしんしんな{子|こ}なんだ。ほかのカメのごはんまで、{食|た}べたそうにすることがあるんだって。くいしんぼうさんでしょ？",
@@ -419,7 +639,16 @@
      "title": "ケヅメリクガメ｜エコファミリーWEB",
      "url": "https://ecofami.com/hyakka/detail/48351/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Meteo the African spurred tortoise is super curious about food! Sometimes Meteo even looks like they want to eat the other tortoises' meals. What a big eater, right?",
+    "favorites": "Meteo eats lots of vegetables, wild plants, and fruit. Meteo even eats watermelon rinds! Meteo also eats \"timothy blocks,\" which are pressed blocks of dried grass.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about African spurred tortoises. The mother digs a hole in the ground. Then she lays lots of eggs at one time. A newborn baby's shell is only about 4 to 5 centimeters long. That's really small, right? But they grow up super fast!"
+   },
+   "nameEn": "Meteo"
   },
   "r-6s8gun": {
    "personality": "ティガーは、ベンガルトラの{子|こ}なんだ。のんびり、まったりすごしていることが{多|おお}いんだって。おちついたトラなんだ。のんびりやさんでしょ？",
@@ -431,7 +660,16 @@
      "title": "トラ（ベンガル系／白変種） - 平川動物公園公式サイト",
      "url": "https://hirakawazoo.jp/zookan/%E3%83%99%E3%83%B3%E3%82%AC%E3%83%AB%E3%83%88%E3%83%A9/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Tigger is a young Bengal tiger. I hear Tigger spends a lot of time just taking it easy and relaxing. Tigger is a calm tiger. A real laid-back type, right?",
+    "favorites": "I hear the food Tigger eats the most is deer meat. Sometimes Tigger sharpens their claws on a scratching tree, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but Bengal tigers live in the forests of India and Nepal. I hear they usually live alone. But a mother raising cubs stays with her babies. In the daytime, they often rest in thick bushes. Their stripes are perfect for hiding in the bushes. Isn't that amazing?"
+   },
+   "nameEn": "Tigger"
   },
   "r-miy3ij": {
    "personality": "",
@@ -443,7 +681,16 @@
      "title": "シャムワニ - Wikipedia",
      "url": "https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%A3%E3%83%A0%E3%83%AF%E3%83%8B"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one secret about Siamese crocodiles. Siamese crocodiles live in Southeast Asia. They live in slow rivers, lakes, and swamps. Their home is water that is not salty. They mostly eat fish and snakes. A mother crocodile mixes grass and dead twigs with mud. With that, she builds a big, round nest. Then she guards the eggs she laid. Isn't she a kind mom?"
+   },
+   "nameEn": "Tirol"
   },
   "r-1l14bjb": {
    "personality": "",
@@ -463,7 +710,16 @@
      "title": "レッサースローロリス（沖縄こどもの国）",
      "url": "https://www.okzm.jp/animal_book/1071/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but slow lorises are part of the monkey family! They live in the forests of Southeast Asia. In Japanese, their name sounds like it has the word for \"squirrel\" in it, but they aren't squirrels at all. Slow lorises live up in the trees at night. They have big, round eyes. That's why they can see well even in the dark! Their favorite foods are tree sap, flower nectar, fruit, and bugs. They hold on tight to branches with their hands and feet. Then they move slowly, making almost no sound. They can't jump. Aren't they easygoing?"
+   },
+   "nameEn": "Oyaki"
   },
   "r-14a9x66": {
    "personality": "ビンは、ビントロングの{子|こ}なんだ。まわりの{様子|ようす}がかわると、そわそわしちゃうことがあるんだって。あついのは、ちょっとにがてなんだよ。",
@@ -483,7 +739,16 @@
      "title": "ビントロング（那須どうぶつ王国）",
      "url": "https://nasu-oukoku.com/?p=3882"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Bin is a young binturong. When things around Bin change, Bin can get a little restless. Bin doesn't like hot weather very much.",
+    "favorites": "At mealtime, Bin often picks the side dishes to eat. Maybe Bin cares more about the extras than the main dish?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! Binturongs live in forests in places like Southeast Asia. They spend most of their time up in the trees. Their tails are thick and long. They can wrap their tails around branches to hold their bodies steady. Their favorite food is fruit. They eat bugs and other things, too. They sleep during the day. Then, at night, they start moving around. And guess what? Their bodies smell like popcorn! Isn't that strange?"
+   },
+   "nameEn": "Bin"
   },
   "r-fgmwjt": {
    "personality": "",
@@ -503,7 +768,16 @@
      "title": "Binturong - Arctictis binturong (Marwell Zoo)",
      "url": "https://www.marwell.org.uk/animals/binturong/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one secret about binturongs. Binturongs love the fruit of fig plants! The seeds from the fruit they eat get spread all over the forest in their poop. Inside a binturong's tummy, the seed's skin gets softer. That helps the seeds sprout more easily. So binturongs are little helpers that grow the forest, right?"
+   },
+   "nameEn": "Basil"
   },
   "r-10pu0va": {
    "personality": "",
@@ -515,7 +789,16 @@
      "title": "Binturong - Georgia Aquarium",
      "url": "https://www.georgiaaquarium.org/animal/binturong/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Binturong moms usually have 1 or 2 babies at a time. When the babies are born, their eyes are closed. For the first few days, they hold on tight to their mom's fur. What little cuddle bugs, right?"
+   },
+   "nameEn": "Parsley"
   },
   "r-1c6ro7x": {
    "personality": "のり{次|じ}は、ビルマニシキヘビの{子|こ}なんだ。ふだんは{落|お}ち{着|つ}いていて、のんびりすごしているんだって。でも、ごはんを{見|み}つけると、すばやく{飛|と}びつくこともあるんだよ。",
@@ -535,7 +818,16 @@
      "title": "ビルマニシキヘビ - 神戸市（神戸どうぶつ王国）",
      "url": "https://www.kobe-oukoku.com/animals/92"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Noriji is a young Burmese python. Most of the time, Noriji is calm and takes it easy. But when Noriji spots food, Noriji can jump at it super fast!",
+    "favorites": "Noriji's usual food is rats. And sometimes Noriji sheds. That means taking off the old skin! Great at changing clothes, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Burmese pythons are very big snakes. They live in forests and wet grasslands in Southeast Asia. You can often find them near water. They are great swimmers! They can stay underwater for 30 minutes without taking a breath. Amazing, right? When they are young, they spend a lot of time up in trees. As they grow bigger, their bodies get heavy. So they spend more time living on the ground. They eat small animals and birds. Isn't that interesting?"
+   },
+   "nameEn": "Noriji"
   },
   "r-t4rjs9": {
    "personality": "ホタルちゃんは、およそ4{週間|しゅうかん}に1{回|かい}、まとめてごはんを{食|た}べる{子|こ}なんだ。ふだんは、ごはんを{食|た}べない{日|ひ}がつづくんだって。でも、それはヘビにとって、ふつうのくらし{方|かた}なんだよ。",
@@ -547,7 +839,16 @@
      "title": "Burmese python",
      "url": "https://nationalzoo.si.edu/animals/burmese-python"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Hotaru eats a big meal about once every 4 weeks. Most of the time, Hotaru goes many days without eating. But that's a normal way of life for a snake!",
+    "favorites": "Hotaru's food is mice and rats. They're both in the mouse family. Hotaru eats a big, hearty meal all at once!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "A Burmese python mom wraps her body around her eggs to protect them. And guess what? She shivers and shakes her body to keep the eggs warm! Sometimes she stays with them for more than 2 months, until they hatch. That's rare for a snake. What a caring mom, right?"
+   },
+   "nameEn": "Hotaru"
   },
   "r-9f3yvx": {
    "personality": "{吹雪|ふぶき}は、ゆったりしたリズムでくらしている{子|こ}なんだ。ごはんを{食|た}べるのは、だいたい4しゅうかんに1{回|かい}なんだって。のんびりやさんでしょ？",
@@ -559,7 +860,16 @@
      "title": "Burmese python",
      "url": "https://nationalzoo.si.edu/animals/burmese-python"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Fubuki lives life at a slow, easy pace. Fubuki eats only about once every 4 weeks! What a laid-back snake, right?",
+    "favorites": "Fubuki's food is mice and rats.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "A Burmese python has a really long body, doesn't it? Most snakes have only one lung. But Burmese pythons have two lungs! One of them is very small, though."
+   },
+   "nameEn": "Fubuki"
   },
   "r-1bcp4qe": {
    "personality": "ジミンは、{子|こ}どものジュピターのお{母|かあ}さんなんだ。ジュピターが{赤|あか}ちゃんのころは、しっかりだっこしていたんだって。おせわもしていたんだって。やさしいお{母|かあ}さんでしょ？",
@@ -579,7 +889,16 @@
      "title": "ワオキツネザル",
      "url": "https://www.toyama-familypark.jp/zukan/750"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Jimin is the mother of a young lemur named Jupiter. When Jupiter was a baby, Jimin held her baby tight. She took good care of Jupiter, too. Isn't she a kind mom?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Ring-tailed lemurs live in the southern part of Madagascar, a big island. Their tails have rings on them. That's why they're called \"ring-tailed\"! Wow, that's an easy name to remember, right? They eat fruit, tree buds, leaves, bugs, and more. And guess what? On cold days, they sunbathe. They face the sun and spread their arms and legs out wide."
+   },
+   "nameEn": "Jimin"
   },
   "r-ki6bjv": {
    "personality": "サナは、{赤|あか}ちゃんを{育|そだ}てているおかあさんなんだ。{赤|あか}ちゃんを、しっかりだっこしているんだって。{赤|あか}ちゃんも、サナにぎゅっとしがみついているんだ。",
@@ -595,7 +914,16 @@
      "title": "Ring-tailed Lemur - Singapore Zoo",
      "url": "https://www.mandai.com/en/singapore-zoo/animals-and-zones/ring-tailed-lemur.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Sana is a mom who is raising a baby. She holds her baby tight in her arms. And her baby holds on tight to Sana, too!",
+    "favorites": "Sana seems to love dandelions. She eats them like they're super yummy!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "In a ring-tailed lemur group, the females are stronger than the males. Even the lowest-ranking female is stronger than the males! That's really unusual for monkeys and their relatives."
+   },
+   "nameEn": "Sana"
   },
   "r-dp4mxx": {
    "personality": "",
@@ -611,7 +939,16 @@
      "title": "Ring-tailed Lemur Lemur catta (Denver Zoo)",
      "url": "https://www.denverzoo.org/wp-content/uploads/2018/09/Ring-tailed-Lemur.pdf"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Luna seems to love dandelions. People have seen Luna eating them like they taste really yummy!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just between us. Ring-tailed lemurs talk to each other with smells! They get into a pose almost like a handstand and rub their smell on branches and walls. Males put their smell on their tails. Then they wave their tails around to see whose smell is stronger. It's stinky, but it's an important message!"
+   },
+   "nameEn": "Luna"
   },
   "r-1yvwqhs": {
    "personality": "",
@@ -627,7 +964,16 @@
      "title": "Ring-tailed Lemur - Saint Louis Zoo",
      "url": "https://stlzoo.org/animals/mammals/lemurs-monkeys-apes/ring-tailed-lemur"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "I heard Momo really loves dandelions. People have seen Momo munching on them like they taste yummy. If Momo finds a dandelion, maybe Momo smiles too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about ring-tailed lemurs. When ring-tailed lemur babies are born, they have blue eyes! When they grow up, their eyes change to a goldish brown. The grown-up females in the group all raise the babies together. That's lots of kind aunties, right?"
+   },
+   "nameEn": "Momo"
   },
   "r-lau52a": {
    "personality": "",
@@ -643,7 +989,16 @@
      "title": "Ring-Tailed Lemur - Reid Park Zoo",
      "url": "https://reidparkzoo.org/animals/ring-tailed-lemur/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "I heard Percy really loves dandelions. When Percy eats them, they look super yummy!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? A ring-tailed lemur's tail has ring patterns on it. There are 13 black rings and 13 white rings. Don't you want to count them? Their tail can't wrap around branches. I heard they use it to keep their balance up in the trees."
+   },
+   "nameEn": "Percy"
   },
   "r-ljyirp": {
    "personality": "ジョージは、{年|とし}をとったワオキツネザルなんだって。いつもゆったりすごしているんだ。{南米|なんべい}がわの{入口|いりぐち}のちかくにいることが{多|おお}いんだよ。{右上|みぎうえ}のたなで、じっとしているんだって。",
@@ -659,7 +1014,16 @@
      "title": "Ring-tailed lemur - San Francisco Zoo & Gardens",
      "url": "https://www.sfzoo.org/animals-exhibits/a-to-z/ring-tailed-lemur/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "George is an older ring-tailed lemur. George always takes it easy. You can often find George near the entrance on the South America side. They say George likes to sit very still on the upper right shelf.",
+    "favorites": "George loves dandelions! People have seen George munching on them like they're super yummy.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a ring-tailed lemur is? It spends more time on the ground than other lemurs. On the ground, it trots along on all four legs. And when it walks, it holds its long tail straight up in the air!"
+   },
+   "nameEn": "George"
   },
   "r-1po87o6": {
    "personality": "",
@@ -675,7 +1039,16 @@
      "title": "Ring-tailed Lemur - Potter Park Zoo",
      "url": "https://potterparkzoo.org/animals/ring-tailed-lemur/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but ring-tailed lemurs are some of the noisier members of the monkey family! They tell each other how they feel with their voices and their faces. Even when they argue about their territory, they usually settle it with loud calls."
+   },
+   "nameEn": "Jupiter"
   },
   "r-lqrtyq": {
    "personality": "",
@@ -687,7 +1060,16 @@
      "title": "Ring-tailed lemur - Whipsnade Zoo",
      "url": "https://www.whipsnadezoo.org/whats-here/animals/ring-tailed-lemur"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite facts! Ring-tailed lemurs are great at jumping. They kick off trees with their strong back legs. They can jump many meters from one tree to the next! Isn't that an amazing jump?"
+   },
+   "nameEn": "Spacey"
   },
   "r-1s6jkqg": {
    "personality": "キンカジューのフィグは、{暖|あたた}かいところが{大|だい}すきな{子|こ}なんだって。おなじへやのヴィラと、くっついてすごしていたこともあるんだよ。なかよしで、ほっこりするでしょ？",
@@ -703,7 +1085,16 @@
      "title": "Kinkajou | Oregon Zoo",
      "url": "https://www.oregonzoo.org/animals/kinkajou"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Fig the kinkajou really loves warm places. Fig and Villa share a room, and they have even spent time snuggled up together. They're such good friends. Isn't that heartwarming?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Kinkajous are animals that live around South America and Mexico. ...Oops, that's not quite right. Let me say it again more carefully. Kinkajous live in warm forests from southern Mexico all the way to Brazil. They are part of the raccoon family. They move around at night and sleep in tree holes during the day. Their favorite food is fruit, and they like figs best of all! With their long tail and back legs, they can hold on to branches. They can even eat while hanging upside down. Isn't that amazing? They love sweet things, so they are sometimes called \"honey bears.\" How fun is that!"
+   },
+   "nameEn": "Fig"
   },
   "r-1mdrnso": {
    "personality": "",
@@ -715,7 +1106,16 @@
      "title": "Kinkajou | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/kinkajou"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "A kinkajou's tongue is about 13 centimeters long! I heard it can reach deep inside flowers, and even into beehives. And guess what? While a kinkajou licks up the sweet nectar from flowers, it also helps carry pollen from flower to flower. With that long, stretchy tongue, kinkajous really stick their necks… I mean, their tongues out to help! Aren't they hard workers?"
+   },
+   "nameEn": "Villa"
   },
   "r-tcxh6y": {
    "personality": "",
@@ -727,7 +1127,16 @@
      "title": "Kinkajou | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/kinkajou"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "I hear Coco likes thick, gooey tree sap. Maybe that sweet smell is just too yummy to say no to?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "A kinkajou's fur is short and grows very thick. I hear this fur works like a raincoat! So even in forests with lots of rain, their body doesn't get wet easily. It also helps keep bees from stinging them. Isn't that amazing?"
+   },
+   "nameEn": "Coco"
   },
   "r-1hzv6wt": {
    "personality": "",
@@ -739,7 +1148,16 @@
      "title": "Kinkajou | San Diego Zoo Animals & Plants",
      "url": "https://animals.sandiegozoo.org/animals/kinkajou"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just for you! Kinkajous also have a scientific name. That's a name people use all over the world. It's \"Potos flavus.\" They say it means something close to \"golden drinker.\" That's because kinkajous have goldish fur, and they love to drink nectar, the sweet juice inside flowers!"
+   },
+   "nameEn": "Hazel"
   },
   "r-lz1a5j": {
    "personality": "",
@@ -751,7 +1169,16 @@
      "title": "Kinkajou | Zoo Ekzo",
      "url": "https://www.zoo-ekzo.com/en/node/2978"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "I heard that Chirine the kinkajou seems to like tree sap. Not the sweet juice that comes out of trees. Chirine likes the tree sap itself best!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one kinkajou secret. Kinkajous live in small groups. Many groups have one female, two males, and their babies. In the daytime, they sleep together. In the evening, they groom each other's fur. After that, they each go off on their own to look for food. They're good friends, right?"
+   },
+   "nameEn": "Chirine"
   },
   "r-mn414n": {
    "personality": "",
@@ -767,7 +1194,16 @@
      "title": "Kinkajou | Zoo Ekzo",
      "url": "https://www.zoo-ekzo.com/en/node/2978"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Kinkajou babies are usually born one at a time. When they are born, their eyes are closed. After about 10 days, they can see! The mom carries her baby by holding it against her tummy. Isn't that cute?"
+   },
+   "nameEn": "Maka"
   },
   "r-vsruwx": {
    "personality": "",
@@ -779,7 +1215,16 @@
      "title": "Kinkajou | The Belize Zoo",
      "url": "https://www.belizezoo.org/kinkajou/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a kinkajou is? Guess what? It's a really noisy animal! Kinkajous hiss and bark. They can make high, squeaky calls, too. Sometimes they make a big racket high up in the trees of the forest at night. Pretty noisy, right?"
+   },
+   "nameEn": "Mia"
   },
   "r-r3eia6": {
    "personality": "",
@@ -795,7 +1240,16 @@
      "title": "Kinkajou | Zoo Ekzo",
      "url": "https://www.zoo-ekzo.com/en/node/2978"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but kinkajous use smell to tell others, \"This is my area!\" They make the smell from the corners of their mouth, their throat, and their tummy. And every night, they take almost the same path. So neat and tidy, right?"
+   },
+   "nameEn": "Kuko"
   },
   "r-2js3ns": {
    "personality": "",
@@ -815,7 +1269,16 @@
      "title": "那須どうぶつ王国 コモンマーモセット",
      "url": "https://nasu-oukoku.com/?p=3907"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Common marmosets are small monkeys that live in the forests of Brazil in South America. They live up in the trees. They hardly ever come down to the ground. They eat fruit and bugs. They also eat things like sap, the juice that comes out of trees. You can spot them by the fluffy white hair around their ears. They live together as a family. The dads help a lot with taking care of the babies, too. What a close family, right?"
+   },
+   "nameEn": "Satsuki"
   },
   "r-1i3blrn": {
    "personality": "ウリンは、フタユビナマケモノの{子|こ}なんだ。ふだんは、おだやかな{子|こ}なんだって。でも、ときどき、ごきげんななめな{日|ひ}もあるんだよ。",
@@ -835,7 +1298,16 @@
      "title": "【京都市動物園だより】１日の半分以上は樹の上でねているよ「フタユビナマケモノ」",
      "url": "https://www.ecochil.net/article/49590/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Urin is a young two-toed sloth. Most of the time, Urin is a calm kid. But some days, Urin is a little grumpy!",
+    "favorites": "Urin has eaten zucchini before. But it seems Urin doesn't like corn very much.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but two-toed sloths live in forests in the northern part of South America. They live up in the trees. They hook their long claws on branches and hang down. They eat leaves, new buds, and fruit. They are active at night. People say they sleep 15 to 18 hours a day. So laid-back, right? But guess what? They are actually great swimmers!"
+   },
+   "nameEn": "Urin"
   },
   "r-1nsptjq": {
    "personality": "",
@@ -855,7 +1327,16 @@
      "title": "千葉市：千葉市動物公園 アカハナグマ",
      "url": "https://www.city.chiba.jp/zoo/zone/coati.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, did you know? South American coatis live in the forests of South America. Their noses are long and thin, and they can bend a lot! Coatis dig in the ground with their noses and sharp claws. They eat bugs and other small animals, and fruit too. Their tails are about as long as their bodies. They use their tails to keep their balance up in the trees. Mothers and babies live together in groups. They make little sounds with their noses to chat with each other. Aren't they good friends?"
+   },
+   "nameEn": "Kanna"
   },
   "r-7s4luj": {
    "personality": "",
@@ -871,7 +1352,16 @@
      "title": "South American Coati",
      "url": "https://elmwoodparkzoo.org/animal/south-american-coati/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a South American coati is? Its ankles can bend really, really well. So when it climbs down a tree, it can go down headfirst! Upside down is no problem at all, right?"
+   },
+   "nameEn": "Lua"
   },
   "r-kjb7ow": {
    "personality": "",
@@ -887,7 +1377,16 @@
      "title": "South american coati - Jungle Park",
      "url": "https://www.junglepark.es/en/especies/mammals/south-american-coati/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but South American coati moms build nests up in the trees! That's where they have their babies. The babies stay in the nest with their mom for 5 to 6 weeks. After that, they go back to the group together."
+   },
+   "nameEn": "Myu"
   },
   "r-kwuyay": {
    "personality": "",
@@ -903,7 +1402,16 @@
      "title": "South American Coati",
      "url": "https://elmwoodparkzoo.org/animal/south-american-coati/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! In Japanese, the South American coati's name has the word \"kuma\" in it. That means \"bear\"! But coatis are not in the bear family. They are in the same family as raccoons and red pandas. They look a lot like raccoons!"
+   },
+   "nameEn": "Puppe"
   },
   "r-m9wrko": {
    "personality": "",
@@ -915,7 +1423,16 @@
      "title": "アカハナグマ｜いきもの図鑑｜ZOO CAN DREAM PROJECT",
      "url": "http://www.zoocan.jp/zukan/index.cgi?193="
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? A South American coati's tail has stripes on it! In tall grass, coatis hold their tails straight up. The tail is a signal that says, \"I'm right here!\" That way, they don't get lost from their friends. Smart, right?"
+   },
+   "nameEn": "Pupu"
   },
   "r-1kbzhj5": {
    "personality": "",
@@ -927,7 +1444,16 @@
      "title": "アカハナグマ｜いきもの図鑑｜ZOO CAN DREAM PROJECT",
      "url": "http://www.zoocan.jp/zukan/index.cgi?193="
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "In a group of South American coatis, a few of them keep watch even at mealtime. They take turns and look out for each other. That way, their friends can eat without worrying. That's amazing teamwork, right?"
+   },
+   "nameEn": "Rin"
   },
   "r-1cb853": {
    "personality": "ゆめこは、アメリカバクの{女|おんな}の{子|こ}なんだ。ほかのバクたちと、いっしょにくらしているよ。いろいろな{草|くさ}や{木|き}の{葉|は}を{食|た}べて、すごしているんだって。",
@@ -947,7 +1473,16 @@
      "title": "アメリカバク（池田動物園）",
      "url": "https://ikedazoo.jp/animal/mammalian/%E3%82%A2%E3%83%A1%E3%83%AA%E3%82%AB%E3%83%90%E3%82%AF/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Yumeko is a girl South American tapir. She lives together with other tapirs. She spends her days eating all kinds of grass and tree leaves.",
+    "favorites": "Yumeko loves willow leaves! She often eats water lily leaves, too. She also eats hay and wild grasses. And she eats tree branches and leaves, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? South American tapirs live in South America. Their homes are forests and grasslands near water. A tapir's long nose is really its nose and upper lip joined together and stretched out. Tapirs can move this nose very well, just like an elephant's trunk. They use it to eat tree leaves, grass, and fruit. Tapirs are great swimmers, too. They can stay underwater for about 5 minutes. Isn't that amazing? And baby tapirs have stripes going along their bodies!"
+   },
+   "nameEn": "Yumeko"
   },
   "r-lpd7lb": {
    "personality": "テルは、{食|た}べものにこだわりがあるリスザルなんだ。{好|す}きなものをえらんで{食|た}べるんだって。なかまのえさをとっちゃうこともあるんだ。{元気|げんき}でつよきな{子|こ}なんだよ。",
@@ -967,7 +1502,16 @@
      "title": "【円山動物園だより】リスに似た小さなサル「コモンリスザル」",
      "url": "https://www.ecochil.net/article/56513/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Teru is a squirrel monkey who is picky about food. Teru chooses the foods they like and eats those. Sometimes Teru even takes food from the others! Teru is a lively, bold little monkey.",
+    "favorites": "Teru loves worms, sunflower seeds, mulberries, and oranges. Teru also eats lots of bamboo grass and wild plants. Eating oranges makes Teru feel orange-tastic… just kidding!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a common squirrel monkey is? It's a small monkey that lives in the forests of South America. Its size and color are like a squirrel's. That's how it got its name! It lives almost all the time up in the trees. It uses its long tail to keep its balance. It eats fruit, nuts, insects, and other things. It lives in big groups of dozens of monkeys. The females work together to raise the babies. What a friendly team, right?"
+   },
+   "nameEn": "Teru"
   },
   "r-1d0nygf": {
    "personality": "",
@@ -987,7 +1531,16 @@
      "title": "メガネカイマン（池田動物園）",
      "url": "https://ikedazoo.jp/animal/reptiles/%E3%83%A1%E3%82%AC%E3%83%8D%E3%82%AB%E3%82%A4%E3%83%9E%E3%83%B3/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The spectacled caiman is part of the crocodile family. Between their eyes, there is a raised ridge. It looks like a pair of glasses, or \"spectacles.\" That's how they got their name. Fun, right? They live in rivers, lakes, and swamps, from southern Mexico all the way to Argentina. They mostly eat fish, crabs, and other food like that. They like to float in the water with just their head poking out. Don't they look cute like that?"
+   },
+   "nameEn": "Kichi"
   },
   "r-sb6b8": {
    "personality": "フェンは、{春|はる}になると、にこにこしたかおに{見|み}えることが{多|おお}い{子|こ}なんだって。{元気|げんき}いっぱいに{見|み}えるんだ。{食|た}べものを{地面|じめん}にうめておくこともあるんだって。",
@@ -1003,7 +1556,16 @@
      "title": "ホッキョクオオカミ（那須どうぶつ王国 動物紹介）",
      "url": "https://nasu-oukoku.com/?p=805"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "In spring, Fen often looks like they're smiling! Fen looks full of energy. I heard Fen sometimes buries food in the ground, too.",
+    "favorites": "Fen eats deer meat a lot. It seems Fen likes liver, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Arctic wolves live in cold places near the North Pole, like Canada and Greenland. Their bodies are covered in long, pure white fur. Their snouts (the nose and mouth part) are shorter than other wolves' snouts. Their ears are small, too. This is their secret for staying warm in the cold! They eat animals like musk oxen and Arctic hares. They live together in a group called a pack. Everyone in the pack helps raise the pups, too. They're super at teamwork. Isn't that amazing?"
+   },
+   "nameEn": "Fen"
   },
   "r-u1jc9u": {
    "personality": "ネガは、お{母|かあ}さんオオカミなんだ。{名前|なまえ}を{呼|よ}ばれると、{部屋|へや}へやって{来|く}ることがあるんだって。ごはんをもらいに{来|く}るんだ。",
@@ -1019,7 +1581,16 @@
      "title": "Colorado Wolf and Wildlife Center - Arctic Wolves",
      "url": "https://www.wolfeducation.org/arctic-wolves"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Nega is a mother wolf. I heard that when someone calls her name, she sometimes comes into her room. She comes to get her food!",
+    "favorites": "Nega likes a kind of inner-body meat called \"fuegarami.\" I heard she really likes eating the parts that look like a hose. She loves liver too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "An Arctic wolf has long fur, and under it, lots of soft fur grows close together. I heard that when winter comes near, the fur gets even thicker. And guess what? In spring, the fur falls out and changes to shorter fur. They change their coats to match the season!"
+   },
+   "nameEn": "Nega"
   },
   "r-dehppj": {
    "personality": "マリは、{自分|じぶん}で{地面|じめん}にあなをほりすすめることがある{子|こ}なんだ。いっしょにくらすネガがちかづくと、さっとはなれることもあるんだって。マイペースな{子|こ}なのかな？",
@@ -1035,7 +1606,16 @@
      "title": "Toronto Zoo - Arctic wolf",
      "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Mari sometimes digs holes in the ground all by themself. When Nega, who lives with Mari, comes close, Mari sometimes moves away quickly. Maybe Mari just likes to do things their own way?",
+    "favorites": "Mari eats a lot of windpipe meat, stomach meat, and liver. I hear Mari likes to eat deer meat, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Arctic wolves howl, \"Awoooo!\" Their voices can travel many kilometers. That's why they can stay with their pack, even in the snow or in the dark. Calling to each other with their voices, isn't that wonderful?"
+   },
+   "nameEn": "Mari"
   },
   "r-1o4g48n": {
    "personality": "ユアは、かむ{力|ちから}がとっても{強|つよ}い{子|こ}なんだ。{木|き}でできたものを、こわしちゃうこともあるんだって。おかれたまるたにも、よくきょうみをしめしていたんだよ。",
@@ -1051,7 +1631,16 @@
      "title": "Toronto Zoo - Arctic wolf",
      "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Yua has a super strong bite! Sometimes Yua even breaks things made of wood. When a log was put out, Yua was often very curious about it.",
+    "favorites": "Yua often eats deer meat. One time, Yua ate up every bit of some duck meat! Yua loves logs, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! In the Arctic, the ground stays frozen all the time. So it's rock hard! That makes it hard for Arctic wolves to dig dens. Instead, they make their homes behind rocks or in caves. Pretty clever, right?"
+   },
+   "nameEn": "Yua"
   },
   "r-m8zvr3": {
    "personality": "テオは、マイペースなホッキョクオオカミの{子|こ}なんだ。なげられたエサを、すぐにはうけとらないこともあるんだって。あとから{自分|じぶん}でひろって{食|た}べるんだ。のんびりやさんでしょ？",
@@ -1067,7 +1656,16 @@
      "title": "Toronto Zoo - Arctic wolf",
      "url": "https://www.torontozoo.com/animals/Arctic%20wolf"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Teo is a young Arctic wolf who likes to do things at Teo's own pace. Sometimes, when food is tossed to Teo, Teo doesn't catch it right away. Later, Teo picks it up and eats it. Pretty laid-back, right?",
+    "favorites": "Teo loves liver and mino (that's part of a cow's stomach). I hear Teo eats a lot of them! Besides deer meat, Teo eats all sorts of things, like fish and quail.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about Arctic wolves. Arctic wolf moms have babies every year. They have about 2 or 3 babies at a time. That's fewer than other wolves!"
+   },
+   "nameEn": "Teo"
   },
   "r-tbv8ac": {
    "personality": "カムイは、ちょっぴり{不器用|ぶきよう}なところがある{子|こ}なんだって。{投|な}げてもらったごはんを、うまくキャッチできないこともあるんだ。{鼻|はな}にぶつけて、{落|お}としちゃうこともあるんだって。",
@@ -1079,7 +1677,16 @@
      "title": "Arctic wolf - WWF",
      "url": "https://wwf.panda.org/discover/our_focus/wildlife_practice/profiles/mammals/arcticwolf/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Kamui is a little bit clumsy, I hear. Sometimes Kamui can't catch the food the keepers toss. Sometimes it even bonks Kamui on the nose and drops to the ground!",
+    "favorites": "Kamui's favorite foods are fuegarami and mino. (Fuegarami is a cow's windpipe, and mino is part of a cow's stomach.) It seems Kamui likes mino even more than deer meat!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? In the Arctic winter, there are days when it stays dark all day long. Those dark days can go on for as long as 5 months! But Arctic wolves don't mind one bit. They're tough animals that can handle the cold and the dark. Pretty strong, right?"
+   },
+   "nameEn": "Kamui"
   },
   "r-6jyoop": {
    "personality": "ハナは、はじめての{場所|ばしょ}がちょっぴりにがてな{子|こ}だったんだって。{動|うご}くとびらも、ちょっぴりにがてだったんだ。でも、{少|すこ}しずつなれたんだよ。{今|いま}では、{自分|じぶん}で{出|で}たり{入|はい}ったりできるんだ。{朝|あさ}、{外|そと}に{出|で}たいときは、{水|みず}のおさらをポーンとなげることもあるんだって。",
@@ -1095,7 +1702,16 @@
      "title": "ニホンザル（大内山動物園）",
      "url": "http://www.oouchiyama-zoo.com/animals/6557/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "I heard that Hana used to feel a little nervous in new places. Moving doors made Hana a little nervous, too. But little by little, Hana got used to them. Now Hana can go in and out all alone! On mornings when Hana wants to go outside, Hana sometimes tosses the water dish. Toss!",
+    "favorites": "Hana eats lots of bananas and bread. I heard Hana has tried yogurt, too. And Hana has eaten muscat grapes and plums! Hana can eat so many kinds of food. Isn't that great?",
+    "identifyingMarks": "Hana wears a collar. Take a good look at Hana's neck!",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret just for you. Japanese macaques live in the mountains and forests of Honshu, Shikoku, and Kyushu in Japan. Not counting humans, they live the farthest north of all the monkeys in the world! They have red faces and red bottoms. They eat all kinds of things, like nuts and fruit, leaves, and bugs. They have \"cheek pouches\" in their cheeks. These are like little pockets where they can keep food for a while. They live together in big groups called troops."
+   },
+   "nameEn": "Hana"
   },
   "r-109oir3": {
    "personality": "",
@@ -1115,7 +1731,16 @@
      "title": "東京のツキノワグマ|ツキノワグマについて|東京都環境局",
      "url": "https://www.kankyo.metro.tokyo.lg.jp/nature/animals_plants/bear/tokyos"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Goro eats apples, bananas, and carrots. Depending on the season, Goro also gets grapes, persimmons, peaches, and watermelon. So many yummy flavors to enjoy. Isn't that great?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The Asian black bear's Japanese name means \"moon ring bear.\" It comes from the crescent moon pattern on its chest. But some bears have a pattern with missing parts, and some have no pattern at all! Their favorite foods are nuts like acorns, and fruit. They are good at climbing trees. They are good swimmers, too! In winter, they stay inside holes in big trees or in rocks. Pretty interesting, right?"
+   },
+   "nameEn": "Goro"
   },
   "r-1pz6900": {
    "personality": "まっ{君|くん}は、{毎日|まいにち}のんびり{過|す}ごしているツキノワグマなんだ。タイヤやロープのまわりにいることもあるんだって。のんびりやさんでしょ？",
@@ -1131,7 +1756,16 @@
      "title": "ツキノワグマ舎のクマ棚（福岡市動物園ブログ）",
      "url": "http://fukuokazoo.blogspot.com/2021/03/blog-post.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Makkun is an Asian black bear who takes it easy every day. Makkun sometimes hangs around the tires and ropes, too. What a laid-back bear, right?",
+    "favorites": "Makkun loves bananas and carrots. In summer, Makkun eats peaches and watermelon. In fall, Makkun eats persimmons. Makkun enjoys the fruits of each season!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "When Asian black bears eat fruit up in a tree, they pull the branches close with their paws. And guess what? The broken branches pile up and look like a bird's nest! People call this a \"bear shelf.\""
+   },
+   "nameEn": "Makkun"
   },
   "r-y5gzah": {
    "personality": "だいちゃんは、{元気|げんき}で{人|ひと}なつこいキタキツネなんだ。{人|ひと}になでてもらうのが{大|だい}すきみたいだよ。じめんをほるのもとくいなんだ。{大|おお}きなあなをつくることもあるんだって。",
@@ -1151,7 +1785,16 @@
      "title": "キタキツネ / 国立環境研究所 侵入生物DB",
      "url": "https://www.nies.go.jp/biodiversity/invasive/DB/detail/10300.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Dai-chan is a lively, friendly Ezo red fox. Dai-chan seems to love being petted by people! Dai-chan is also great at digging in the ground. Sometimes Dai-chan even makes a big hole!",
+    "favorites": "Dai-chan eats meat, dog food, vegetables, and more. Sometimes Dai-chan gets fish or deer meat, too. Dai-chan also gets boiled eggs, fruit, and sweet potatoes. So many yummy treats! Pretty happy, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think the Ezo red fox is? In Japan, this fox lives only in Hokkaido. You can spot one by the black backs of its ears and its black feet. It eats all kinds of food, like mice, bugs, fish, and nuts. When it catches its prey, it jumps up high with a big boing! Its den has lots of ways in and out. Which door will it pop out of? That's one tricky, foxy puzzle, right?"
+   },
+   "nameEn": "Dai-chan"
   },
   "r-1dxjmk7": {
    "personality": "あずきは、{大|おお}きな{音|おと}がすこしにがてな{子|こ}なんだ。こうじの{音|おと}がしたときは、{小屋|こや}の{中|なか}でじっとしていたよ。でも、{時間|じかん}がたつと、おちついたんだって。",
@@ -1163,7 +1806,16 @@
      "title": "【旭山動物園だより】身近な野生動物「キタキツネ」｜地球にやさしい子ども達を育む環境教育メディア",
      "url": "https://www.ecochil.net/article/51104/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Azuki is a little scared of loud noises. When there were building work sounds, Azuki stayed very still inside the hut. But after a while, Azuki calmed down.",
+    "favorites": "Azuki eats meat and vegetables. Sometimes Azuki eats the carrots or the dog food first!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but Ezo red foxes usually don't live in groups. They live on their own! But the season when babies are born is special. Then the male and the female stay together. The babies are born in spring. By the end of autumn, they leave their parents. Going off on their own so soon. Isn't that amazing?"
+   },
+   "nameEn": "Azuki"
   },
   "r-17tlnq1": {
    "personality": "",
@@ -1187,7 +1839,16 @@
      "title": "アカギツネ ｜ 哺乳類図鑑 ｜ 図鑑 ｜ 大阪府立環境農林水産総合研究所",
      "url": "https://www.knsk-osaka.jp/zukan/zukan_database/mammal/f0de16a243c8957/cfb2dc4738ae560.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite stories! The silver fox is a kind of red fox. It's a red fox with a different fur color. Its fur looks kind of gray. That's why it's called a silver fox! Red foxes live in many places across the northern half of the world. People say you can sometimes spot silver foxes in Hokkaido, in Japan, too. They eat mice, birds, bugs, fruit, and more. And isn't that long, fluffy tail just wonderful?"
+   },
+   "nameEn": "Mei"
   },
   "r-1wj5osd": {
    "personality": "タムタムは、ふだん{落|お}ち{着|つ}いてすごしているタヌキなんだって。まわりの{音|おと}や{作業|さぎょう}に{気|き}がつくと、そわそわすることもあるんだよ。{耳|みみ}がいいのかな？",
@@ -1207,7 +1868,16 @@
      "title": "どうぶつ図鑑「ホンドタヌキ」｜東京ズーネット",
      "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?code=89"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "I hear Tamutamu is usually a calm raccoon dog. But when Tamutamu notices sounds or work going on nearby, they can get a little restless. Maybe they have really good ears?",
+    "favorites": "I hear Tamutamu loves meat! They eat vegetables too. They also eat dog food, liver, and boiled eggs. Tamutamu can eat lots of different foods. Great job, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Japanese raccoon dogs live in forests and in the countryside near villages on Honshu, Shikoku, and Kyushu in Japan. They are mostly active at night. I hear they eat almost anything, like nuts, fruit, and bugs. They are in the dog family, but they can climb trees! That's rare for the dog family. They also have a habit called \"tamefun.\" That means they always poop in the same spot. Isn't that funny?"
+   },
+   "nameEn": "Tamutamu"
   },
   "r-1vmqxs9": {
    "personality": "ファスは、{自分|じぶん}の{場所|ばしょ}を{大切|たいせつ}にするウッドチャックの{子|こ}なんだ。{食|た}べものを{部屋|へや}のすみっこに{運|はこ}んでおくくせがあるんだって。お{気|き}に{入|い}りのねどこは、{部屋|へや}のおくにあるんだ。",
@@ -1227,7 +1897,16 @@
      "title": "Groundhog (Woodchuck) North Carolina Wildlife Profiles",
      "url": "https://www.ncwildlife.gov/media/2189/download?attachment="
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Fas is a young woodchuck who takes good care of their own space. Fas has a habit of carrying food to the corners of the room. Fas's favorite bed is at the back of the room.",
+    "favorites": "Fas loves carrots and dandelions! Fas gobbles up dandelions with lots of gusto, munch, munch! And Fas finishes the carrots before anything else.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Woodchucks are part of the squirrel family. They live in North America, in Canada and the United States. They eat soft plants, like clover. In summer, they eat a lot! Then they store fat in their bodies. In winter, they sleep the whole time in a hole under the ground. What easygoing animals, right?"
+   },
+   "nameEn": "Fas"
   },
   "r-1m221tq": {
    "personality": "クッキーは、{人|ひと}によくなれている{子|こ}なんだって。あまえんぼうなところもあるんだ。かわいいでしょ？",
@@ -1243,7 +1922,16 @@
      "title": "オグロプレーリードッグ／須坂市ホームページ",
      "url": "https://www.city.suzaka.nagano.jp/suzaka_zoo/animal/1/2347.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "I hear Cookie is very used to people. Cookie can be a bit of a cuddle-lover, too. Cute, right?",
+    "favorites": "I hear Cookie sometimes eats wild plants. Munch, munch on grass from the fields!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Prairie dogs live on the grasslands of North America. Their name says \"dog,\" but guess what? They are really part of the squirrel family! They eat grass. They dig big burrows, or tunnel homes, under the ground. They live there with their families. And wow, I hear their burrows have rooms for the babies! They have rooms for sleeping, too. They even have toilets! Aren't they amazing digging experts? You really can dig their style!"
+   },
+   "nameEn": "Cookie"
   },
   "r-1svvkx9": {
    "personality": "",
@@ -1259,7 +1947,16 @@
      "title": "オグロプレーリードッグ／札幌市円山動物園",
      "url": "https://www.city.sapporo.jp/zoo/030-e.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "At the door of a prairie dog's burrow, there is a lookout spot made from a pile of dirt. The lookout stands up on its back legs and watches all around. It uses lots of different calls to tell the others what is going on nearby. What a great guard, right?"
+   },
+   "nameEn": "Marron"
   },
   "r-168gt41": {
    "personality": "たんぽぽは、{甘|あま}えんぼうなプレーリードッグなんだって。{飼育員|しいくいん}さんのそばに、よってくることもあるんだ。かわいいでしょ？",
@@ -1275,7 +1972,16 @@
      "title": "プレーリードッグ - Wikipedia",
      "url": "https://ja.wikipedia.org/wiki/%E3%83%97%E3%83%AC%E3%83%BC%E3%83%AA%E3%83%BC%E3%83%89%E3%83%83%E3%82%B0"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Tanpopo is a prairie dog who loves cuddles and attention. Sometimes Tanpopo even comes up close to the keepers. Isn't that cute?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just for you. Prairie dogs say hello to their friends by touching mouths. It looks like a kiss, right? Sometimes they hug to say hello, too! They also connect with their friends by grooming each other's fur. And they talk with tail moves and calls, too!"
+   },
+   "nameEn": "Tanpopo"
   },
   "r-trs08o": {
    "personality": "",
@@ -1299,7 +2005,16 @@
      "title": "タテガミヤマアラシ｜【公式】のんほいパーク（豊橋総合動植物公園）",
      "url": "https://www.nonhoi.jp/animal/p12891/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Kogomi really loves wild plants! When Kogomi gets some, Kogomi eats a lot, I hear. A tasty plant snack never gets Kogomi down. Maybe it puts Kogomi in a happy mood!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Porcupines are part of the rat and mouse family. They live in forests and grasslands around the world, I hear. They eat grass and tree roots. They eat tree bark and fruit, too! Their front teeth never stop growing. So they chew on hard wood to keep their teeth at the right length. The quills on their back are spikes that grew from hair. When they get scared, they make their quills stand straight up. That's how they protect themselves. Pretty sharp, right?"
+   },
+   "nameEn": "Kogomi"
   },
   "r-h5a6qs": {
    "personality": "",
@@ -1319,7 +2034,16 @@
      "title": "千葉市：千葉市動物公園 アメリカビーバー",
      "url": "https://www.city.chiba.jp/zoo/zone/data-american_beaver.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a North American beaver is? It lives in rivers and lakes in North America. It eats tree leaves, little twigs, and tree bark. Its back feet are webbed, so it's a super good swimmer! Its teeth are so strong that it can even knock down trees. Amazing, right? Beavers use branches and mud to block the flow of a river. They're great at building \"dams\" this way! Inside, there are a few rooms, and the family lives there happily together."
+   },
+   "nameEn": "Oak"
   },
   "r-1wuyhat": {
    "personality": "ユウトは、オオカンガルーの{子|こ}なんだ。ほかのカンガルーといっしょになると、すこし{興奮|こうふん}しやすいんだって。{元気|げんき}いっぱいでしょ？",
@@ -1339,7 +2063,16 @@
      "title": "オオカンガルー - 平川動物公園公式サイト",
      "url": "https://hirakawazoo.jp/zookan/%E3%82%AA%E3%82%AA%E3%82%AB%E3%83%B3%E3%82%AC%E3%83%AB%E3%83%BC/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Yuto is a young Eastern grey kangaroo. When Yuto is with other kangaroos, Yuto can get a little excited. So full of energy, right?",
+    "favorites": "Yuto eats carrots and cabbage. Yuto also eats special kangaroo food!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Eastern grey kangaroos live in the grasslands and forests of Australia. Their favorite food is grass! On hot afternoons, they rest in the shade of trees. Then, in the evening, they start moving around. A newborn baby weighs only about 1 gram! It grows big inside the pouch on its mother's tummy. Kangaroos have strong back legs. They can jump as far as 8 meters in one hop! Aren't they jumping champs?"
+   },
+   "nameEn": "Yuto"
   },
   "r-1xq14tb": {
    "personality": "シゲコは、{仲間|なかま}のことがとっても{気|き}になる{子|こ}なんだ。いっしょにくらすツユとは、なかよくなりたそうにしているんだって。ちょっぴりびっくりしやすいところもあるんだ。",
@@ -1355,7 +2088,16 @@
      "title": "Macropus giganteus Shaw, 1790, Eastern Grey Kangaroo (Museums Victoria)",
      "url": "https://collections.museumsvictoria.com.au/species/8419"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Shigeko really cares about the other kangaroos. Shigeko seems to want to be good friends with Tsuyu, who lives in the same home. Shigeko can get a little startled sometimes, too.",
+    "favorites": "Shigeko seems super curious about spending time with the other kangaroos. Maybe being with everyone makes Shigeko happy?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! An eastern grey kangaroo has a thick, long tail. When it moves slowly, it holds up its body with its front legs, back legs, and tail. The tip of the tail is often dark, almost black."
+   },
+   "nameEn": "Shigeko"
   },
   "r-gfu6yx": {
    "personality": "",
@@ -1367,7 +2109,16 @@
      "title": "オオカンガルー（ハイイロカンガルー）／札幌市円山動物園",
      "url": "https://www.city.sapporo.jp/zoo/023-e.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one secret about Eastern grey kangaroos. Eastern grey kangaroos live together in groups called mobs. Lots of mobs have about 10 kangaroos. But sometimes a mob can get really big, with about 100 kangaroos! That's a busy crowd, right?"
+   },
+   "nameEn": "Junko"
   },
   "r-1betead": {
    "personality": "オオカンガルーのソウタは、エリアに{出|で}てすごす{時間|じかん}が{長|なが}い{子|こ}なんだ。なかまのユウトといっしょに{出|で}ていることもあるんだって。なかよしでいいでしょ？",
@@ -1383,7 +2134,16 @@
      "title": "オーストラリアの平原｜展示動物紹介｜園内ガイド｜いしかわ動物園",
      "url": "https://www.ishikawazoo.jp/guide/animal/australia.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Sota the eastern grey kangaroo spends a lot of time out in the open area. Sometimes Sota is out there with a buddy named Yuto, too. Good friends, right? Isn't that nice?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think the eastern grey kangaroo is? It's one of the bigger members of the kangaroo family. Its scientific name even has a word in it that means \"very big\"! Its fur is grey. That's why it's also called the \"grey kangaroo.\""
+   },
+   "nameEn": "Sota"
   },
   "r-fcbxri": {
    "personality": "カンタは、オオカンガルーの{子|こ}なんだ。まわりで{音|おと}がすると、{気|き}になってそわそわすることもあるんだって。",
@@ -1399,7 +2159,16 @@
      "title": "オオカンガルー（ハイイロカンガルー）／札幌市円山動物園",
      "url": "https://www.city.sapporo.jp/zoo/023-e.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Kanta is a young eastern grey kangaroo. I hear that when there are sounds nearby, Kanta sometimes gets curious and a little fidgety.",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but eastern grey kangaroo babies start coming out of the pouch when they are about 9 months old. But they don't leave Mom right away! I hear they start living on their own at about a year and a half. They take their time growing up!"
+   },
+   "nameEn": "Kanta"
   },
   "r-1w3sm1x": {
    "personality": "ユイは、{毎日|まいにち}おそとのエリアに{出|で}て、{長|なが}い{時間|じかん}をすごしているんだ。なかまのシゲコがツユのほうへ{走|はし}ってくることがあるでしょ？そんなとき、ユイはいやがって{向|む}かっていくことがあるんだって。ユイは、{気持|きも}ちがはっきりした{子|こ}なんだ。",
@@ -1411,7 +2180,16 @@
      "title": "オーストラリアの平原｜展示動物紹介｜園内ガイド｜いしかわ動物園",
      "url": "https://www.ishikawazoo.jp/guide/animal/australia.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Every day, Yui goes out to the outdoor area and spends a long time there. You know how their friend Shigeko sometimes runs over toward Tsuyu? When that happens, Yui doesn't like it and sometimes heads straight at Shigeko. Yui is someone who shows their feelings clearly!",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite facts! Eastern grey kangaroo males and females are different sizes. Big males can weigh more than 60 kilograms. Females weigh about 20 to 30 kilograms. The males are really strong and sturdy, right?"
+   },
+   "nameEn": "Yui"
   },
   "r-1idja4d": {
    "personality": "ツユは、オオカンガルーの{女|おんな}の{子|こ}なんだ。{外|そと}のエリアで{長|なが}い{時間|じかん}をすごしているんだって。{大胆|だいたん}なところを{見|み}せてくれたこともあるんだよ。",
@@ -1423,7 +2201,16 @@
      "title": "どうぶつ図鑑「オオカンガルー」 ｜ 東京ズーネット",
      "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?species_code=348"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Tsuyu is a girl Eastern grey kangaroo. I hear she spends a lot of time in the outdoor area. She has even shown us her bold side!",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? An Eastern grey kangaroo's back feet hide an amazing secret. Let's take a close look. The big toes are the ring toe and the little toe! And there's no thumb toe at all. Aren't those funny feet?"
+   },
+   "nameEn": "Tsuyu"
   },
   "r-xeb8kq": {
    "personality": "",
@@ -1443,7 +2230,16 @@
      "title": "アカカンガルー｜ハイブリッド・レジャーランド東武動物公園公式Webサイト",
      "url": "https://www.tobuzoo.com/zoo/list/2453.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about red kangaroos. Red kangaroos live in places like the grasslands of Australia. They mostly eat grass. A mother kangaroo has a pouch on her tummy. Her baby grows big inside that pouch! When they run, they don't use their front legs. They put their back legs together and go hop, hop, hop! On hot days, they lick their front legs to make them wet. That's how they cool their bodies down. Pretty clever, right?"
+   },
+   "nameEn": "Koka"
   },
   "r-1ptt844": {
    "personality": "",
@@ -1463,7 +2259,16 @@
      "title": "どうぶつ図鑑「パルマワラビー」 ｜ 東京ズーネット",
      "url": "https://www.tokyo-zoo.net/encyclopedia/species_detail?code=76"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but the Parma wallaby is a small wallaby in the kangaroo family! I hear they live in damp forests in Australia. They are animals that are active at night. Most of the time, they live on their own. They eat grass and tree leaves. A mother has a pouch on her tummy. I hear the baby grows big inside that pouch!"
+   },
+   "nameEn": "Fujio"
   },
   "r-1jg2d5r": {
    "personality": "",
@@ -1475,7 +2280,16 @@
      "title": "Shy little wallaby has been overlooked for decades",
      "url": "https://phys.org/news/2021-09-shy-wallaby-overlooked-decades.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! Parma wallabies are about as big as a cat. Their tail is about as long as their body. Around their mouth, they have a white mark that looks like a mustache. Pretty stylish, right?"
+   },
+   "nameEn": "Fujiko"
   },
   "r-nms5nq": {
    "personality": "",
@@ -1491,7 +2305,16 @@
      "title": "Parma Wallaby (Notamacropus parma) Fact Sheet: Taxonomy & History",
      "url": "https://ielc.libguides.com/sdzg/factsheets/parmawallaby/taxonomy"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? The name \"parma\" comes from the language of people who have lived in Australia for a very long time. In English, they are also called the \"white-throated wallaby.\" That means a wallaby with a white throat. So they have more than one name!"
+   },
+   "nameEn": "Sachiko"
   },
   "r-jlmnhe": {
    "personality": "",
@@ -1503,7 +2326,16 @@
      "title": "Parma Wallaby (Notamacropus parma) Fact Sheet: Behavior & Ecology",
      "url": "https://ielc.libguides.com/sdzg/factsheets/parmawallaby/behavior"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Parma wallabies get around by hopping, boing, boing! They hop close to the ground, with their bodies held almost flat, they say. This is a big clue that helps you tell it's a Parma wallaby. Isn't that fun?"
+   },
+   "nameEn": "Emi"
   },
   "r-wzy6il": {
    "personality": "キキは、まだ{若|わか}いパルマワラビーの{子|こ}なんだ。{大人|おとな}のなかまと{同|おな}じくらい、すいすい{動|うご}けるようになったんだって。がんばりやさんでしょ？",
@@ -1519,7 +2351,16 @@
      "title": "Parma wallabies: a history of translocations and reintroductions",
      "url": "https://meridian.allenpress.com/australian-zoologist/article/44/2/322/504836/Parma-wallabies-a-history-of-translocations-and"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Kiki is a young Parma wallaby. I heard Kiki can now zip around just as well as the grown-ups. What a hard worker, right?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Long ago, people thought Parma wallabies were gone from the whole world. But guess what? In 1965, they were found on Kawau, an island in New Zealand! And in 1967, they were found in Australia too. I'm so glad we got to meet them again!"
+   },
+   "nameEn": "Kiki"
   },
   "r-17s4cuf": {
    "personality": "カピバラのマロは、とってものんびりやさんなんだ。{動|うご}きもまったりしているよ。{見|み}ていると、ほっとするんだ。あたたかいところですごしている{姿|すがた}も{見|み}られるんだって。",
@@ -1539,7 +2380,16 @@
      "title": "カピバラ｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
      "url": "https://www.tobuzoo.com/zoo/list/2220.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Maro the capybara is super laid-back. Maro moves nice and slow, too. Just watching Maro makes me feel calm! People say you can also see Maro relaxing in warm spots.",
+    "favorites": "Maro loves wild plants and kumazasa, a kind of bamboo grass. Maro eats them a lot! Maro also seems to like getting cozy and warm in front of a warm breeze. Looks comfy, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret just for you! Capybaras live in grassy fields and forests near water in South America. They are in the rodent family, the same family as mice and rats, and they are the biggest of them all! Some can weigh more than 50 kilograms. In the wild, they eat grass that grows near the water. Their toes have small webs between them. That makes it easy for them to live in the water, too. They live in groups of about 10. Everyone in the group helps raise the babies. What a close family, right?"
+   },
+   "nameEn": "Maro"
   },
   "r-tixr54": {
    "personality": "",
@@ -1555,7 +2405,16 @@
      "title": "【金沢動物園だより】カピバラ",
      "url": "https://www.ecochil.net/article/1550/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Shizuka loves grass, kumazasa bamboo grass, and fresh new bamboo shoots. Shizuka eats lots and lots of grass! I hear Shizuka also likes to rest on the mat on the floor.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a capybara secret! A capybara's eyes, ears, and nose are all up high on its face. They sit in a straight line! So in the water, a capybara only needs to poke a little bit of its face out. That way, it can look around and breathe. I hear a hippo's face is built the same way. A capybara's fur is stiff, like a scrub brush. Even when it gets wet, it dries fast. Pretty cool, right?"
+   },
+   "nameEn": "Shizuka"
   },
   "r-setw77": {
    "personality": "",
@@ -1571,7 +2430,16 @@
      "title": "Capybara - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Capybara"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Rapi loves wild plants and kumazasa, a kind of bamboo grass. On days when there are lots of wild plants, Rapi eats a lot!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Capybaras have a special name that scientists gave them, called a \"scientific name.\" It means \"water pig\"! That's how much capybaras love the water. They're not pigs, but they're called pigs. Isn't that hog-wild?"
+   },
+   "nameEn": "Rapi"
   },
   "r-uwzwij": {
    "personality": "",
@@ -1587,7 +2455,16 @@
      "title": "マーラ｜日立市公式ウェブサイト",
      "url": "https://www.city.hitachi.lg.jp/zoo/dobutsu_shokai/1004071/1004077.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but Patagonian maras live on grassy plains in South America called the \"pampas.\" With those big ears, they look like rabbits, right? But they are really part of the rodent family, like mice! They mostly eat grass. They are busy and active in the daytime. I heard they love to sunbathe. At night, they rest in holes they dig in the ground. Relaxing in the warm sunshine... what easygoing animals, huh?"
+   },
+   "nameEn": "Kabosu"
   },
   "r-5q5tar": {
    "personality": "",
@@ -1599,7 +2476,16 @@
      "title": "マーラ ｜ 長崎バイオパーク",
      "url": "https://www.biopark.co.jp/animals/mammal/patagonianmara.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite facts! Maras are super fast runners. They say a mara can run about as fast as a car! A mara can also jump and spin around in the air to face the other way. What a jump, right?"
+   },
+   "nameEn": "Yuzu"
   },
   "r-d66tme": {
    "personality": "",
@@ -1615,7 +2501,16 @@
      "title": "マーラ│マザー牧場の動物たち│マザー牧場",
      "url": "https://www.motherfarm.co.jp/animal/breed/detail.php?CN=199463"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Patagonian maras live in pairs, a male and a female. Once they pair up, they stay together for life! They always spend their time side by side. Aren't they a sweet couple?"
+   },
+   "nameEn": "Lime"
   },
   "r-bl12jq": {
    "personality": "",
@@ -1631,7 +2526,16 @@
      "title": "マーラ ｜ 長崎バイオパーク",
      "url": "https://www.biopark.co.jp/animals/mammal/patagonianmara.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Patagonian maras raise their babies in burrows, which are holes in the ground. While the mom feeds the babies her milk, the dad keeps watch all around, they say. At milk time, the mom and babies sit down neatly together. Aren't they well-mannered?"
+   },
+   "nameEn": "Lemon"
   },
   "r-4kj549": {
    "personality": "",
@@ -1647,7 +2551,16 @@
      "title": "マーラ｜日立市公式ウェブサイト",
      "url": "https://www.city.hitachi.lg.jp/zoo/dobutsu_shokai/1004071/1004077.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but Patagonian maras live on grassy plains in South America called the \"Pampas.\" With their big ears, they look like rabbits, right? But they're actually part of the rodent family, like mice! They mostly eat grass. They're busy and active during the day. I hear they love sunbathing! At night, they rest in holes dug in the ground. Relaxing in the warm sunshine, they're real take-it-easy types, aren't they?"
+   },
+   "nameEn": "Raichi"
   },
   "r-1bxc2hn": {
    "personality": "",
@@ -1663,7 +2576,16 @@
      "title": "モモイロペリカン｜宮崎市フェニックス自然動物園",
      "url": "https://www.miyazaki-city-zoo.jp/animals_t/%E3%83%A2%E3%83%A2%E3%82%A4%E3%83%AD%E3%83%9A%E3%83%AA%E3%82%AB%E3%83%B3/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Kun loves fish! I heard Kun eats lots of kinds, like horse mackerel, herring, and sprats.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret just for you. Great white pelicans live near lakes and rivers in Europe, Asia, and Africa. They are usually white. But when it's time to raise their babies, their bodies turn pink! Under the beak there is a \"throat pouch.\" It can stretch out and shrink back. They eat fish. I heard they line up in a group in a half-circle shape. Then they push the fish into shallow water. Amazing teamwork, right?"
+   },
+   "nameEn": "Kun"
   },
   "r-19hi6qt": {
    "personality": "ポンは、{食|た}べる{魚|さかな}のこのみが、はっきりしているモモイロペリカンなんだ。{魚|さかな}のしゅるいによって、{食|た}べ{方|かた}がかわることもあるんだって。こだわりやさんでしょ？",
@@ -1675,7 +2597,16 @@
      "title": "モモイロペリカン／札幌市円山動物園",
      "url": "https://www.city.sapporo.jp/zoo/141-b.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Pon is a great white pelican who knows exactly which fish they like to eat. They say Pon even eats in different ways, depending on the kind of fish. Pon is a picky eater, right?",
+    "favorites": "Pon eats horse mackerel and Atka mackerel. They say Pon also eats small fish called sprats.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about great white pelicans. Great white pelicans are some of the biggest birds that fly in the sky. When they spread their wings, they are almost 3 meters wide! They say their beak is the longest of any bird. It is about 50 centimeters long. That's a super-size beak, right?"
+   },
+   "nameEn": "Pon"
   },
   "r-mxbjt1": {
    "personality": "{白鳳|はくほう}は、{仲間|なかま}といっしょにいるとき、あまり{前|まえ}に{出|で}ない{子|こ}なんだ。ひかえめな{性格|せいかく}なんだって。ごはんの{時間|じかん}には、じぶんのペースで{魚|さかな}を{食|た}べているんだ。",
@@ -1687,7 +2618,16 @@
      "title": "静岡市立 日本平動物園｜飼育日誌 モモイロペリカン",
      "url": "https://www.nhdzoo.jp/sp/animals/naka.php?animal_uid=168"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "When Hakuho is with friends, they don't really go to the front. People say Hakuho is a shy, quiet type. At mealtime, Hakuho eats fish at their own pace.",
+    "favorites": "Hakuho's favorites are horse mackerel and sprats. Both are small fish. Hakuho doesn't seem to like herring or saffron cod very much. Isn't it funny that even fish have favorites?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Great white pelicans build their nests on the ground! They make them by piling up grass and tree branches. Lots of pelicans gather in the same place to build their nests. So many neighbors, it must be really lively!"
+   },
+   "nameEn": "Hakuho"
   },
   "r-15mc14s": {
    "personality": "モネは、まわりがにぎやかになると、そわそわしやすい{子|こ}なんだって。おなかがいっぱいのときは、{魚|さかな}であそびながら{食|た}べるすがたも{見|み}られるよ。",
@@ -1703,7 +2643,16 @@
      "title": "モモイロペリカンってどんな生き物？ 長いくちばしと大きな喉袋の秘密に迫る！",
      "url": "https://onlineshop.sunshinecity.jp/blog/post-3828/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Monet tends to get fidgety when things get noisy and busy all around. When Monet's tummy is full, you might see Monet playing with a fish while eating it!",
+    "favorites": "Monet is a fish eater! Monet eats horse mackerel, herring, sprats, Atka mackerel, and more. Eating so many kinds of fish is pretty amazing, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think the great white pelican is? It's a bird, and some of them go on long trips when winter comes! They fly to places like the southern part of Africa and India. They travel together in a group, called a flock, to warm places. But the ones that already live in warm places sometimes don't travel at all."
+   },
+   "nameEn": "Monet"
   },
   "r-1te1kpb": {
    "personality": "ハルトは、{水|みず}にうかんでいるごはんを、{手|て}でたぐりよせて{食|た}べる{子|こ}なんだ。じょうずな{手|て}つきでしょ？",
@@ -1723,7 +2672,16 @@
      "title": "コツメカワウソ｜ ハイブリッド・レジャーランド東武動物公園公式Webサイト",
      "url": "https://www.tobuzoo.com/zoo/list/292.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Haruto pulls floating food over with their hands and then eats it. Pretty handy, right?",
+    "favorites": "I hear Haruto's favorite food is smelt, a kind of small fish. When smelt float bobbing on the water, Haruto pulls them in with their hands and eats them.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "I hear Asian small-clawed otters are the smallest of all the otters. Just like their name says, they have small claws. They live near water, like rivers and swamps in Asia. They eat crabs, shellfish, frogs, and fish. They live together in family groups. They chat with each other using more than 12 kinds of calls! A close family, and a noisy one too, don't you think?"
+   },
+   "nameEn": "Haruto"
   },
   "r-z8b2b9": {
    "personality": "",
@@ -1739,7 +2697,16 @@
      "title": "Meet the Asian Small-Clawed Otter, an Adorable and Social Carnivore",
      "url": "https://nationalzoo.si.edu/animals/news/meet-asian-small-clawed-otter-adorable-and-social-carnivore"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! Asian small-clawed otters catch their food with their front paws, not their mouths. That makes them different from other otters. Even in muddy water or mud, they feel around with their front paws to find food. They're great at searching by touch, right?"
+   },
+   "nameEn": "Kento"
   },
   "r-14fwtpy": {
    "personality": "ミナトは、{食|た}べることが{大|だい}すきなコツメカワウソなんだ。ごはんの{時間|じかん}が{近|ちか}づくと、ごはんをほしがるようすを{見|み}せることがあるんだって。くいしんぼうさんでしょ？",
@@ -1759,7 +2726,16 @@
      "title": "Asian small-clawed otter at Point Defiance Zoo & Aquarium in Asian Forest",
      "url": "https://www.pdza.org/animals/asian-forest-sanctuary/asian-otter/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Minato is an Asian small-clawed otter who loves to eat! When mealtime is getting close, Minato sometimes acts like they really want their food. What a hungry little otter, right?",
+    "favorites": "Minato eats shrimp. And it seems Minato's favorite thing is a burlap sack that was put in their room.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about Asian small-clawed otters. Their babies are born with their eyes closed! Their eyes open when they are about 40 days old. They learn to swim when they are about 9 weeks old. They grow up little by little!"
+   },
+   "nameEn": "Minato"
   },
   "r-wnbrx6": {
    "personality": "リンリンは、たくさん{食|た}べるときと、あまり{食|た}べないときが、はっきりしているペンギンなんだ。すのざいりょうをあつめるすがたも{見|み}られたんだって。",
@@ -1779,7 +2755,16 @@
      "title": "ケープペンギンってどんな生き物？特徴や生息地を紹介| カワスイ アクア&アニマルスクール",
      "url": "https://school.kawa-sui.com/creature-book/863/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Rinrin is a penguin who has clear times of eating a lot and times of not eating much. Rinrin has also been seen gathering things to build a nest!",
+    "favorites": "Rinrin eats two kinds of fish called horse mackerel and sprats. It seems Rinrin eats sprats more often!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? The African penguin is the only penguin that lives on the continent of Africa. They live on the seashores of South Africa. They're penguins, but their home is a warm place! Their favorite foods are small fish like sardines. They catch them underwater. And they make a sound like a donkey's bray! Isn't that funny?"
+   },
+   "nameEn": "Rinrin"
   },
   "r-1g92q4q": {
    "personality": "テンテンは、{食|た}べることが{大|だい}すきな{元気|げんき}なケープペンギンなんだ。お{魚|さかな}をたくさん{食|た}べようとするんだよ。なれないところでは、ちょっぴりとまどうこともあるんだって。",
@@ -1795,7 +2780,16 @@
      "title": "African Penguin - Aquarium of the Pacific",
      "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/african_penguin"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Tenten is a lively African penguin who loves to eat. Tenten tries to eat lots and lots of fish! In new places, Tenten can feel a little unsure.",
+    "favorites": "Tenten loves horse mackerel. Tenten also eats small fish called sprats. When Tenten gets some horse mackerel, Tenten is very happy. That's a fish-tastic snack, don't you think?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think the African penguin is? It's a penguin with pink patches above its eyes. When it gets hot, lots of blood flows there. The air around it cools its body down. So on hot days, the pink gets brighter! Isn't that cool?"
+   },
+   "nameEn": "Tenten"
   },
   "r-vngj3f": {
    "personality": "サムは、{食|た}べることが{大好|だいす}きなケープペンギンなんだ。ときには、なかまのごはんまで{食|た}べちゃうんだって。{元気|げんき}いっぱいでしょ？",
@@ -1811,7 +2805,16 @@
      "title": "African Penguin - Aquarium of the Pacific",
      "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/african_penguin"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Sam is an African penguin who loves to eat! Sometimes Sam even eats the other penguins' food. So full of energy, right?",
+    "favorites": "Sam's very favorite food is horse mackerel. Sam often eats sprats, too. But Sam doesn't seem to like pond smelt very much.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but African penguins have black spots on their chests! Every penguin's spots are different. That's a bit like the lines on your fingertips, right? Just look at the spots, and you can tell who's who!"
+   },
+   "nameEn": "Sam"
   },
   "r-rg3fdf": {
    "personality": "ポッちゃんは、サムというペンギンとペアでくらしている{女|おんな}の{子|こ}なんだ。たまに、サムのごはんをよこどりしちゃうんだって。ちゃっかりやさんでしょ？",
@@ -1827,7 +2830,16 @@
      "title": "African Penguin - Aquarium of the Pacific",
      "url": "https://www.aquariumofpacific.org/onlinelearningcenter/species/african_penguin"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Pocchan is a girl who lives as a pair with a penguin named Sam. Sometimes she sneaks Sam's food and eats it! Isn't she a little sly?",
+    "favorites": "Pocchan's favorite foods are fish called horse mackerel and sprats. She also seems to like eating fish that are put on the ground.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite facts. African penguins love to dig holes to make their nests. Their very favorite place is where lots of bird poop has piled up! Sometimes they make nests in shallow holes dug in the sand. They make them under rocks, too."
+   },
+   "nameEn": "Pocchan"
   },
   "r-ska0lm": {
    "personality": "",
@@ -1839,7 +2851,16 @@
      "title": "この春 ４羽のケープペンギンの赤ちゃんが誕生しました！ - アドベンチャーワールド",
      "url": "https://www.aws-s.com/en/topics/detail?id=top2368"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Kotoka really loves fish! Kotoka eats horse mackerel and sprats.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? African penguins raise their chicks as a pair, a male and a female together. They lay 2 eggs at a time. The male and the female take turns keeping the eggs warm. What great teamwork, right?"
+   },
+   "nameEn": "Kotoka"
   },
   "r-2o3hoy": {
    "personality": "",
@@ -1855,7 +2876,16 @@
      "title": "この春 ４羽のケープペンギンの赤ちゃんが誕生しました！ - アドベンチャーワールド",
      "url": "https://www.aws-s.com/en/topics/detail?id=top2368"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Mitsuru eats horse mackerel and pond smelt. I heard Mitsuru eats a fish called sprat, too. Mitsuru really loves fish!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "African penguin babies stay close to their parents for a while after they hatch. Their parents keep them safe. When they are about 3 months old, their baby feathers change into grown-up feathers. Then they can swim! Isn't that amazing?"
+   },
+   "nameEn": "Mitsuru"
   },
   "r-1woitmt": {
    "personality": "プティは、ちょっとかわったくせをもつオウムなんだ。ごはんをもらうと、おさらをすぐに{水|みず}の{中|なか}にしずめちゃうことがあるんだって。おさら、どこにいっちゃったのかな？",
@@ -1875,7 +2905,16 @@
      "title": "【小諸市動物園だより】フレンドリーな鳥「タイハクオウム」",
      "url": "https://www.ecochil.net/article/32715/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Petit is a cockatoo with a funny little habit. When Petit gets food, Petit sometimes sinks the dish right into the water! Hmm, where did that dish go?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? White cockatoos live on the Moluccas, a group of islands in Indonesia. Their whole body is pure white. On their head, they have long white feathers for decoration, called a crest. The crest feathers curve backward. The undersides of their wing and tail feathers are yellow. They eat nuts, seeds, bugs, and more. When they sleep, they stay perched on a tree branch the whole time. Isn't that amazing?"
+   },
+   "nameEn": "Petit"
   },
   "r-smint8": {
    "personality": "",
@@ -1895,7 +2934,16 @@
      "title": "キバタン ｜リトルワールド ｜愛媛県立とべ動物園",
      "url": "https://www.tobezoo.com/animals/library/article/000541.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! The sulphur-crested cockatoo is a big member of the parrot family. They live around Australia and New Guinea. Their body is covered in white feathers. On top of their head, they have yellow feathers that curl up. They can raise these feathers up and put them down again. Aren't they stylish? Their favorite foods are nuts and fruit."
+   },
+   "nameEn": "Rutile"
   },
   "r-1ctlljj": {
    "personality": "",
@@ -1907,7 +2955,16 @@
      "title": "キバタンとは - 生態や形態の特徴解説 - ZUKAN（図鑑）",
      "url": "https://www.zukan.earth/descriptions/6/1141992"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "I heard Kobachi just loves sunflower seeds. It looks like Kobachi eats them a lot!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? When a flock of sulphur-crested cockatoos eats on the ground, a few of them sit up in a nearby tree and keep watch. If there's danger, they call out loudly to warn their friends. Isn't that amazing teamwork?"
+   },
+   "nameEn": "Kobachi"
   },
   "r-15qlj3k": {
    "personality": "",
@@ -1931,7 +2988,16 @@
      "title": "ヨウム（富山市ファミリーパーク 動物図鑑）",
      "url": "https://www.toyama-familypark.jp/zukan/6100"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just between us. Grey parrots are part of the parrot family, and they live in the forests of Africa. Their bodies are almost all grey. Only their tails are red! In the wild, they eat nuts and seeds. They live together in big flocks. They really like being together, don't they? And they are very smart, too. They are famous for learning lots of words that people say!"
+   },
+   "nameEn": "Big"
   },
   "r-qrb0xd": {
    "personality": "",
@@ -1951,7 +3017,16 @@
      "title": "Chestnut-fronted Macaw - Ara severus - Birds of the World",
      "url": "https://birdsoftheworld.org/bow/species/chfmac1/cur/introduction"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! Red-shouldered macaws live in the northern part of South America and in Panama. They are on the small side for macaws. Their bodies are green. Their wings and tails have red and blue feathers. Their faces are white. The top of the beak is brown. They eat nuts, seeds, flowers, and more. They usually live in pairs or in small flocks. Aren't they good friends?"
+   },
+   "nameEn": "Abiru"
   },
   "r-1kt5wgo": {
    "personality": "",
@@ -1967,7 +3042,16 @@
      "title": "福岡市動物園｜オカメインコ",
      "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/101"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Cockatiels are birds that live in {Australia}. In Japanese, their name calls them a kind of parakeet. But guess what? They are really part of the cockatoo family! See the orange patches on their cheeks? People in Japan thought those patches looked like an \"okame\" mask. That's how the bird got its Japanese name! Cockatiels have feathers on top of their heads, called a crest. When they feel danger, they stand those feathers straight up. When they are relaxed, they lay them down flat. Cockatiels live in groups called flocks. They eat grass seeds and fruit."
+   },
+   "nameEn": "Ō"
   },
   "r-1hoh9sb": {
    "personality": "テチは、{人|ひと}が{近|ちか}くにいると、すこしようすを{見|み}てから{動|うご}く{子|こ}なんだ。よく{考|かんが}える、しんちょうやさんでしょ？いまは、なでてもらうれんしゅうもしているんだって。",
@@ -1991,7 +3075,16 @@
      "title": "ベニコンゴウインコ（ヒノトントンZOO 羽村市動物公園）",
      "url": "https://hamurazoo.jp/animals/detail.html?CN=336181"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "When people are nearby, Techi watches for a little while before moving. Techi really thinks things through. What a careful bird, right? Right now, Techi is also practicing getting petted!",
+    "favorites": "It looks like Techi likes oranges and wild grasses. I heard Techi sometimes chews on wood, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about green-winged macaws. Green-winged macaws are really big parrots! They live in hot forests in South America. Their bodies are a pretty red color. Their wings have red, green, and blue on them. They mostly eat nuts and fruit. Their beaks are as strong as pliers! That's why they can even crack open hard nuts. They live together in groups called flocks. They chat with their friends in loud voices. Sounds lively and fun, right?"
+   },
+   "nameEn": "Techi"
   },
   "r-180v9vk": {
    "personality": "エレナは、ちょっぴり{気|き}が{強|つよ}いインコなんだって。でもさいきんは、えさがあると、うでに{乗|の}ってくれることもあるんだよ。なかよしになってきたのかな？",
@@ -2007,7 +3100,16 @@
      "title": "ベニコンゴウインコ - 動植物園データベース",
      "url": "https://www.ezooko.jp/rel_dgram/pub/detail.aspx?c_id=30&id=6&pg=1&bk=1"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Elena is a parrot with a bit of a strong will, I hear. But lately, when there's food, Elena sometimes hops onto a person's arm! Maybe we're becoming friends?",
+    "favorites": "It looks like Elena likes tomatoes. Elena sometimes eats wild plants too, I hear. And sometimes Elena takes a banana right from someone's hand and eats it!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Once green-winged macaws pair up, they stay together for their whole lives! For a nest, they use a hole in a tall tree. When the chicks hatch from their eggs, the dad and mom work together to raise them. What a loving couple, right?"
+   },
+   "nameEn": "Elena"
   },
   "r-1k8zija": {
    "personality": "",
@@ -2023,7 +3125,16 @@
      "title": "メンフクロウ（富山市ファミリーパーク 動物図鑑）",
      "url": "https://www.toyama-familypark.jp/zukan/809"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Barn owls got their Japanese name because their face looks like they're wearing a mask. And guess what? Their face gathers sounds, just like a satellite dish! That's why they can notice even really tiny sounds. They're listening champions, right? They're active at night. They eat small animals like mice. Barn owls don't live in Japan. But they live in lots of places around the world!"
+   },
+   "nameEn": "Alicia"
   },
   "r-17co4v7": {
    "personality": "",
@@ -2035,7 +3146,16 @@
      "title": "メンフクロウの羽根",
      "url": "https://www.parks.or.jp/sczoo/blog/entry/002419.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Takezo's meals are often chicks. On some days, Takezo eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Barn owls can fly through the sky making almost no sound! The feathers on the very outside edge of their wings have jagged edges, like a comb. The top of their feathers is soft and fluffy, too. That's why the rubbing sounds are so small. They have lots of secrets for flying quietly, don't they?"
+   },
+   "nameEn": "Takezo"
   },
   "r-18eo2hu": {
    "personality": "",
@@ -2051,7 +3171,16 @@
      "title": "アカアシモリフクロウ - 世界のフクロウ 富士花鳥園 -",
      "url": "http://www.kamoltd.co.jp/fuji/rufous-leggedowl.htm"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Peace mostly eats chicks. Sometimes Peace eats quail, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Rufous-legged owls live in Chile and Argentina in South America. They live in forests. They eat small animals, birds, and bugs. Their bodies are about 30 to 40 centimeters long. They are small owls. If you get close, they snap their beaks, click-click! That's how they say, \"Stay away!\" Doesn't that make you go \"Whoo!\" in surprise?"
+   },
+   "nameEn": "Peace"
   },
   "r-19kt440": {
    "personality": "",
@@ -2067,7 +3196,16 @@
      "title": "Rufous-legged owl - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Rufous-legged_owl"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Peace 2 usually eats chicks. Sometimes Peace 2 eats quail, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret! The rufous-legged owl got its name from the color of its legs. Its legs are orange-brown. The feathers around its face are reddish-brown, too. Its head is round. It doesn't have feathers that stick up like ears."
+   },
+   "nameEn": "Peace 2"
   },
   "r-1d9v83x": {
    "personality": "",
@@ -2083,7 +3221,16 @@
      "title": "モリフクロウ - Wikipedia",
      "url": "https://ja.wikipedia.org/wiki/%E3%83%A2%E3%83%AA%E3%83%95%E3%82%AF%E3%83%AD%E3%82%A6"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Kuku eats chicks and quails! Tawny owls are birds that eat meat.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but tawny owls live in forests in Europe and in the northwest of Africa. They're night owls who are most lively at night! Their favorite foods are mice, frogs, and small birds. Some tawny owls are gray, and some are brown. And a pair stays together all year round. Aren't they good friends?"
+   },
+   "nameEn": "Kuku"
   },
   "r-1uid875": {
    "personality": "",
@@ -2095,7 +3242,16 @@
      "title": "ナンベイヒナフクロウ｜八木山動物公園フジサキの杜",
      "url": "https://www.city.sendai.jp/zoo/animals/birds/fukuro/090.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Riri's usual food is chicks, I hear. Sometimes Riri eats quail, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The mottled owl is an owl that lives in the forests of Central and South America. Those forests are hot and damp, I hear. Its body is about 30 to 36 centimeters long. That's a medium size for an owl! It eats small animals like mice, plus lizards and their relatives, and bugs too. It eats lots of different things. What a hungry eater, right?"
+   },
+   "nameEn": "Riri"
   },
   "r-tfcb9w": {
    "personality": "",
@@ -2111,7 +3267,16 @@
      "title": "オオフクロウってどんな生き物？特徴や生息地を紹介| カワスイ アクア&アニマルスクール",
      "url": "https://school.kawa-sui.com/creature-book/1024/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "O's favorite food is chicks! O always eats every last bit. Sometimes O eats quail, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Brown wood owls live in forests from India to Southeast Asia. Their Japanese name means \"big owl,\" but they are only middle-sized for owls. Their feathers are brown, like tree bark. That helps them blend in with the trees in the forest. They're great at hide-and-seek, right? Their eyes are made to see even in very dim light. They eat small animals, birds, fish, and more. Isn't that cool?"
+   },
+   "nameEn": "O"
   },
   "r-v7v5nl": {
    "personality": "",
@@ -2123,7 +3288,16 @@
      "title": "オオフクロウ（神戸どうぶつ王国）",
      "url": "https://www.kobe-oukoku.com/animals/19"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Queen eats chicks on most days. On some days, Queen eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Brown wood owls are great at flying between the trees in the forest. And guess what? They can fly very quietly. They can fly fast, too. Just like a ninja, right?"
+   },
+   "nameEn": "Queen"
   },
   "r-1ifdb8f": {
    "personality": "",
@@ -2139,7 +3313,16 @@
      "title": "ベンガルワシミミズク（那須どうぶつ王国 動物紹介）",
      "url": "https://nasu-oukoku.com/?p=4686"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Miyabi eats chicks a lot, I hear. Sometimes Miyabi eats quail, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! Indian eagle-owls live in India and other places. They live in rocky places and in forests. Their orange eyes are special, I hear. In the daytime, they rest in their roost, the place where they sleep. When night comes, they look for food. They find it by listening for sounds! Their favorite food is mice. They also eat birds, frogs, and lizards and their relatives. Isn't it a cool bird that gets busy at night?"
+   },
+   "nameEn": "Miyabi"
   },
   "r-lt3s2t": {
    "personality": "",
@@ -2151,7 +3334,16 @@
      "title": "Indian eagle-owl - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Indian_eagle-owl"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Indian eagle-owls use the same nesting spot every year. They lay 3 to 4 eggs. The eggs are a creamy white color. After about 33 days, the chicks hatch! Then the parents take care of the chicks for almost 6 months."
+   },
+   "nameEn": "Musashi"
   },
   "r-20y5ed": {
    "personality": "うっちゃんは、まわりの{様子|ようす}が{変|か}わると、しばらく{落|お}ち{着|つ}かないことがあるんだって。いつもとおなじだと、あんしんするんだ。デリケートな{子|こ}なんだね。",
@@ -2171,7 +3363,16 @@
      "title": "フクロウ|亜寒帯の森|動物紹介 よこはま動物園ズーラシア公式サイト",
      "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/subarctic/post_68/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "When things around Ucchan change, Ucchan can feel uneasy for a while. When everything is the same as usual, Ucchan feels safe. Ucchan is a sensitive one!",
+    "favorites": "Ucchan's very favorite food is chicks. Sometimes Ucchan eats quail, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "In Japan, the Ural owl is the bird people just call \"fukurou,\" which means \"owl.\" Ural owls live in forests across a huge area, from the north of Europe all the way to Japan. They are active at night. They catch and eat mice and other small animals. Guess what? Their heart-shaped face collects sounds, like a big dish antenna! Their feathers are soft, so they can fly without making a sound. That's why they are also called \"ninjas of the forest.\" Isn't that amazing?"
+   },
+   "nameEn": "Ucchan"
   },
   "r-8kxpb7": {
    "personality": "",
@@ -2187,7 +3388,16 @@
      "title": "ワシミミズク（京都市動物園 どうぶつ図鑑）",
      "url": "https://zoo.city.kyoto.lg.jp/zoo/animals/b_bubo"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The Eurasian eagle-owl is one of the very biggest birds in the owl family. Wow, when the biggest ones spread their wings, they can be as wide as 1.8 meters! They live in the northern part of Africa and in big areas of Europe and Asia. They are birds that move around at night. They eat animals like mice and hares. Look for the feathers on their head that look like ears! Their orange eyes are special, too. Cool, right?"
+   },
+   "nameEn": "Mock"
   },
   "r-agcxtp": {
    "personality": "",
@@ -2199,7 +3409,16 @@
      "title": "【円山動物園だより】耳でかりをする最強ハンター「ユーラシアワシミミズク」",
      "url": "https://www.ecochil.net/article/64081/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "I heard that the Eurasian eagle-owl is a bird that hunts with its ears. It can tell where its prey is just by sound! It waits very still in the dark. Then it flies over without making a sound. It's a real listening expert, right?"
+   },
+   "nameEn": "Mukku"
   },
   "r-1k82p5k": {
    "personality": "",
@@ -2219,7 +3438,16 @@
      "title": "福岡市動物園｜ワシミミズク",
      "url": "https://zoo.city.fukuoka.lg.jp/animals/detail/105"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Rera usually eats chicks. On some days, Rera eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The Eurasian eagle-owl is a very big kind of owl. When the biggest ones spread their wings, they can be as wide as 1.8 meters! They live in lots of places, like Europe and Asia. And guess what? In Japan, we know they raise their chicks in Hokkaido. They are active at night. They eat mice, hares, birds, and more. They're champions at staying up late, don't you think?"
+   },
+   "nameEn": "Rera"
   },
   "r-x7famq": {
    "personality": "エヴァは、ごはんの{時間|じかん}になると、いきおいよく{食|た}べるヒメコンドルなんだ。{同|おな}じ{部屋|へや}で、レラという{仲間|なかま}とくらしているよ。ふたりでなかよくすごしているんだって。",
@@ -2235,7 +3463,16 @@
      "title": "ヒメコンドル（Midpeninsula Regional Open Space District）",
      "url": "https://ja.openspace.org/turkey-vulture"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Eva is a turkey vulture who eats with lots of energy when it's mealtime. Eva lives in the same room with a buddy named Rera. I hear the two of them get along really well together.",
+    "favorites": "Eva's favorite food is chicks. On some days, Eva eats quail, too. I bet Eva can't wait for mealtime!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Turkey vultures are birds that live in North America and South America. Their heads are red. People say they look like a turkey's head. Turkey vultures have a super strong sense of smell, which is rare for birds. They follow smells to find leftover animals to eat. That makes them nature's cleaning crew! They fly by riding on rising currents of warm air. They hardly flap their wings at all. Aren't they great at flying?"
+   },
+   "nameEn": "Eva"
   },
   "r-1iywx6s": {
    "personality": "",
@@ -2255,7 +3492,16 @@
      "title": "Milky Eagle Owl",
      "url": "https://www.banhamzoo.co.uk/animals/milky-eagle-owl"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The Verreaux's eagle-owl is a big owl that lives in Africa. They say it's the biggest owl in all of Africa! Its most special feature is its pink eyelids! They say it's the only kind of owl in the world with pink eyelids. Pretty stylish, right? At night, it goes out hunting. It eats mice, hedgehogs, and other animals. Isn't that amazing?"
+   },
+   "nameEn": "Milky"
   },
   "r-1hdd551": {
    "personality": "",
@@ -2279,7 +3525,16 @@
      "title": "ユーラシアワシミミズク（大内山動物園）",
      "url": "http://www.oouchiyama-zoo.com/animals/6640/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Mac eats chicks a lot. On some days, Mac eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a \"Bengal × Eurasian eagle-owl\" is? It's an owl that is a mix of a Bengal eagle-owl and a Eurasian eagle-owl. Bengal eagle-owls live in rocky places and forests in India and other areas. Eurasian eagle-owls are in the group of the biggest owls in the world. Both of them are active at night. They catch and eat mice and birds. See the feathers on the head that look like ears? Those aren't real ears! They're just fancy decoration feathers."
+   },
+   "nameEn": "Mac"
   },
   "r-2spanw": {
    "personality": "チッチは、マイペースなのんびりやさんなんだ。となりには、{仲間|なかま}のカッチがいるんだ。でも、おたがい{気|き}にしないんだって。はなれて、のんびりすごしているんだ。",
@@ -2291,7 +3546,16 @@
      "title": "アビシニアンワシミミズク|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト｜公益財団法人 横浜市緑の協会",
      "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/post_18/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Chicchi likes to do things at their own pace and is very easygoing. Right next door is their buddy Kacchi. But I hear they don't really pay attention to each other. They each relax in their own spot, apart from each other.",
+    "favorites": "Chicchi's favorite food is chicks. I hear Chicchi eats lots of them! Sometimes Chicchi eats quail, too.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "The Abyssinian eagle-owl is a kind of owl that lives in Africa. It lives in very dry, rough land with only a few trees here and there. It eats bugs and small animals. It is a night owl, so it is most active in the evening and at night! It looks just like the spotted eagle-owl. But you can tell them apart by their eye color. Guess what? The spotted eagle-owl has yellow eyes, and the Abyssinian eagle-owl has dark brown eyes. Isn't that cool?"
+   },
+   "nameEn": "Chicchi"
   },
   "r-1eujohi": {
    "personality": "カッチは、ごはんの{時間|じかん}になると、{近|ちか}くまでよってくる{子|こ}なんだ。ふだんは、{止|と}まり{木|ぎ}でじっとおちついてすごすこともあるんだって。",
@@ -2307,7 +3571,16 @@
      "title": "Greyish eagle-owl - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Greyish_eagle-owl"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "When it's mealtime, Kacchi comes up close. At other times, Kacchi sometimes sits calmly and quietly on a perch.",
+    "favorites": "Kacchi's very favorite food is chicks (baby chickens). Kacchi sometimes eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Abyssinian eagle-owls lay their eggs in dips in the ground or between rocks. They also use places that are easy to hide in, like shady spots by cliffs. Sometimes they even borrow a big bird's old nest up in a tree! They lay 2 or 3 eggs."
+   },
+   "nameEn": "Kacchi"
   },
   "r-9vwjox": {
    "personality": "しずかは、{新|あたら}しい{場所|ばしょ}だと、はじめはちょっとようじんぶかくなる{子|こ}なんだ。まわりをよく{見|み}るんだよ。でも、すぐにおちつくんだって。そして、ごはんを{食|た}べはじめるんだ。しずかは、いつもくいしんぼうさんなんだよ。",
@@ -2323,7 +3596,16 @@
      "title": "アビシニアンワシミミズク|アフリカのサバンナ|動物紹介 よこはま動物園ズーラシア公式サイト",
      "url": "https://www.hama-midorinokyokai.or.jp/zoo/zoorasia/animal/savanna/post_18/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "When Shizuka is in a new place, Shizuka is a little careful at first. Shizuka looks all around very closely. But I hear Shizuka calms down quickly. And then it's time to start eating! Shizuka is always a big eater.",
+    "favorites": "I hear Shizuka's favorite food is chicks. Sometimes Shizuka eats quail, too. Shizuka always eats every last bite!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about spotted eagle-owls. Spotted eagle-owls are a kind of owl. They live in places like Africa and Saudi Arabia. They are on the small side for eagle-owls. On their heads, feathers stick up like little ears. But these are not real ears! They are feathers called \"ear tufts.\" Their eyes are yellow. Sharp and cool, right? I hear they eat small animals and birds. They eat lizards and animals like them, too."
+   },
+   "nameEn": "Shizuka"
   },
   "r-1y24uhx": {
    "personality": "シトリンは、{元気|げんき}いっぱいのアフリカオオコノハズクなんだ。{気|き}が{強|つよ}い{子|こ}なんだよ。ごはんの{時間|じかん}には、いきおいよくとびかかってくることもあるんだって。",
@@ -2339,7 +3621,16 @@
      "title": "アフリカオオコノハズク - 鳥 - ペット - Yahoo!きっず図鑑",
      "url": "https://kids.yahoo.co.jp/zukan/pet/bird/raptores/0003.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Citrine is a White-faced owl who is full of energy. Citrine has a strong, bold spirit! At mealtime, Citrine sometimes swoops in fast to grab the food.",
+    "favorites": "Citrine loves food! Citrine eats so well that they jump right at their meal. What a big eater, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret just for you. The White-faced owl is a small owl that lives in Africa. You can spot one by its white face and big orange eyes. When it closes its eyes and stays very still, it blends in with the trees around it. That makes it hard to see! When it finds an animal it is scared of, it squeezes its body thin. If that animal still comes closer, it spreads its wings. That makes its body look bigger. Thin one moment, big the next. It's a master of changing shape, don't you think?"
+   },
+   "nameEn": "Citrine"
   },
   "r-1syq5nu": {
    "personality": "インドオオコノハズクのインディーは、{食|た}べることが{大好|だいす}きな{子|こ}なんだ。ごはんが{来|く}ると、いきおいよく{飛|と}びかかるんだって。{元気|げんき}いっぱいの{子|こ}でしょ？",
@@ -2355,7 +3646,16 @@
      "title": "インドオオコノハズク - 世界のフクロウ 富士花鳥園 -",
      "url": "http://www.kamoltd.co.jp/fuji/indianscopsowl.htm"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Indy the Indian scops owl loves to eat! When food arrives, Indy pounces on it with a big swoop. Full of energy, right?",
+    "favorites": "Indy's very favorite food is chicks. Sometimes Indy eats quails, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! The Indian scops owl is a kind of small owl. On its head, it has feathers that look like ears. It lives in places like Pakistan, India, and Sri Lanka. In the daytime, it doesn't move much. It sits very still and blends in with the tree branches. That makes it really hard to find! When night comes, it gets busy. It catches beetles, grasshoppers, small animals, and more to eat. It works hard at night, so it's a real \"night owl,\" right?"
+   },
+   "nameEn": "Indy"
   },
   "r-j05jec": {
    "personality": "{樹|いつき}は、インドオオコノハズクの{子|こ}なんだ。いつもとちがう{場所|ばしょ}にいても、おちついてすごせたことがあるんだって。おちつきやさんでしょ？",
@@ -2367,7 +3667,16 @@
      "title": "インドオオコノハズク - 生きもの図鑑 鳥羽水族館",
      "url": "https://aquarium.co.jp/picturebook/otus-bakkamoena.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Itsuki is a young Indian scops owl. I heard that even in a new, unusual place, Itsuki stayed calm. What a calm little owl, right?",
+    "favorites": "Itsuki eats a lot of baby chicks. But sometimes Itsuki leaves some quail uneaten. It seems Itsuki doesn't like quail very much.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Indian scops owls have eyes that are jet black and perfectly round. They are owls known for their black eyes. Their call is very quiet. It's thin and soft, too. Big eyes, but a shy little voice, right?"
+   },
+   "nameEn": "Itsuki"
   },
   "r-hx4flt": {
    "personality": "スピックスコノハズクのカカオを{紹介|しょうかい}するね。カカオは、あしに{目印|めじるし}のわっかをつけている{子|こ}なんだ。でも、あまり{気|き}にしていないようすなんだって。",
@@ -2383,7 +3692,16 @@
      "title": "スピックスコノハズク - 世界のフクロウ 富士花鳥園 -",
      "url": "http://www.kamoltd.co.jp/fuji/tropicalscreech-owl.htm"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Let me introduce Cacao the tropical screech owl! Cacao wears a little ring on one leg as a name tag. But it seems Cacao doesn't really mind it.",
+    "favorites": "Cacao mostly eats chicks. Sometimes Cacao eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a tropical screech owl is? It's a kind of small owl! They live in the forests of Central America and South America. Their feathers are brown with dark stripes going up and down. Don't they look like tree leaves? In the daytime, they sit in trees. They pretend to be leaves and stay very still. When night comes, they start moving. They listen for the tiny sounds bugs make, and then catch them. Having such good ears is an amazing skill, right?"
+   },
+   "nameEn": "Cacao"
   },
   "r-134r3jy": {
    "personality": "",
@@ -2403,7 +3721,16 @@
      "title": "Understanding the Little Owl: Key Information - Hawk and Owl Trust",
      "url": "https://hawkandowltrust.org/learn-and-discover/about-birds-of-prey/little-owl"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Gomoku's usual food is chicks. Some days, Gomoku eats quail too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Little owls are small owls that live in Europe, northern Africa, and Asia. Their bodies are about 22 centimeters long. Their yellow eyes are so pretty! Their favorite foods are bugs and earthworms. They are most lively in the morning and in the evening. Sometimes you can see them in the daytime, too. They make their nests in holes in trees or rocks. And guess what? A pair will tidy each other's feathers! Aren't they good friends?"
+   },
+   "nameEn": "Gomoku"
   },
   "r-o7h1ff": {
    "personality": "{琥珀|こはく}は、{呼|よ}ぶと{飛|と}んでもどってくる{練習|れんしゅう}をしている{子|こ}なんだ。じめんよりも、すこし{高|たか}いところから{呼|よ}ばれたときのほうが、よくこたえてくれるんだって。{高|たか}いところがすきなのかな？",
@@ -2427,7 +3754,16 @@
      "title": "Harris's Hawk - Plumpton Park Zoo",
      "url": "https://plumptonparkzoo.org/birds/harriss-hawk/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Kohaku is practicing flying back when called. I hear Kohaku answers better when called from a spot a little higher up than the ground. Maybe Kohaku likes high places?",
+    "favorites": "Kohaku eats quails and chicks. Once, during practice, Kohaku even caught a wild mouse! Pretty good hunting skills, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about Harris's hawks. Harris's hawks are a kind of hawk. They live in dry lands, from the southern part of North America to South America. You can often see them in wild, rough lands with cactuses, and in grasslands. They live together happily as a family. They work together to catch their food. Great teamwork, right? When there aren't many places to sit, they sometimes stand on each other's backs and stack up! They eat mice, rabbits, lizards, and more."
+   },
+   "nameEn": "Kohaku"
   },
   "r-9677mx": {
    "personality": "{天明|てんめい}は、とっても{気|き}づきやさんな{子|こ}なんだ。まわりの{音|おと}や、ほかの{動物|どうぶつ}に、すぐ{気|き}がつくんだって。{気|き}になることがあると、そっちをじっと{見|み}るんだ。",
@@ -2443,7 +3779,16 @@
      "title": "Harris Hawk - Canadian Raptor Conservancy",
      "url": "https://canadianraptorconservancy.com/harris-hawk/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Tenmei is really good at noticing things. They say Tenmei quickly notices sounds nearby and other animals. When something catches Tenmei's interest, Tenmei stares right at it.",
+    "favorites": "They say Tenmei eats chicks and quail. In a calm room, Tenmei eats a lot.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? A Harris's hawk's body is dark brown. Its shoulders and the tops of its legs are a reddish brown, like chestnuts. The base of its tail is white. The tip of its tail is white too! Its legs are long. And they're yellow! The females are bigger than the males. Surprising, right?"
+   },
+   "nameEn": "Tenmei"
   },
   "r-pk1orh": {
    "personality": "ハリスホークのハリーは、{人|ひと}のそばへすぐ{来|き}たがる{子|こ}なんだ。たくさんれんしゅうをして、そうなったんだって。ごはんをもらったあとに、{羽|はね}を{広|ひろ}げることもあるんだよ。",
@@ -2459,7 +3804,16 @@
      "title": "Harris's hawk - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Harris's_hawk"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Harry the Harris's hawk is a bird who loves to come right up close to people. Harry practiced a lot to learn that! Sometimes, after getting food, Harry spreads their wings, too.",
+    "favorites": "Harry eats quails and baby chicks. After mealtime, you might see Harry spreading their wings. Don't you want to see Harry do that?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a Harris's hawk is? Guess what—its name has a person's name in it! A bird scientist named Mr. Audubon gave it that name. He named it after his friend, Mr. Edward Harris. Mr. Harris was someone who helped and supported Mr. Audubon. A name that comes from a good friend—isn't that nice?"
+   },
+   "nameEn": "Harry"
   },
   "r-1yfbvz7": {
    "personality": "",
@@ -2471,7 +3825,16 @@
      "title": "ワシノスリ - 神戸どうぶつ王国",
      "url": "https://www.kobe-oukoku.com/animals/85"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Subaru's favorite foods are chicks and quails. When eating, Subaru tries to use their beak in a clever way. That beak is a real star, right?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? The black-chested buzzard-eagle is a bird in the hawk family. They live high up in the mountains of South America. When they spread their wings, they are more than 1.2 meters across! Their bluish-gray feathers make them easy to spot. They circle round and round high in the sky. Then they look for food with their sharp eyes. Their feet can grab things really, really hard, too. Isn't that amazing?"
+   },
+   "nameEn": "Subaru"
   },
   "r-1efv2h2": {
    "personality": "",
@@ -2483,7 +3846,16 @@
      "title": "Black-chested Buzzard-eagle - Palmitos Park",
      "url": "https://palmitospark.es/en/especies/birds/black-chested-buzzard-eagle/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Black-chested buzzard-eagles have wide wings and very short tails. When they sit on a tree or something like that, you can hardly see their tails at all! When they are young, their feathers are a reddish brown. That's really different from the grown-up colors. Isn't that cool?"
+   },
+   "nameEn": "Futaba"
   },
   "r-1sqvpu3": {
    "personality": "",
@@ -2499,7 +3871,16 @@
      "title": "Lanner falcon - Blair Drummond Safari Park",
      "url": "https://blairdrummond.com/animals/our-animals/lanner-falcon/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Hayate is a young lanner falcon. I hear Hayate eats quails and baby chicks.",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? The lanner falcon is part of the falcon family. They live in most parts of Africa and in the southeast part of Europe. They mostly eat birds, like pigeons and ducks. A male and a female pair up and work together to catch their food. Great teamwork, right? They don't build their own nests. They lay their eggs on top of cliffs or in old nests made by other birds."
+   },
+   "nameEn": "Hayate"
   },
   "r-13xwtgn": {
    "personality": "",
@@ -2519,7 +3900,16 @@
      "title": "Siberian Husky History: From Arctic Protector to Active Companion",
      "url": "https://www.akc.org/expert-advice/dog-breeds/siberian-husky-history/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but the Siberian Husky is a kind of dog! Huskies first came from Siberia, a place far, far up north. The people who live there raised them with lots of care, as dogs to pull sleds. Their bodies are wrapped in fluffy, thick fur. And for their size, they can run a long way on just a little food. They're super sled pullers. Isn't that sled-sational?"
+   },
+   "nameEn": "Ginga"
   },
   "r-1swc4st": {
    "personality": "ロックは、{元気|げんき}なシベリアンハスキーの{子|こ}なんだ。となりにいるなかまのライに、さくごしに{近|ちか}づいていくことがあるんだって。なかまが{気|き}になるのかな？",
@@ -2535,7 +3925,16 @@
      "title": "Siberian Husky Standard — Siberian Husky Club of America, Inc",
      "url": "https://www.shca.org/siberian-husky-standard"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Rock is a lively young Siberian Husky. Sometimes Rock goes up to the fence to get close to Rai, a buddy next door. Maybe Rock is curious about Rai?",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you my favorite fact! Siberian Huskies have blue eyes or brown eyes. Some huskies have one eye of each color, a different color on the right and the left. Some even have blue and brown mixed together in one eye. Don't you want to take a peek and see what color they are?"
+   },
+   "nameEn": "Rock"
   },
   "r-17snyj3": {
    "personality": "シベリアンハスキーの{風牙|ふうが}くんを{紹介|しょうかい}するね。{風牙|ふうが}くんは、お{外|そと}に{出|で}ると、{元気|げんき}に{走|はし}る{姿|すがた}が{見|み}られることがあるんだって。かぜみたいに{速|はや}いかな？",
@@ -2547,7 +3946,16 @@
      "title": "Siberian Husky | Britannica",
      "url": "https://www.britannica.com/animal/Siberian-husky"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Let me introduce Fuga the Siberian Husky! When Fuga goes outside, you can sometimes see Fuga running around full of energy. I wonder if Fuga is as fast as the wind?",
+    "favorites": "Fuga eats dog food. Fuga also likes canned dog food, and sometimes gets to eat it!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Siberian Huskies don't bark \"woof woof\" very much. Instead, they make a \"woo\" sound. They can make sounds like little birds, too. And they howl! What chatterboxes, right?"
+   },
+   "nameEn": "Fuga"
   },
   "r-1fja9y0": {
    "personality": "",
@@ -2559,7 +3967,16 @@
      "title": "Siberian Husky | Britannica",
      "url": "https://www.britannica.com/animal/Siberian-husky"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Siberian Huskies often have fur that is gray, brown, or black and white. Some huskies have markings on their heads. People say these markings can look like a hat, a mask, or glasses! Pretty stylish, right?"
+   },
+   "nameEn": "Anya"
   },
   "r-ic0n02": {
    "personality": "",
@@ -2571,7 +3988,16 @@
      "title": "Siberian husky - Britannica Kids",
      "url": "https://kids.britannica.com/students/article/Siberian-husky/313529"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "A Siberian Husky's ears stand straight up. The tips of the ears are pointy. Wow, people say they look like a wolf's ears! The tail is long and fluffy. It curls loosely over the husky's back."
+   },
+   "nameEn": "Othello"
   },
   "r-25xxux": {
    "personality": "",
@@ -2591,7 +4017,16 @@
      "title": "Siberian Husky | Britannica",
      "url": "https://www.britannica.com/animal/Siberian-husky"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Siberian Huskies were raised to be dogs that work together as a team with their buddies. They love people! They make friends easily, even with people they don't know. That's why they're not good guard dogs for watching over a house. They get along with everyone, don't they?"
+   },
+   "nameEn": "Yuki"
   },
   "r-4gn843": {
    "personality": "",
@@ -2603,7 +4038,16 @@
      "title": "Siberian Husky | VCA Animal Hospitals",
      "url": "https://vcahospitals.com/know-your-pet/dog-breeds/siberian-husky"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just for you! About 100 years ago, Siberian Huskies did something amazing. They carried important medicine to a faraway town in Alaska. They went about 550 kilometers in six days! The dogs running in front were Balto and Togo. The two of them became heroes. Isn't that awesome?"
+   },
+   "nameEn": "Noel"
   },
   "r-5p9jcc": {
    "personality": "",
@@ -2619,7 +4063,16 @@
      "title": "セントバーナードの特徴は？性格や飼い方、平均寿命、歴史も紹介！ - 東京ECOいきもの図鑑",
      "url": "https://www.tcaeco.ac.jp/contents/animalbook/st-bernard/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! The Saint Bernard is a kind of dog. It is a very big dog that comes from Switzerland. Some can weigh as much as 90 kilograms! Long ago, they worked in the snowy Alps mountains. They helped people who got lost. Their name comes from a monastery in the mountains. A monastery is a home for monks. The dogs lived there with the people. Saint Bernards have thick fur, so they are tough in the cold. That's why snow is no problem for them, right?"
+   },
+   "nameEn": "Josef"
   },
   "r-1vvrrpa": {
    "personality": "",
@@ -2631,7 +4084,16 @@
      "title": "Border Collie | Britannica",
      "url": "https://www.britannica.com/animal/Border-Collie"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret just for you. The Border Collie is one kind of dog. Border Collies first came from Great Britain, from the border between Scotland and England. They have been doing an important job for about 300 years! Their job is to gather sheep and move them around. They are very smart. Some people even say they are the smartest dogs in the world. They love their job and work really hard, don't you think?"
+   },
+   "nameEn": "Shine"
   },
   "r-4g2csd": {
    "personality": "ピレネーシェパードのエルサは、ちょっぴりせんさいな{子|こ}なんだ。かみなりの{音|おと}に、びっくりしやすいんだって。",
@@ -2647,7 +4109,16 @@
      "title": "Pyrenean Sheepdog (Wikipedia)",
      "url": "https://en.wikipedia.org/wiki/Pyrenean_Sheepdog"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Elsa the Pyrenean Shepherd is a bit of a sensitive pup. I hear the sound of thunder can give Elsa a big fright!",
+    "favorites": "Elsa loves eating dog food. I hear Elsa looks forward to walk time, too!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a Pyrenean Shepherd is? It's actually a kind of dog! The Pyrenees are mountains between France and Spain. For a long, long time, Pyrenean Shepherds have worked there, keeping flocks of sheep together. Of all the French dogs that herd sheep, they are the smallest! Their fur comes in two types: one with long hair on the face, and one with short hair. They are full of energy, and they're smart, too. I hear they never seem to get tired! Small, but such hard workers, right?"
+   },
+   "nameEn": "Elsa"
   },
   "r-ajq9z9": {
    "personality": "",
@@ -2667,7 +4138,16 @@
      "title": "ポニー｜岡崎市公式ホームページ",
      "url": "https://www.city.okazaki.lg.jp/zoo/nakama/1002138.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one secret about ponies. A pony is a horse that is shorter than 147 centimeters. A pony is not a different kind of animal! Ponies eat grass, tree leaves, fruit, and more. Their bodies are small, but they are very tough. They can pull a load that weighs twice as much as they do. Aren't they strong?"
+   },
+   "nameEn": "Mei"
   },
   "r-1a86s4o": {
    "personality": "",
@@ -2679,7 +4159,16 @@
      "title": "Pony - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Pony"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Ponies often have thicker hair than big horses. Their mane (the long hair on their neck) and their tail are nice and bushy, too. Their legs are on the short side, and their necks are strong and sturdy. So fluffy! Don't they look warm and cozy?"
+   },
+   "nameEn": "Kinoko"
   },
   "r-1xvaqaj": {
    "personality": "",
@@ -2691,7 +4180,16 @@
      "title": "Pony - Wikipedia",
      "url": "https://en.wikipedia.org/wiki/Pony"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Where do you think the name \"pony\" comes from? It comes from an old French word! That word means a young horse, called a foal. It's the perfect name for such a small body, right?"
+   },
+   "nameEn": "Sakura"
   },
   "r-6pa8e7": {
    "personality": "",
@@ -2715,7 +4213,16 @@
      "title": "ヤギ｜到津の動物たち｜到津の森公園",
      "url": "https://www.itozu-zoo.jp/friends/entry/77.php"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you about one of my favorites! Goats are animals that live with people all over the world. They eat grass and leaves from trees. Goats are always moving their mouths, munch, munch! They bring the grass they swallowed back up into their mouths. Then they chew it all over again. Also, goats love to climb up high. They like places where they can see far. They're mountain-climbing champs, right?"
+   },
+   "nameEn": "Latte"
   },
   "r-iq24z1": {
    "personality": "",
@@ -2731,7 +4238,16 @@
      "title": "飼育日誌（3月7日～3月21日）シバヤギ - 市川市動植物園サイト",
      "url": "https://www.city.ichikawa.lg.jp/site/zoo/56919.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? A goat's pupils (the dark middle part of the eye) are long and flat, going side to side. Thanks to this shape, goats can see a wide area all around them. Goats sometimes look down to eat grass, right? Even then, their pupils roll around and stay level with the ground! And in dark places, their pupils turn perfectly round."
+   },
+   "nameEn": "Marble"
   },
   "r-155c4r9": {
    "personality": "",
@@ -2747,7 +4263,16 @@
      "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
      "url": "https://www.ecochil.net/article/63089/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Both boy goats and girl goats have two horns. Deer grow new antlers again and again, but goats don't get new horns. They keep the same horns their whole life! A goat's horns get longer as the goat grows bigger. Isn't that cool?"
+   },
+   "nameEn": "Natsume"
   },
   "r-kwmsg2": {
    "personality": "",
@@ -2763,7 +4288,16 @@
      "title": "ヤギ - 日本平動物園",
      "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Lots of goats have a beard on their chin. I hear the males have really big beards! And guess what? Some goats even have little flaps of skin hanging under their chin. Take a close look at their chins. Aren't they stylish?"
+   },
+   "nameEn": "Mifuyu"
   },
   "r-1bz26by": {
    "personality": "バウムは、「お{手|て}」ができるヤギなんだ。すごいでしょ？{昼間|ひるま}は、ほかのヤギたちといっしょにすごすこともあるんだって。",
@@ -2775,7 +4309,16 @@
      "title": "【京都市動物園だより】イヌの次に早く家畜化した動物「ヤギ」",
      "url": "https://www.ecochil.net/article/63089/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Baum is a goat who can shake hands! Isn't that amazing? I hear that in the daytime, Baum sometimes spends time with the other goats.",
+    "favorites": "Baum loves a block of salt with minerals in it. It's called a \"mineral salt lick.\" I hear you can see Baum licking it, lick, lick, all on their own!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Goats live together in groups called herds. I hear the herd is led by a strong female leader. That's why goats are good at getting along with their friends. They say goats can make friends with people easily, too!"
+   },
+   "nameEn": "Baum"
   },
   "r-1biqhym": {
    "personality": "",
@@ -2787,7 +4330,16 @@
      "title": "出会いの季節ですよ！ - 埼玉県こども動物自然公園",
      "url": "https://www.parks.or.jp/sczoo/blog/entry/001903.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Here's a little secret, just between us! A baby goat grows inside its mother's tummy. It takes about 150 days before it is born. Goats are often born as twins. What a lively pair of brothers and sisters, right?"
+   },
+   "nameEn": "Machiko"
   },
   "r-7b8o7t": {
    "personality": "ツートンは、{飼育員|しいくいん}さんのあとをついてまわる{子|こ}なんだ。とってもあまえんぼうさんでしょ？ほかのヤギがかまわれていると、{気|き}になっちゃうみたい。",
@@ -2803,7 +4355,16 @@
      "title": "出会いの季節ですよ！ - 埼玉県こども動物自然公園",
      "url": "https://www.parks.or.jp/sczoo/blog/entry/001903.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Two-Tone likes to follow the keepers around. What a sweetie, right? When the keepers pay attention to the other goats, Two-Tone seems to want to know what's going on.",
+    "favorites": "Two-Tone seems to like being close to the keepers. Being near them and getting lots of love is Two-Tone's favorite thing!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a goat secret! A baby goat stands up all by itself right after it is born. Horses and cows can stand up soon after they are born, too. When a baby goat is about 2 weeks old, it starts picking up its mom's food in its mouth. That's how it starts copying her. What a hard worker, right?"
+   },
+   "nameEn": "Two-Tone"
   },
   "r-1pf5sq8": {
    "personality": "",
@@ -2819,7 +4380,16 @@
      "title": "ヤギ - 日本平動物園",
      "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "Shiki eats grass and hay. I heard Shiki eats lucerne too. That's a kind of plant also called alfalfa. What a lot of grassy food on the menu!",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Goats have lived with people for a very, very long time! They were the second animal to become a farm animal, right after dogs. People think farm goats came from wild goats. Those goats lived in the mountains and grasslands about 9,000 years ago. That's a long friendship, isn't it?"
+   },
+   "nameEn": "Shiki"
   },
   "r-fu4fft": {
    "personality": "",
@@ -2835,7 +4405,16 @@
      "title": "文献にみる長崎のヒツジ・ヤギなどについて（畜産の研究）",
      "url": "https://agriknowledge.affrc.go.jp/RN/2010872587.pdf"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a goat is? Guess what, even its name is a mystery! In Japanese, the goat is called \"yagi.\" It is written with the kanji for \"mountain\" and \"sheep.\" People have two ideas about where the name \"yagi\" came from. One idea is that it changed from an old word, \"yagyu.\" The other idea is that it came from the language of a nearby country. Even the name has a mystery. Isn't that amazing?"
+   },
+   "nameEn": "Marge"
   },
   "r-si9hsm": {
    "personality": "",
@@ -2847,7 +4426,16 @@
      "title": "ヤギ - 日本平動物園",
      "url": "https://www.nhdzoo.jp/animals/naka.php?animal_uid=153"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but goats aren't only white! There are goats in lots of colors, like black and brown. Some kinds of goats are kept for their hair, too. One kind is called the \"Angora.\" Its hair is white and looks like thread!"
+   },
+   "nameEn": "Flo"
   },
   "r-ablwzr": {
    "personality": "ラテjrは、むれですごす{時間|じかん}を{大切|たいせつ}にしている{子|こ}なんだ。{仲間|なかま}のヤギたちといっしょだと、ずっとごはんを{食|た}べていることがあるんだって。",
@@ -2863,7 +4451,16 @@
      "title": "ヤギ（山羊）【かぎけんWEB】",
      "url": "https://www.kagiken.co.jp/new/kojimachi/animal-yagi_large.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Latte Jr. really values time spent with the herd. When Latte Jr. is with the other goats, they sometimes keep eating the whole time!",
+    "favorites": "Latte Jr. seems to love mealtime with friends. Munch, munch, nice and slow. Don't they look happy?",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you one of my favorite facts! At the tips of a goat's feet are hard hooves. Each foot has two hooves. When goats climb up and down rocks and walk around, their hooves wear down by just the right amount. That's why at the zoo, keepers sometimes trim the goats' hooves. It keeps them from growing too long."
+   },
+   "nameEn": "Latte Jr."
   },
   "r-dvxqve": {
    "personality": "",
@@ -2879,7 +4476,16 @@
      "title": "ヤギ（山羊）【かぎけんWEB】",
      "url": "https://www.kagiken.co.jp/new/kojimachi/animal-yagi_large.html"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? Even lively goats have things they don't like. Goats don't do well with damp, sticky air or hot weather. Long ago, goats' ancestors lived in dry places. That's why goats like nice, dry weather!"
+   },
+   "nameEn": "Shizuru"
   },
   "r-ebp1us": {
    "personality": "ローズは、{人|ひと}のそばによってくることがある{子|こ}なんだって。{名前|なまえ}をよぶと、ちかづいてくるんだ。{足|あし}のあいだに{入|はい}ってくることもあるんだって。はなで、ぐいっとおしてくることもあるんだよ。",
@@ -2891,7 +4497,16 @@
      "title": "ブタ - Wikipedia",
      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%BF"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Rose sometimes comes up close to people. When you call Rose's name, Rose comes over to you. Sometimes Rose even squeezes in between your legs! Rose may also give you a big push with that nose.",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Pot-bellied pigs are a kind of pig. Pigs are like wild boars. They eat lots of different things. They dig in the ground with their strong noses. Then they look for bugs and roots in the dirt. Guess what? A pig's nose is very good at smelling. It can also feel things really well when it touches them. When it's hot, pigs roll around in mud. That's how they cool their bodies down. Aren't they mud-play masters?"
+   },
+   "nameEn": "Rose"
   },
   "r-au3nhc": {
    "personality": "",
@@ -2911,7 +4526,16 @@
      "title": "ヒツジ - 周南市徳山動物園",
      "url": "https://tokuyama-zoo.jp/as/cms/view.php?id=21&m=cel&k=A08KMGERmh"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Let me tell you a secret about sheep! Sheep are animals that people raise and take care of. They live all over the world. Sheep eat grass. Did you know a sheep's wool doesn't fall out and grow back? It just keeps on growing! That's why people cut their wool every year. Sheep also live in big groups called flocks. They all move around together. Aren't they good friends?"
+   },
+   "nameEn": "Paul"
   },
   "r-1g237i4": {
    "personality": "バーバリーは、いっしょに{暮|く}らすマージュと、{頭|あたま}をぶつけあうことがある{子|こ}なんだ。これを「ずつき」っていうんだって。ふたりは、なかよしなんだ。",
@@ -2927,7 +4551,16 @@
      "title": "ヤギ・ヒツジのウンチのお話（板橋区立こども動物園）",
      "url": "https://itabashi-park-zoo.com/cat_cmn/%E3%83%A4%E3%82%AE%E3%83%BB%E3%83%92%E3%83%84%E3%82%B8%E3%81%AE%E3%82%A6%E3%83%B3%E3%83%81%E3%81%AE%E3%81%8A%E8%A9%B1/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "Barbary sometimes bumps heads with Marge, who lives with them. This is called \"headbutting.\" The two of them are good friends!",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Hey, guess what? Sheep have four stomachs! After they swallow grass, they bring it back up into their mouths. Then they chew it again! This is called \"chewing the cud.\" They often do it when they are relaxing."
+   },
+   "nameEn": "Barbary"
   },
   "r-1wu0bkc": {
    "personality": "",
@@ -2939,7 +4572,16 @@
      "title": "Hunters have vertical slits; the hunted, horizontal（UC Berkeley News）",
      "url": "https://news.berkeley.edu/2015/08/07/pupil-shape-and-ecological-niche/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "What kind of animal do you think a sheep is? Sheep have really interesting eyes! The black part in the middle of each eye is long and flat, going sideways. This shape helps them see all around a wide area. You know how sheep lower their heads to eat grass? Even then, their eyes roll around to stay level. So the black part stays long and sideways. It keeps facing the same way as the ground!"
+   },
+   "nameEn": "Asako"
   },
   "r-31ilah": {
    "personality": "",
@@ -2955,7 +4597,16 @@
      "title": "Sheep are able to recognise human faces from photographs（University of Cambridge）",
      "url": "https://www.cam.ac.uk/research/news/sheep-are-able-to-recognise-human-faces-from-photographs"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "This might surprise you, but sheep are really good at remembering faces! One study says a sheep can remember the faces of 50 other sheep. And they still didn't forget them after 2 years! Sheep can even tell people's faces apart in photos. Amazing, right?"
+   },
+   "nameEn": "Tae"
   },
   "r-1ha5jn": {
    "personality": "",
@@ -2983,7 +4634,16 @@
      "title": "Spring Rose the Geep: a Goat-Sheep Hybrid - Goat Journal",
      "url": "https://goatjournal.iamcountryside.com/goat-breeds/geep-goat-sheep-hybrid/"
     }
-   ]
+   ],
+   "en": {
+    "family": "",
+    "personality": "",
+    "favorites": "",
+    "identifyingMarks": "",
+    "keeperComment": "",
+    "speciesInfo": "Guess what? \"Geep\" is the name for an animal that has features of both a sheep and a goat. In 1984, scientists made one. They put together the starting cells of a baby sheep and a baby goat. A geep's coat is patchy. Some parts are fluffy like a sheep, and some parts have hair like a goat. A baby born to a sheep and a goat is also called a geep. But that is very, very rare. Two animals in one body. Isn't that amazing?"
+   },
+   "nameEn": "Rea"
   }
  }
 }

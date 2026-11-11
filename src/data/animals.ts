@@ -41,6 +41,8 @@ export interface Animal {
   speciesInfo?: string
   /** speciesInfo の出典 */
   speciesSources?: { title: string; url: string }[]
+  /** 英語表示の本文（日本語の確認済みの文を、スコップの口調のまま子ども向けの英語にしたもの）。無ければ日本語のまま出す */
+  en?: ProfileText
   /** ready: プロフィールと映像がそろっている。preparing: 準備中（一覧に出さない） */
   status: 'ready' | 'preparing'
   /** 任意。写真がなくても UI は成立させる */
@@ -59,6 +61,16 @@ export interface Animal {
    * モニターに「どの子が映っているかは未確認」と出す。その種が 1 頭だけなら無し
    */
   videoGroup?: VideoSubject
+}
+
+/** プロフィールの本文（英語版） */
+export interface ProfileText {
+  family: string
+  personality: string
+  favorites: string
+  identifyingMarks: string
+  keeperComment: string
+  speciesInfo: string
 }
 
 interface AnimalsFile {
@@ -137,6 +149,9 @@ interface ProfileRow {
   identifyingMarks: string
   speciesInfo: string
   speciesSources: { title: string; url: string }[]
+  /** 英語の名前（ライオン以外の子。animals.json に nameEn がある子はそちら） */
+  nameEn?: string
+  en?: ProfileText
 }
 const PROFILES = (profilesRaw as { profiles: Record<string, ProfileRow> }).profiles
 for (const a of [...lions, ...rosterAnimals]) {
@@ -147,6 +162,8 @@ for (const a of [...lions, ...rosterAnimals]) {
   a.identifyingMarks ||= p.identifyingMarks
   a.speciesInfo = p.speciesInfo
   a.speciesSources = p.speciesSources
+  a.nameEn ||= p.nameEn
+  if (p.en) a.en = p.en
 }
 
 /** 顔の写真（tools/photos-import.mjs が書く。id → public/faces の画像）。無い子は自作の顔のまま */
