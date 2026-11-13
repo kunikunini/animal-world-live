@@ -432,6 +432,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'cockatielOo', species: 'オカメインコ', name: 'おー', file: 'cockatiel-oo', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
       { key: 'macawTechi', species: 'ベニコンゴウインコ', name: 'テチ', file: 'macaw-techi', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
       { key: 'macawElena', species: 'ベニコンゴウインコ', name: 'エレナ', file: 'macaw-techi', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      // 空の世界の猛禽 4 種 7 羽（11/13 くにの指示）: 種ごとに 1 体生成して複製（リグなし）。インコと同じく止まり木の上でその場の呼吸と首の向きだけ
+      { key: 'vultureEva', species: 'ヒメコンドル', name: 'エヴァ', file: 'vulture-eva', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'hawkKohaku', species: 'ハリスホーク', name: '琥珀', file: 'hawk-kohaku', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'hawkTenmei', species: 'ハリスホーク', name: '天明', file: 'hawk-kohaku', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'hawkHarry', species: 'ハリスホーク', name: 'ハリー', file: 'hawk-kohaku', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'eagleSubaru', species: 'ワシノスリ', name: '昴', file: 'eagle-subaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'eagleFutaba', species: 'ワシノスリ', name: '二葉', file: 'eagle-subaru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'falconHayate', species: 'ラナーハヤブサ', name: '疾風', file: 'falcon-hayate', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
       { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },
