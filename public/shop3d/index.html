@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<base href="/shop3d/">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>3Dのグッズ売り場（試作）｜北海道アニマルワールド</title>
+<!-- 文字はサイト（/cheer）と同じ：日本語は Zen Maru Gothic、英字の見出しは Fredoka -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="store.css">
+<script>addEventListener("error",function(){if(parent!==window&&!document.querySelector(".app.is-ready"))parent.postMessage({type:"awl-shop-fail"},location.origin)},true)</script>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/addons/"}}</script>
+</head>
+<body>
+<div class="app" id="app" data-mode="outside">
+  <section class="stage" id="stage" aria-label="3Dのグッズ売り場">
+    <canvas id="scene"></canvas>
+
+    <header class="top">
+      <span class="wordmark">北海道アニマルワールド <span>SHOP</span></span>
+      <span class="badge">試作・見るだけ</span>
+      <button class="cartlink" id="cart-link" hidden>カート <b>0</b></button>
+      <button class="ghost" id="leave" hidden>外に出る</button>
+    </header>
+
+    <h1 class="greeting" id="greeting"><span><span>動物たちの</span></span><span><span>グッズのお店へ</span></span><span><span>ようこそ！</span></span></h1>
+    <div class="welcome" id="welcome">
+      <div class="welcome-actions">
+        <button class="primary" id="enter">お店に入る</button>
+        <a class="back" id="to-world" href="/">ワールドにもどる</a>
+      </div>
+    </div>
+
+    <p class="loading" id="loading" role="status">お店を準備しています…</p>
+    <p class="notice" id="notice" hidden></p>
+    <!-- レジの前まで来たときだけ出る -->
+    <div class="pay-here" id="pay-here" hidden>
+      <p class="pay-msg" id="pay-msg" role="status" hidden>カートはまだ空です。<br>商品を選んで「カートに入れる」を押してください</p>
+      <button type="button" class="pay-btn" id="pay-btn">お会計にすすむ</button>
+    </div>
+  </section>
+
+  <div class="hud" id="hud" hidden>
+    <nav class="places" id="places" aria-label="売り場"></nav>
+    <div class="bar">
+      <div class="selected">
+        <span id="h-kind">店内</span>
+        <h2 id="h-name">見たい売り場を選んでください</h2>
+        <p id="h-sub"></p>
+      </div>
+      <div class="controls">
+        <button class="arrow" id="h-prev" aria-label="前の商品">&larr;</button>
+        <button class="arrow" id="h-next" aria-label="次の商品">&rarr;</button>
+        <button class="inspect" id="h-inspect" disabled>詳しく見る</button>
+      </div>
+    </div>
+  </div>
+
+  <aside class="editor" id="editor" hidden aria-label="並べかえ">
+    <div class="editor-head">
+      <h2>並べかえ</h2>
+      <p>売り場・段・順番を変えると、すぐ店内に反映されます。</p>
+    </div>
+    <div class="editor-list" id="ed-list"></div>
+    <p class="editor-state" id="ed-state"></p>
+    <div class="editor-actions">
+      <button id="ed-export">ファイルに書き出す</button>
+      <button id="ed-reset">元に戻す</button>
+    </div>
+  </aside>
+</div>
+
+<dialog id="detail">
+  <div class="dialog-head">
+    <span id="d-type"></span>
+    <button class="close" data-close>閉じる</button>
+  </div>
+  <div class="product-layout">
+    <div class="photo" id="d-photo-wrap"><img id="d-photo" alt=""></div>
+    <div class="copy">
+      <h2 id="d-name"></h2>
+      <p id="d-desc"></p>
+      <dl id="d-spec"></dl>
+      <div class="sizes" id="d-options" role="group"></div>
+      <button class="cart" id="d-cart" disabled>カートに入れる</button>
+      <p class="added" id="d-added" role="status" hidden><span id="d-added-text"></span> <button type="button" id="d-added-link">カートを見て、お会計へ</button></p>
+      <p class="note" id="d-ship" hidden></p>
+      <p class="note" id="d-note">画像は3Dで作ったイメージです（実物の写真ではありません）</p>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="cart" aria-labelledby="c-title">
+  <div class="dialog-head">
+    <span>カート</span>
+    <button class="close" data-close>閉じる</button>
+  </div>
+  <div class="cart-body">
+    <h2 id="c-title"></h2>
+    <p class="cart-lead" id="c-lead"></p>
+    <ul class="cart-lines" id="c-lines"></ul>
+    <dl class="cart-sums" id="c-sums"></dl>
+    <p class="note" id="c-note"></p>
+    <p class="added error" id="c-error" role="alert" hidden></p>
+    <button class="cart" id="c-pay">お支払いへ進む</button>
+    <div class="cart-foot"><button type="button" class="linklike" data-close>お店にもどる</button></div>
+  </div>
+</dialog>
+
+<script type="module" src="store/main.js"></script>
+</body>
+</html>

@@ -32,6 +32,8 @@ import { createBookView } from './ui/book'
 import { createWorldLabels } from './ui/labels'
 import type { LabelEntry, Rect } from './ui/labels'
 import { createEncounterIcon } from './ui/encounter'
+import { createShopView } from './ui/shop'
+import { SHOP, updateShopHouse } from './world/shop'
 import { createMinimap } from './ui/minimap'
 import { arrivalOf } from './world/mapBases'
 import { createMapView } from './ui/map'
@@ -804,6 +806,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
 
   // 広げた全体地図（ミニマップの「地図を広げる」から開く）
   const mapView = createMapView()
+  // グッズのお店（ふれあいワールド）。扉の前で「お店に入る」を押すと、3D の売り場を上に重ねる
+  const shopView = createShopView()
 
   // 入る演出の間は true（操作を止め、HUD を隠す）
   let introOn = false
@@ -812,7 +816,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // アニマルスコープの一覧を見ている間は true。描画も止める（canvas は最後の絵のまま一覧の下に隠れる）
   let viewing = false
   const syncInput = () => {
-    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen() || introOn
+    const blocked = observe.isOpen() || book.isOpen() || mapView.isOpen() || catalog.isOpen() || shopView.isOpen() || introOn
     player.setInputEnabled(!blocked && !paused)
     joystick.setEnabled(!blocked && !paused)
     staminaUi.setEnabled(!blocked && !paused)
@@ -826,6 +830,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   })
   book.onOpenChange(syncInput)
   syncInput()
+  // 売り場を開いている間は、ワールドの描画を止め（3D を二重に動かさない）、BGM と環境音を下げる
+  let shopping = false
+  shopView.onOpenChange((open) => {
+    shopping = open
+    if (open) player.goTo([])
+    else clock.getDelta()
+    document.body.classList.toggle('shop-open', open)
+    sound.setDuck(open)
+    syncInput()
+  })
 
   // 観察スポットに立つ → スコープをのぞく演出 → アニマルスコープ（動画一覧）
   const body = document.body
@@ -1491,7 +1505,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const tick = () => {
     // 3D の地図を開いている間は本編を描かない（地図のジオラマだけ描く）。
     // アニマルスコープの一覧・観察モニターの間も描かない（ワールドから直接モニターを開いた時も。スマホのメモリと電池）
-    if (paused || viewing || mapView.is3DOpen() || catalog.isOpen() || observe.isOpen()) {
+    if (paused || viewing || mapView.is3DOpen() || catalog.isOpen() || observe.isOpen() || shopping) {
       if (warmFrames > 0) {
         warmFrames--
         postfx.render()
@@ -1513,6 +1527,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
     walkX = player.object.position.x
     walkZ = player.object.position.z
+    // グッズのお店: 扉の前にいる間だけ「お店に入る」を出す
+    updateShopHouse(walkX, walkZ)
+    shopView.setNear(!introOn && Math.hypot(walkX - SHOP.doorX, walkZ - SHOP.doorZ) < SHOP.reach)
     // あそびかたツアー: ライリーと観察スポットの画面の位置（暗幕の穴と矢印を合わせる）
     if (guide.isActive()) {
       const pp = player.object.position

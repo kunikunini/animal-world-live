@@ -1,3 +1,4 @@
+import { SHOP } from '../world/shop'
 import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
@@ -908,6 +909,15 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.beginPath()
       b.arc(px(farm.x + GOAT_ROCKS.dx), py(farm.z + GOAT_ROCKS.dz), GOAT_ROCKS.radius * 0.4 * k, 0, Math.PI * 2)
       b.fill()
+      // グッズのお店（大きな木）: 幹の茶色の輪に、葉の緑
+      b.fillStyle = '#7a5232'
+      b.beginPath()
+      b.arc(px(SHOP.x), py(SHOP.z), Math.max(SHOP.radius * 1.5 * k, 2.6 * u), 0, Math.PI * 2)
+      b.fill()
+      b.fillStyle = '#4fae45'
+      b.beginPath()
+      b.arc(px(SHOP.x), py(SHOP.z), Math.max(SHOP.radius * 1.1 * k, 1.8 * u), 0, Math.PI * 2)
+      b.fill()
     }
 
     // 空の世界のフライトの輪（広場を回る小道。峠への道は上の峠の道と重なる）
@@ -1032,6 +1042,9 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     if (farm) {
       const goat = t('goatRocks')
       pill(goat, px(farm.x + GOAT_ROCKS.dx) - pillWidth(ctx, goat, u) / 2, py(farm.z + GOAT_ROCKS.dz) + (GOAT_ROCKS.radius + 3) * k)
+      const shop = t('shopName')
+      // ワールドの名前（左上）に重ならないよう、お店の右に
+      pill(shop, px(SHOP.x) + (SHOP.radius + 4) * k + 3 * u, py(SHOP.z) - 8 * u)
     }
     return boxes
   }

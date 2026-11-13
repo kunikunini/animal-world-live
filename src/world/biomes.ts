@@ -8,6 +8,7 @@ import type { Collider } from './props'
 import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { SUN_LIGHT_DIR } from './scene'
+import { createShopHouse, shopClears } from './shop'
 
 /**
  * サバンナ以外の 5 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
@@ -840,7 +841,8 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
   const leafB = new THREE.Color('#94d45c')
   trees.forEach((t, i) => {
     const y = terrainHeight(t.x, t.z)
-    const s = 0.8 + rand() * 0.5
+    // お店（大きな木）のまわりの木は出さない。乱数は同じ数だけ引くので、ほかの木の並びは変わらない
+    const s = (0.8 + rand() * 0.5) * (shopClears(t.x, t.z) ? 0 : 1)
     const h = (3.2 + rand() * 1.6) * s
     _q.setFromEuler(_e.set(0, rand() * Math.PI * 2, 0))
     _m.compose(_p.set(t.x, y - 0.2, t.z), _q, _s.set(s, h, s))
@@ -853,10 +855,13 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
       blobs.setMatrixAt(i * BLOBS + b, _m)
       blobs.setColorAt(i * BLOBS + b, _c.copy(leafA).lerp(leafB, rand()))
     }
-    if (Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
+    if (s > 0 && Math.hypot(t.x - r.x, t.z - r.z) < r.walk + REACH_BAND) colliders.push({ x: t.x, z: t.z, r: 0.5 * s })
   })
   finish(trunks, blobs)
   group.add(trunks, blobs)
+
+  // グッズのお店（大きな木）: ポニーの放牧場の奥、山のふもと
+  createShopHouse(group, colliders, mobile)
 
   // 花: 牧草地のところどころに小さな花の群れ（白・黄・桃・水色）。当たり判定なし
   const flowerSpots: Array<{ x: number; z: number }> = []

@@ -1,0 +1,225 @@
+:root{--paper:#f6f3ee;--ink:#1d1b18;--muted:#7a746b;--line:#ddd6cb;--accent:#2f5d50}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:500 15px/1.6 "Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;height:100dvh}
+.app.editing{grid-template-columns:minmax(0,1fr) 320px}
+.stage{position:relative;min-height:0;overflow:hidden;background:#d9e6df;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+.stage.can-go{cursor:pointer}
+.stage.dragging{cursor:grabbing}
+
+.top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:12px;padding:14px 20px;pointer-events:none}
+.top>*{pointer-events:auto}
+.wordmark{font-weight:600;letter-spacing:.02em;white-space:nowrap;background:rgba(246,243,238,.86);padding:4px 12px;border-radius:99px}
+.wordmark span{margin-left:6px;font-size:12px;letter-spacing:.2em;color:var(--muted)}
+.badge{white-space:nowrap;font-size:11px;border:1px solid var(--line);padding:2px 10px;border-radius:99px;color:var(--muted);background:rgba(246,243,238,.86)}
+.ghost{white-space:nowrap;margin-left:auto;background:rgba(246,243,238,.9);border:1px solid var(--line);border-radius:99px;padding:6px 16px;font-size:13px}
+.ghost[hidden]{display:none}
+.cartlink{white-space:nowrap;margin-left:auto;background:var(--ink);color:var(--paper);border:0;border-radius:99px;padding:6px 16px;font-size:13px;text-decoration:none}
+.cartlink b{margin-left:4px;font-weight:600}
+.cartlink[hidden]{display:none}
+.cartlink:not([hidden])~.ghost{margin-left:0}
+
+/* 入口の案内：白い板は置かず、景色の上に文字とボタンだけを出す。文字は、ふわっと浮かんで現れる */
+.welcome{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));text-align:center;transition:opacity .35s,transform .35s}
+.app:not([data-mode=outside]) .welcome{opacity:0;visibility:hidden;transform:translate(-50%,12px);pointer-events:none;transition:opacity .35s,transform .35s,visibility 0s .35s}
+.eyebrow{margin:0;font-size:11px;letter-spacing:.25em;color:var(--muted)}
+/* ようこそ／お礼のあいさつ：画面のまんなかに大きく出して、しばらくしたら消える（押せない・景色のじゃまをしない）。
+   出方はマスクリビール：行ごとの見えない枠（外の span）の下から、文字（中の span）がすっと持ち上がって現れる。行ごとに少しずつ遅らせる */
+.greeting{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:calc(100% - 32px);margin:0;text-align:center;pointer-events:none;
+  font-size:clamp(34px,11vw,88px);font-weight:700;letter-spacing:.02em;line-height:1.35;color:#fff;animation:greeting 6.5s .5s linear both}
+.greeting>span{display:inline-block;white-space:nowrap;overflow:hidden;vertical-align:top;padding:.12em .35em .28em;margin:-.12em -.35em -.28em}   /* 影がはみ出しても切れないよう、枠を少し広げる */
+.greeting>span>span{display:inline-block;text-shadow:0 3px 6px rgba(20,30,20,.6),0 0 22px rgba(20,30,20,.45);animation:greeting-reveal .95s .55s cubic-bezier(.16,.84,.24,1) both}
+.greeting>span:nth-child(2)>span{animation-delay:.73s}
+.greeting>span:nth-child(3)>span{animation-delay:.91s}
+/* お店を出たあとのお礼：「ありがとうございました！」（12文字）が1行に入る大きさにする */
+.greeting.thanks{font-size:clamp(20px,6.8vw,80px)}
+.app:not([data-mode=outside]) .greeting{display:none}
+@keyframes greeting-reveal{0%{transform:translateY(118%)}100%{transform:none}}
+/* 全体は、出てから5秒ほど置いて、上へふわっと消える */
+@keyframes greeting{0%{opacity:1;transform:translate(-50%,-50%);filter:none}80%{opacity:1;transform:translate(-50%,-50%);filter:none}
+  100%{opacity:0;transform:translate(-50%,calc(-50% - 10px));filter:blur(8px)}}
+@keyframes greeting-plain{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.welcome-actions{display:flex;align-items:center;justify-content:center;gap:12px;animation:welcome-in 1.2s 1.5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes welcome-in{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+.primary{background:var(--accent);color:#fff;border:0;min-height:48px;padding:0 36px;border-radius:4px;font-size:16px}
+.loading,.notice{position:absolute;left:50%;transform:translateX(-50%);margin:0;font-size:12px;color:var(--muted);background:rgba(246,243,238,.9);padding:2px 12px;border-radius:99px}
+/* 読み込み中の案内：外観が出るまでは画面のまんなかに大きく。外観が出たら、ボタンが出る場所（下）へ */
+.loading{top:46%;font-size:15px;font-weight:700;color:var(--ink);padding:10px 24px;box-shadow:0 6px 18px rgba(20,30,20,.18);animation:loading-pulse 1.4s ease-in-out infinite}
+.app.is-shown .loading{top:auto;bottom:9%}
+@keyframes loading-pulse{50%{opacity:.55}}
+/* あいさつは外観が出てから、ボタンは店内の準備が済んでから出す */
+.app:not(.is-shown) .greeting,.app:not(.is-ready) .welcome{display:none}
+.notice{top:58px;color:#8a3b1e;max-width:calc(100% - 32px)}
+.loading[hidden],.notice[hidden]{display:none}
+/* レジの前の「お会計にすすむ」：「お店に入る」と同じ緑のボタン */
+.pay-here{position:absolute;left:16px;right:16px;bottom:22px;display:flex;pointer-events:none;flex-direction:column;align-items:center;gap:10px;z-index:3;animation:pay-in .35s cubic-bezier(.2,.7,.2,1) both}
+.pay-here[hidden]{display:none}
+.pay-btn{pointer-events:auto;min-height:52px;padding:0 34px;border:0;border-radius:4px;background:#5f9a4a;color:#fff;font:700 17px/1 "Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;box-shadow:0 4px 0 #417334,0 8px 18px rgba(20,30,20,.3);white-space:nowrap}
+.pay-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #417334,0 4px 10px rgba(20,30,20,.3)}
+.pay-msg{margin:0;padding:10px 18px;border-radius:6px;background:rgba(246,243,238,.95);color:#8a3b1e;font-size:13px;line-height:1.6;text-align:center;box-shadow:0 6px 18px rgba(20,30,20,.2)}
+.pay-msg[hidden]{display:none}
+@keyframes pay-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pay-here{animation:none}}
+
+.hud{border-top:1px solid var(--line);background:var(--paper);padding:10px 20px 14px;grid-column:1;min-width:0}
+.hud[hidden]{display:none}
+.places{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.places::-webkit-scrollbar{display:none}
+.places button{flex:none;background:none;border:1px solid var(--line);border-radius:99px;padding:5px 16px;font-size:13px;white-space:nowrap}
+.places button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.selected{display:grid;grid-template-columns:auto 1fr;column-gap:14px;min-width:0}
+.selected>span{grid-row:1/3;font-size:12px;color:var(--muted);padding-top:4px;min-width:64px}
+.selected h2{margin:0;font-size:18px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.selected p{margin:2px 0 0;font-size:12px;color:var(--muted);min-height:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.controls{display:flex;gap:8px;flex:none}
+.arrow{width:42px;height:42px;background:none;border:1px solid var(--line)}
+.arrow:disabled,.inspect:disabled{opacity:.35;cursor:default}
+.inspect{background:var(--ink);color:var(--paper);border:0;padding:0 22px;min-height:42px}
+
+dialog{width:min(980px,calc(100% - 32px));max-height:calc(100% - 32px);border:0;padding:0;background:var(--paper);color:var(--ink);border-radius:6px}
+dialog::backdrop{background:rgba(29,27,24,.45)}
+.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.close{background:none;border:0;padding:6px}
+.product-layout{display:grid;grid-template-columns:1.15fr 1fr;gap:36px;padding:28px}
+.photo{background:#fff;display:flex;align-items:center;justify-content:center;border-radius:4px}
+.photo.render{background:#ece6dc}
+.photo img{width:100%;height:auto;max-height:70vh;object-fit:contain}
+.copy{align-self:center}
+.copy h2{margin:0 0 12px;font-size:28px;font-weight:500}
+.copy p{margin:0;color:var(--muted);font-size:14px}
+.copy dl{margin:22px 0;font-size:13px}
+.copy dl>div{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line)}
+dd{margin:0}
+.sizes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.sizes:empty{display:none}
+.sizes button{min-width:48px;height:40px;background:none;border:1px solid var(--line);padding:0 10px}
+.sizes button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.cart{width:100%;min-height:48px;border:0;background:var(--accent);color:#fff}
+.cart:disabled{opacity:.55;cursor:default}
+.sizes button:disabled{opacity:.4;cursor:default;text-decoration:line-through}
+.added{margin:12px 0 0!important;padding:10px 12px;border:1px solid var(--accent);border-radius:4px;color:var(--ink)!important;font-size:13px!important}
+.added.error{border-color:#8a3b1e;color:#8a3b1e!important}
+.added[hidden],.added a[hidden]{display:none}
+.added button{background:none;border:0;padding:0;color:var(--accent);font-weight:600;white-space:nowrap;text-decoration:underline}
+/* 「お店に入る」は、/cheer の「グッズを見る」と同じ緑（--leaf #5f9a4a、下の影 #417334） */
+.welcome .primary{background:#5f9a4a;font-weight:700;box-shadow:0 4px 0 #417334,0 8px 18px rgba(20,30,20,.3)}
+.welcome .back{display:inline-flex;align-items:center;min-height:48px;padding:0 26px;border-radius:4px;background:rgba(246,243,238,.92);color:var(--ink);font-size:16px;text-decoration:none;box-shadow:0 6px 18px rgba(20,30,20,.3)}
+/* カート（この売り場の中で、確認からお会計まで） */
+#cart{width:min(560px,calc(100% - 32px))}
+.cart-body{padding:22px 24px 24px}
+.cart-body h2{margin:0 0 6px;font-size:22px;font-weight:500}
+.cart-lead{margin:0 0 14px;font-size:13px;color:var(--muted);white-space:pre-line}
+.cart-lead:empty{display:none}
+.cart-lines{list-style:none;margin:0;padding:0}
+.cart-lines li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.cart-lines b{font-weight:500}
+.cart-lines small{display:block;font-size:12px;color:var(--muted)}
+.cart-lines strong{font-weight:500;text-align:right}
+.qty{grid-column:1/3;display:flex;align-items:center;gap:8px;font-size:13px}
+.qty button{min-width:36px;height:36px;background:none;border:1px solid var(--line)}
+.qty button:disabled{opacity:.35;cursor:default}
+.qty output{min-width:24px;text-align:center}
+.qty .remove{margin-left:auto;border:0;color:var(--muted);text-decoration:underline;min-width:0;padding:0 4px}
+.cart-sums{margin:0 0 12px;font-size:14px;border-top:1px solid var(--line)}
+.cart-sums:empty{display:none}
+.cart-sums>div{display:flex;justify-content:space-between;padding:8px 0}
+.cart-sums>div.total{border-top:1px solid var(--line);font-size:17px;font-weight:600}
+#c-note{margin:0 0 12px!important;white-space:pre-line}
+#c-note:empty,#c-pay[hidden]{display:none}
+#c-error{margin:0 0 12px!important}
+.cart-foot{display:flex;justify-content:space-between;gap:12px;margin-top:14px}
+.linklike{background:none;border:0;padding:6px 0;font-size:13px;color:var(--muted);text-decoration:underline;cursor:pointer}
+.note{margin-top:12px!important;font-size:11px!important}
+.note[hidden]{display:none}
+
+.editor{grid-column:2;grid-row:1/3;border-left:1px solid var(--line);background:#fbf9f5;display:flex;flex-direction:column;min-height:0}
+.editor[hidden]{display:none}
+.editor-head{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+.editor-head h2{margin:0;font-size:16px;font-weight:600}
+.editor-head p{margin:4px 0 0;font-size:12px;color:var(--muted)}
+.editor-list{flex:1;overflow:auto;padding:8px 12px}
+.ed-group{margin:10px 0 4px;font-size:11px;letter-spacing:.12em;color:var(--muted)}
+.ed-row{border:1px solid var(--line);border-radius:6px;background:#fff;padding:8px 10px;margin-bottom:6px}
+.ed-row.off{opacity:.55}
+.ed-name{font-size:13px;font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.ed-name label{font-weight:400;font-size:12px;color:var(--muted);white-space:nowrap}
+.ed-fields{display:flex;gap:6px;margin-top:6px;align-items:center}
+.ed-fields select{flex:1;min-width:0;font:inherit;font-size:12px;padding:4px;border:1px solid var(--line);border-radius:4px;background:#fff}
+.ed-fields select.tier{flex:none;width:68px}
+.ed-fields button{width:30px;height:30px;border:1px solid var(--line);background:none;border-radius:4px;padding:0}
+.ed-fields button:disabled{opacity:.3;cursor:default}
+.editor-state{margin:0;padding:6px 16px;font-size:12px;color:var(--muted);min-height:30px}
+.editor-actions{display:flex;gap:8px;padding:10px 16px 16px;border-top:1px solid var(--line)}
+.editor-actions button{flex:1;min-height:40px;border:1px solid var(--line);background:#fff;border-radius:4px;font-size:13px}
+.editor-actions button:first-child{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+@media(max-width:700px){
+  .top{padding:10px 12px;gap:8px}
+  .wordmark{font-size:12px;padding:4px 10px}
+  .wordmark span{margin-left:4px;font-size:10px;letter-spacing:.12em}
+  .top:has(.cartlink:not([hidden])) .wordmark span{display:none}   /* カートのボタンが入るぶん、SHOP の文字をしまう */
+  .ghost,.cartlink{padding:5px 10px;font-size:12px}
+  .top:has(.cartlink:not([hidden])){gap:6px}
+  .top:has(.cartlink:not([hidden])) .badge{padding:2px 8px}
+  .hud{padding:8px 12px 12px}
+  .bar{flex-wrap:wrap;gap:10px}
+  .selected{width:100%}
+  .controls{width:100%}
+  .inspect{flex:1}
+  .product-layout{grid-template-columns:1fr;gap:18px;padding:16px}
+  .copy h2{font-size:22px}
+  .cart-body{padding:16px}
+  .app.editing{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto 44dvh}
+  .editor{grid-column:1;grid-row:3;border-left:0;border-top:1px solid var(--line)}
+}
+/* 背の低い画面（スマホの横向きなど）：入口の案内を細い帯にして、店の外観を隠さない */
+@media(max-height:480px){
+  .welcome{display:flex;align-items:center;justify-content:center;gap:16px;width:auto;max-width:calc(100% - 24px);bottom:10px;white-space:nowrap}
+  .greeting{top:38%;font-size:clamp(22px,9vh,44px)}
+  .greeting.thanks{font-size:clamp(18px,min(9vh,6.8vw),44px)}
+  .primary,.welcome .back{min-height:40px;padding:0 22px;font-size:14px}
+  .hud{padding:6px 16px 8px}
+  .places{padding-bottom:6px}
+}
+@media(prefers-reduced-motion:reduce){.loading{animation:none} .welcome{transition:none} .welcome-actions{animation:none} .greeting{animation-name:greeting-plain} .greeting>span>span{animation:none}}
+/* とても狭い画面：カートのボタンが出ているあいだは「試作」の札をしまう */
+@media(max-width:380px){.top:has(.cartlink:not([hidden])) .badge{display:none}}
+
+/* ---------- ボタンの動き：ホバーで浮く・押すと沈む・主役のボタンは、押せることが伝わるようにゆっくり光る ---------- */
+button,.welcome .back,a.linklike{transition:transform .16s cubic-bezier(.2,.7,.2,1),box-shadow .16s,background-color .16s,border-color .16s,color .16s,filter .16s;-webkit-tap-highlight-color:transparent}
+/* 押したとき（指でもマウスでも）：少し沈む */
+button:not(:disabled):active,.welcome .back:active{transform:translateY(1px) scale(.96);filter:brightness(.94)}
+.welcome .primary:active{box-shadow:0 1px 0 #417334,0 3px 8px rgba(20,30,20,.3);transform:translateY(3px) scale(.98)}
+@media(hover:hover){
+  button:not(:disabled):hover,.welcome .back:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(20,30,20,.18)}
+  .primary:hover,.cart:not(:disabled):hover,.inspect:not(:disabled):hover,.cartlink:hover{filter:brightness(1.1)}
+  .welcome .primary:hover{box-shadow:0 6px 0 #417334,0 12px 22px rgba(20,30,20,.34);transform:translateY(-2px)}
+  .welcome .back:hover{background:#fff}
+  .ghost:hover,.arrow:not(:disabled):hover,.places button:not([aria-pressed=true]):hover,.sizes button:not(:disabled):not([aria-pressed=true]):hover,.qty button:not(:disabled):hover{background:#fff;border-color:var(--ink)}
+  .close:hover,.added button:hover,.linklike:hover{transform:none;box-shadow:none;color:var(--accent);text-decoration:underline}
+  .arrow:not(:disabled):hover{transform:translateY(-2px) scale(1.06)}
+  button:not(:disabled):hover:active,.welcome .back:hover:active{transform:translateY(1px) scale(.96);box-shadow:none}
+  .welcome .primary:hover:active{transform:translateY(3px) scale(.98);box-shadow:0 1px 0 #417334,0 3px 8px rgba(20,30,20,.3)}
+}
+/* 主役のボタン（お店に入る・詳しく見る・カートに入れる・お支払いへ進む）：まわりに光の輪がゆっくり広がる */
+.primary,.cart:not(:disabled),.inspect:not(:disabled){position:relative}
+.primary::after,.cart:not(:disabled)::after,.inspect:not(:disabled)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:0 0 0 0 rgba(95,154,74,.55);animation:btn-ring 2.4s ease-out infinite}
+.inspect:not(:disabled)::after{box-shadow:0 0 0 0 rgba(29,27,24,.4);animation-name:btn-ring-ink}
+@keyframes btn-ring{0%{box-shadow:0 0 0 0 rgba(95,154,74,.55)}70%,100%{box-shadow:0 0 0 14px rgba(95,154,74,0)}}
+@keyframes btn-ring-ink{0%{box-shadow:0 0 0 0 rgba(29,27,24,.4)}70%,100%{box-shadow:0 0 0 12px rgba(29,27,24,0)}}
+/* 「お店に入る」は、ときどき小さくはずむ */
+.welcome .primary{animation:btn-bob 3.2s 3s ease-in-out infinite}
+@keyframes btn-bob{0%,84%,100%{translate:0 0}90%{translate:0 -5px}95%{translate:0 1px}}
+.welcome .primary:hover,.welcome .primary:active{animation:none}
+@media(prefers-reduced-motion:reduce){button,.welcome .back,a.linklike{transition:none} .primary::after,.cart::after,.inspect::after{animation:none!important} .welcome .primary{animation:none}}
+/* ANIMAL WORLD LIVE 用：「ワールドにもどる」は元の「戻る」より長いので、スマホ縦でも1行に収める */
+.welcome .primary,.welcome .back{white-space:nowrap}
+@media(max-width:480px){.welcome .primary,.welcome .back{padding:0 16px;font-size:15px}}
+/* ANIMAL WORLD LIVE のお店の扉から開いたとき：外のあいさつと「お店に入る」は出さない（店内から始まる） */
+.app.awl .greeting,.app.awl .welcome{display:none}

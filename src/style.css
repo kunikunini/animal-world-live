@@ -1756,13 +1756,13 @@ body.world-fly .intro-skip { display: inline-flex; animation: refresh-fade 0.6s 
 
 /* 演出の間は HUD を隠し、終わったらふわっと出す */
 body.in-world :is(.hud, .minimap, .minimap-expand, .stick) { transition: opacity 0.7s var(--ease-soft); }
-body.world-intro :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin, .coach-card, .coach-hole, .coach-arrow, .coach-away) {
+body.world-intro :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin, .shop-enter, .coach-card, .coach-hole, .coach-arrow, .coach-away) {
   opacity: 0;
   pointer-events: none;
 }
 
 /* ワールドの部品は、ワールドにいる時だけ見せる（ホームの裏で準備・一時停止している間に、フォーカスが届かないように） */
-body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin, .hud-toast) {
+body:not(.in-world) :is(.hud, .minimap, .minimap-expand, .stick, .spot-label, .encounter-pin, .shop-enter, .shop-view, .hud-toast) {
   visibility: hidden;
 }
 
@@ -6559,3 +6559,84 @@ body.is-reduce-motion .hop * { animation: none !important; }
 body.is-reduce-motion .hop.is-fade-in { animation: hop-in 0.25s ease both !important; }
 body.is-reduce-motion .hop.has-shot .hop-view { transform: none; }
 body.is-reduce-motion .hop.is-focus .hop-view { transition: none; }
+/* ==========================================================================
+   グッズのお店（ふれあいワールド）: 扉の前の「お店に入る」と、売り場を重ねる画面
+   ========================================================================== */
+.shop-enter {
+  position: fixed;
+  left: 50%;
+  bottom: calc(132px + var(--safe-bottom));
+  z-index: 6;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--btn-l);
+  padding: 0 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sun);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fs-btn);
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 0 0 3px #fff, var(--shadow-sun);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--t-view) var(--ease-soft), translate var(--t-view) var(--ease-soft);
+}
+.shop-enter.is-out { opacity: 0; translate: -50% 10px; }
+.shop-enter:hover { background: var(--sun-deep); }
+.shop-enter:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+body:is(.is-scoping, .is-viewing, .observe-open, .book-open, .map-open) .shop-enter { opacity: 0; pointer-events: none; }
+
+.shop-view {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #dfe9d6;
+  transition: opacity var(--t-view) var(--ease-soft);
+}
+.shop-view.is-out { opacity: 0; }
+.shop-view-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.shop-view-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  margin: 0;
+  max-width: calc(100% - 48px);
+  padding: 12px 20px;
+  border-radius: var(--r-md);
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 700;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+/* 売り場の中にも「ワールドにもどる」があるので、こちらは読み込み中と、開けなかった時だけ出す */
+.shop-view-back {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 56px);
+  translate: -50% 0;
+  min-height: var(--btn-m);
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+.shop-view-status[hidden] + .shop-view-back { display: none; }
+body.is-reduce-motion .shop-enter { transition: opacity var(--t-view) linear; }
