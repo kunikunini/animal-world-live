@@ -4,6 +4,8 @@ import type { Iris } from './iris'
 
 /** 3D の売り場（public/shop3d。別のプロジェクトで作ったものを写した、見るだけの版） */
 const SHOP_URL = '/shop3d/index.html?awl'
+/** スマホ用: ページごと移る時の行き先 */
+const SHOP_NAV_URL = '/shop3d/index.html?awl=nav'
 /** これだけ待っても売り場の用意ができなければ、うまく開けなかった案内を出す */
 const LOAD_TIMEOUT_MS = 20000
 
@@ -22,7 +24,7 @@ export interface ShopView {
   onOpenChange: (fn: (open: boolean) => void) => void
 }
 
-export function createShopView(iris: Iris): ShopView {
+export function createShopView(iris: Iris, navigate = false): ShopView {
   const enter = document.createElement('button')
   enter.type = 'button'
   enter.className = 'shop-enter'
@@ -66,6 +68,11 @@ export function createShopView(iris: Iris): ShopView {
   let near = false
 
   let busy = false
+  /** ページごとお店へ移った（ブラウザの「戻る」でこのページが出し直された時に、お店の前から入り直す） */
+  let left = false
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted && left) location.replace('/?shop')
+  })
   /** 売り場の用意ができた（true）・失敗した（false）を待つ間だけ入っている */
   let settle: ((ok: boolean) => void) | null = null
 
@@ -95,6 +102,14 @@ export function createShopView(iris: Iris): ShopView {
     hideView(enter)
     listeners.forEach((fn) => fn(true))
     await iris.close()
+    if (navigate) {
+      // スマホ: ワールドの上に重ねず、ページごとお店へ移る（ワールドとお店の 3D を同時に持つと、メモリが足りずにページが落ちて、スタートに戻ってしまう）。
+      // お店を出ると /?shop で、ワールドのお店の前に戻ってくる
+      iris.setWaiting(true)
+      left = true
+      location.assign(SHOP_NAV_URL)
+      return
+    }
     setStatus(null)
     const f = document.createElement('iframe')
     f.className = 'shop-view-frame'

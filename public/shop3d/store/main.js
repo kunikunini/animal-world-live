@@ -21,7 +21,9 @@ const reduced = matchMedia('(prefers-reduced-motion:reduce)');
 const params = new URLSearchParams(location.search);
 // ANIMAL WORLD LIVE のワールドに立つお店から、演出をはさんで飛んできたとき（?awl）。
 // 外観から始まり、親の合図（awl-shop-go）で扉をくぐって店内へ歩く。外へ出たら、お礼のあいさつのあとワールドへ戻る
-const AWL = params.has('awl') && window.parent !== window;
+// スマホでは、ワールドの上に重ねず、ページごとここへ移ってくる（?awl=nav。ワールドとお店の 3D を同時に持つと、メモリが足りずにページが落ちる）。出る時は /?shop でワールドのお店の前へ戻る
+const AWL_NAV = params.get('awl') === 'nav' && window.parent === window;
+const AWL = AWL_NAV || (params.has('awl') && window.parent !== window);
 if (AWL) document.getElementById('app').classList.add('awl');
 const EDIT = params.has('edit');
 
@@ -278,7 +280,7 @@ function refresh(){
     $('#greeting').classList.add('thanks');
     $('#greeting').replaceChildren(...['ありがとうございました！', 'またきてね！'].map(t => { const line = document.createElement('span'); line.append(Object.assign(document.createElement('span'), {textContent:t})); return line; }));   // 行ごとに、外の枠（マスク）と中の文字
   }
-  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => tellParent('awl-shop-close'), 1900); }   // お礼を見せてから、ワールドへ
+  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => AWL_NAV ? location.assign('/?shop') : tellParent('awl-shop-close'), 1900); }   // お礼を見せてから、ワールドへ
   $('#hud').hidden = !inside; $('#leave').hidden = !inside;
   $('#enter').tabIndex = inside ? -1 : 0;
   for (const b of $('#places').children) b.setAttribute('aria-pressed', String(b.dataset.place === (mode === 'fixture' ? String(current) : 'overview')));
@@ -797,7 +799,9 @@ async function start(){
   ready = true;
   $('#loading').hidden = true;
   app.classList.add('is-ready');
-  tellParent('awl-shop-ready');   // ANIMAL WORLD LIVE の中なら、親の「準備しています」を消してもらう
+  tellParent('awl-shop-ready');
+  if (AWL_NAV) setTimeout(() => { if (mode === 'outside' && !visited) walkIn(); }, 1200);   // ページごと移ってきた時は、合図を待たずに店内へ歩く
+   // ANIMAL WORLD LIVE の中なら、親の「準備しています」を消してもらう
   const goods = buildFixtures().then(() => {
     if (room.solid) paintCards = buildPriceCards(scene, room.solid, fixtures);   // 売り場ごとのプライスカード
     nav = null; setTimeout(navMap, 0);   // 歩ける場所の地図は、売り場（よける場所）がそろってから作り直す

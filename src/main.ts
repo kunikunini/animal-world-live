@@ -825,7 +825,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 広げた全体地図（ミニマップの「地図を広げる」から開く）
   const mapView = createMapView()
   // グッズのお店（ふれあいワールド）。扉の前で「お店に入る」を押すと、3D の売り場を上に重ねる
-  const shopView = createShopView(shell.iris)
+  const shopView = createShopView(shell.iris, mobile)
 
   // 入る演出の間は true（操作を止め、HUD を隠す）
   let introOn = false
