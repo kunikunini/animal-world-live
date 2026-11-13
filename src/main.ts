@@ -858,7 +858,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // 広げた全体地図（ミニマップの「地図を広げる」から開く）
   const mapView = createMapView()
   // グッズのお店（ふれあいワールド）。扉の前で「お店に入る」を押すと、3D の売り場を上に重ねる
-  const shopView = createShopView(shell.iris, mobile)
+  const shopView = createShopView(shell.iris, mobile, () => {
+    try {
+      renderer.dispose()
+      renderer.forceContextLoss()
+    } catch {
+      // 手放せなくても、お店へは移る
+    }
+  })
 
   // 入る演出の間は true（操作を止め、HUD を隠す）
   let introOn = false
@@ -2166,7 +2173,27 @@ function main(): void {
   let world: WorldHandle | null = null
   let busy = false
   // グッズのお店のページ（/shop3d/）をじかに開いて「ワールドにもどる」を押した時（/?shop）: ホームで止まらず、ワールドのお店の前に着く
-  let arriveAtShop = new URLSearchParams(location.search).has('shop')
+  // 戻る途中でメモリが足りずにページが落ち、ブラウザが読み込み直した時は、もう 1 回だけ同じ所からやり直す（印は sessionStorage。2 回目も落ちたら、ふつうにホームから）
+  const SHOP_BACK = 'awl.shopBack'
+  const shopBackTries = (): number => {
+    try {
+      return Number(sessionStorage.getItem(SHOP_BACK)) || 0
+    } catch {
+      return 0
+    }
+  }
+  const setShopBack = (n: number | null) => {
+    try {
+      if (n === null) sessionStorage.removeItem(SHOP_BACK)
+      else sessionStorage.setItem(SHOP_BACK, String(n))
+    } catch {
+      // 保存できなくても続ける
+    }
+  }
+  const fromShopLink = new URLSearchParams(location.search).has('shop')
+  let arriveAtShop = fromShopLink || shopBackTries() === 1
+  if (arriveAtShop) setShopBack(fromShopLink ? 1 : 2)
+  else setShopBack(null)
 
   // ホーム → 幕が双眼鏡の形に閉じる → ワールド → 幕が開く
   const enterWorld = async () => {
@@ -2198,6 +2225,7 @@ function main(): void {
       canvas.focus()
       await shell.iris.open()
       // 幕が開いたら入る演出（モザイク → 寄りから引き → ワールドの名前）。終わってからあそび方ナビを出す
+      if (toShop) setShopBack(null)
       if (!toShop) {
         await world.playIntro()
         shell.guide.autoStart(shell.store.list().length > 0)
@@ -2205,6 +2233,8 @@ function main(): void {
       shell.guide.setInWorld(true)
     } catch (err) {
       console.error(err)
+      dropSplash(false)
+      setShopBack(null)
       shell.home.show()
       document.body.classList.remove('in-world')
       shell.home.showFallback()
@@ -2237,7 +2267,11 @@ function main(): void {
     // 読み込み直しても同じことが起きないよう、印を外してから入る
     history.replaceState(null, '', location.pathname)
     if (webgl) void enterWorld()
-    else arriveAtShop = false
+    else {
+      arriveAtShop = false
+      setShopBack(null)
+      dropSplash(false)
+    }
   }
   // 物語をみる: ホームの上で紙芝居を流し、最後の「のぞいてみる」まで見たら「だれで冒険する？」へ（とばした時はホームのまま）
   shell.home.onStory(async () => {

@@ -23,6 +23,29 @@ const params = new URLSearchParams(location.search);
 // 外観から始まり、親の合図（awl-shop-go）で扉をくぐって店内へ歩く。外へ出たら、お礼のあいさつのあとワールドへ戻る
 // スマホでは、ワールドの上に重ねず、ページごとここへ移ってくる（?awl=nav。ワールドとお店の 3D を同時に持つと、メモリが足りずにページが落ちる）。出る時は /?shop でワールドのお店の前へ戻る
 const AWL_NAV = params.get('awl') === 'nav' && window.parent === window;
+// ページごとワールドへ戻る前に、この売り場の 3D（GPU のメモリ）を手放す。
+// 手放さないと、スマホのブラウザが前のページを裏に残したまま、ワールドの組み立てでメモリが足りなくなってページが落ち、スタートに戻ってしまう（2026-11-13 実機）
+let gone = false;
+function freeGL(){
+  if (gone) return; gone = true;
+  try { bgm?.pause(); } catch { /* 音が無くても続ける */ }
+  try { renderer.dispose(); renderer.forceContextLoss(); } catch { /* 手放せなくても、移動は続ける */ }
+}
+// スマホでページごと移ってきた時は、ワールドの BGM が途切れるので、ここでふれあいワールドの曲を小さく流す。
+// ブラウザは最初の操作まで音を出させないので、最初にさわった時から鳴る。音量と消音は、アプリの設定（localStorage）に合わせる
+let bgm = null;
+function startBgm(){
+  if (bgm || gone) return;
+  let vol = 0.6, mute = false;
+  try {
+    const v = Number(localStorage.getItem('awl.vol.bgm') ?? 0.6); if (Number.isFinite(v)) vol = Math.min(1, Math.max(0, v));
+    mute = localStorage.getItem('awl.mute.all') === '1' || localStorage.getItem('awl.mute.bgm') === '1';
+  } catch { /* 設定が読めなければ、既定の音量 */ }
+  if (mute || vol <= 0) return;
+  bgm = new Audio('/audio/bgm-partner.mp3');
+  bgm.loop = true; bgm.volume = vol * vol * 0.5;   // 店内なので、ワールドより控えめ
+  bgm.play().catch(() => { bgm = null; });   // まだ鳴らせなければ、次の操作でもう一度
+}
 const curtain = document.getElementById('awl-curtain');   // ページごと行き来する時の暗い幕（ワールドの側の幕と同じ色）
 const AWL = AWL_NAV || (params.has('awl') && window.parent !== window);
 if (AWL) document.getElementById('app').classList.add('awl');
@@ -240,6 +263,7 @@ function showPayHere(){
   if (!near) { $('#pay-msg').hidden = true; clearTimeout(payMsgTimer); }
 }
 function frame(time){
+  if (gone) return;   // 3D を手放したあとは描かない
   advance(last ? Math.min(0.05, (time - last) / 1000) : 0); last = time;
   requestAnimationFrame(frame);
 }
@@ -283,7 +307,7 @@ function refresh(){
     $('#greeting').classList.add('thanks');
     $('#greeting').replaceChildren(...['ありがとうございました！', 'またきてね！'].map(t => { const line = document.createElement('span'); line.append(Object.assign(document.createElement('span'), {textContent:t})); return line; }));   // 行ごとに、外の枠（マスク）と中の文字
   }
-  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => { if (!AWL_NAV) return tellParent('awl-shop-close'); curtain?.classList.remove('is-out'); setTimeout(() => location.assign('/?shop'), 480); }, 1700); }   // ページごと戻る時は、暗い幕を閉じてから   // お礼を見せてから、ワールドへ
+  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => { if (!AWL_NAV) return tellParent('awl-shop-close'); curtain?.classList.remove('is-out'); setTimeout(() => { freeGL(); location.assign('/?shop'); }, 480); }, 1700); }   // ページごと戻る時は、暗い幕を閉じてから   // お礼を見せてから、ワールドへ
   $('#hud').hidden = !inside; $('#leave').hidden = !inside;
   $('#enter').tabIndex = inside ? -1 : 0;
   for (const b of $('#places').children) b.setAttribute('aria-pressed', String(b.dataset.place === (mode === 'fixture' ? String(current) : 'overview')));
@@ -301,7 +325,7 @@ function refresh(){
   } else {
     $('#h-kind').textContent = '店内';
     $('#h-name').textContent = '見たい売り場を選んでください';
-    $('#h-sub').textContent = mobile.matches ? 'タップでそこまで歩く・上へなでると前へ・2本指で見回す' : '床や売り場をクリックすると、そこまで歩きます。スクロールで前へ・うしろへ、ドラッグで見回せます';
+    $('#h-sub').textContent = mobile.matches ? 'タップでそこまで歩く・上へなでると前へ・横へなでると見回す' : '床や売り場をクリックすると、そこまで歩きます。スクロールで前へ・うしろへ、ドラッグで見回せます';
   }
   $('#h-prev').disabled = !f || !n || active <= 0;
   $('#h-next').disabled = !f || !n || active >= n - 1;
@@ -532,9 +556,11 @@ stage.addEventListener('pointermove', e => {
   if (press && e.pointerId === press.id) {
     const dx = e.clientX - press.x, dy = e.clientY - press.y;
     if (!press.moved && Math.hypot(dx, dy) > 6) { press.moved = true; press.lastY = e.clientY; if (!press.touch) stage.classList.add('dragging'); return; }
-    if (press.moved && press.touch) {   // 指を上へ動かすと前へ（ページのスクロールと同じ向き）
+    if (press.moved && press.touch) {   // 指を上へ動かすと前へ（ページのスクロールと同じ向き）。横へ動かすと見回す（ANIMAL WORLD LIVE、2026-11-13：実機で「スワイプが効かない」。横は2本指だけだった）
+      if (!press.axis) press.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';   // なで始めの向きで、見回しか歩きかを決める
       const step = press.lastY - e.clientY; press.lastY = e.clientY;
-      if (step) walkBy(step * SWIPE_M);
+      if (press.axis === 'x') { look.gy = press.yaw + dx * 0.0026 * (camera.fov / 50); dirty = true; }
+      else if (step) walkBy(step * SWIPE_M);
       return;
     }
     if (press.moved) { const k = 0.0026 * (camera.fov / 50); look.gy = press.yaw + dx * k; look.gp = press.pitch + dy * k; dirty = true; }
@@ -803,6 +829,7 @@ async function start(){
   $('#loading').hidden = true;
   app.classList.add('is-ready');
   tellParent('awl-shop-ready');
+  if (AWL_NAV) { for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, startBgm, {passive:true}); addEventListener('pagehide', freeGL); startBgm(); }
   if (AWL_NAV) { curtain?.classList.add('is-out'); setTimeout(() => { if (mode === 'outside' && !visited) walkIn(); }, 1500); }   // ページごと移ってきた時は、合図を待たずに店内へ歩く
    // ANIMAL WORLD LIVE の中なら、親の「準備しています」を消してもらう
   const goods = buildFixtures().then(() => {

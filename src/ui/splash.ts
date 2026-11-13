@@ -27,6 +27,8 @@ export function hideSplash(behind?: () => void): void {
   let done = false
   const out = () => {
     if (done) return
+    // お店から戻ってきた時の暗い幕（is-curtain）は、ここでは消さない。ワールドの幕が閉じた所で main.ts が外す（先に消えると、ホームが一瞬見える）
+    if (el.classList.contains('is-curtain')) return
     done = true
     el.classList.add('is-out')
     // 消え始めたらホームのボタンを「ぽん」と出す

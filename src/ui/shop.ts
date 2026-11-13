@@ -24,7 +24,7 @@ export interface ShopView {
   onOpenChange: (fn: (open: boolean) => void) => void
 }
 
-export function createShopView(iris: Iris, navigate = false): ShopView {
+export function createShopView(iris: Iris, navigate = false, beforeLeave?: () => void): ShopView {
   const enter = document.createElement('button')
   enter.type = 'button'
   enter.className = 'shop-enter'
@@ -106,6 +106,8 @@ export function createShopView(iris: Iris, navigate = false): ShopView {
       // スマホ: ワールドの上に重ねず、ページごとお店へ移る（ワールドとお店の 3D を同時に持つと、メモリが足りずにページが落ちて、スタートに戻ってしまう）。
       // お店を出ると /?shop で、ワールドのお店の前に戻ってくる
       left = true
+      // ワールドの 3D（GPU のメモリ）を手放してから移る。ブラウザがこのページを裏に残しても、お店の 3D とメモリを取り合わない
+      beforeLeave?.()
       location.assign(SHOP_NAV_URL)
       return
     }
