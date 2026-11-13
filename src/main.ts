@@ -399,6 +399,19 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'penguinPocchan', species: 'ケープペンギン', name: 'ポッちゃん', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin' },
       { key: 'penguinKotoka', species: 'ケープペンギン', name: 'ことか', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin', scale: 0.65 },
       { key: 'penguinMitsuru', species: 'ケープペンギン', name: '満', file: 'penguin-rinrin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, sizeOf: 'penguin', scale: 0.65 },
+      // モモイロペリカン 4 羽（11/13 くにの指示）: 種の特徴で描いた絵から 1 体だけ生成し（リグなし）、4 羽ともその複製に差し替える（ペンギンと同じやり方）。
+      // 四足リグが体に合わないので歩かせず、その場で呼吸・首・揺れだけ。大きさは各自のプリミティブ版の高さにそろえる
+      { key: 'pelicanKun', species: 'モモイロペリカン', name: 'クン', file: 'pelican-kun', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'pelicanPon', species: 'モモイロペリカン', name: 'ポン', file: 'pelican-kun', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'pelicanHakuho', species: 'モモイロペリカン', name: '白鳳', file: 'pelican-kun', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'pelicanMone', species: 'モモイロペリカン', name: 'モネ', file: 'pelican-kun', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      // パルマワラビー 5 頭（11/13 くにの指示）: 種の特徴で描いた絵から 1 体だけ生成し（リグなし。後ろ足と尾で立つ休みの姿）、5 頭ともその複製に差し替える。
+      // 跳ぶ動きは四足リグで作れないので歩かせず、その場で呼吸・首・揺れだけ。群れのプリミティブ版（kangaroo.ts）は差し替え口が空なので replaceHost
+      { key: 'wallabyFujio', species: 'パルマワラビー', name: 'フジオ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'wallabyFujiko', species: 'パルマワラビー', name: 'フジコ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'wallabySachiko', species: 'パルマワラビー', name: 'サチコ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'wallabyEmi', species: 'パルマワラビー', name: 'えみ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'wallabyKiki', species: 'パルマワラビー', name: 'キキ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
       { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },
@@ -488,6 +501,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'kinkajouFig', species: 'キンカジュー', name: 'フィグ', file: 'kinkajou-fig', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       // マカ: フィグの値（1／0.8／0.5／1）だと歩く途中で腰が立ち姿の 97.7〜99.0% まで沈むので、背骨 1・前脚 0.98 で腰 99.2〜100.4%（11/13 の計測）
       { key: 'kinkajouMaca', species: 'キンカジュー', name: 'マカ', file: 'kinkajou-maca', posture: { hind: 1, spine: 1, tail: 0.5, front: 0.98, ground: true } },
+      // さつき（コモンマーモセット、11/13 くにの指示）: 種の特徴で描いた絵から生成。2026-11 からの Meshy の四足リグ（49 本の骨、rearUpr.L などの名前）に「犬-ウォーク」。
+      // 座ったサルのプリミティブ版（wildfolk.ts）は差し替え口が空なので replaceHost。接地だけだと腰 118〜145%（歩行で体を持ち上げる）。
+      // 後ろ脚 0.95・背骨 1・尾 0.5・前脚 0.95 で腰 100.9〜102.7%（さつきで測って決めた値）
+      { key: 'marmosetSatsuki', species: 'コモンマーモセット', name: 'さつき', file: 'marmoset-satsuki', posture: { hind: 0.95, spine: 1, tail: 0.5, front: 0.95, ground: true }, replaceHost: true },
       { key: 'lemurJimin', species: 'ワオキツネザル', name: 'ジミン', file: 'lemur-jimin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'binturongBin', species: 'ビントロング', name: 'ビン', file: 'binturong-bin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'binturongBasil', species: 'ビントロング', name: 'バジル', file: 'binturong-basil', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
@@ -552,7 +569,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const animal = ANIMALS.find((a) => a.species === r.species && a.name === r.name)
       if (!animal) continue
       let host = lions.find((l) => l.id === animal.id)
-      const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, 'z') } : undefined)
+      const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, r.upright ? 'y' : 'z') } : undefined)
       if (!host && !place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
       loadAiLion(`/models/${r.file}.glb`, { length: sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1), posture, upright: r.upright, lie: r.lie, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })

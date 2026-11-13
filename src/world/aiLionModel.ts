@@ -183,12 +183,15 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   const bones: { bone: THREE.Object3D; rest: THREE.Quaternion; raw: THREE.Quaternion; k: number; hind: boolean; front: boolean; meanInv: THREE.Quaternion }[] = []
   inner.traverse((o) => {
     if ((o as THREE.Bone).isBone)
-      bones.push({ bone: o, rest: o.quaternion.clone(), raw: o.quaternion.clone(), k: weightFor(o.name, posture), hind: /backleg/i.test(o.name), front: /frontleg/i.test(o.name), meanInv: new THREE.Quaternion() })
+      bones.push({ bone: o, rest: o.quaternion.clone(), raw: o.quaternion.clone(), k: weightFor(o.name, posture), hind: HIND_BONE.test(o.name), front: FRONT_BONE.test(o.name), meanInv: new THREE.Quaternion() })
   })
   // Meshy の「歩く」は腰の骨に、リグの寸法合わせの名残（位置のずれと一様な縮小 約 0.93）を入れてくる。
   // そのままだと歩き出した時に体が 7% 縮んで前にずれる（立ち姿と歩行の間でポップする）ので、腰の位置と大きさは常に立ち姿の値に戻す
-  const hipsRest = hips ? { pos: hips.position.clone(), scale: hips.scale.clone() } : null
-  const hipsRaw = hips ? { pos: hips.position.clone(), scale: hips.scale.clone() } : null
+  // 2026-11 からの四足リグは、いちばん上の root の骨に歩行の体の上下（立ち姿より高く持ち上げる）を入れてくるので、root がある時は root を戻す
+  const rootBone = find(/^root$/i)
+  const posBone = rootBone && (rootBone as THREE.Bone).isBone ? rootBone : hips
+  const hipsRest = posBone ? { pos: posBone.position.clone(), scale: posBone.scale.clone() } : null
+  const hipsRaw = posBone ? { pos: posBone.position.clone(), scale: posBone.scale.clone() } : null
   const clips = gltf.animations
   if (clips.length) {
     mixer = new THREE.AnimationMixer(inner)
@@ -207,16 +210,16 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
       if ((b.hind && posture.hindCenter) || (b.front && posture.frontCenter)) b.bone.quaternion.multiply(qCenter.identity().slerp(b.meanInv, w))
       if (b.k > 0) b.bone.quaternion.slerp(b.rest, b.k)
     }
-    if (hips && hipsRest) {
-      hips.position.copy(hipsRest.pos)
-      hips.scale.copy(hipsRest.scale)
+    if (posBone && hipsRest) {
+      posBone.position.copy(hipsRest.pos)
+      posBone.scale.copy(hipsRest.scale)
     }
   }
 
   // クリップの速さ: 地面に着いている足は体の速さで後ろへ動く。足先の骨を 1 周ぶん追い、いちばん速く後ろ（-z）へ動いた速さを採る
   let clipSpeed = 1
   if (mixer && action) {
-    const feet = bones.filter((b) => /leg2$/i.test(b.bone.name)).map((b) => b.bone)
+    const feet = bones.filter((b) => FOOT_BONE.test(b.bone.name)).map((b) => b.bone)
     const N = 24
     const dur = action.getClip().duration
     const prev: THREE.Vector3[] = feet.map(() => new THREE.Vector3())
@@ -293,9 +296,9 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     if (mixer && action) {
       // ミキサーは値が前のコマと同じだと骨に書き直さない。前のコマの補正と生活感レイヤーを先に戻しておく
       for (const b of bones) b.bone.quaternion.copy(b.raw)
-      if (hips && hipsRaw) {
-        hips.position.copy(hipsRaw.pos)
-        hips.scale.copy(hipsRaw.scale)
+      if (posBone && hipsRaw) {
+        posBone.position.copy(hipsRaw.pos)
+        posBone.scale.copy(hipsRaw.scale)
       }
       if (walk > 0 || !restWritten) {
         action.setEffectiveWeight(walk)
@@ -303,9 +306,9 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
         restWritten = walk === 0
       }
       for (const b of bones) b.raw.copy(b.bone.quaternion)
-      if (hips && hipsRaw) {
-        hipsRaw.pos.copy(hips.position)
-        hipsRaw.scale.copy(hips.scale)
+      if (posBone && hipsRaw) {
+        hipsRaw.pos.copy(posBone.position)
+        hipsRaw.scale.copy(posBone.scale)
       }
       // 姿勢の補正: 歩いている間だけ、立ち姿の方へ寄せる（腰の位置と大きさは重みが途中でも戻す）
       if (walk > 0) applyPosture(walk)
@@ -387,15 +390,21 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   }
 }
 
+// 四足リグの脚の骨の名前。旧い書き出し（backleg・frontleg、27 本）と、2026-11 からの書き出し（rearUpr.L・frontLwr.R・clavicle.L など、49 本。読み込むと「.」は消える）の両方
+const HIND_BONE = /backleg|^rear/i
+const FRONT_BONE = /frontleg|^front(Upr|Lwr|Horselink|Foot|Toe)|^clavicle/i
+// 足先（足裏の接地に使う）。three.js は読み込み時に骨の名前の「.」を消す（rearFoot.L → rearFootL）
+const FOOT_BONE = /leg2$|^(rear|front)(Foot|Toe)\.?[LR]$/i
 const UP = new THREE.Vector3(0, 1, 0)
 const RIGHT = new THREE.Vector3(1, 0, 0)
 const FORWARD = new THREE.Vector3(0, 0, 1)
 
 function weightFor(name: string, p: PostureFix): number {
   if (/tail/i.test(name)) return p.tail
-  if (/backleg/i.test(name)) return p.hind
-  if (/frontleg/i.test(name)) return p.front
-  if (/^(hips|chest)$/i.test(name)) return p.spine
+  if (HIND_BONE.test(name)) return p.hind
+  if (FRONT_BONE.test(name)) return p.front
+  // 背骨: 旧いリグは hips・chest、2026-11 からのリグは root・spine1・spine2 も歩行で回る
+  if (/^(hips|chest|root|spine\d*)$/i.test(name)) return p.spine
   return 0
 }
 
@@ -422,7 +431,7 @@ function findSoles(wrap: THREE.Object3D, n = 24): { mesh: THREE.SkinnedMesh; idx
           bi = si.getComponent(i, k)
         }
       }
-      if (bi < 0 || !/leg2$/i.test(bones[bi]?.name ?? '')) continue
+      if (bi < 0 || !FOOT_BONE.test(bones[bi]?.name ?? '')) continue
       mesh.getVertexPosition(i, v).applyMatrix4(mesh.matrixWorld)
       if (!byFoot.has(bi)) byFoot.set(bi, [])
       byFoot.get(bi)!.push({ i, y: v.y })
