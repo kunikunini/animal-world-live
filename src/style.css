@@ -6594,11 +6594,10 @@ body:is(.is-scoping, .is-viewing, .observe-open, .book-open, .map-open) .shop-en
 .shop-view {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  /* 幕（.iris の 40）のすぐ下。幕が閉じている間に出し入れする */
+  z-index: 39;
   background: #dfe9d6;
-  transition: opacity var(--t-view) var(--ease-soft);
 }
-.shop-view.is-out { opacity: 0; }
 .shop-view-frame {
   position: absolute;
   inset: 0;

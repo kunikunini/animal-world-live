@@ -683,6 +683,12 @@ export async function buildTreeRoom(scene, room, renderer, sky){
   const backdrop = buildBackdrop();
   g.add(backdrop.group);
   sky.set(backdrop.top);
+  // ANIMAL WORLD LIVE：地面の苔を、ふれあいワールドの草の明るい緑に寄せる（遠景の丘とつながる）
+  shell.nodes.Ground?.traverse(o => {
+    if (!o.isMesh) return;
+    o.material = o.material.clone();
+    o.material.color.setRGB(1.75, 2.0, 1.05);
+  });
 
   // ---------- 光 ----------
   const key = new THREE.DirectionalLight(0xfff0d8, 1.9);

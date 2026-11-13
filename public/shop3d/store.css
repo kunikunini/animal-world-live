@@ -221,5 +221,5 @@ button:not(:disabled):active,.welcome .back:active{transform:translateY(1px) sca
 /* ANIMAL WORLD LIVE 用：「ワールドにもどる」は元の「戻る」より長いので、スマホ縦でも1行に収める */
 .welcome .primary,.welcome .back{white-space:nowrap}
 @media(max-width:480px){.welcome .primary,.welcome .back{padding:0 16px;font-size:15px}}
-/* ANIMAL WORLD LIVE のお店の扉から開いたとき：外のあいさつと「お店に入る」は出さない（店内から始まる） */
-.app.awl .greeting,.app.awl .welcome{display:none}
+/* ANIMAL WORLD LIVE から飛んできたとき：外のボタンは出さない（自動で店内へ歩き、外へ出たらワールドへ戻る） */
+.app.awl .welcome{display:none}

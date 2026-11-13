@@ -1,5 +1,6 @@
 import { onLangChange, t } from './i18n'
 import { hideView, showView } from './transition'
+import type { Iris } from './iris'
 
 /** 3D の売り場（public/shop3d。別のプロジェクトで作ったものを写した、見るだけの版） */
 const SHOP_URL = '/shop3d/index.html?awl'
@@ -7,7 +8,8 @@ const SHOP_URL = '/shop3d/index.html?awl'
 const LOAD_TIMEOUT_MS = 20000
 
 /**
- * グッズのお店。扉の前に来た時の「お店に入る」ボタンと、売り場を上に重ねる画面。
+ * グッズのお店。お店の前（石畳の手前から）に来た時の「お店に入る」ボタンと、売り場を上に重ねる画面。
+ * 入る時と出る時は、ゲームを始める時と同じ演出（双眼鏡の形に絞られて、また開く幕）をはさむ。
  * 売り場は iframe で開き、出たら iframe ごと外す（ワールドと売り場の 3D を同時に持たない）。
  * 入るのは、必ずユーザーがボタンを押した時だけ。
  */
@@ -20,7 +22,7 @@ export interface ShopView {
   onOpenChange: (fn: (open: boolean) => void) => void
 }
 
-export function createShopView(): ShopView {
+export function createShopView(iris: Iris): ShopView {
   const enter = document.createElement('button')
   enter.type = 'button'
   enter.className = 'shop-enter'
@@ -63,61 +65,81 @@ export function createShopView(): ShopView {
   let open = false
   let near = false
 
-  const close = () => {
-    if (!open) return
+  let busy = false
+  /** 売り場の用意ができた（true）・失敗した（false）を待つ間だけ入っている */
+  let settle: ((ok: boolean) => void) | null = null
+
+  // 出る: 幕（ゲームを始める時と同じ、双眼鏡の形の演出）を閉じ、売り場を外して、ワールドで幕を開ける
+  const close = async () => {
+    if (!open || busy) return
+    busy = true
+    await iris.close()
+    // 売り場の 3D を手放す（開き直したら読み込み直す）
+    frame?.remove()
+    frame = null
+    view.hidden = true
+    setStatus(null)
     open = false
-    window.clearTimeout(loadTimer)
-    hideView(view, () => {
-      // 売り場の 3D を手放す（開き直したら読み込み直す）
-      if (!open) {
-        frame?.remove()
-        frame = null
-      }
-    })
-    // まだ扉の前にいるので、また入れるようにする
-    if (near) showView(enter)
     listeners.forEach((fn) => fn(false))
+    // まだお店の前にいるので、また入れるようにする
+    if (near) showView(enter)
+    await iris.open()
+    busy = false
   }
 
-  const openView = () => {
-    if (open) return
+  // 入る: 幕を閉じ、その裏で売り場を読み、用意ができたら幕を開ける。売り場は外観から始まり、合図で扉をくぐって店内へ歩く
+  const openView = async () => {
+    if (open || busy) return
     open = true
-    enter.hidden = true
-    setStatus('loading')
-    frame?.remove()
+    busy = true
+    hideView(enter)
+    listeners.forEach((fn) => fn(true))
+    await iris.close()
+    setStatus(null)
     const f = document.createElement('iframe')
     f.className = 'shop-view-frame'
     f.title = t('shopName')
-    // ページが届いても、お店の 3D はまだ。「準備しています」と「ワールドにもどる」は、売り場からの合図（awl-shop-ready）まで出しておく
     f.addEventListener('load', () => frame === f && f.focus())
-    f.addEventListener('error', () => frame === f && setStatus('fail'))
+    f.addEventListener('error', () => frame === f && settle?.(false))
     f.src = SHOP_URL
     frame = f
     view.prepend(f)
-    loadTimer = window.setTimeout(() => frame === f && !status.hidden && setStatus('fail'), LOAD_TIMEOUT_MS)
-    showView(view)
-    listeners.forEach((fn) => fn(true))
+    view.hidden = false
+    // 少し待っても用意ができない時だけ、幕の上に「じゅんびちゅう」が浮かぶ
+    iris.setWaiting(true)
+    const ok = await new Promise<boolean>((resolve) => {
+      settle = resolve
+      loadTimer = window.setTimeout(() => resolve(false), LOAD_TIMEOUT_MS)
+    })
+    settle = null
+    window.clearTimeout(loadTimer)
+    iris.setWaiting(false)
+    if (!ok) setStatus('fail')
+    await iris.open()
+    busy = false
+    if (ok) f.contentWindow?.postMessage({ type: 'awl-shop-go' }, location.origin)
   }
 
   // ワールドのタップ移動には渡さない
   enter.addEventListener('pointerdown', (e) => e.stopPropagation())
   enter.addEventListener('click', (e) => {
     e.stopPropagation()
-    openView()
+    void openView()
   })
-  back.addEventListener('click', close)
+  back.addEventListener('click', () => void close())
   view.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close()
+    if (e.key === 'Escape') void close()
   })
   // 売り場の中の「ワールドにもどる」
   window.addEventListener('message', (e) => {
     if (!open || !frame || e.origin !== location.origin || e.source !== frame.contentWindow) return
     const type = (e.data as { type?: string } | null)?.type
-    if (type === 'awl-shop-close') close()
-    else if (type === 'awl-shop-ready') {
-      window.clearTimeout(loadTimer)
-      setStatus(null)
-    } else if (type === 'awl-shop-fail') setStatus('fail')
+    if (type === 'awl-shop-close') void close()
+    else if (type === 'awl-shop-ready') settle?.(true)
+    else if (type === 'awl-shop-fail') {
+      if (settle) settle(false)
+      else setStatus('fail')
+    }
   })
 
   return {
@@ -127,8 +149,8 @@ export function createShopView(): ShopView {
       if (next && !open) showView(enter)
       else hideView(enter)
     },
-    open: openView,
-    close,
+    open: () => void openView(),
+    close: () => void close(),
     isOpen: () => open,
     onOpenChange: (fn) => {
       listeners.push(fn)

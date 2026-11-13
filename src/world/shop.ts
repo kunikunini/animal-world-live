@@ -33,11 +33,11 @@ export const SHOP = {
   yaw,
   /** 幹の当たり判定の半径（根の張り出しは、モデルの形から足す） */
   radius: 4.3,
-  /** 扉の前（ここに近づくと「お店に入る」が出る） */
-  doorX: x + Math.sin(yaw) * (DOOR + 2),
-  doorZ: z + Math.cos(yaw) * (DOOR + 2),
-  /** 「お店に入る」を出す距離（扉の前から） */
-  reach: 5.5,
+  /** 石畳のまんなか（ここに近づくと「お店に入る」が出る） */
+  doorX: x + Math.sin(yaw) * (DOOR + 6.5),
+  doorZ: z + Math.cos(yaw) * (DOOR + 6.5),
+  /** 「お店に入る」を出す距離（石畳のまんなかから。石畳の手前〜扉の前） */
+  reach: 8,
   /** まわりの木をどける半径（枝と根の広がり） */
   clear: 15,
 }
@@ -110,6 +110,8 @@ async function loadModel(): Promise<void> {
   /** 当たり判定を置くマス（1m 角）。ひざ〜胸の高さに幹や根がある所 */
   const cells = new Set<string>()
   for (const node of [...Object.values(shell.nodes), ...Object.values(roof.nodes)]) {
+    // 扉は閉じておく（モデルは開いた向き。中は売り場で見る）
+    if (node.name === 'Door_L' || node.name === 'Door_R') node.quaternion.identity()
     node.updateMatrix()
     const follow = ON_GROUND.has(node.name)
     const solid = node.name === 'Roots_outer' || node.name === 'Trunk_Lower'

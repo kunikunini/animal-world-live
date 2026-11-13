@@ -19,7 +19,8 @@ const app = $('#app'), stage = $('#stage'), canvas = $('#scene');
 const mobile = matchMedia('(max-width:700px)');
 const reduced = matchMedia('(prefers-reduced-motion:reduce)');
 const params = new URLSearchParams(location.search);
-// ANIMAL WORLD LIVE のワールドに立つお店の扉から開いたとき（?awl）。外観はワールドの側にあるので、ここでは外の場面を出さず、店内から始めて、外へ出たらワールドへ戻る
+// ANIMAL WORLD LIVE のワールドに立つお店から、演出をはさんで飛んできたとき（?awl）。
+// 外観から始まり、親の合図（awl-shop-go）で扉をくぐって店内へ歩く。外へ出たら、お礼のあいさつのあとワールドへ戻る
 const AWL = params.has('awl') && window.parent !== window;
 if (AWL) document.getElementById('app').classList.add('awl');
 const EDIT = params.has('edit');
@@ -256,6 +257,7 @@ function buildChips(){
 }
 // プライスカードに書く価格：売り場の商品の価格をまとめる（ショップで買えるものは税込の価格、未登録のものは予定の価格）
 let paintCards = null;
+let goingBack = false;   // ワールドへ戻る合図を出したか（?awl）
 let visited = false, thanked = false;   // お店に入ったか／お礼のあいさつに替えたか
 function cardText(f){
   const vs = f.items.map(it => view(it.product)), ok = vs.filter(v => v.state === 'ok'), plan = vs.filter(v => v.state !== 'ok' && v.tentative);
@@ -271,12 +273,12 @@ function refresh(){
   const inside = mode !== 'outside';
   // 一度お店に入ったあと外へ出たら、外のあいさつを「ようこそ」から、お礼に替える（外へ出るたびに、また現れる）
   if (inside) visited = true;
-  else if (AWL && visited) { tellParent('awl-shop-close'); return; }
   else if (visited && !thanked) {
     thanked = true;
     $('#greeting').classList.add('thanks');
     $('#greeting').replaceChildren(...['ありがとうございました！', 'またきてね！'].map(t => { const line = document.createElement('span'); line.append(Object.assign(document.createElement('span'), {textContent:t})); return line; }));   // 行ごとに、外の枠（マスク）と中の文字
   }
+  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => tellParent('awl-shop-close'), 1900); }   // お礼を見せてから、ワールドへ
   $('#hud').hidden = !inside; $('#leave').hidden = !inside;
   $('#enter').tabIndex = inside ? -1 : 0;
   for (const b of $('#places').children) b.setAttribute('aria-pressed', String(b.dataset.place === (mode === 'fixture' ? String(current) : 'overview')));
@@ -434,8 +436,7 @@ function walkToFixture(i){
 }
 const SHOP_DOOR_IN = {x:0, z:2.9}, SHOP_DOOR_OUT = {x:0, z:7.2};
 function walkIn(){ if (!walkTo(SHOP_DOOR_IN.x, SHOP_DOOR_IN.z, {face:new THREE.Vector3(0, 1.2, -3.3), done:() => goOverview()})) { enter(); } }
-function walkOut(){ if (AWL) { tellParent('awl-shop-close'); return; }
-  if (!walkTo(SHOP_DOOR_OUT.x, SHOP_DOOR_OUT.z, {face:new THREE.Vector3(0, 1.4, 14)})) leave(); }
+function walkOut(){ if (!walkTo(SHOP_DOOR_OUT.x, SHOP_DOOR_OUT.z, {face:new THREE.Vector3(0, 1.4, 14)})) leave(); }
 // 押した所の床（または台・棚・壁）。歩ける地図の上で、目線の先をたどって探す
 function floorHit(e){
   const n = navMap(); if (!n) return null;
@@ -796,7 +797,6 @@ async function start(){
   ready = true;
   $('#loading').hidden = true;
   app.classList.add('is-ready');
-  if (AWL) enter();
   tellParent('awl-shop-ready');   // ANIMAL WORLD LIVE の中なら、親の「準備しています」を消してもらう
   const goods = buildFixtures().then(() => {
     if (room.solid) paintCards = buildPriceCards(scene, room.solid, fixtures);   // 売り場ごとのプライスカード
@@ -822,6 +822,9 @@ async function start(){
     step(seconds){ let moving = false; for (let i = 0; i < seconds * 60; i++) moving = advance(1 / 60); return moving; }};
 }
 // ANIMAL WORLD LIVE の中（iframe）で開いているとき、親の画面に知らせる
+if (AWL) addEventListener('message', e => {   // 親の幕が開いたら、扉をくぐって店内へ
+  if (e.origin === location.origin && e.source === window.parent && e.data?.type === 'awl-shop-go') setTimeout(() => { if (mode === 'outside' && !visited) walkIn(); }, 700);
+});
 function tellParent(type){ if (window.parent !== window) window.parent.postMessage({type}, location.origin); }
 start().catch(err => {
   if (!ready) tellParent('awl-shop-fail');

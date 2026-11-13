@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {canvasTexture} from './util.js';
 
-// 店の外の遠景：空、雪の残る遠い山、青い山なみ、森の丘、手前の木立。
+// 店の外の遠景。ANIMAL WORLD LIVE に置いたこの売り場では、ふれあいワールドの景色（青い空、緑の丘、オレンジの岩山、丸い木）に合わせてある。
 // 店を囲む筒を、遠いものから順に重ねる。遠い層ほど、ぼかして、空の色に近づける（空気遠近）。
 // 絵はすべてここで描く（画像は使わない）。毎回同じ景色になるよう、乱数は決まった種から作る。
 const BASE = -1.5;          // 筒の下端の高さ（地面より少し下）
@@ -71,67 +71,76 @@ export function buildBackdrop(){
     }
   }
 
-  // 1. 空：上は青、地平へ向かって白っぽく。うすい雲
-  layer(1, 40, 72, 1024, 1024, 2, 3, (g, v) => {
+  // ---- ANIMAL WORLD LIVE のふれあいワールドに合わせた遠景（2026-11-13） ----
+  // ワールドと同じ色（空 #2a6ee0→#9ad0f4、丘 #5fae4a/#9ad86a・#72b85e/#b2e282・#94c890/#cdeab4、木 #5cb84a/#94d45c）で、
+  // ぼかさず、面で塗ったローポリの絵にする。もやは掛けない。
+  const hex = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  // 面で塗った山・丘：step（m）ごとの頂点を直線で結び、上り坂の面は明るく、下り坂の面は暗く塗る
+  function facets(g, v, line, step, foot, peak, lo, hi){
+    const n = Math.round(v.w / (step * v.sx)), dx = v.w / n;
+    const hs = []; for (let k = 0; k <= n; k++) hs.push(line(k * dx));
+    for (let k = 0; k < n; k++) {
+      const a = hs[k], b = hs[k + 1], top = Math.max(a, b), t = Math.max(0, Math.min(1, (top - lo) / (hi - lo)));
+      const base = mix(foot, peak, t), col = b > a ? mix(base, [255, 255, 255], 0.1) : mix(base, [0, 40, 20], 0.12);
+      const gr = g.createLinearGradient(0, v.Y(top), 0, v.Y(lo - 2));
+      gr.addColorStop(0, rgb(col)); gr.addColorStop(1, rgb(mix(col, foot, 0.7)));
+      g.fillStyle = gr;
+      g.beginPath(); g.moveTo(k * dx - 0.5, v.h); g.lineTo(k * dx - 0.5, v.Y(a)); g.lineTo((k + 1) * dx + 0.5, v.Y(b)); g.lineTo((k + 1) * dx + 0.5, v.h); g.closePath(); g.fill();
+    }
+  }
+  // ワールドの丸い木：細い幹に、明るい緑の玉が3つ（下の面は少し暗く）
+  function roundTree(g, v, x, foot, tall, col){
+    g.fillStyle = '#7a5636'; g.fillRect(x - 0.13 * v.sx, v.Y(foot + tall * 0.62), 0.26 * v.sx, tall * 0.62 * v.sy);
+    const r = tall * 0.36;
+    for (const [ox, oy, k] of [[-0.55, 0.62, 0.72], [0.55, 0.66, 0.7], [0, 0.86, 1]]) {
+      const cx = x + ox * r * v.sx, cy = v.Y(foot + tall * oy), rr = r * k;
+      g.fillStyle = rgb(mix(col, [20, 80, 30], 0.3)); g.beginPath(); g.ellipse(cx, cy, rr * v.sx, rr * 0.86 * v.sy, 0, 0, 6.283); g.fill();
+      g.fillStyle = rgb(col); g.beginPath(); g.ellipse(cx - rr * 0.08 * v.sx, cy - rr * 0.16 * v.sy, rr * 0.9 * v.sx, rr * 0.72 * v.sy, 0, 0, 6.283); g.fill();
+    }
+  }
+
+  // 1. 空：ワールドのふれあいワールドの空（上は濃い青、地平は水色）。白い雲のかたまり
+  layer(1, 40, 72, 1024, 1024, 2, 1.5, (g, v) => {
     const gr = g.createLinearGradient(0, 0, 0, v.Y(0));
-    gr.addColorStop(0, '#6fb0e6'); gr.addColorStop(0.5, '#9fcdee'); gr.addColorStop(0.82, '#d3e8f2'); gr.addColorStop(1, rgb(HAZE));
+    gr.addColorStop(0, '#2a6ee0'); gr.addColorStop(0.45, '#4f93ea'); gr.addColorStop(0.8, '#9ad0f4'); gr.addColorStop(1, '#c4e4f8');
     g.fillStyle = gr; g.fillRect(0, 0, v.w, v.h);
-    for (let i = 0; i < 9; i++) {
-      const cx = rnd() * v.w, cy = v.Y(pick(26, 52)), len = pick(60, 150);
-      for (let k = 0; k < 9; k++) wrap(v, cx + pick(-len, len), x => {
-        g.fillStyle = `rgba(255,255,255,${pick(0.1, 0.24)})`;
-        g.beginPath(); g.ellipse(x, cy + pick(-10, 10), pick(40, 90), pick(10, 22), 0, 0, 6.283); g.fill();
-      });
+    for (let i = 0; i < 7; i++) {
+      const cx = rnd() * v.w, cy = v.Y(pick(24, 46)), len = pick(40, 90);
+      for (let k = 0; k < 6; k++) { const ox = pick(-len, len), oy = pick(-6, 6), rx = pick(34, 70), ry = pick(12, 22); wrap(v, cx + ox, x => {
+        g.fillStyle = 'rgba(255,255,255,.92)';
+        g.beginPath(); g.ellipse(x, cy + oy, rx, ry, 0, 0, 6.283); g.fill();
+      }); }
     }
   });
 
-  // 2. いちばん遠い山：雪が残る、とがった峰。強くぼかして、空にとけこませる
-  layer(2, 38.6, 36, 1024, 512, 3, 5, (g, v) => {
-    const line = ridge(v.w, 15, [[2, 5.5, true], [3, 3, true], [7, 1.6, true], [13, 0.7, false]]);
-    const gr = g.createLinearGradient(0, v.Y(25), 0, v.Y(6));
-    gr.addColorStop(0, '#f6f9fc'); gr.addColorStop(0.3, '#e3ebf2'); gr.addColorStop(0.5, '#bccbdb'); gr.addColorStop(1, '#b3c6d3');
-    fillRidge(g, v, line, gr);
-    mist(g, v, 16, 5, 0.85);
+  // 2. いちばん遠い、うすい緑の山なみ
+  layer(2, 38.6, 36, 1024, 512, 3, 1, (g, v) => {
+    const line = ridge(v.w, 14, [[2, 3.4, true], [3, 2.2, true], [7, 1.0, false]]);
+    facets(g, v, line, 3.2, hex('#94c890'), hex('#cdeab4'), 8, 20);
   });
 
-  // 3. 青い山なみ
-  layer(3, 36.8, 30, 2048, 512, 3, 3.2, (g, v) => {
-    const line = ridge(v.w, 11.5, [[3, 2.6, true], [5, 1.5, false], [11, 0.8, true], [23, 0.3, false]]);
-    const gr = g.createLinearGradient(0, v.Y(16), 0, v.Y(5));
-    gr.addColorStop(0, '#7fa0b4'); gr.addColorStop(1, '#a4bfbd');
-    fillRidge(g, v, line, gr);
-    mist(g, v, 11, 4, 0.7);
+  // 3. サバンナとの境の、オレンジ色の岩山（ところどころに、とがった峰が顔を出す）
+  layer(3, 36.8, 30, 2048, 512, 3, 1, (g, v) => {
+    const line = ridge(v.w, 5.5, [[2, 7.5, true], [5, 1.8, true], [9, 0.8, false]]);
+    facets(g, v, line, 2.2, hex('#c8642e'), hex('#f0b47c'), 6, 15);
   });
 
-  // 4. 森の丘：稜線に、針葉樹の頭が並ぶ
-  layer(4, 34.6, 26, 2048, 512, 4, 1.9, (g, v) => {
-    const line = ridge(v.w, 7.4, [[2, 1.5, false], [5, 0.9, false], [9, 0.5, false]]);
-    const hill = [98, 142, 104];
-    fillRidge(g, v, line, rgb(hill));
-    for (let m = 0; m < v.w / v.sx; m += pick(0.5, 1.1)) {
-      const x = m * v.sx, tall = pick(1.4, 2.8), col = rgb(mix(hill, [70, 112, 84], rnd()));
-      wrap(v, x, xx => conifer(g, v, xx, line(x) - 0.5, tall, tall * 0.5, col));
+  // 4. まんなかの丘
+  layer(4, 34.6, 26, 2048, 512, 4, 1, (g, v) => {
+    const line = ridge(v.w, 8.2, [[2, 1.8, false], [5, 1.1, false], [9, 0.6, true]]);
+    facets(g, v, line, 2.6, hex('#72b85e'), hex('#b2e282'), 4, 11);
+  });
+
+  // 5. 手前の丘と、丸い木
+  layer(5, 32.2, 22, 2048, 1024, 4, 1, (g, v) => {
+    const line = ridge(v.w, 3.4, [[3, 0.8, false], [7, 0.5, false]]);
+    facets(g, v, line, 2.0, hex('#5fae4a'), hex('#9ad86a'), 0, 5);
+    const a = hex('#5cb84a'), b = hex('#94d45c');
+    for (let m = 0; m < v.w / v.sx; m += pick(2.2, 5.5)) {
+      const x = m * v.sx, tall = pick(3.2, 5.2), col = mix(a, b, rnd());
+      wrap(v, x, xx => roundTree(g, v, xx, line(x) - pick(0.6, 2.2), tall, col));
     }
-    mist(g, v, 8, 2.5, 0.6);
   });
 
-  // 5. 手前の木立：針葉樹と広葉樹がまじる。ここは、ほとんどぼかさない
-  layer(5, 32.2, 22, 2048, 1024, 4, 1.25, (g, v) => {
-    const green = [66, 118, 72], dark = [44, 88, 58], light = [112, 158, 84], far = mix(green, HAZE, 0.32);
-    const back = ridge(v.w, 2.0, [[3, 0.5, false], [7, 0.3, false]]);
-    fillRidge(g, v, x => back(x) + 0.6, rgb(far));
-    for (let m = 0; m < v.w / v.sx; m += pick(0.7, 1.4)) {   // 奥の列（少しかすむ）
-      const x = m * v.sx, tall = pick(3.6, 5.6), col = rgb(mix(mix(dark, green, rnd()), HAZE, 0.3));
-      wrap(v, x, xx => conifer(g, v, xx, back(x) - 0.2, tall, tall * 0.42, col));
-    }
-    fillRidge(g, v, x => back(x) - 0.5, rgb(mix(green, dark, 0.3)));
-    for (let m = 0; m < v.w / v.sx; m += pick(0.9, 2.2)) {   // 手前の列
-      const x = m * v.sx, foot = back(x) - 1.6;
-      if (rnd() < 0.55) { const tall = pick(3.4, 6.0), col = rgb(mix(dark, green, rnd())); wrap(v, x, xx => conifer(g, v, xx, foot, tall, tall * 0.44, col)); }
-      else { const tall = pick(3.0, 4.6), col = mix(green, light, rnd()), wide = tall * pick(0.7, 0.95); const s = seed; wrap(v, x, xx => { seed = s; leafy(g, v, xx, foot, tall, wide, col, dark); }); }
-    }
-    mist(g, v, 2.2, -1, 0.35);
-  });
-
-  return {group, top:0x6fb0e6};   // top：筒より上に見える空の色
+  return {group, top:0x2a6ee0};   // top：筒より上に見える空の色
 }
