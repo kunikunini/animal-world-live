@@ -2114,13 +2114,17 @@ function main(): void {
 
   let world: WorldHandle | null = null
   let busy = false
+  // グッズのお店のページ（/shop3d/）をじかに開いて「ワールドにもどる」を押した時（/?shop）: ホームで止まらず、ワールドのお店の前に着く
+  let arriveAtShop = new URLSearchParams(location.search).has('shop')
 
   // ホーム → 幕が双眼鏡の形に閉じる → ワールド → 幕が開く
   const enterWorld = async () => {
     if (busy || !webgl) return
     busy = true
     try {
-      if (shell.story.shouldShow()) await shell.story.play()
+      const toShop = arriveAtShop
+      arriveAtShop = false
+      if (!toShop && shell.story.shouldShow()) await shell.story.play()
       await shell.iris.close()
       // 初めて入る時はワールドの組み立てに時間がかかるので、幕が閉じた所で出発地のサバンナの曲へ替える
       // （待っている間もホームの曲が流れ続けていた。組み立て済みなら、最初のコマでいまいるワールドの曲になる）
@@ -2133,14 +2137,18 @@ function main(): void {
       } else world.resume()
       // 選んだ子の読み込みを少しだけ待つ（入る演出の寄りで前の子が一瞬映らないように。遅い回線でも 2.5 秒で先へ進む）
       await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
-      world.prepareIntro()
+      // お店のページから戻ってきた時は、入る演出とあそび方ナビをせず、お店の前（石畳の手前）にお店を向いて立つ
+      if (toShop) world.placeAt(SHOP.x + Math.sin(SHOP.yaw) * 16, SHOP.z + Math.cos(SHOP.yaw) * 16, SHOP.yaw + Math.PI)
+      else world.prepareIntro()
       shell.home.hide()
       document.body.classList.add('in-world')
       canvas.focus()
       await shell.iris.open()
       // 幕が開いたら入る演出（モザイク → 寄りから引き → ワールドの名前）。終わってからあそび方ナビを出す
-      await world.playIntro()
-      shell.guide.autoStart(shell.store.list().length > 0)
+      if (!toShop) {
+        await world.playIntro()
+        shell.guide.autoStart(shell.store.list().length > 0)
+      }
       shell.guide.setInWorld(true)
     } catch (err) {
       console.error(err)
@@ -2172,6 +2180,12 @@ function main(): void {
   shell.home.onEnter(() => {
     void enterWorld()
   })
+  if (arriveAtShop) {
+    // 読み込み直しても同じことが起きないよう、印を外してから入る
+    history.replaceState(null, '', location.pathname)
+    if (webgl) void enterWorld()
+    else arriveAtShop = false
+  }
   // 物語をみる: ホームの上で紙芝居を流し、最後の「のぞいてみる」まで見たら「だれで冒険する？」へ（とばした時はホームのまま）
   shell.home.onStory(async () => {
     if (busy) return

@@ -787,7 +787,7 @@ async function start(){
   $('#loading').textContent = 'お店の中を準備しています…';
   // ショップの内容は、売り場の組み立てと並行して読む（読めなくても売り場は見られる）
   connectShop().then(s => { shop = s; refresh(); if (dialog.open) paintDetail(); afterReturn(); });
-  // 「ワールドにもどる」：ANIMAL WORLD LIVE の中（iframe）で開いているときは、親の画面に閉じてもらう。じかに開いたときは、アプリのトップへ
+  // 「ワールドにもどる」：ANIMAL WORLD LIVE の中（iframe）で開いているときは、親の画面に閉じてもらう。じかに開いたときは、ワールドのお店の前へ（/?shop）
   $('#to-world').addEventListener('click', e => {
     if (window.parent === window) return;
     e.preventDefault();
