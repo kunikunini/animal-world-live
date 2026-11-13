@@ -423,6 +423,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'kangarooYui', species: 'オオカンガルー', name: 'ユイ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
       { key: 'kangarooTsuyu', species: 'オオカンガルー', name: 'ツユ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
       { key: 'kangarooKoka', species: 'アカカンガルー', name: 'コカ', file: 'kangaroo-koka', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      // 空の世界のインコ・オウム 6 種 8 羽（11/13 くにの指示）: 種ごとに 1 体生成して複製（リグなし）。止まり木の上でその場の呼吸と首の向きだけ（skyfolk.ts の swapModel）
+      { key: 'cockatooPuti', species: 'タイハクオウム', name: 'プティ', file: 'cockatoo-puti', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'cockatooRutile', species: 'キバタン', name: 'ルチル', file: 'cockatoo-rutile', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'cockatooKobachi', species: 'キバタン', name: 'こばち', file: 'cockatoo-rutile', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'greyBig', species: 'ヨウム', name: 'ビッグ', file: 'grey-big', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'macawAbiru', species: 'ヒメコンゴウインコ', name: 'アビル', file: 'macaw-abiru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'cockatielOo', species: 'オカメインコ', name: 'おー', file: 'cockatiel-oo', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'macawTechi', species: 'ベニコンゴウインコ', name: 'テチ', file: 'macaw-techi', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
+      { key: 'macawElena', species: 'ベニコンゴウインコ', name: 'エレナ', file: 'macaw-techi', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
       { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },

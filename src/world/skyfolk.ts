@@ -403,9 +403,14 @@ export function createSkyfolk(options: SkyfolkOptions): Lion {
           ? { breath: 2.4, look: 0.6, lookRate: 0.35, tilt: 0.06 }
           : { breath: 1.5, look: 0.35, lookRate: 0.15, tilt: 0.05 }
 
+  // 生成モデルに差し替えたら（swapModel）、呼吸と首の動きをモデルと首の入れ物に向け直す（翼・尾は止める）
+  let animBody: THREE.Object3D = built.body
+  let animNeck: THREE.Object3D = built.neck
+  let swapped = false
+
   const update = (time: number, dt: number, player: THREE.Vector3) => {
     const breath = reduceMotion ? 0 : Math.sin(time * tempo.breath + phase) * 0.025
-    built.body.scale.set(1 + breath * 0.5, 1 + breath, 1 + breath * 0.5)
+    animBody.scale.set(1 + breath * 0.5, 1 + breath, 1 + breath * 0.5)
     headTarget.copy(player)
     group.worldToLocal(headTarget)
     const dist = Math.hypot(headTarget.x, headTarget.z) * scale
@@ -414,8 +419,8 @@ export function createSkyfolk(options: SkyfolkOptions): Lion {
     else if (!reduceMotion) wantYaw = Math.sin(time * tempo.lookRate + phase) * tempo.look
     const quick = time - noticeTime < 1.2 ? 2.4 : 1
     const k = reduceMotion ? 1 : Math.min(1, dt * 2 * quick)
-    built.neck.rotation.y += (wantYaw - built.neck.rotation.y) * k
-    if (reduceMotion) return
+    animNeck.rotation.y += (wantYaw - animNeck.rotation.y) * k
+    if (reduceMotion || swapped) return
     // 首をかしげる（フクロウ・インコらしさ）
     built.neck.rotation.z = Math.sin(time * tempo.lookRate * 1.7 + phase * 2) * tempo.tilt
     // 気づいた直後: 翼を少し広げて、尾をふる
@@ -441,8 +446,43 @@ export function createSkyfolk(options: SkyfolkOptions): Lion {
     notice: (time) => {
       noticeTime = time
     },
-    swapModel: () => {
-      // 空の世界の鳥は差し替えの実験の対象外
+    swapModel: (model, parts) => {
+      // 生成モデル（Meshy、リグなし）に差し替える。止まり木の上でその場の呼吸と首の向きだけ（歩かない・羽ばたかない）。
+      // 足を止まり木の上（y=0）に置き、高さはプリミティブ版の止まり木から上（頭・冠羽のてっぺん）にそろえる。
+      // 渡される大きさはプリミティブ版の上下の全長で、長い尾のインコは垂れた尾のぶん大きくなりすぎるので、ここで測り直す
+      group.updateMatrixWorld(true)
+      const inv = group.matrixWorld.clone().invert()
+      const local = (root: THREE.Object3D) => {
+        const box = new THREE.Box3()
+        group.updateMatrixWorld(true)
+        root.traverse((o) => {
+          const mesh = o as THREE.Mesh
+          if (!mesh.isMesh) return
+          if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
+          box.union(mesh.geometry.boundingBox!.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, mesh.matrixWorld)))
+        })
+        return box
+      }
+      const top = Math.max(local(built.body).max.y, local(built.neck).max.y)
+      built.body.visible = false
+      built.neck.visible = false
+      // 呼吸は model の scale に毎コマ書くので、大きさの合わせは外側の入れ物に持たせる
+      const holder = new THREE.Group()
+      holder.add(model)
+      group.add(holder)
+      const box = local(model)
+      const h = box.max.y - box.min.y
+      if (h > 0 && top > 0) holder.scale.setScalar(top / h)
+      holder.position.y = -box.min.y * holder.scale.y
+      model.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) {
+          o.castShadow = true
+          o.receiveShadow = true
+        }
+      })
+      animBody = model
+      animNeck = parts.neck ?? new THREE.Object3D()
+      swapped = true
     },
   }
 }
