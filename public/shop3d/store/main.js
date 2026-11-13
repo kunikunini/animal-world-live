@@ -23,6 +23,7 @@ const params = new URLSearchParams(location.search);
 // 外観から始まり、親の合図（awl-shop-go）で扉をくぐって店内へ歩く。外へ出たら、お礼のあいさつのあとワールドへ戻る
 // スマホでは、ワールドの上に重ねず、ページごとここへ移ってくる（?awl=nav。ワールドとお店の 3D を同時に持つと、メモリが足りずにページが落ちる）。出る時は /?shop でワールドのお店の前へ戻る
 const AWL_NAV = params.get('awl') === 'nav' && window.parent === window;
+const curtain = document.getElementById('awl-curtain');   // ページごと行き来する時の暗い幕（ワールドの側の幕と同じ色）
 const AWL = AWL_NAV || (params.has('awl') && window.parent !== window);
 if (AWL) document.getElementById('app').classList.add('awl');
 const EDIT = params.has('edit');
@@ -31,9 +32,11 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NeutralToneMapping;
 renderer.toneMappingExposure = 1.0;
-renderer.shadowMap.enabled = true;
+// スマホ・タブレット（指で操作する端末）では、影をやめ、解像度を下げる（ANIMAL WORLD LIVE、2026-11-13：実機で、何を押しても反応しないほど重かった）
+const LITE = matchMedia('(pointer:coarse)').matches;
+renderer.shadowMap.enabled = !LITE;
 renderer.shadowMap.type = THREE.VSMShadowMap;
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.25 : 2));
 
 const scene = new THREE.Scene();
 const SKY = new THREE.Color(0xd9e6df);
@@ -280,7 +283,7 @@ function refresh(){
     $('#greeting').classList.add('thanks');
     $('#greeting').replaceChildren(...['ありがとうございました！', 'またきてね！'].map(t => { const line = document.createElement('span'); line.append(Object.assign(document.createElement('span'), {textContent:t})); return line; }));   // 行ごとに、外の枠（マスク）と中の文字
   }
-  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => AWL_NAV ? location.assign('/?shop') : tellParent('awl-shop-close'), 1900); }   // お礼を見せてから、ワールドへ
+  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => { if (!AWL_NAV) return tellParent('awl-shop-close'); curtain?.classList.remove('is-out'); setTimeout(() => location.assign('/?shop'), 480); }, 1700); }   // ページごと戻る時は、暗い幕を閉じてから   // お礼を見せてから、ワールドへ
   $('#hud').hidden = !inside; $('#leave').hidden = !inside;
   $('#enter').tabIndex = inside ? -1 : 0;
   for (const b of $('#places').children) b.setAttribute('aria-pressed', String(b.dataset.place === (mode === 'fixture' ? String(current) : 'overview')));
@@ -800,7 +803,7 @@ async function start(){
   $('#loading').hidden = true;
   app.classList.add('is-ready');
   tellParent('awl-shop-ready');
-  if (AWL_NAV) setTimeout(() => { if (mode === 'outside' && !visited) walkIn(); }, 1200);   // ページごと移ってきた時は、合図を待たずに店内へ歩く
+  if (AWL_NAV) { curtain?.classList.add('is-out'); setTimeout(() => { if (mode === 'outside' && !visited) walkIn(); }, 1500); }   // ページごと移ってきた時は、合図を待たずに店内へ歩く
    // ANIMAL WORLD LIVE の中なら、親の「準備しています」を消してもらう
   const goods = buildFixtures().then(() => {
     if (room.solid) paintCards = buildPriceCards(scene, room.solid, fixtures);   // 売り場ごとのプライスカード

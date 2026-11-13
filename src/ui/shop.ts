@@ -105,7 +105,6 @@ export function createShopView(iris: Iris, navigate = false): ShopView {
     if (navigate) {
       // スマホ: ワールドの上に重ねず、ページごとお店へ移る（ワールドとお店の 3D を同時に持つと、メモリが足りずにページが落ちて、スタートに戻ってしまう）。
       // お店を出ると /?shop で、ワールドのお店の前に戻ってくる
-      iris.setWaiting(true)
       left = true
       location.assign(SHOP_NAV_URL)
       return

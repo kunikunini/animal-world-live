@@ -2177,6 +2177,8 @@ function main(): void {
       arriveAtShop = false
       if (!toShop && shell.story.shouldShow()) await shell.story.play()
       await shell.iris.close()
+      // お店から戻ってきた時: 立ち上げの画面（暗い幕にしてある）は、同じ色の幕が閉じた所で外す。音のためのタップ待ちをしない（待つと、スタートに戻ったように見える）
+      if (toShop) dropSplash(false)
       // 初めて入る時はワールドの組み立てに時間がかかるので、幕が閉じた所で出発地のサバンナの曲へ替える
       // （待っている間もホームの曲が流れ続けていた。組み立て済みなら、最初のコマでいまいるワールドの曲になる）
       if (!world) sound.setBgm('savanna')

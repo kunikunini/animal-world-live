@@ -78,6 +78,8 @@
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
       document.documentElement.classList.add('is-splash')
+      // グッズのお店から戻ってきた時（?shop）: 黄色い立ち上げの画面の代わりに、お店の側と同じ暗い幕にする（src/style.css の .splash.is-curtain）
+      if (/[?&]shop\b/.test(location.search)) document.getElementById('splash').classList.add('is-curtain')
       // スコープとワールドの行き来（?scope=1 で開いた時・戻り先 rx を持って戻った時）は、立ち上げの画面の代わりに行き来の画面を出す
       try {
         var hq = new URLSearchParams(location.search)

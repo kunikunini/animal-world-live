@@ -15,6 +15,9 @@
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/addons/"}}</script>
 </head>
 <body>
+<!-- ANIMAL WORLD LIVE からページごと移ってきた時（?awl=nav）の暗い幕。ワールドの側の幕と同じ色で、用意ができたら開く -->
+<div id="awl-curtain" hidden><span>じゅんびちゅう…</span></div>
+<script>if(/[?&]awl=nav/.test(location.search)&&parent===window)document.getElementById("awl-curtain").hidden=false</script>
 <div class="app" id="app" data-mode="outside">
   <section class="stage" id="stage" aria-label="3Dのグッズ売り場">
     <canvas id="scene"></canvas>
