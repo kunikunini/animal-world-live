@@ -486,6 +486,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'woodchuckFas', species: 'ウッドチャック', name: 'ファス', file: 'woodchuck-fas', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'porcupineKogomi', species: 'ヤマアラシ', name: 'こごみ', file: 'porcupine-kogomi', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'kinkajouFig', species: 'キンカジュー', name: 'フィグ', file: 'kinkajou-fig', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
+      { key: 'kinkajouMaca', species: 'キンカジュー', name: 'マカ', file: 'kinkajou-maca', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'lemurJimin', species: 'ワオキツネザル', name: 'ジミン', file: 'lemur-jimin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'binturongBin', species: 'ビントロング', name: 'ビン', file: 'binturong-bin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
       { key: 'binturongBasil', species: 'ビントロング', name: 'バジル', file: 'binturong-basil', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true } },
