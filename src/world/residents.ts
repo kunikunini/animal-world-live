@@ -269,7 +269,8 @@ const EXTRA: Extra[] = [
   // - アメリカバク: 前は [-3, -13] で、大きな木の樹冠の影にずっと入って目立たなかった（11/8 くにの指示）。南へ寄せて、歩き回る半径 6 m がまるごと日なたになる所に
   { species: 'アメリカバク', region: 'jungle', at: [-3, -8.3], spread: 1, size: 1.0, make: wild('tapir') },
   { species: 'コモンリスザル', region: 'jungle', at: [13, 4], spread: 1, size: 1.8, make: wild('squirrelmonkey') },
-  { species: 'コモンマーモセット', region: 'jungle', at: [14, 8], spread: 1, size: 1.9, make: wild('marmoset') },
+  // - コモンマーモセット: 前は [14, 8] で、シダの株（0.4 m 先）に体が隠れていた（11/13 くにの指示）。まわり 2.5 m にシダの無い北へ 3.5 m（ワールドの m で）寄せる
+  { species: 'コモンマーモセット', region: 'jungle', at: [14.4, 9.35], spread: 1, size: 1.9, make: wild('marmoset') },
   { species: 'スローロリス', region: 'jungle', at: [15, 0], spread: 1, size: 1.9, make: wild('loris') },
   { species: 'シャムワニ', region: 'jungle', at: [-15, 6], spread: 1, size: 1.3, make: wild('croc') },
   { species: 'メガネカイマン', region: 'jungle', at: [-15, 11], spread: 1, size: 1.0, make: wild('caiman') },
