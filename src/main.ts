@@ -414,6 +414,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'wallabySachiko', species: 'パルマワラビー', name: 'サチコ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
       { key: 'wallabyEmi', species: 'パルマワラビー', name: 'えみ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
       { key: 'wallabyKiki', species: 'パルマワラビー', name: 'キキ', file: 'wallaby-fujio', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      // オオカンガルー 7 頭は 1 体を複製、アカカンガルーのコカは顔写真の色で別に 1 体。ワラビーと同じく、その場で呼吸だけ（2026-11-13）
+      { key: 'kangarooYuto', species: 'オオカンガルー', name: 'ユウト', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooShigeko', species: 'オオカンガルー', name: 'シゲコ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooJunko', species: 'オオカンガルー', name: '順子', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooSota', species: 'オオカンガルー', name: 'ソウタ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooKanta', species: 'オオカンガルー', name: 'カンタ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooYui', species: 'オオカンガルー', name: 'ユイ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooTsuyu', species: 'オオカンガルー', name: 'ツユ', file: 'kangaroo-yuto', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
+      { key: 'kangarooKoka', species: 'アカカンガルー', name: 'コカ', file: 'kangaroo-koka', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, upright: true, still: true },
       // ハルト: 水の世界の潟の北西の岸のコツメカワウソ 3 頭のうちハルト（ケント・ミナトはプリミティブ版のまま）。水に入らないよう、まわり 1.2 m だけ歩く。
       // 補正の弱い組では前の体が沈んで腰が上がりすぎる（最大 106〜121%）。後ろ脚 0.85・背骨 1・尾 0.5・前脚 0.95 で腰 99.8〜103.6%（ハルトで測って決めた値）
       { key: 'otter', species: 'コツメカワウソ', name: 'ハルト', file: 'otter-haruto', posture: { hind: 0.65, hindCenter: true, spine: 1, tail: 0.5, front: 0.5, frontCenter: true, ground: true } },
