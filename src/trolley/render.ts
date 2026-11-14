@@ -83,6 +83,8 @@ export interface ViewState {
   shakeX: number
   shakeY: number
   reduce: boolean
+  /** うしろから転がってくる大岩（on でない時は描かない） */
+  boulder: { on: boolean; x: number; y: number; rot: number; r: number }
 }
 
 interface Pal {
@@ -1030,6 +1032,92 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     ctx.restore()
   }
 
+  /** 大岩: ごつごつした丸い岩が転がる（rot で回る）。地面に影 */
+  function drawBoulder(b: ViewState['boulder']): void {
+    const x = X(b.x)
+    const y = Y(b.y)
+    const r = b.r * s
+    if (x + r < -20 || x - r > W + 20) return
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'
+    ctx.beginPath()
+    ctx.ellipse(x, Y(b.y - b.r) + 2 * s, r * 0.9, r * 0.16, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(b.rot)
+    const base = palColor(b.x, 'rock')
+    const hi = palColor(b.x, 'rockHi')
+    const lo = palColor(b.x, 'rockLo')
+    // ごつごつの輪郭（決まった形）
+    ctx.beginPath()
+    const n = 11
+    for (let i = 0; i <= n; i++) {
+      const a = (i / n) * Math.PI * 2
+      const k = 0.9 + hash(i % n, 41) * 0.14
+      const px = Math.cos(a) * r * k
+      const py = Math.sin(a) * r * k
+      if (i === 0) ctx.moveTo(px, py)
+      else ctx.lineTo(px, py)
+    }
+    ctx.closePath()
+    ctx.fillStyle = base
+    ctx.fill()
+    ctx.lineWidth = Math.max(2, 3 * s)
+    ctx.strokeStyle = lo
+    ctx.stroke()
+    // 面の明るい所・暗い所
+    ctx.fillStyle = hi
+    ctx.globalAlpha = 0.55
+    ctx.beginPath()
+    ctx.moveTo(-r * 0.62, -r * 0.2)
+    ctx.lineTo(-r * 0.2, -r * 0.7)
+    ctx.lineTo(r * 0.3, -r * 0.55)
+    ctx.lineTo(r * 0.05, -r * 0.15)
+    ctx.closePath()
+    ctx.fill()
+    ctx.fillStyle = lo
+    ctx.globalAlpha = 0.6
+    ctx.beginPath()
+    ctx.moveTo(r * 0.1, r * 0.25)
+    ctx.lineTo(r * 0.7, r * 0.1)
+    ctx.lineTo(r * 0.45, r * 0.7)
+    ctx.lineTo(-r * 0.05, r * 0.6)
+    ctx.closePath()
+    ctx.fill()
+    ctx.globalAlpha = 1
+    // ひび
+    ctx.strokeStyle = lo
+    ctx.lineWidth = Math.max(1.5, 2.2 * s)
+    ctx.beginPath()
+    ctx.moveTo(-r * 0.15, -r * 0.1)
+    ctx.lineTo(-r * 0.45, r * 0.2)
+    ctx.lineTo(-r * 0.35, r * 0.5)
+    ctx.moveTo(-r * 0.45, r * 0.2)
+    ctx.lineTo(-r * 0.7, r * 0.3)
+    ctx.stroke()
+    ctx.restore()
+  }
+  /** 大岩が画面の左の外にいる時: 左の端に「！」 */
+  function drawBoulderMark(b: ViewState['boulder'], t: number): void {
+    const x = X(b.x)
+    if (x + b.r * s > 0) return
+    const y = Math.min(H - 40, Math.max(60, Y(b.y)))
+    const r = 17 + Math.sin(t * 12) * 2
+    ctx.fillStyle = '#ff5a4a'
+    ctx.beginPath()
+    ctx.arc(28, y, r, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = '#fff'
+    ctx.stroke()
+    ctx.fillStyle = '#fff'
+    ctx.font = `900 22px ${font}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('!', 28, y + 1)
+  }
+
   function drawClod(c: Clod): void {
     if (c.state === 'passed') return
     const x = X(c.x)
@@ -1592,6 +1680,7 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       drawPortal(course.exitX, 'to')
       for (const it of course.items) if (!it.taken && it.x > xa - 40 && it.x < xb + 40) drawItem(it, v.t)
       for (const c of v.clods) drawClod(c)
+      if (v.boulder.on) drawBoulder(v.boulder)
       drawParticles(v.particles, false)
       drawCart(v.cart, v.t)
       for (const m of v.mice) drawMouse(m, v.t, v.cart)
@@ -1601,6 +1690,7 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       drawParticles(v.particles, true)
       ctx.globalCompositeOperation = 'source-over'
       drawTexts(v.texts)
+      if (v.boulder.on) drawBoulderMark(v.boulder, v.t)
       drawSpeedLines(v.speedLines, v.t)
       drawDirt(v.dirt, v.dirtSeed)
       if (v.flash > 0) {

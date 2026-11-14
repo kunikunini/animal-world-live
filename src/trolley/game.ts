@@ -48,6 +48,7 @@ type Key =
   | 'moleHit' | 'moleMiss' | 'dodge' | 'mouseOn' | 'mouseShake' | 'mouseSteal' | 'mouseEmpty' | 'bats' | 'upPath' | 'downPath'
   | 'skipped' | 'mischief' | 'time' | 'got' | 'molesR' | 'miceR' | 'batsR' | 'rotate' | 'start' | 'newBest' | 'autoDone'
   | 'score' | 'lever' | 'howLever' | 'hintLever' | 'adventure' | 'tapTap' | 'tapSub' | 'timeBonus'
+  | 'boulderCome' | 'hintBoulder' | 'boulderBump' | 'boulderBoom' | 'boulderSafe' | 'boulderClose' | 'boulderR' | 'boulderClean' | 'boulderHits'
 const WORLD: Record<string, { ja: string; en: string }> = {
   water: { ja: '水の世界', en: 'Water World' },
   sky: { ja: '空の世界', en: 'Sky World' },
@@ -106,6 +107,15 @@ const DICT: Record<Key, { ja: string; en: string }> = {
   tapTap: { ja: 'タップ タップ！', en: 'Tap! Tap!' },
   tapSub: { ja: 'れんだで 出口へ いそげ！', en: 'Mash to rush for the exit!' },
   timeBonus: { ja: 'タイムボーナス', en: 'Time bonus' },
+  boulderCome: { ja: 'うしろから おおいわが！', en: 'A boulder behind you!' },
+  hintBoulder: { ja: 'レバーを こいで にげろ！', en: 'Pump the lever to escape!' },
+  boulderBump: { ja: 'ゴツン！ いそげ！', en: 'Bonk! Hurry!' },
+  boulderBoom: { ja: 'ドーン！', en: 'Boom!' },
+  boulderSafe: { ja: 'にげきった！', en: 'Escaped!' },
+  boulderClose: { ja: 'ふう… セーフ！', en: 'Phew… safe!' },
+  boulderR: { ja: 'おおいわ', en: 'Boulder' },
+  boulderClean: { ja: 'ぶつからずに にげきった', en: 'escaped without a bump' },
+  boulderHits: { ja: 'ゴツン {n}かい', en: '{n} bump(s)' },
 }
 
 // ---- 動き ----
@@ -115,6 +125,11 @@ const HOLD_T = 0.24
 const CRUISE = 330
 /** レバーをこいでいる時のめざす速さ */
 const LEVER_V = 590
+/** 大岩の大きさ（半径）・めざす速さ・いちばん近づける距離（トロッコのまん中から） */
+const BOULDER_R = 72
+const BOULDER_V = 450
+const BOULDER_V_MAX = 660
+const BOULDER_NEAR = BOULDER_R + 44
 /** 出口の遠近の画面に切り替える、出口までの距離 */
 const FINALE_AT = 700
 const ITEM_PT: Record<ItemKind, number> = { shell: 100, feather: 150, gem: 200 }
@@ -311,6 +326,20 @@ export function startTrolleyMode(p: TrolleyParams): void {
   const inVent = new Set<CourseEvent>()
   let hintTimer = 0
   let hintKey: string | null = null
+  // 大岩（11/14 くに: 後半で うしろから追いかけてきて ハラハラさせる。追いつかれても止まらず、前へ押し出されるだけ）
+  const boulder = {
+    state: 'idle' as 'idle' | 'fall' | 'roll' | 'drop' | 'gone',
+    x: 0,
+    y: 0,
+    vy: 0,
+    v: 0,
+    rot: 0,
+    rollAcc: 0,
+    cool: 0,
+    bumps: 0,
+    seen: false,
+    pit: 0,
+  }
 
   // ---- 小さな道具 ----
   const lowestRailAt = (x: number): { ri: number; y: number } | null => {
@@ -636,6 +665,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
     clods.length = 0
     mice.length = 0
     bats.length = 0
+    if (boulder.state !== 'idle') boulder.state = 'gone'
+    audio.setBoulder(null)
     dirt = 0
     for (const ev of course.events) if (('x' in ev ? ev.x : ev.x0) < x + 400) fired.add(ev)
     camX = cart.x + 120
@@ -836,6 +867,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
         tally.bats++
         audio.bats()
         say(tr('bats'), cx + 80, cart.y + 150, '#d9c6ff')
+      } else if (ev.type === 'boulder' && cx >= ev.x0) {
+        fired.add(ev)
+        startBoulder(ev.pit)
       } else if (ev.type === 'fork' && cart.ri >= 0 && course.rails[cart.ri].kind === 'main' && cx >= ev.x - 560 && cx < ev.x) {
         fired.add(ev)
         if (ev.dir === 'down') {
@@ -1010,6 +1044,115 @@ export function startTrolleyMode(p: TrolleyParams): void {
     }
   }
 
+  // ---- 大岩 ----
+  function startBoulder(pit: number): void {
+    boulder.state = 'fall'
+    boulder.seen = true
+    boulder.pit = pit
+    boulder.x = cart.x - 300
+    boulder.y = ceilAt(boulder.x) - BOULDER_R
+    boulder.vy = 0
+    boulder.v = cart.v
+    boulder.rot = 0
+    boulder.cool = 0
+    audio.boom()
+    addShake(8)
+    say(tr('boulderCome'), cart.x, cart.y + 170, '#ffb36b', true)
+    if (!autopilot) showHint('boulder', tr('hintBoulder'))
+    // 天井からぱらぱら
+    emit(14, () => ({ x: boulder.x + (Math.random() - 0.5) * 140, y: boulder.y + BOULDER_R * 0.6, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 120, life: 0.9, size: 3 + Math.random() * 4, kind: 'dirt', color: Math.random() < 0.5 ? '#7a5434' : '#5d3e24', g: 900 }))
+  }
+  function boulderDust(n: number, spread: number): void {
+    emit(n, () => ({ x: boulder.x + (Math.random() - 0.5) * spread, y: boulder.y - BOULDER_R + 4, vx: (Math.random() - 0.5) * 260, vy: 60 + Math.random() * 200, life: 0.7, size: 4 + Math.random() * 6, kind: 'dust', color: 'rgba(205,185,150,0.75)', g: 300 }))
+  }
+  function stepBoulder(dt: number): void {
+    if (boulder.state === 'idle' || boulder.state === 'gone') return
+    if (phase !== 'ride') {
+      boulder.state = 'gone'
+      audio.setBoulder(null)
+      return
+    }
+    boulder.cool = Math.max(0, boulder.cool - dt)
+    const dist = cart.x - boulder.x
+    if (boulder.state === 'fall') {
+      // 天井から落ちて、線路の上で弾む
+      boulder.vy -= G * dt
+      boulder.x += boulder.v * dt
+      boulder.y += boulder.vy * dt
+      const gy = mainYAt(boulder.x)
+      if (gy !== null && boulder.y - BOULDER_R <= gy) {
+        boulder.y = gy + BOULDER_R
+        boulder.state = 'roll'
+        boulder.v = cart.v + 60
+        audio.boom()
+        addShake(12)
+        boulderDust(16, 160)
+      }
+    } else if (boulder.state === 'roll') {
+      const gy = mainYAt(boulder.x)
+      if (gy === null || boulder.x >= boulder.pit) {
+        // 最後の切れ目に落ちる
+        boulder.state = 'drop'
+        boulder.vy = 0
+        return
+      }
+      // 坂で速くなる（トロッコと同じ式。めざす速さはふつうのトロッコより速く、レバーをこいだ時より遅い）
+      const r = course.rails[mainRails.find((i) => railY(course.rails[i], boulder.x) !== null) ?? 0]
+      const slope = railSlope(r, boulder.x)
+      const sinA = slope / Math.sqrt(1 + slope * slope)
+      boulder.v = Math.min(BOULDER_V_MAX, Math.max(160, boulder.v + (-SLOPE_G * sinA + (BOULDER_V - boulder.v) * 0.7) * dt))
+      const dx = (boulder.v * dt) / Math.sqrt(1 + slope * slope)
+      boulder.x += dx
+      boulder.y = (mainYAt(boulder.x) ?? gy) + BOULDER_R
+      boulder.rot += dx / BOULDER_R
+      boulder.rollAcc += dx
+      const near = Math.min(1, Math.max(0.15, 1 - (dist - BOULDER_NEAR) / 420))
+      if (boulder.rollAcc > BOULDER_R * 2.2) {
+        boulder.rollAcc = 0
+        audio.roll(near)
+        addShake(2 + 4 * near)
+      }
+      if (Math.random() < 0.35) boulderDust(1, 60)
+      // 追いつかれた: ゴツンと前へ押し出される（止まらない）。大岩は弾んで少し遅れる
+      if (cart.x - boulder.x < BOULDER_NEAR) {
+        boulder.x = cart.x - BOULDER_NEAR
+        if (boulder.cool <= 0) {
+          boulder.cool = 1.2
+          boulder.bumps++
+          cart.v = Math.max(cart.v, 600)
+          cart.squash = -0.6
+          boulder.v = Math.min(boulder.v, cart.v * 0.45)
+          addShake(14)
+          audio.thud()
+          say(tr('boulderBump'), cart.x, cart.y + 160, '#ff9aa8', true)
+          emit(10, () => ({ x: cart.x - CART_W / 2, y: cart.y + 30, vx: -60 + (Math.random() - 0.5) * 200, vy: 80 + Math.random() * 200, life: 0.6, size: 6, kind: 'star', color: '#ffe36b', rot: Math.random() * 6 }))
+        }
+      }
+    } else if (boulder.state === 'drop') {
+      boulder.vy -= G * dt
+      boulder.x += boulder.v * 0.5 * dt
+      boulder.y += boulder.vy * dt
+      boulder.rot += (boulder.v * 0.5 * dt) / BOULDER_R
+      const low = lowestRailAt(boulder.x)
+      const floor = low ? low.y : boulder.y - 400
+      if (boulder.y - BOULDER_R <= floor || boulder.y < cart.y - 700) {
+        // 穴の底で砕ける
+        boulder.y = floor + BOULDER_R
+        boulder.state = 'gone'
+        audio.boom()
+        addShake(14)
+        emit(26, () => ({ x: boulder.x + (Math.random() - 0.5) * 120, y: boulder.y - BOULDER_R * 0.4, vx: (Math.random() - 0.5) * 420, vy: 120 + Math.random() * 420, life: 0.9, size: 5 + Math.random() * 9, kind: 'dirt', color: Math.random() < 0.5 ? '#6b6178' : '#4a4256', g: 1100 }))
+        boulderDust(20, 200)
+        say(tr('boulderBoom'), boulder.x, boulder.y + 60, '#ffd27a', true)
+        const pts = boulder.bumps === 0 ? 500 : 200
+        say(tr(boulder.bumps === 0 ? 'boulderSafe' : 'boulderClose'), cart.x, cart.y + 170, '#9cf0ff', true)
+        addScore(pts, cart.x, cart.y + 230)
+      }
+    }
+    audio.setBoulder(boulder.state === 'gone' ? null : Math.min(1, Math.max(0.15, 1 - (cart.x - boulder.x - BOULDER_NEAR) / 420)))
+    if (boulder.state === 'gone') audio.setBoulder(null)
+  }
+
   function stepFx(dt: number): void {
     for (const p of particles) {
       p.life -= dt
@@ -1062,7 +1205,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
     if (reduce) zt = 1 - (1 - zt) * 0.4
     zoom += (zt - zoom) * Math.min(1, dt * (reduce ? 0.8 : 1.4))
     const viewW = w / (s * zoom)
-    const ahead = phase === 'title' ? 120 : phase === 'intro' ? 20 : viewW * (0.2 + 0.1 * fast)
+    let ahead = phase === 'title' ? 120 : phase === 'intro' ? 20 : viewW * (0.2 + 0.1 * fast)
+    // 大岩に追われている間は、うしろを広く見せる（トロッコを右へ寄せる）
+    if (boulder.state === 'fall' || boulder.state === 'roll' || boulder.state === 'drop') ahead = Math.max(-viewW * 0.25, Math.min(ahead, viewW * 0.5 - 380))
     const tx = cart.x + ahead
     // 先の線路の高さも少し見る
     let look = 0
@@ -1191,6 +1336,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
         <dt>${tr('molesR')}</dt><dd>${moleTxt}</dd>
         <dt>${tr('miceR')}</dt><dd>${mouseTxt}</dd>
         <dt>${tr('batsR')}</dt><dd>${tally.bats}</dd>
+        ${boulder.seen && boulder.state === 'gone' ? `<dt>${tr('boulderR')}</dt><dd>${boulder.bumps === 0 ? tr('boulderClean') : tr('boulderHits', { n: String(boulder.bumps) })}</dd>` : ''}
       </dl>
       <div class="tr-actions">
         <button type="button" class="tr-btn tr-primary" data-act="go">${tr('goWorld')}</button>
@@ -1263,6 +1409,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     shakeX: 0,
     shakeY: 0,
     reduce,
+    boulder: { on: false, x: 0, y: 0, rot: 0, r: BOULDER_R },
   }
   window.addEventListener('resize', () => {
     renderer.resize()
@@ -1279,6 +1426,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
         const sub = Math.max(1, Math.ceil(dt / 0.012))
         for (let i = 0; i < sub; i++) stepCart(dt / sub)
         if (phase === 'ride' || phase === 'ending') stepEvents(dt)
+        stepBoulder(dt)
       }
       stepFx(dt)
       if (phase !== 'finale') stepCamera(dt)
@@ -1325,6 +1473,10 @@ export function startTrolleyMode(p: TrolleyParams): void {
     view.cart.pump = cart.pump
     view.cart.pumpA = cart.pumpA
     view.lampFlicker = lampFlicker
+    view.boulder.on = boulder.state === 'fall' || boulder.state === 'roll' || boulder.state === 'drop'
+    view.boulder.x = boulder.x
+    view.boulder.y = boulder.y
+    view.boulder.rot = boulder.rot
     view.dirt = dirt
     view.dirtSeed = dirtSeed
     view.speedLines = speedLines
@@ -1342,6 +1494,6 @@ export function startTrolleyMode(p: TrolleyParams): void {
 
   // 開発用の窓口（?debug=1 の時だけ）
   if (new URLSearchParams(location.search).get('debug') === '1') {
-    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
+    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
   }
 }

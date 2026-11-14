@@ -115,6 +115,12 @@ export interface TrolleyAudio {
   setFinale: (k: number | null) => void
   /** 連打の 1 回 */
   tapHit: (k: number) => void
+  /** 大岩の近さ 0〜1（ゴロゴロの大きさ。null で止める） */
+  setBoulder: (k: number | null) => void
+  /** 大岩がひと転がりした音 */
+  roll: (k: number) => void
+  /** 大岩が落ちた・砕けた音 */
+  boom: () => void
   stop: () => void
 }
 
@@ -134,6 +140,8 @@ export function createTrolleyAudio(): TrolleyAudio {
   let stopped = false
   let drive = 0
   let finaleK: number | null = null
+  let boulderK = 0
+  let boulderGain: GainNode | null = null
 
   const se = (): Out | null => (stopped ? null : sound.synthOut('se'))
   const bg = (): Out | null => (stopped ? null : sound.synthOut('bgm'))
@@ -190,6 +198,14 @@ export function createTrolleyAudio(): TrolleyAudio {
     const sg = o.ctx.createGain()
     sg.gain.value = 0
     src.connect(hf).connect(sg).connect(o.out)
+    // 大岩のゴロゴロ（スマホのスピーカーでも聞こえる低め）
+    const bf = o.ctx.createBiquadFilter()
+    bf.type = 'lowpass'
+    bf.frequency.value = 420
+    const bgn = o.ctx.createGain()
+    bgn.gain.value = 0
+    src.connect(bf).connect(bgn).connect(o.out)
+    boulderGain = bgn
     src.start()
     rumbleSrc = src
     rumbleGain = g
@@ -291,6 +307,7 @@ export function createTrolleyAudio(): TrolleyAudio {
         if (!onRail) rumbleGain?.gain.setTargetAtTime(0, now, 0.05)
         rumbleFilter?.frequency.setTargetAtTime(180 + 260 * k, now, 0.1)
         sparkGain?.gain.setTargetAtTime(boost && onRail ? 0.05 : 0, now, 0.12)
+        boulderGain?.gain.setTargetAtTime(0.32 * boulderK, now, 0.15)
       }
       const b = bg()
       if (!b || !musicOn) return
@@ -456,6 +473,24 @@ export function createTrolleyAudio(): TrolleyAudio {
       const t = o.ctx.currentTime
       tone(o, t, hz(72 + Math.round(k * 14)), hz(79 + Math.round(k * 14)), 0.09, 0.07, 'square', 0.002)
       hiss(o, t, 0.06, 0.06, 'bandpass', 2600, 2600, 2)
+    },
+    setBoulder(k) {
+      boulderK = k === null ? 0 : Math.min(1, Math.max(0, k))
+    },
+    roll(k) {
+      const o = se()
+      if (!o || k <= 0) return
+      const t = o.ctx.currentTime
+      tone(o, t, 150, 70, 0.22, 0.28 * k, 'sine', 0.003)
+      hiss(o, t, 0.2, 0.12 * k, 'lowpass', 700, 200)
+    },
+    boom() {
+      const o = se()
+      if (!o) return
+      const t = o.ctx.currentTime
+      tone(o, t, 110, 32, 0.7, 0.5, 'sine', 0.002)
+      tone(o, t, 220, 60, 0.4, 0.18, 'triangle', 0.002)
+      hiss(o, t, 0.8, 0.32, 'lowpass', 1600, 120)
     },
     stop() {
       musicOn = false

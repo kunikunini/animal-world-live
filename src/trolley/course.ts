@@ -35,6 +35,8 @@ export type CourseEvent =
   | { type: 'splash'; x0: number; x1: number }
   | { type: 'boost'; x0: number; x1: number }
   | { type: 'fork'; x: number; dir: 'up' | 'down'; rail: number }
+  /** うしろから大岩が転がってくる（x0 で天井から落ち、pit の切れ目に落ちて砕ける） */
+  | { type: 'boulder'; x0: number; pit: number }
 
 export interface Zone {
   x0: number
@@ -426,6 +428,29 @@ function skyZone(c: Ctx, first: boolean): void {
   b.flat(400).hill(360, 60)
 }
 
+/**
+ * 後半の大岩（11/14 くに）: 着くワールドの坑道の終わりに、長い下り坂と最後の切れ目。
+ * 坂の入口でうしろの天井から大岩が落ちて追いかけてくる。最後の切れ目を跳ぶと、大岩は穴に落ちて砕ける
+ */
+function boulderRun(c: Ctx): void {
+  const { b } = c
+  const it = c.item
+  b.flat(200)
+  const x0 = b.x
+  b.flat(240)
+  b.slope(900, -170)
+  b.row(x0 + 340, 7, 110, it, 40)
+  b.waves(2, 340, 46)
+  b.flat(280)
+  const pit = b.x
+  const py = b.y
+  b.events.push({ type: 'hint', x: pit - 240, key: 'jump' })
+  b.gap(240, 0)
+  b.arc(pit, b.x, py, b.y, 4, it, 120)
+  b.events.push({ type: 'boulder', x0, pit })
+  b.flat(320)
+}
+
 type BuilderWithCaverns = Builder & { caverns: Cavern[] }
 
 const ITEM_OF: Record<Theme, ItemKind> = { water: 'shell', sky: 'feather', mid: 'gem' }
@@ -452,7 +477,10 @@ export function buildCourse(from: TrolleyEnd, to: TrolleyEnd): Course {
   const mouthX = 560
   zone(from, () => run(from, true))
   zone('mid', () => run('mid', false))
-  zone(to, () => run(to, false))
+  zone(to, () => {
+    run(to, false)
+    boulderRun({ b, theme: to, item: ITEM_OF[to] })
+  })
   // 出口へ向かう上り → 出口 → 着く駅
   b.slope(600, 80)
   b.flat(500)
