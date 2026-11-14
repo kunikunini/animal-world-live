@@ -237,7 +237,9 @@ export function focusHop(): void {
   ready = true
   const el = hopEl()
   if (!el) return
-  if (tapped) {
+  // トロッコで着いた時は待たずに開く（11/14 くに: 出口の光を連打で抜けたあとに、もう一度タップさせると意味がない）。
+  // 音はワールドで最初に触った時に鳴り出す（sound.ts の unlock が、その時に BGM を合わせる）
+  if (tapped || document.documentElement.classList.contains('hop-trolley')) {
     openHop()
     return
   }
