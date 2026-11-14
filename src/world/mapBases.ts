@@ -3,6 +3,7 @@ import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT, WALK
 import { OUTER_REGIONS, biomeAt, clampToWalkable, emptyWeights, isWalkable } from './regions'
 import type { RegionKey } from './regions'
 import { TROLLEY_ROUTES, arrivalSpot } from '../trolley/stations'
+import { SHOP } from './shop'
 
 /**
  * 地図の「拠点」と「道」（スーパーマリオブラザーズ 3 のワールドマップのパネルと道の考え方を借りる。11/6 のくにの要望）。
@@ -11,10 +12,11 @@ import { TROLLEY_ROUTES, arrivalSpot } from '../trolley/stations'
  * - spot: 観察スポット
  * - pass: 峠（となりのワールドへの出口）。着く先は、となりのワールドの入口
  * - trolley: トロッコの駅（11/14〜）。押すとその駅の前へ（となりのワールドの駅なら、地図の中でトンネルを通って行く）。トンネルは地面の下なので点線で描く
+ * - shop: ふれあいワールドのグッズのお店（大きな木のお店。11/15〜）。押すと扉の前の石畳に着き、「お店に入る」が出る
  * - animal: 代表的な動物のいる場所。動物は歩き回るので、場所は開いた時・着いた時の個体の位置（animalId）で決める
  * 道は、拠点どうしをまっすぐ結ぶ。ワールドの中は入口とスポットから放射状（動物の拠点は近い方から）、サバンナの峠と各ワールドの入口は峠の道でつながる
  */
-export type BaseKind = 'entry' | 'spot' | 'pass' | 'trolley' | 'animal'
+export type BaseKind = 'entry' | 'spot' | 'pass' | 'trolley' | 'shop' | 'animal'
 
 export interface MapBase {
   id: string
@@ -133,6 +135,9 @@ export function mapBases(): { bases: MapBase[]; roads: MapRoad[] } {
     }
     roads.push({ a: `${r.a.region}:trolley:${r.b.region}`, b: `${r.b.region}:trolley:${r.a.region}`, tunnel: true })
   }
+  // グッズのお店（扉の前の石畳）。ふれあいワールドのスポットと道でつなぐ
+  bases.push({ id: 'partner:shop', world: 'partner', kind: 'shop', x: SHOP.doorX, z: SHOP.doorZ })
+  roads.push({ a: 'partner:spot', b: 'partner:shop' })
   const fixed: Record<string, { x: number; z: number }> = {
     ミーアキャット: SAVANNA_MEERKAT,
     ブチハイエナ: SAVANNA_HYENA,
@@ -233,6 +238,10 @@ export function arrivalOf(base: MapBase, animalAt: (id: string) => { x: number; 
       { s: r.b, to: r.a.region },
     ]).find((e) => e.s.region === base.world && e.to === base.to)?.s
     if (st) return arrivalSpot(st)
+  }
+  if (base.kind === 'shop') {
+    // 石畳のまんなかに、扉の方を向いて立つ（すぐ「お店に入る」が出る）
+    return { x: SHOP.doorX, z: SHOP.doorZ, heading: SHOP.yaw + Math.PI }
   }
   if (base.kind === 'spot') {
     if (base.world === 'africa') return { x: SPOT.x, z: SPOT.z + 2.5, heading: Math.PI }

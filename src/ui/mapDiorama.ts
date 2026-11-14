@@ -25,7 +25,7 @@ import { TROLLEY_ROUTES } from '../trolley/stations'
  */
 export interface DioramaBase {
   id: string
-  kind: 'entry' | 'spot' | 'pass' | 'trolley' | 'animal'
+  kind: 'entry' | 'spot' | 'pass' | 'trolley' | 'shop' | 'animal'
   x: number
   z: number
   label: string
@@ -95,7 +95,7 @@ const NEIGHBOR_DROP = -14
 /** 押しただけか、ドラッグか（px） */
 const DRAG_PX = 6
 
-const BASE_COLOR: Record<DioramaBase['kind'], number> = { entry: 0x2f6bff, spot: 0xf26a1b, pass: 0x8a6a46, trolley: 0xb5643a, animal: 0x3f9a4a }
+const BASE_COLOR: Record<DioramaBase['kind'], number> = { entry: 0x2f6bff, spot: 0xf26a1b, pass: 0x8a6a46, trolley: 0xb5643a, shop: 0x2f8a4a, animal: 0x3f9a4a }
 const TREE_STYLE: Record<RegionKey, { leaf: number; shape: 'flat' | 'ball' | 'cone' }> = {
   africa: { leaf: 0x6faa3a, shape: 'flat' },
   south: { leaf: 0x7f9a3a, shape: 'flat' },

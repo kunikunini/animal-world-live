@@ -4162,6 +4162,7 @@ button.bk-tab:hover {
 .map3d-base.is-spot { --base-c: #f26a1b; }
 .map3d-base.is-pass { --base-c: #8a6a46; }
 .map3d-base.is-trolley { --base-c: #b5643a; }
+.map3d-base.is-shop { --base-c: #2f8a4a; }
 .map3d-base.is-animal { --base-c: #3f9a4a; }
 .map3d-base.is-target { outline: 3px solid #ffd21f; }
 /* となりのワールドの名前は木の看板（少し透ける。押すとそのワールドのスポットへ） */

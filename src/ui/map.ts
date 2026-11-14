@@ -119,6 +119,7 @@ export function createMapView(): MapView {
     if (b.kind === 'entry') return t('mapStart')
     if (b.kind === 'pass' && b.to) return t('mapPassTo', { world: worldName(b.to) })
     if (b.kind === 'trolley' && b.to) return t('mapTrolleyAt', { world: worldName(b.to) })
+    if (b.kind === 'shop') return t('shopName')
     return b.species ? speciesName(b.species) : ''
   }
   /** 拠点の今の場所（動物の拠点は個体の今の位置） */

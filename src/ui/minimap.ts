@@ -84,7 +84,7 @@ export interface MapRenderer {
 
 /** 広げた地図の拠点（マリオ 3 のワールドマップのパネル）と道 */
 export interface MapOverlay {
-  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'trolley' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string; to?: string }>
+  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'trolley' | 'shop' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string; to?: string }>
   /** 名前の札を出すワールド（いまいるワールド。ほかのワールドの拠点は記号のパネルだけにして、大陸の地図を札だらけにしない） */
   labelWorld: string
   /** x1, z1, x2, z2, 動物の拠点への道か（動物を隠している時は描かない） */
@@ -1092,7 +1092,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     }
     ctx.setLineDash([])
   }
-  const BASE_FILL: Record<MapOverlay['bases'][number]['kind'], string> = { entry: '#2f6bff', spot: '#f26a1b', pass: '#7a5a3a', trolley: '#b5643a', animal: '#3f9a4a' }
+  const BASE_FILL: Record<MapOverlay['bases'][number]['kind'], string> = { entry: '#2f6bff', spot: '#f26a1b', pass: '#7a5a3a', trolley: '#b5643a', shop: '#2f8a4a', animal: '#3f9a4a' }
   /** 道（ベージュの太線に濃い縁）と拠点（角の丸いパネル。種類で色と記号を変える） */
   const drawOverlay = (ctx: CanvasRenderingContext2D): Box[] => {
     if (!overlay) return []
@@ -1131,7 +1131,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       ctx.font = `900 ${Math.round(9 * u)}px ${FONT}`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      const mark = b.kind === 'entry' ? 'S' : b.kind === 'spot' ? '◎' : b.kind === 'pass' ? '➜' : b.kind === 'trolley' ? '⇄' : b.friend ? '♥' : '●'
+      const mark = b.kind === 'entry' ? 'S' : b.kind === 'spot' ? '◎' : b.kind === 'pass' ? '➜' : b.kind === 'trolley' ? '⇄' : b.kind === 'shop' ? '店' : b.friend ? '♥' : '●'
       ctx.fillText(mark, x, y + 0.5 * u)
       boxes.push({ l: x - s, t: y - s, r: x + s, b: y + s })
     }
@@ -1553,6 +1553,29 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       ctx.fill()
       ctx.restore()
       return { l: x - 7 * u, t: y - 7 * u, r: x + 7 * u, b: y + 7 * u }
+    }
+    if (bs.kind === 'shop') {
+      // グッズのお店: 緑の札に、大きな木と扉
+      ctx.fillStyle = '#2f8a4a'
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 1.8 * u
+      roundRect(ctx, x - 8 * u, y - 8 * u, 16 * u, 16 * u, 4 * u)
+      ctx.fill()
+      ctx.stroke()
+      ctx.fillStyle = '#9fe08a'
+      ctx.beginPath()
+      ctx.arc(x, y - 2 * u, 5 * u, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = '#7a4a26'
+      ctx.fillRect(x - 2.6 * u, y, 5.2 * u, 5.4 * u)
+      ctx.fillStyle = '#ffd36b'
+      ctx.beginPath()
+      ctx.arc(x, y + 2.4 * u, 1.5 * u, Math.PI, 0)
+      ctx.lineTo(x + 1.5 * u, y + 5.4 * u)
+      ctx.lineTo(x - 1.5 * u, y + 5.4 * u)
+      ctx.closePath()
+      ctx.fill()
+      return { l: x - 8 * u, t: y - 8 * u, r: x + 8 * u, b: y + 8 * u }
     }
     if (bs.kind === 'trolley') {
       // トロッコの駅: 赤茶の札に、小さなトロッコ（箱と車輪）
