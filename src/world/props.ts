@@ -14,6 +14,10 @@ export interface Collider {
   r: number
   /** false の時は地図のジオラマに描かない（ワールドのスコップなど、木や岩ではない当たり） */
   map?: false
+  /** 上端の高さ（ワールドの y）。主人公の足がこれより上なら当たらない（柵は跳び越えられ、柱の頂の台には乗れる）。無ければ上まで続く */
+  top?: number
+  /** 上に歩ける台がある（岩の柱）。橋・台をタップで目指す時の道探しでは避けない */
+  deck?: true
 }
 
 export interface Props {

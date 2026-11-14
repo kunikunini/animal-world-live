@@ -9,6 +9,7 @@ import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist,
 import { toonMaterial } from '../render/toon'
 import { SUN_LIGHT_DIR } from './scene'
 import { createShopHouse, shopClears } from './shop'
+import { addWalkSurface, deckSurface, rampSurface } from './walkSurfaces'
 
 /**
  * サバンナ以外の 5 つのワールドの置き物。どれも InstancedMesh で、種類ごとに 1〜2 回の描画で済ませる。
@@ -37,6 +38,8 @@ export const JUNGLE_PERCH = { dx: 7, dz: -9, height: 2.7, length: 6.2, radius: 0
 
 /** ヤギの岩場の板が地面から出てよい高さ（m）。これより低ければ主人公は板の上を歩いて見える */
 const GOAT_SLAB_RISE = 0.3
+/** 放牧場の柵の上端（地面から m、柱の頭 1.15m＋少し）。主人公の足がこれより上なら柵に当たらない */
+const FENCE_TOP = 1.2
 
 /** 円の外へ歩ける範囲（props.ts の REACH_EXTRA_OUTER）＋少し。ここまでの木と岩には当たり判定を付ける */
 const REACH_BAND = 40
@@ -737,12 +740,13 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
       const bx = r.x + p.x + Math.cos(b) * p.r
       const bz = r.z + p.z + Math.sin(b) * p.r
       posts.push({ x: ax, z: az })
-      colliders.push({ x: ax, z: az, r: 0.35 })
+      // 上端は柱の頭（地面から 1.15m）。ジャンプ（約 2.5m）で跳び越えられる
+      colliders.push({ x: ax, z: az, r: 0.35, top: terrainHeight(ax, az) + FENCE_TOP })
       const mid = (a + b) / 2
       const gateGap = Math.abs(Math.atan2(Math.sin(mid - p.gate), Math.cos(mid - p.gate))) < Math.PI / n
       if (gateGap) continue
       rails.push({ x: (ax + bx) / 2, z: (az + bz) / 2, len: Math.hypot(bx - ax, bz - az), yaw: Math.atan2(-(bz - az), bx - ax) })
-      colliders.push({ x: (ax + bx) / 2, z: (az + bz) / 2, r: 0.75 })
+      colliders.push({ x: (ax + bx) / 2, z: (az + bz) / 2, r: 0.75, top: Math.max(terrainHeight(ax, az), terrainHeight(bx, bz)) + FENCE_TOP })
     }
   }
   const postMesh = instanced(postGeo, wood, posts.length)
@@ -965,7 +969,9 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
       }
     })
     group.add(pillar)
-    colliders.push({ x: px, z: pz, r: 1.9 })
+    // 柱の岩は横からは登れない。頂の台（板の高さ）にいる時は当たらない
+    const deckY = pillarTop + 0.14
+    colliders.push({ x: px, z: pz, r: 1.9, top: deckY - 0.3, deck: true })
     // 板の橋: 岩山の上から柱の頂へ。板を並べ、両側に細い手すり
     const ex = px - Math.cos(side) * 1.3
     const ez = pz - Math.sin(side) * 1.3
@@ -1003,6 +1009,13 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
       if ((o as THREE.Mesh).isMesh) o.castShadow = true
     })
     group.add(bridge)
+    // 上を歩ける面: 板の上面（板の中心から 0.035m 上）と、柱の頂の台。手すりの内側（0.55m − 体の半分ほど）から出ない。
+    // 橋の始まりは岩山の上の地面より少し外へのばし、地面から段差なく乗れるようにする
+    const pad = 0.6
+    const top0 = { x: sx - Math.cos(side) * pad, z: sz - Math.sin(side) * pad, y: sy + 0.1 + 0.035 }
+    const top1 = { x: ex, z: ez, y: ey + 0.035 }
+    addWalkSurface(rampSurface(top0, top1, 0.62, 0.22, [{ x: sx, z: sz }], [planks]))
+    addWalkSurface(deckSurface(px, pz, 1.5, deckY, [{ x: sx, z: sz }, { x: ex, z: ez }], [deck]))
   }
 
   // 広場の水飲みおけ（木の箱に水色の水面）

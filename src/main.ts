@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { createScene, sunDiscDir } from './world/scene'
 import { createTerrain, terrainHeight } from './world/terrain'
+import { groundUnder } from './world/walkSurfaces'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
 import { createBiomeProps } from './world/biomes'
 import { createSea } from './world/sea'
@@ -679,6 +680,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const gpuRelease = createGpuRelease(renderer, scene)
 
   const player = createPlayer(camera, terrain, canvas, scene, props.colliders)
+  // 主人公の影と相棒の足元: 地形と、主人公の足の高さから乗れる橋・台（ふれあいワールドのヤギの岩場）
+  const playerGround = (x: number, z: number) => groundUnder(x, z, player.object.position.y + 0.05)
   // 足音: 北の世界の雪の上は雪、ほかは草。跳ぶ・着地
   const stepBiome = emptyWeights()
   const playStep = (x: number, z: number) => {
@@ -768,7 +771,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const loaded = await loadHero(entry.model, {
         height: figureHeight * (heroScaleOverride || entry.scale),
         separation: heroQuery.get('heroSep') !== 'off',
-        ground: terrainHeight,
+        ground: playerGround,
       })
       // 読み込み中に別の子が選ばれていたら、こちらは捨てる
       if (heroWant !== id) return loaded.dispose()
@@ -1605,7 +1608,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       if (!scopAsked && !scopOff) {
         scopAsked = true
         scopAskedAt = performance.now()
-        loadScopCompanion('/models/scop.glb', { heroHeight: figureHeight, ground: terrainHeight })
+        loadScopCompanion('/models/scop.glb', { heroHeight: figureHeight, ground: playerGround })
           .then((s) => {
             scop = s
             s.setReduceMotion(reduceMotionNow)
@@ -1668,7 +1671,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const speed = dt > 0 && moved < 2 ? moved / dt : 0
       heroSpeed += (speed - heroSpeed) * Math.min(1, dt * 12)
       heroPrev.copy(p)
-      if (hero.update(dt, heroSpeed, Math.max(0, p.y - terrainHeight(p.x, p.z))) && heroSpeed > 1) playStep(p.x, p.z)
+      if (hero.update(dt, heroSpeed, Math.max(0, p.y - player.groundY())) && heroSpeed > 1) playStep(p.x, p.z)
     }
     {
       // がんばりゲージは主人公の頭の高さ（1.4m）の右に

@@ -3,6 +3,8 @@ import { SPAWN } from '../world/layout'
 import { clampToWalkable, routeTo } from '../world/regions'
 import { terrainHeight } from '../world/terrain'
 import type { Collider } from '../world/props'
+import { surfaceUnder, walkSurfaces } from '../world/walkSurfaces'
+import type { WalkSurface } from '../world/walkSurfaces'
 import { toonMaterial } from '../render/toon'
 import { refineRoute } from './pathfind'
 
@@ -60,6 +62,8 @@ export interface PlayerController {
   onJump: (fn: () => void) => void
   /** drop は跳んだいちばん高い所から着地点までの落差（m） */
   onLand: (fn: (drop: number) => void) => void
+  /** 主人公の足元の高さ（地形か、乗っている橋・台） */
+  groundY: () => number
   dispose: () => void
 }
 
@@ -142,11 +146,12 @@ function clampToWorld(p: THREE.Vector3): void {
 
 const _push = new THREE.Vector3()
 
-/** 岩や幹の円から押し出す。押し出した量を返し、押し出した向きを _push に残す */
-function pushOutOfColliders(p: THREE.Vector3, radius: number, colliders: Collider[]): number {
+/** 岩や幹の円から押し出す。押し出した量を返し、押し出した向きを _push に残す。feetY を渡すと、上端（top）がそれより低い当たり（柵・柱）は跳び越えている */
+function pushOutOfColliders(p: THREE.Vector3, radius: number, colliders: Collider[], feetY?: number): number {
   let pushed = 0
   _push.set(0, 0, 0)
   for (const c of colliders) {
+    if (feetY !== undefined && c.top !== undefined && feetY >= c.top) continue
     const dx = p.x - c.x
     const dz = p.z - c.z
     const min = c.r + radius
@@ -192,6 +197,8 @@ export function createPlayer(
   // ジャンプ: 空中の高さと上向きの速度。地面にいるときは null
   let airY: number | null = null
   let vy = 0
+  // 乗っている橋・台（地面の上なら null）。端から外へ出たら落ちる
+  let surface: WalkSurface | null = null
   let waypoints: THREE.Vector3[] = []
   let reduceMotion = false
   let walkPhase = 0
@@ -247,11 +254,13 @@ export function createPlayer(
     markerLife = 1
   }
 
-  const goTo = (points: Array<{ x: number; z: number }>) => {
-    // 岩でふさがれた区間は、格子の上で回り道を探して経由点を差し込む（崖の岩の間や一枚岩の裏へも着く）
-    waypoints = refineRoute(object.position, points, colliders, PLAYER_RADIUS).map((p) => {
+  const goTo = (points: Array<{ x: number; z: number }>, onDeck = false) => {
+    // 岩でふさがれた区間は、格子の上で回り道を探して経由点を差し込む（崖の岩の間や一枚岩の裏へも着く）。
+    // 橋・台を目指す時は、上に台のある柱を避けない（橋を渡って頂に乗る）
+    const solid = onDeck ? colliders.filter((c) => !c.deck) : colliders
+    waypoints = refineRoute(object.position, points, solid, PLAYER_RADIUS).map((p) => {
       const v = new THREE.Vector3(p.x, 0, p.z)
-      clampToWorld(v)
+      if (!onDeck) clampToWorld(v)
       v.y = terrainHeight(v.x, v.z)
       return v
     })
@@ -335,9 +344,19 @@ export function createPlayer(
     const rect = canvas.getBoundingClientRect()
     ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1)
     raycaster.setFromCamera(ndc, camera)
-    const hits = raycaster.intersectObject(terrain, true)
+    const decks = walkSurfaces()
+    const hits = raycaster.intersectObjects([terrain, ...decks.flatMap((s) => s.meshes)], true)
     if (hits.length === 0) return
     _hit.copy(hits[0].point)
+    // 橋・台をタップした時は、地面からの入口（via）を通って上を歩く
+    const deck = decks.find((s) => s.meshes.some((m) => { let o: THREE.Object3D | null = hits[0].object; while (o) { if (o === m) return true; o = o.parent } return false }))
+    if (deck) {
+      const onIt = surface !== null && decks.includes(surface)
+      const via = onIt ? [] : deck.via
+      const first = via[0] ?? { x: _hit.x, z: _hit.z }
+      goTo([...routeTo(object.position, first), ...via.slice(1), { x: _hit.x, z: _hit.z }], true)
+      return
+    }
     // ワールドをまたぐ時は峠を通る（地図のタップと同じ道順）
     goTo(routeTo(object.position, { x: _hit.x, z: _hit.z }))
   }
@@ -481,8 +500,10 @@ export function createPlayer(
     }
 
     // 当たり判定: 世界の端・岩・幹。地形はどこでも歩ける（崖の段も登れる）
-    clampToWorld(object.position)
-    const pushed = pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
+    // 足の高さ（跳んでいる時は空中の高さ）。これより上端の低い柵・柱には当たらない
+    const feetY = airY ?? object.position.y
+    if (!surface) clampToWorld(object.position)
+    const pushed = pushOutOfColliders(object.position, PLAYER_RADIUS, colliders, feetY)
     slideIdle += dt
     if (slideIdle > 0.3) slideSign = 0
     if (moving && pushed > 0 && wanted > 0) {
@@ -500,11 +521,24 @@ export function createPlayer(
         }
         object.position.x += tx * sign * wanted
         object.position.z += tz * sign * wanted
-        clampToWorld(object.position)
-        pushOutOfColliders(object.position, PLAYER_RADIUS, colliders)
+        if (!surface) clampToWorld(object.position)
+        pushOutOfColliders(object.position, PLAYER_RADIUS, colliders, feetY)
       }
     }
-    const ground = terrainHeight(object.position.x, object.position.z)
+    // 橋の手すりの内側に戻す（跳んで手すりより高い時は越えられる）
+    if (surface?.constrain && feetY < (surface.heightAt(object.position.x, object.position.z) ?? -Infinity) + 0.6) surface.constrain(object.position)
+    // 足元: 地形と、足の高さから乗れる橋・台の高いほう
+    const terrainY = terrainHeight(object.position.x, object.position.z)
+    const under = surfaceUnder(object.position.x, object.position.z, feetY)
+    const ground = under && under.y > terrainY ? under.y : terrainY
+    const wasOn = surface
+    surface = under && under.y > terrainY ? under.surface : null
+    // 橋・台の端から外へ出て、足元が急に下がった時は落ちる（地形の坂は今までどおり足元に沿う）
+    if (airY === null && wasOn && ground < feetY - 0.3) {
+      airY = feetY
+      airTop = feetY
+      vy = 0
+    }
     if (airY !== null) {
       // 空中: 重力で落ち、地面に着いたら戻る
       vy -= GRAVITY * dt
@@ -618,6 +652,12 @@ export function createPlayer(
     update,
     goTo,
     isAutoWalking: () => waypoints.length > 0,
+    groundY: () => {
+      const p = object.position
+      const t = terrainHeight(p.x, p.z)
+      const s = surfaceUnder(p.x, p.z, airY ?? p.y)
+      return s && s.y > t ? s.y : t
+    },
     destination: () => {
       const last = waypoints[waypoints.length - 1]
       return last ? { x: last.x, z: last.z } : null
@@ -678,6 +718,7 @@ export function createPlayer(
       camPitch = CAM_PITCH
       camDist = CAM_DISTANCE
       airY = null
+      surface = null
       object.rotation.y = heading
       placeCamera(true)
     },
