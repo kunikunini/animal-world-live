@@ -179,18 +179,169 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
 .tr-fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
 .tr-fade.is-on { opacity: 1; }
 
+/* 得点（上の帯） */
+.tr-score { display: flex; align-items: baseline; gap: 6px; padding: 3px 12px; border-radius: 999px; background: rgba(20, 12, 6, 0.55); border: 2px solid rgba(255, 217, 102, 0.6); }
+.tr-score span { font-size: 11px; font-weight: 900; opacity: 0.85; }
+.tr-score b { min-width: 3ch; font-size: 19px; font-weight: 900; color: #ffe36b; font-variant-numeric: tabular-nums; text-align: right; }
+.tr-score.is-pop { animation: tr-pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+
+/* こぐレバー（左下。押している間こぐ） */
+.tr-lever {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 96px;
+  height: 104px;
+  padding: 0 0 10px;
+  border: 3px solid #fff;
+  border-radius: 22px;
+  background: #d8432f;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.15;
+  box-shadow: 0 6px 0 #8c2414, 0 10px 24px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  touch-action: none;
+}
+.tr-lever[hidden] { display: none; }
+.tr-lever i {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  width: 8px;
+  height: 40px;
+  margin-left: -4px;
+  border-radius: 4px;
+  background: #f4e2c4;
+  transform-origin: 50% 100%;
+  transform: rotate(-28deg);
+  transition: transform 0.12s ease;
+}
+.tr-lever i::before { content: ''; position: absolute; left: 50%; top: -8px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: #ffcc33; border: 2px solid #5a3a1c; }
+.tr-lever.is-on { background: #ff7a2f; box-shadow: 0 2px 0 #8c2414, 0 6px 18px rgba(0, 0, 0, 0.4); transform: translateY(4px); }
+.tr-lever.is-on i { animation: tr-pump 0.32s ease-in-out infinite alternate; }
+@keyframes tr-pump { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+.tr-lever:focus-visible { outline: 3px solid #2f8fd8; outline-offset: 3px; }
+
+/* 出発: はじめの札が飛んでいく・「ぼうけんに しゅっぱつ！」・3 2 1 GO */
+.tr-card.tr-title.is-out { animation: tr-card-out 0.38s cubic-bezier(0.5, 0, 0.8, 0.4) both; pointer-events: none; }
+@keyframes tr-card-out { to { opacity: 0; transform: translate(-50%, -160%) rotate(-6deg) scale(0.8); } }
+.tr-banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18%;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(255, 180, 40, 0), rgba(255, 180, 40, 0.92) 18%, rgba(255, 120, 40, 0.92) 82%, rgba(255, 120, 40, 0));
+  color: #fff;
+  font-size: clamp(26px, 7vw, 46px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-shadow: 0 3px 0 #8c3c10, 0 6px 16px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateX(-110%) skewX(-12deg);
+  pointer-events: none;
+}
+.tr-banner.is-on { animation: tr-banner 1.25s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+@keyframes tr-banner {
+  0% { opacity: 1; transform: translateX(-110%) skewX(-12deg); }
+  30% { opacity: 1; transform: translateX(0) skewX(-12deg); }
+  80% { opacity: 1; transform: translateX(0) skewX(-12deg); }
+  100% { opacity: 0; transform: translateX(110%) skewX(-12deg); }
+}
+.tr-cd {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(90px, 26vmin, 200px);
+  font-weight: 900;
+  color: #fff;
+  -webkit-text-stroke: 5px #5a3a1c;
+  paint-order: stroke fill;
+  text-shadow: 0 8px 0 #5a3a1c, 0 14px 30px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+.tr-cd.is-go { color: #ffe36b; }
+.tr-cd.is-on.is-anim { animation: tr-cd 0.68s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+.tr-cd.is-go.is-anim { animation: tr-go 0.9s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+@keyframes tr-cd { 0% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } }
+@keyframes tr-go { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); } }
+
+/* 出口のラストスパート: タップ タップ！ */
+.tr-tap {
+  position: absolute;
+  left: 50%;
+  top: calc(max(10px, env(safe-area-inset-top)) + 54px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+  text-align: center;
+}
+.tr-tap[hidden] { display: none; }
+.tr-tap b {
+  font-size: clamp(32px, 9vw, 56px);
+  font-weight: 900;
+  white-space: nowrap;
+  color: #ffe36b;
+  -webkit-text-stroke: 4px #5a3a1c;
+  paint-order: stroke fill;
+  text-shadow: 0 6px 0 #5a3a1c, 0 10px 24px rgba(0, 0, 0, 0.5);
+  animation: tr-tapbob 0.36s ease-in-out infinite alternate;
+}
+.tr-tap span { font-size: 15px; font-weight: 900; text-shadow: 0 2px 4px #000; }
+.tr-tap.is-auto b, .tr-tap.is-auto span { visibility: hidden; }
+.tr-tap.is-hit b { animation: tr-taphit 0.18s ease-out; }
+@keyframes tr-tapbob { from { transform: scale(1) rotate(-3deg); } to { transform: scale(1.1) rotate(3deg); } }
+@keyframes tr-taphit { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.tr-tap-bar { width: 100%; height: 14px; border-radius: 8px; background: rgba(0, 0, 0, 0.5); border: 3px solid #fff3d6; overflow: hidden; }
+.tr-tap-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb020, #fff3a6); }
+
+/* おわりの札: 大きい得点とタイム */
+.tr-big { display: flex; justify-content: center; gap: 10px; margin: 6px 0 4px; }
+.tr-big > div { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 6px 10px; border-radius: 18px; background: #3b2414; color: #fff6e6; }
+.tr-big span { font-size: 13px; font-weight: 900; color: #ffd98a; }
+.tr-big b { font-size: clamp(34px, 10vw, 48px); line-height: 1.05; font-weight: 900; font-variant-numeric: tabular-nums; }
+.tr-big-score { flex: 1.5 !important; }
+.tr-big-score b { color: #ffe36b; }
+.tr-big small { font-size: 12px; font-weight: 800; opacity: 0.85; }
+.tr-big em { margin-top: 2px; padding: 2px 10px; border-radius: 999px; background: #ff6b8a; color: #fff; font-style: normal; font-size: 12px; font-weight: 900; }
+.tr-big.is-done .tr-big-score b { animation: tr-pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.tr-big-time b { font-size: clamp(26px, 7.5vw, 36px); padding-top: 8px; }
+
 /* 横向きの低い画面: 札を詰める */
 @media (max-height: 460px) {
   .tr-card { padding: 14px 18px 10px; }
   .tr-how { display: none; }
   .tr-sub { margin-bottom: 6px; }
   .tr-hint { top: calc(max(8px, env(safe-area-inset-top)) + 46px); }
+  .tr-lever { width: 84px; height: 88px; }
+  .tr-big b { font-size: 36px; }
+  .tr-big-time b { font-size: 28px; }
+  .tr-h2 { margin-top: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tr-card, .tr-down, .tr-count.is-pop { animation: none; }
+  .tr-card, .tr-down, .tr-count.is-pop, .tr-score.is-pop, .tr-tap b, .tr-banner.is-on, .tr-big.is-done .tr-big-score b { animation: none; }
+  .tr-cd.is-on.is-anim, .tr-cd.is-go.is-anim { animation: tr-fadeout 0.6s both; }
+  .tr-card.tr-title.is-out { animation: tr-fadeout 0.2s both; }
 }
+@keyframes tr-fadeout { 0%, 60% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -50%); } }
 body.is-reduce-motion .tr-card,
 body.is-reduce-motion .tr-down,
+body.is-reduce-motion .tr-score.is-pop,
+body.is-reduce-motion .tr-tap b,
 body.is-reduce-motion .tr-count.is-pop { animation: none; }
 
 /* 縦長のスマホ: 道のりは 2 段目に */
@@ -199,4 +350,5 @@ body.is-reduce-motion .tr-count.is-pop { animation: none; }
   .tr-counts { flex: 1; }
   .tr-progress { order: 3; flex-basis: 100%; }
   .tr-hint { top: calc(max(10px, env(safe-area-inset-top)) + 92px); }
+  .tr-tap { top: calc(max(10px, env(safe-area-inset-top)) + 96px); }
 }

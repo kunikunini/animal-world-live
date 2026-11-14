@@ -68,7 +68,7 @@ export interface ViewState {
   camX: number
   camY: number
   zoom: number
-  cart: { x: number; y: number; angle: number; wheel: number; onRail: boolean; cheer: number; dizzy: number; squash: number }
+  cart: { x: number; y: number; angle: number; wheel: number; onRail: boolean; cheer: number; dizzy: number; squash: number; pump: number; pumpA: number }
   lampFlicker: number
   particles: Particle[]
   moles: Mole[]
@@ -1170,6 +1170,37 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     ctx.scale(1 / sq, sq)
     // 主人公（箱のうしろ半分に座る）
     drawHero(c, t)
+    // 手押しのレバー（前の方。こぐと前後にゆれる）
+    {
+      const lx = 14
+      const ang = -0.25 + Math.sin(c.pumpA) * 0.55 * c.pump
+      const kx = lx + Math.sin(ang) * 34
+      const ky = 36 + Math.cos(ang) * 34
+      ctx.strokeStyle = '#5a3a1c'
+      ctx.lineCap = 'round'
+      ctx.lineWidth = 4
+      ctx.beginPath()
+      ctx.moveTo(lx, 30)
+      ctx.lineTo(kx, ky)
+      ctx.stroke()
+      ctx.fillStyle = '#e0432a'
+      ctx.beginPath()
+      ctx.arc(kx, ky, 4.2, 0, Math.PI * 2)
+      ctx.fill()
+      // こいでいる時は、両手でレバーをにぎる
+      if (c.pump > 0.2 && c.cheer < 0.3) {
+        ctx.strokeStyle = hero.jacket
+        ctx.lineWidth = 7
+        ctx.beginPath()
+        ctx.moveTo(-2, 52)
+        ctx.lineTo(kx - 2, ky - 2)
+        ctx.stroke()
+        ctx.fillStyle = '#f2c7a5'
+        ctx.beginPath()
+        ctx.arc(kx - 1, ky - 1, 4, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
     // 箱
     const w = CART_W
     ctx.fillStyle = '#b8562f'
