@@ -21,7 +21,7 @@ export interface ScopeHandoff {
   guide: number | null
 }
 
-const KEYS = ['scope', 'rx', 'rz', 'rh', 'rg', 'g'] as const
+const KEYS = ['scope', 'rx', 'rz', 'rh', 'rg', 'g', 'via'] as const
 
 export function isScopeMode(): boolean {
   return new URLSearchParams(location.search).get('scope') === '1'

@@ -72,8 +72,8 @@
       <div class="hop-curtain"></div>
       <i class="hop-rim hop-l"></i><i class="hop-rim hop-r"></i>
       <img class="hop-scop" src="/splash-scop.webp" alt="" width="560" height="624" decoding="sync" />
-      <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span></p>
-      <p class="hop-hint"><span class="hop-to" lang="ja">タップで のぞいてみよう！</span><span class="hop-back" lang="ja">タップで ワールドに もどろう！</span><span class="hop-to-en" lang="en">Tap to take a look!</span><span class="hop-back-en" lang="en">Tap to go back to the world!</span></p>
+      <p class="hop-text"><span class="hop-to" lang="ja">スコープを のぞいているよ</span><span class="hop-back" lang="ja">ワールドに もどるよ</span><span class="hop-to-en" lang="en">Looking through the scope</span><span class="hop-back-en" lang="en">Heading back to the world</span><span class="hop-tr" lang="ja">トンネルを ぬけたよ</span><span class="hop-tr-en" lang="en">Out of the tunnel</span></p>
+      <p class="hop-hint"><span class="hop-to" lang="ja">タップで のぞいてみよう！</span><span class="hop-back" lang="ja">タップで ワールドに もどろう！</span><span class="hop-to-en" lang="en">Tap to take a look!</span><span class="hop-back-en" lang="en">Tap to go back to the world!</span><span class="hop-tr" lang="ja">タップで ワールドへ！</span><span class="hop-tr-en" lang="en">Tap to step into the world!</span></p>
     </div>
     <script>
       // 動きをへらす設定（設定画面か OS）なら、ふわっと大きくなる動きはやめてフェードだけ
@@ -86,9 +86,13 @@
       // スコープとワールドの行き来（?scope=1 で開いた時・戻り先 rx を持って戻った時）は、立ち上げの画面の代わりに行き来の画面を出す
       try {
         var hq = new URLSearchParams(location.search)
-        var hop = hq.get('scope') === '1' ? 'to' : hq.has('rx') ? 'back' : ''
+        // トロッコ（?trolley=）は 2D の坑道の画面を出すので、行き来の画面は出さない（src/trolley/game.ts）
+        if (hq.has('trolley')) document.documentElement.classList.add('is-trolley')
+        var hop = hq.has('trolley') ? '' : hq.get('scope') === '1' ? 'to' : hq.has('rx') ? 'back' : ''
         if (hop) {
           document.documentElement.classList.add('is-hop', 'hop-' + hop)
+          // トロッコで着いた時（via=trolley）: スコップの代わりに、トンネルの出口の明るい丸と「トンネルを ぬけたよ」
+          if (hq.get('via') === 'trolley') document.documentElement.classList.add('hop-trolley')
           if (localStorage.getItem('awl.lang') === 'en') document.documentElement.classList.add('hop-en')
           // ワールドへ戻る時: のぞき窓の中に、スコープへ入る前のワールドの小さな絵（引き伸ばしてぼやけて見える）を最初のコマから出す
           var shot = hop === 'back' ? sessionStorage.getItem('awl.hopShot') : null

@@ -34,6 +34,8 @@ import { createWorldLabels } from './ui/labels'
 import type { LabelEntry, Rect } from './ui/labels'
 import { createEncounterIcon } from './ui/encounter'
 import { createShopView } from './ui/shop'
+import { createTrolleyGate } from './ui/trolleyGate'
+import { createTrolleyStations, nearStation } from './world/trolleyStation'
 import { SHOP, updateShopHouse } from './world/shop'
 import { createMinimap } from './ui/minimap'
 import { arrivalOf } from './world/mapBases'
@@ -49,6 +51,7 @@ import { createGuide } from './ui/guide'
 import { createCatalog } from './ui/catalog'
 import { checkScopeTraceOnLoad, traceScopeView } from './debug/scopeTrace'
 import { createScope } from './ui/scope'
+import { startTrolleyMode, trolleyParams } from './trolley/game'
 import { armHop, focusHop, goScope, goWorld, hideHop, isScopeMode, primeHop, readHandoff, revealHop, saveHopShot, type ReturnSpot, type ScopeHandoff } from './scopeMode'
 import { dropSplash } from './ui/splash'
 import { animalName, applyStatic, getLang, onLangChange, speciesName, t, tIn } from './ui/i18n'
@@ -223,6 +226,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // サバンナから峠を抜けた先の 5 つのワールドの木や岩
   const biomeGroup = createBiomeProps({ mobile, colliders: props.colliders }).group
   scene.add(biomeGroup)
+  // トロッコの駅（水の世界 ⇔ 空の世界）。駅のまわりの木や岩はどける
+  createTrolleyStations(scene, [props.group, biomeGroup], props.colliders, mobile)
   // 水の世界の海（潟と小川も）
   const sea = createSea()
   scene.add(sea.mesh)
@@ -873,6 +878,20 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 手放せなくても、お店へは移る
     }
   })
+
+  // トロッコの駅: トロッコの前で「トロッコで ○○へ」。押すと 2D の坑道のモードで起動し直す（3D は手放す）
+  const trolleyGate = createTrolleyGate(
+    shell.iris,
+    () => ({ x: player.object.position.x, z: player.object.position.z, heading: player.object.rotation.y }),
+    () => {
+      try {
+        renderer.dispose()
+        renderer.forceContextLoss()
+      } catch {
+        // 手放せなくても移る
+      }
+    },
+  )
 
   // 入る演出の間は true（操作を止め、HUD を隠す）
   let introOn = false
@@ -1595,6 +1614,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // グッズのお店: 扉の前にいる間だけ「お店に入る」を出す
     updateShopHouse(walkX, walkZ)
     shopView.setNear(!introOn && Math.hypot(walkX - SHOP.doorX, walkZ - SHOP.doorZ) < SHOP.reach)
+    trolleyGate.setNear(introOn ? null : nearStation(walkX, walkZ))
     // あそびかたツアー: ライリーと観察スポットの画面の位置（暗幕の穴と矢印を合わせる）
     if (guide.isActive()) {
       const pp = player.object.position
@@ -2163,6 +2183,12 @@ function main(): void {
   const handoff = readHandoff()
   // 行き来の画面のスコップの絵を先に読み終えておく（スコープをのぞく・世界に戻る時に遅れて現れないように）
   window.setTimeout(() => void primeHop(), 1500)
+  // トロッコ（?trolley=<ルート>&from=<出発>）: 3D のワールドを作らずに、2D の坑道を走る（src/trolley/game.ts）
+  const trolley = trolleyParams()
+  if (trolley) {
+    startTrolleyMode(trolley)
+    return
+  }
   if (isScopeMode()) {
     startScopeMode(handoff)
     return

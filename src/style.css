@@ -6643,3 +6643,17 @@ body.is-reduce-motion .shop-enter { transition: opacity var(--t-view) linear; }
 /* グッズのお店から戻ってきた時（/?shop）の立ち上げの画面: 黄色い画面の代わりに、幕と同じ暗い色だけ */
 .splash.is-curtain { background: #13192b; }
 .splash.is-curtain > * { display: none; }
+
+/* トロッコで着いた時（?via=trolley、src/trolley/game.ts）: スコップの双眼鏡ではなく、トンネルの出口の 1 つの明るい丸 */
+html.hop-trolley .hop { --off: 0px; --lens: clamp(80px, min(28vw, 20vh), 150px); }
+html.hop-trolley .hop-r,
+html.hop-trolley .hop-scop { display: none; }
+html.hop-trolley .hop-curtain { background: radial-gradient(120% 80% at 50% var(--cy), #3b2a1c 0%, #1a120c 70%); }
+html.hop-trolley .hop-l { border-color: #c98b4a; box-shadow: 0 0 0 3px rgba(43, 29, 18, 0.9), 0 0 40px rgba(255, 236, 190, 0.6), inset 0 0 30px rgba(255, 246, 220, 0.5); }
+html.hop-trolley .hop .hop-text > span,
+html.hop-trolley .hop .hop-hint > span { display: none; }
+html.hop-trolley:not(.hop-en) .hop .hop-tr,
+html.hop-trolley.hop-en .hop .hop-tr-en { display: inline; }
+html.hop-trolley .hop-hint::before { right: 50%; margin-right: -8px; }
+/* トロッコのモードでは、立ち上げの画面とワールドの画面を出さない */
+html.is-trolley #splash { display: none; }

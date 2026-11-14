@@ -62,6 +62,8 @@ const DICT = {
   goatRocks: { ja: 'ヤギの岩場', en: 'Goat rocks' },
   shopName: { ja: 'グッズのお店', en: 'Goods shop' },
   shopEnter: { ja: 'お店に入る', en: 'Enter the shop' },
+  trolleyToSky: { ja: 'トロッコで 空の世界へ', en: 'Mine cart to Sky World' },
+  trolleyToWater: { ja: 'トロッコで 水の世界へ', en: 'Mine cart to Water World' },
   shopBack: { ja: 'ワールドにもどる', en: 'Back to the world' },
   shopLoading: { ja: 'お店を準備しています…', en: 'Getting the shop ready…' },
   shopFail: { ja: 'お店をうまく開けませんでした。「ワールドにもどる」でもどれます。', en: 'The shop couldn’t be opened. Use “Back to the world” to return.' },

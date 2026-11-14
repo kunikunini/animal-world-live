@@ -816,6 +816,15 @@ export const sound = {
     window.clearTimeout(pendingTap)
   },
   /** 効果音。ほかの効果音が鳴る時は、同じ操作のタップ音を取り消す */
+  /**
+   * 自前で合成する音（トロッコのミニゲームの曲と効果音）の出口。BGM・効果音の音量と消音の設定がそのまま効く。
+   * 音がまだ許されていない・使えない時は null（鳴らさずに続ける）
+   */
+  synthOut(ch: 'bgm' | 'se'): { ctx: AudioContext; out: AudioNode } | null {
+    if (!unlocked || !ctx) return null
+    const out = ch === 'bgm' ? bgm.bus : seBus
+    return out ? { ctx, out } : null
+  },
   play(name: SeName): void {
     if (name !== 'tap') window.clearTimeout(pendingTap)
     switch (name) {
