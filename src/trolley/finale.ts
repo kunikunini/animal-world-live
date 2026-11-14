@@ -36,9 +36,17 @@ export function createFinale(canvas: HTMLCanvasElement, hero: { img: HTMLImageEl
     ctx.arc(cx, cy, R, 0, Math.PI * 2)
     ctx.clip()
     const sky = ctx.createLinearGradient(0, cy - R, 0, cy + R)
-    sky.addColorStop(0, '#5fb4f2')
-    sky.addColorStop(0.55, '#bfe6ff')
-    sky.addColorStop(1, to === 'water' ? '#e8f7ff' : '#f2fbff')
+    const SKY: Record<TrolleyEnd, [string, string, string]> = {
+      water: ['#5fb4f2', '#bfe6ff', '#e8f7ff'],
+      sky: ['#5fb4f2', '#bfe6ff', '#f2fbff'],
+      north: ['#7fb6e6', '#d6ebfb', '#ffffff'],
+      jungle: ['#5fb0d8', '#bfe8d0', '#e8fff0'],
+      south: ['#e9774a', '#ffb877', '#ffe2b0'],
+      partner: ['#69b8f0', '#c6e8ff', '#effaff'],
+    }
+    sky.addColorStop(0, SKY[to][0])
+    sky.addColorStop(0.55, SKY[to][1])
+    sky.addColorStop(1, SKY[to][2])
     ctx.fillStyle = sky
     ctx.fillRect(cx - R, cy - R, R * 2, R * 2)
     if (to === 'water') {
@@ -62,6 +70,103 @@ export function createFinale(canvas: HTMLCanvasElement, hero: { img: HTMLImageEl
       ctx.beginPath()
       ctx.ellipse(cx - R * 0.55, cy + R * 0.2, R * 0.7, R * 0.12, 0, 0, Math.PI * 2)
       ctx.fill()
+    } else if (to === 'north') {
+      // 雪の山と、雪の野原
+      for (const [dx, h, w] of [
+        [-0.5, 0.55, 0.45],
+        [0.1, 0.7, 0.5],
+        [0.6, 0.45, 0.4],
+      ]) {
+        ctx.fillStyle = '#a9c2dc'
+        ctx.beginPath()
+        ctx.moveTo(cx + R * (dx - w), cy + R * 0.25)
+        ctx.lineTo(cx + R * dx, cy + R * (0.25 - h))
+        ctx.lineTo(cx + R * (dx + w), cy + R * 0.25)
+        ctx.fill()
+        ctx.fillStyle = '#ffffff'
+        ctx.beginPath()
+        ctx.moveTo(cx + R * (dx - w * 0.35), cy + R * (0.25 - h * 0.65))
+        ctx.lineTo(cx + R * dx, cy + R * (0.25 - h))
+        ctx.lineTo(cx + R * (dx + w * 0.35), cy + R * (0.25 - h * 0.65))
+        ctx.fill()
+      }
+      ctx.fillStyle = '#f4f8fc'
+      ctx.fillRect(cx - R, cy + R * 0.22, R * 2, R)
+      ctx.fillStyle = 'rgba(255,255,255,0.9)'
+      for (let i = 0; i < 30; i++) {
+        const x = cx + (rnd(i) - 0.5) * 2 * R
+        const y = cy - R + ((rnd(i + 50) * 2 * R + v.t * R * 0.15 * (0.5 + rnd(i + 3))) % (2 * R))
+        ctx.beginPath()
+        ctx.arc(x, y, Math.max(1, R * 0.008 * (1 + rnd(i + 7))), 0, Math.PI * 2)
+        ctx.fill()
+      }
+    } else if (to === 'jungle') {
+      // こんもりした森と、垂れたつる
+      ctx.fillStyle = '#5fb86a'
+      ctx.fillRect(cx - R, cy + R * 0.2, R * 2, R)
+      for (let i = 0; i < 12; i++) {
+        const x = cx + (rnd(i) - 0.5) * 2.2 * R
+        const y = cy + R * (0.05 + rnd(i + 30) * 0.3)
+        const r = R * (0.14 + rnd(i + 8) * 0.12)
+        ctx.fillStyle = i % 3 === 0 ? '#2f7a45' : i % 3 === 1 ? '#3f9a52' : '#276a3b'
+        ctx.beginPath()
+        ctx.arc(x, y, r, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      ctx.strokeStyle = '#2d6b34'
+      ctx.lineWidth = Math.max(2, R * 0.012)
+      for (let i = 0; i < 6; i++) {
+        const x = cx + (rnd(i + 60) - 0.5) * 1.8 * R
+        ctx.beginPath()
+        ctx.moveTo(x, cy - R)
+        ctx.quadraticCurveTo(x + Math.sin(v.t + i) * R * 0.03, cy - R * 0.6, x, cy - R * (0.2 + rnd(i + 61) * 0.4))
+        ctx.stroke()
+      }
+    } else if (to === 'south') {
+      // 夕日と、赤い荒野の岩山
+      const sg = ctx.createRadialGradient(cx + R * 0.3, cy + R * 0.05, 0, cx + R * 0.3, cy + R * 0.05, R * 0.4)
+      sg.addColorStop(0, 'rgba(255,245,200,1)')
+      sg.addColorStop(0.4, 'rgba(255,200,120,0.9)')
+      sg.addColorStop(1, 'rgba(255,170,100,0)')
+      ctx.fillStyle = sg
+      ctx.fillRect(cx - R, cy - R, R * 2, R * 2)
+      ctx.fillStyle = '#9a4a30'
+      ctx.beginPath()
+      ctx.moveTo(cx - R * 0.8, cy + R * 0.25)
+      ctx.lineTo(cx - R * 0.7, cy - R * 0.02)
+      ctx.lineTo(cx - R * 0.2, cy - R * 0.04)
+      ctx.lineTo(cx - R * 0.1, cy + R * 0.25)
+      ctx.fill()
+      ctx.fillStyle = '#c8693c'
+      ctx.fillRect(cx - R, cy + R * 0.22, R * 2, R)
+    } else if (to === 'partner') {
+      // 牧場の丘、白い柵、赤い納屋
+      ctx.fillStyle = '#8ccf6a'
+      ctx.beginPath()
+      ctx.ellipse(cx - R * 0.3, cy + R * 0.45, R * 1.2, R * 0.4, 0, 0, Math.PI * 2)
+      ctx.ellipse(cx + R * 0.6, cy + R * 0.5, R * 0.9, R * 0.42, 0, 0, Math.PI * 2)
+      ctx.fill()
+      const bx = cx + R * 0.35
+      const by = cy + R * 0.12
+      ctx.fillStyle = '#c0392b'
+      ctx.fillRect(bx - R * 0.12, by - R * 0.16, R * 0.24, R * 0.16)
+      ctx.beginPath()
+      ctx.moveTo(bx - R * 0.14, by - R * 0.15)
+      ctx.lineTo(bx, by - R * 0.26)
+      ctx.lineTo(bx + R * 0.14, by - R * 0.15)
+      ctx.fill()
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(bx - R * 0.035, by - R * 0.09, R * 0.07, R * 0.09)
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = Math.max(2, R * 0.01)
+      ctx.beginPath()
+      for (let i = -10; i <= 10; i++) {
+        ctx.moveTo(cx + i * R * 0.1, cy + R * 0.3)
+        ctx.lineTo(cx + i * R * 0.1, cy + R * 0.38)
+      }
+      ctx.moveTo(cx - R, cy + R * 0.32)
+      ctx.lineTo(cx + R, cy + R * 0.32)
+      ctx.stroke()
     } else {
       // 雲の海と、遠くの岩の塔
       ctx.fillStyle = '#9aa0bf'

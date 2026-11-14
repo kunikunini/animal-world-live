@@ -128,10 +128,10 @@ export function mapBases(): { bases: MapBase[]; roads: MapRoad[] } {
       [r.b, r.a],
     ] as const) {
       const p = arrivalSpot(from)
-      bases.push({ id: `${from.region}:trolley`, world: from.region, kind: 'trolley', x: p.x, z: p.z, to: to.region })
-      roads.push({ a: `${from.region}:spot`, b: `${from.region}:trolley` })
+      bases.push({ id: `${from.region}:trolley:${to.region}`, world: from.region, kind: 'trolley', x: p.x, z: p.z, to: to.region })
+      roads.push({ a: `${from.region}:spot`, b: `${from.region}:trolley:${to.region}` })
     }
-    roads.push({ a: `${r.a.region}:trolley`, b: `${r.b.region}:trolley`, tunnel: true })
+    roads.push({ a: `${r.a.region}:trolley:${r.b.region}`, b: `${r.b.region}:trolley:${r.a.region}`, tunnel: true })
   }
   const fixed: Record<string, { x: number; z: number }> = {
     ミーアキャット: SAVANNA_MEERKAT,
@@ -228,7 +228,10 @@ export function arrivalOf(base: MapBase, animalAt: (id: string) => { x: number; 
     return { ...p, heading: face(p, worldCenter(base.to)) }
   }
   if (base.kind === 'trolley') {
-    const st = TROLLEY_ROUTES.flatMap((r) => [r.a, r.b]).find((s) => s.region === base.world)
+    const st = TROLLEY_ROUTES.flatMap((r) => [
+      { s: r.a, to: r.b.region },
+      { s: r.b, to: r.a.region },
+    ]).find((e) => e.s.region === base.world && e.to === base.to)?.s
     if (st) return arrivalSpot(st)
   }
   if (base.kind === 'spot') {

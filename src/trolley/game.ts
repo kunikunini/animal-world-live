@@ -13,9 +13,9 @@ import { getLang } from '../ui/i18n'
 import { dropSplash } from '../ui/splash'
 import { createTrolleyAudio } from './audio'
 import { createFinale } from './finale'
-import { CART_W, buildCourse, railSlope, railY, sampleAt, themeAt, type Course, type CourseEvent, type ItemKind } from './course'
-import { createRenderer, drawItemIcon, type Bat, type Clod, type FloatText, type Mole, type Mouse, type Particle, type ViewState } from './render'
-import { arrivalSpot, routeFrom, type TrolleyStation } from './stations'
+import { CART_W, buildCourse, railSlope, railY, sampleAt, themeAt, type ChaseKind, type Course, type CourseEvent, type ItemKind, type ThiefKind, type ThrowerKind } from './course'
+import { createRenderer, drawItemIcon, type Bat, type Clod, type FloatText, type Mole, type Mouse, type Particle, type Racer, type Sloth, type ViewState } from './render'
+import { TROLLEY_WORLD_NAME, arrivalSpot, routeFrom, type TrolleyStation } from './stations'
 
 export interface TrolleyParams {
   route: string
@@ -49,14 +49,45 @@ type Key =
   | 'skipped' | 'mischief' | 'time' | 'got' | 'molesR' | 'miceR' | 'batsR' | 'rotate' | 'start' | 'newBest' | 'autoDone'
   | 'score' | 'lever' | 'howLever' | 'hintLever' | 'adventure' | 'tapTap' | 'tapSub' | 'timeBonus'
   | 'boulderCome' | 'hintBoulder' | 'boulderBump' | 'boulderBoom' | 'boulderSafe' | 'boulderClose' | 'boulderR' | 'boulderClean' | 'boulderHits'
-const WORLD: Record<string, { ja: string; en: string }> = {
-  water: { ja: '水の世界', en: 'Water World' },
-  sky: { ja: '空の世界', en: 'Sky World' },
-}
+  | 'hintMonkey' | 'hintIce' | 'hintSloth' | 'iceOn' | 'raceStart' | 'hintRace' | 'raceWin' | 'raceLose' | 'raceR' | 'raceWinR' | 'raceLoseR'
+  | 'slothFive' | 'slothBye' | 'slothR' | 'mudOn' | 'riverOn'
+const WORLD = TROLLEY_WORLD_NAME
 const ITEM_NAME: Record<ItemKind, { ja: string; en: string }> = {
   shell: { ja: 'かいがら', en: 'shell' },
   gem: { ja: 'ひかる石', en: 'glow stone' },
   feather: { ja: 'はね', en: 'feather' },
+  snow: { ja: 'ゆきの けっしょう', en: 'snowflake' },
+  fruit: { ja: 'くだもの', en: 'fruit' },
+  star: { ja: 'ほしの かけら', en: 'star bit' },
+  clover: { ja: 'よつばの クローバー', en: 'clover' },
+}
+/** いたずらの生き物の名前（結果の札・ことば） */
+const THROWER_NAME: Record<ThrowerKind, { ja: string; en: string }> = {
+  mole: { ja: 'モグラ', en: 'Moles' },
+  beaver: { ja: 'ビーバー', en: 'Beavers' },
+  goat: { ja: 'ヤギ', en: 'Goats' },
+  mara: { ja: 'マーラ', en: 'Maras' },
+}
+const THROWER_HIT: Record<ThrowerKind, { ja: string; en: string }> = {
+  mole: { ja: 'モグラの いたずら！', en: 'Mole prank!' },
+  beaver: { ja: 'ビーバーの ダム！', en: 'Beaver dam!' },
+  goat: { ja: 'ヤギの ほしくさ！', en: 'Goat’s hay!' },
+  mara: { ja: 'マーラの いたずら！', en: 'Mara prank!' },
+}
+const THIEF_NAME: Record<ThiefKind, { ja: string; en: string }> = {
+  mouse: { ja: 'ネズミ', en: 'Mice' },
+  monkey: { ja: 'リスザル', en: 'Squirrel monkeys' },
+}
+const RACER_NAME: Record<'kangaroo' | 'collie', { ja: string; en: string }> = {
+  kangaroo: { ja: 'カンガルー', en: 'Kangaroo' },
+  collie: { ja: 'ボーダーコリー', en: 'Border collie' },
+}
+const CHASE_NAME: Record<ChaseKind, { ja: string; en: string }> = {
+  rock: { ja: 'おおいわ', en: 'Boulder' },
+  redrock: { ja: 'あかい おおいわ', en: 'Red boulder' },
+  snow: { ja: 'おおきな ゆきだま', en: 'Giant snowball' },
+  log: { ja: 'まるた', en: 'Log' },
+  hay: { ja: 'ほしくさロール', en: 'Hay bale' },
 }
 const DICT: Record<Key, { ja: string; en: string }> = {
   title: { ja: 'トロッコで {to}へ', en: 'Mine cart to {to}' },
@@ -107,13 +138,29 @@ const DICT: Record<Key, { ja: string; en: string }> = {
   tapTap: { ja: 'タップ タップ！', en: 'Tap! Tap!' },
   tapSub: { ja: 'れんだで 出口へ いそげ！', en: 'Mash to rush for the exit!' },
   timeBonus: { ja: 'タイムボーナス', en: 'Time bonus' },
-  boulderCome: { ja: 'うしろから おおいわが！', en: 'A boulder behind you!' },
+  boulderCome: { ja: 'うしろから {thing}が！', en: '{thing} behind you!' },
   hintBoulder: { ja: 'レバーを こいで にげろ！', en: 'Pump the lever to escape!' },
   boulderBump: { ja: 'ゴツン！ いそげ！', en: 'Bonk! Hurry!' },
   boulderBoom: { ja: 'ドーン！', en: 'Boom!' },
   boulderSafe: { ja: 'にげきった！', en: 'Escaped!' },
   boulderClose: { ja: 'ふう… セーフ！', en: 'Phew… safe!' },
-  boulderR: { ja: 'おおいわ', en: 'Boulder' },
+  boulderR: { ja: '{thing}', en: '{thing}' },
+  hintMonkey: { ja: 'リスザルが のってきたら ジャンプで ふりおとそう', en: 'If a monkey hops in, jump to shake it off' },
+  hintIce: { ja: 'こおりの さか！ ツルツル すべるよ', en: 'Icy slope! Slippery and fast' },
+  hintSloth: { ja: 'ジャンプで ナマケモノと ハイタッチ！', en: 'Jump to high-five the sloth!' },
+  iceOn: { ja: 'ツルツル～！', en: 'Wheee!' },
+  raceStart: { ja: '{who}と きょうそう！', en: 'Race the {who}!' },
+  hintRace: { ja: 'レバーを こいで かとう！', en: 'Pump the lever to win!' },
+  raceWin: { ja: 'かった！', en: 'You win!' },
+  raceLose: { ja: 'まけた～ また きょうそうしよう', en: 'So close! Race again soon' },
+  raceR: { ja: '{who}と きょうそう', en: 'Race vs {who}' },
+  raceWinR: { ja: 'かった', en: 'won' },
+  raceLoseR: { ja: 'まけた', en: 'lost' },
+  slothFive: { ja: 'ハイタッチ！', en: 'High five!' },
+  slothBye: { ja: 'またね～', en: 'See ya~' },
+  slothR: { ja: 'ナマケモノ', en: 'Sloths' },
+  mudOn: { ja: 'どろんこ！', en: 'Mud!' },
+  riverOn: { ja: 'カイマンが みてる！', en: 'Caimans are watching!' },
   boulderClean: { ja: 'ぶつからずに にげきった', en: 'escaped without a bump' },
   boulderHits: { ja: 'ゴツン {n}かい', en: '{n} bump(s)' },
 }
@@ -132,7 +179,9 @@ const BOULDER_V_MAX = 660
 const BOULDER_NEAR = BOULDER_R + 44
 /** 出口の遠近の画面に切り替える、出口までの距離 */
 const FINALE_AT = 700
-const ITEM_PT: Record<ItemKind, number> = { shell: 100, feather: 150, gem: 200 }
+const ITEM_PT: Record<ItemKind, number> = { shell: 100, feather: 150, gem: 200, snow: 150, fruit: 150, star: 150, clover: 150 }
+/** かけっこの相手のめざす速さ（ふつうのトロッコ 330 より速く、レバーをこいだ時 590 より遅い） */
+const RACE_V = 470
 const V_MIN = 150
 const V_MAX = 680
 const SLOPE_G = 950
@@ -277,8 +326,16 @@ export function startTrolleyMode(p: TrolleyParams): void {
   let rideT = 0
   let autopilot = false
   let skipped = false
-  const counts: Record<ItemKind, number> = { shell: 0, gem: 0, feather: 0 }
-  const tally = { moleHit: 0, moleDodge: 0, mouseSteal: 0, mouseShake: 0, bats: 0 }
+  const counts: Record<ItemKind, number> = { shell: 0, gem: 0, feather: 0, snow: 0, fruit: 0, star: 0, clover: 0 }
+  const tally = { moleHit: 0, moleDodge: 0, mouseSteal: 0, mouseShake: 0, bats: 0, five: 0, slothSeen: 0 }
+  /** このコースに出てくる、いたずらの生き物の種類（結果の札の行の名前） */
+  const throwerKinds = new Set<ThrowerKind>()
+  const thiefKinds = new Set<ThiefKind>()
+  for (const ev of course.events) {
+    if (ev.type === 'mole') throwerKinds.add(ev.kind ?? 'mole')
+    if (ev.type === 'mouse') thiefKinds.add(ev.kind ?? 'mouse')
+  }
+  const raceLog: Array<{ kind: 'kangaroo' | 'collie'; win: boolean }> = []
   const startRail = mainRails.find((i) => railY(course.rails[i], course.startX) !== null) ?? 0
   const cart = {
     x: course.startX,
@@ -311,6 +368,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
   const clods: Clod[] = []
   const mice: Mouse[] = []
   const bats: Bat[] = []
+  const racers: Racer[] = []
+  const sloths: Sloth[] = []
   const texts: FloatText[] = []
   let dirt = 0
   let dirtSeed = 1
@@ -324,6 +383,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   const fired = new Set<CourseEvent>()
   const inSplash = new Set<CourseEvent>()
   const inVent = new Set<CourseEvent>()
+  const iceSaid = new Set<CourseEvent>()
   let hintTimer = 0
   let hintKey: string | null = null
   // 大岩（11/14 くに: 後半で うしろから追いかけてきて ハラハラさせる。追いつかれても止まらず、前へ押し出されるだけ）
@@ -339,6 +399,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     bumps: 0,
     seen: false,
     pit: 0,
+    kind: 'rock' as ChaseKind,
   }
 
   // ---- 小さな道具 ----
@@ -666,6 +727,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
     mice.length = 0
     bats.length = 0
     if (boulder.state !== 'idle') boulder.state = 'gone'
+    racers.length = 0
+    sloths.length = 0
     audio.setBoulder(null)
     dirt = 0
     for (const ev of course.events) if (('x' in ev ? ev.x : ev.x0) < x + 400) fired.add(ev)
@@ -760,8 +823,13 @@ export function startTrolleyMode(p: TrolleyParams): void {
           emit(1, () => ({ x: cart.x - wx, y: cart.y + 2, vx: -cart.v * (0.2 + Math.random() * 0.3), vy: 60 + Math.random() * 140, life: 0.3, size: 2, kind: 'spark', color: '#ffd56b', g: 900 }))
         }
         if (boost && Math.random() < 0.9) {
+          const ice = boost.type === 'boost' && boost.kind === 'ice'
           for (const wx of [-CART_W / 2 + 14, CART_W / 2 - 14]) {
-            emit(1, () => ({ x: cart.x + wx, y: cart.y + 2, vx: -cart.v * (0.3 + Math.random() * 0.4), vy: 80 + Math.random() * 200, life: 0.35, size: 2, kind: 'spark', color: Math.random() < 0.5 ? '#ffd56b' : '#ff9a3d', g: 900 }))
+            emit(1, () => ({ x: cart.x + wx, y: cart.y + 2, vx: -cart.v * (0.3 + Math.random() * 0.4), vy: 80 + Math.random() * 200, life: 0.35, size: ice ? 2.6 : 2, kind: ice ? 'glint' : 'spark', color: ice ? (Math.random() < 0.5 ? '#e6f7ff' : '#9fdcff') : Math.random() < 0.5 ? '#ffd56b' : '#ff9a3d', g: 900 }))
+          }
+          if (ice && !iceSaid.has(boost)) {
+            iceSaid.add(boost)
+            say(tr('iceOn'), cart.x, cart.y + 140, '#c8f0ff', true)
           }
         }
       }
@@ -845,17 +913,18 @@ export function startTrolleyMode(p: TrolleyParams): void {
       if (fired.has(ev)) continue
       if (ev.type === 'hint' && cx >= ev.x) {
         fired.add(ev)
-        if (!autopilot) showHint(ev.key, ev.key === 'jump' ? tr('hintJump') : ev.key === 'fork' ? tr('hintFork') : tr('hintMouse'))
+        const hk: Record<typeof ev.key, Key> = { jump: 'hintJump', fork: 'hintFork', mouse: 'hintMouse', monkey: 'hintMonkey', ice: 'hintIce', sloth: 'hintSloth' }
+        if (!autopilot) showHint(ev.key, tr(hk[ev.key]))
       } else if (ev.type === 'mole' && cx >= ev.x - 660) {
         fired.add(ev)
         const hx = ev.x + 150
-        moles.push({ x: hx, y: mainYAt(hx) ?? cart.y, state: 'up', t: 0 })
+        moles.push({ x: hx, y: mainYAt(hx) ?? cart.y, state: 'up', t: 0, kind: ev.kind ?? 'mole' })
         audio.pop()
         ;(moles[moles.length - 1] as Mole & { target?: number }).target = ev.x
       } else if (ev.type === 'mouse' && cx >= ev.x - 900) {
         fired.add(ev)
         const y = mainYAt(ev.x) ?? cart.y
-        mice.push({ x: ev.x, y, beamY: y + 150, state: 'wait', t: 0, carry: null, vx: 0, vy: 0 })
+        mice.push({ x: ev.x, y, beamY: y + 150, state: 'wait', t: 0, carry: null, vx: 0, vy: 0, kind: ev.kind ?? 'mouse' })
       } else if (ev.type === 'bats' && cx >= ev.x - 240) {
         fired.add(ev)
         const n = reduce ? 8 : 16
@@ -869,7 +938,15 @@ export function startTrolleyMode(p: TrolleyParams): void {
         say(tr('bats'), cx + 80, cart.y + 150, '#d9c6ff')
       } else if (ev.type === 'boulder' && cx >= ev.x0) {
         fired.add(ev)
-        startBoulder(ev.pit)
+        startBoulder(ev.pit, ev.kind)
+      } else if (ev.type === 'race' && cx >= ev.x0) {
+        fired.add(ev)
+        startRace(ev.kind, ev.x1)
+      } else if (ev.type === 'sloth' && cx >= ev.x - 900) {
+        fired.add(ev)
+        const y = mainYAt(ev.x) ?? cart.y
+        sloths.push({ x: ev.x, hand: y + 210, state: 'hang', t: 0 })
+        tally.slothSeen++
       } else if (ev.type === 'fork' && cart.ri >= 0 && course.rails[cart.ri].kind === 'main' && cx >= ev.x - 560 && cx < ev.x) {
         fired.add(ev)
         if (ev.dir === 'down') {
@@ -886,12 +963,20 @@ export function startTrolleyMode(p: TrolleyParams): void {
     for (const ev of course.events) {
       if (ev.type !== 'splash') continue
       const on = cart.ri >= 0 && cx >= ev.x0 && cx <= ev.x1
+      const sk = ev.kind ?? 'water'
       if (on && !inSplash.has(ev)) {
         inSplash.add(ev)
         audio.splash()
+        if (sk === 'mud') {
+          // ブタのどろんこ: 画面に泥がはねる
+          dirt = Math.max(dirt, 0.7)
+          dirtSeed = (dirtSeed * 7 + 13) % 997
+          say(tr('mudOn'), cx + 20, cart.y + 140, '#e0b48a', true)
+        }
       }
       if (on && Math.random() < 0.8) {
-        emit(2, () => ({ x: cx + (Math.random() - 0.3) * 50, y: cart.y + 6, vx: -cart.v * 0.2 + (Math.random() - 0.5) * 160, vy: 160 + Math.random() * 220, life: 0.6, size: 2.5 + Math.random() * 2, kind: 'drop', color: 'rgba(170,230,255,0.85)', g: 900 }))
+        const color = sk === 'snow' ? 'rgba(255,255,255,0.9)' : sk === 'mud' ? 'rgba(122,84,52,0.9)' : 'rgba(170,230,255,0.85)'
+        emit(2, () => ({ x: cx + (Math.random() - 0.3) * 50, y: cart.y + 6, vx: -cart.v * 0.2 + (Math.random() - 0.5) * 160, vy: 160 + Math.random() * 220, life: 0.6, size: (sk === 'snow' ? 3.5 : 2.5) + Math.random() * 2, kind: sk === 'snow' ? 'dust' : 'drop', color, g: sk === 'snow' ? 500 : 900 }))
       }
     }
     // 上昇気流の穴の風（いつも）
@@ -910,7 +995,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
         m.state = 'throw'
         m.t = 0
         const ty = mainYAt(target) ?? cart.y
-        clods.push({ x: m.x, y: m.y + 40, x0: m.x - 6, y0: m.y + 40, x1: target, y1: ty, t: 0, dur: 0.6, state: 'fly' })
+        clods.push({ x: m.x, y: m.y + 40, x0: m.x - 6, y0: m.y + 40, x1: target, y1: ty, t: 0, dur: 0.6, state: 'fly', kind: m.kind === 'beaver' ? 'sticks' : m.kind === 'goat' ? 'hay' : 'dirt' })
         audio.throwClod()
       } else if (m.state === 'throw' && m.t > 0.35) {
         m.state = 'laugh'
@@ -944,8 +1029,10 @@ export function startTrolleyMode(p: TrolleyParams): void {
           addShake(10)
           audio.thud()
           tally.moleHit++
-          say(tr('moleHit'), cart.x + 20, cart.y + 140, '#ffb36b', true)
-          emit(16, () => ({ x: c.x, y: c.y + 12, vx: (Math.random() - 0.3) * 300, vy: 100 + Math.random() * 260, life: 0.7, size: 3 + Math.random() * 4, kind: 'dirt', color: Math.random() < 0.5 ? '#7a5434' : '#5d3e24', g: 900 }))
+          const by = moles.find((m) => Math.abs(((m as Mole & { target?: number }).target ?? 0) - c.x) < 4)
+          say(THROWER_HIT[by?.kind ?? 'mole'][lang], cart.x + 20, cart.y + 140, '#ffb36b', true)
+          const cc = c.kind === 'hay' ? ['#e8c766', '#c9a23f'] : c.kind === 'sticks' ? ['#8a5a32', '#5e3a1e'] : ['#7a5434', '#5d3e24']
+          emit(16, () => ({ x: c.x, y: c.y + 12, vx: (Math.random() - 0.3) * 300, vy: 100 + Math.random() * 260, life: 0.7, size: 3 + Math.random() * 4, kind: 'dirt', color: Math.random() < 0.5 ? cc[0] : cc[1], g: 900 }))
           for (const m of moles) if (m.state === 'laugh' && Math.abs(((m as Mole & { target?: number }).target ?? 0) - c.x) < 4) m.t = 0
         } else if (cart.x > c.x + CART_W / 2 + 6 && c.state === 'rest') {
           c.state = 'passed'
@@ -973,8 +1060,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
       } else if (m.state === 'drop' && m.t > 0.3) {
         m.state = 'ride'
         m.t = 0
-        say(tr('mouseOn'), cart.x, cart.y + 150, '#ffd0d8')
-        if (!autopilot) showHint('mouseOn', tr('hintMouse'))
+        say(m.kind === 'monkey' ? (lang === 'en' ? 'A monkey hopped in!' : 'リスザルが のってきた！') : tr('mouseOn'), cart.x, cart.y + 150, '#ffd0d8')
+        if (!autopilot) showHint('mouseOn', tr(m.kind === 'monkey' ? 'hintMonkey' : 'hintMouse'))
       } else if (m.state === 'ride') {
         if (autopilot && m.t > 0.55 && cart.ri >= 0) autoJump()
         if (m.state === 'ride' && m.t > 1.8) {
@@ -992,7 +1079,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
             paintCount(kind, true)
             tally.mouseSteal++
             addScore(-ITEM_PT[kind])
-            say(tr('mouseSteal', { item: ITEM_NAME[kind][lang] }), cart.x, cart.y + 150, '#ffb3c6')
+            say(m.kind === 'monkey' ? (lang === 'en' ? `The monkey took a ${ITEM_NAME[kind].en}!` : `リスザルが ${ITEM_NAME[kind].ja}を もっていった！`) : tr('mouseSteal', { item: ITEM_NAME[kind][lang] }), cart.x, cart.y + 150, '#ffb3c6')
           } else say(tr('mouseEmpty'), cart.x, cart.y + 150, '#e8e0ff')
         }
       } else if (m.state === 'run' || m.state === 'tumble') {
@@ -1041,11 +1128,17 @@ export function startTrolleyMode(p: TrolleyParams): void {
       if (end - cx < ahead && end - cx > 0 && !continues) autoJump()
       for (const c of clods) if ((c.state === 'rest' || c.state === 'fly') && c.x - cx > 30 && c.x - cx < ahead + 50) autoJump()
       for (const ev of course.events) if (ev.type === 'fork' && ev.dir === 'up' && r.kind === 'main' && ev.x - cx < 10 && ev.x - cx > -30) autoJump()
+      // ナマケモノとハイタッチ（てっぺんで手に届くように、0.4 秒前に跳ぶ）
+      for (const sl of sloths) {
+        const lead = cart.v * 0.4
+        if (sl.state === 'hang' && sl.x - cx < lead + 6 && sl.x - cx > lead - 40) autoJump()
+      }
     }
   }
 
   // ---- 大岩 ----
-  function startBoulder(pit: number): void {
+  function startBoulder(pit: number, kind: ChaseKind): void {
+    boulder.kind = kind
     boulder.state = 'fall'
     boulder.seen = true
     boulder.pit = pit
@@ -1057,7 +1150,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     boulder.cool = 0
     audio.boom()
     addShake(8)
-    say(tr('boulderCome'), cart.x, cart.y + 170, '#ffb36b', true)
+    say(tr('boulderCome', { thing: CHASE_NAME[kind][lang] }), cart.x, cart.y + 170, '#ffb36b', true)
     if (!autopilot) showHint('boulder', tr('hintBoulder'))
     // 天井からぱらぱら
     emit(14, () => ({ x: boulder.x + (Math.random() - 0.5) * 140, y: boulder.y + BOULDER_R * 0.6, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 120, life: 0.9, size: 3 + Math.random() * 4, kind: 'dirt', color: Math.random() < 0.5 ? '#7a5434' : '#5d3e24', g: 900 }))
@@ -1141,7 +1234,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
         boulder.state = 'gone'
         audio.boom()
         addShake(14)
-        emit(26, () => ({ x: boulder.x + (Math.random() - 0.5) * 120, y: boulder.y - BOULDER_R * 0.4, vx: (Math.random() - 0.5) * 420, vy: 120 + Math.random() * 420, life: 0.9, size: 5 + Math.random() * 9, kind: 'dirt', color: Math.random() < 0.5 ? '#6b6178' : '#4a4256', g: 1100 }))
+        const bc: Record<ChaseKind, [string, string]> = { rock: ['#6b6178', '#4a4256'], redrock: ['#a8573a', '#7a3a24'], snow: ['#ffffff', '#d8ecfa'], log: ['#8a5a32', '#c99a62'], hay: ['#e8c766', '#c9a23f'] }
+        emit(26, () => ({ x: boulder.x + (Math.random() - 0.5) * 120, y: boulder.y - BOULDER_R * 0.4, vx: (Math.random() - 0.5) * 420, vy: 120 + Math.random() * 420, life: 0.9, size: 5 + Math.random() * 9, kind: 'dirt', color: Math.random() < 0.5 ? bc[boulder.kind][0] : bc[boulder.kind][1], g: 1100 }))
         boulderDust(20, 200)
         say(tr('boulderBoom'), boulder.x, boulder.y + 60, '#ffd27a', true)
         const pts = boulder.bumps === 0 ? 500 : 200
@@ -1151,6 +1245,73 @@ export function startTrolleyMode(p: TrolleyParams): void {
     }
     audio.setBoulder(boulder.state === 'gone' ? null : Math.min(1, Math.max(0.15, 1 - (cart.x - boulder.x - BOULDER_NEAR) / 420)))
     if (boulder.state === 'gone') audio.setBoulder(null)
+  }
+
+  // ---- かけっこ（カンガルー・ボーダーコリー） ----
+  function startRace(kind: 'kangaroo' | 'collie', x1: number): void {
+    const y = mainYAt(cart.x + 40) ?? cart.y
+    racers.push({ kind, x: cart.x + 40, y, v: Math.max(cart.v, 300), t: 0, phase: 0, state: 'run', x1 })
+    say(tr('raceStart', { who: RACER_NAME[kind][lang] }), cart.x + 40, cart.y + 170, '#ffe36b', true)
+    if (!autopilot) showHint('race', tr('hintRace'))
+    audio.count(0)
+  }
+  function stepRacers(dt: number): void {
+    for (const r of racers) {
+      r.t += dt
+      if (r.state === 'run') {
+        r.v += (RACE_V - r.v) * Math.min(1, dt * 1.5)
+        // うしろに離れすぎたら少しだけ追いつく（画面から消えないように）
+        if (cart.x - r.x > 420) r.v = Math.max(r.v, cart.v + 60)
+        r.x += r.v * dt
+        const winR = r.x >= r.x1
+        const winC = cart.x >= r.x1
+        if (winR || winC) {
+          const win = winC && (!winR || cart.x - r.x1 >= r.x - r.x1)
+          r.state = win ? 'lost' : 'won'
+          r.t = 0
+          raceLog.push({ kind: r.kind, win })
+          if (win) {
+            say(tr('raceWin'), cart.x, cart.y + 170, '#ffe36b', true)
+            addScore(500, cart.x, cart.y + 230)
+            audio.fanfare()
+            emit(14, () => ({ x: cart.x + (Math.random() - 0.5) * 120, y: cart.y + 120 + Math.random() * 80, vx: (Math.random() - 0.5) * 300, vy: 100 + Math.random() * 200, life: 1, size: 6, kind: 'star', color: ['#ffe36b', '#ffb3c6', '#9cf0ff'][Math.floor(Math.random() * 3)], rot: Math.random() * 6, g: 200 }))
+          } else {
+            say(tr('raceLose'), cart.x, cart.y + 170, '#e8e0ff', true)
+            addScore(100, cart.x, cart.y + 230)
+          }
+        }
+      } else if (r.state === 'won' || r.state === 'lost') {
+        // 勝った方は跳ねてよろこび、負けた方はゆっくり止まる。しばらくして消える
+        r.v = Math.max(0, r.v - (r.state === 'won' ? 260 : 340) * dt)
+        r.x += r.v * dt
+        if (r.t > 4) r.state = 'gone'
+      }
+      if (r.state !== 'gone') {
+        r.phase += (r.v * dt) / (r.kind === 'kangaroo' ? 120 : 46)
+        r.y = mainYAt(r.x) ?? lowestRailAt(r.x)?.y ?? r.y
+      }
+    }
+  }
+
+  // ---- ナマケモノ（ジャンプで手にさわるとハイタッチ） ----
+  function stepSloths(dt: number): void {
+    for (const sl of sloths) {
+      sl.t += dt
+      if (sl.state !== 'hang') continue
+      if (Math.abs(cart.x - sl.x) < 46 && cart.y + 82 >= sl.hand - 26) {
+        sl.state = 'five'
+        sl.t = 0
+        tally.five++
+        addScore(300, sl.x, sl.hand + 40)
+        say(tr('slothFive'), sl.x, sl.hand + 90, '#ffe36b', true)
+        audio.item()
+        emit(10, () => ({ x: sl.x, y: sl.hand, vx: (Math.random() - 0.5) * 260, vy: (Math.random() - 0.5) * 260, life: 0.7, size: 6, kind: 'star', color: '#ffe36b', rot: Math.random() * 6 }))
+      } else if (cart.x > sl.x + 50) {
+        sl.state = 'bye'
+        sl.t = 0
+        say(tr('slothBye'), sl.x, sl.hand + 60, '#d9f2c8')
+      }
+    }
   }
 
   function stepFx(dt: number): void {
@@ -1322,6 +1483,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
       .join('')
     const moleTxt = lang === 'en' ? `${tally.moleHit} hit · ${tally.moleDodge} dodged` : `あたった ${tally.moleHit}・よけた ${tally.moleDodge}`
     const mouseTxt = lang === 'en' ? `${tally.mouseSteal} took · ${tally.mouseShake} shook off` : `とられた ${tally.mouseSteal}・ふりおとした ${tally.mouseShake}`
+    const names = <K extends string>(set: Set<K>, table: Record<K, { ja: string; en: string }>) => [...set].map((k) => table[k][lang]).join(lang === 'en' ? ' & ' : '・')
+    const raceRows = raceLog.map((r) => `<dt>${tr('raceR', { who: RACER_NAME[r.kind][lang] })}</dt><dd>${tr(r.win ? 'raceWinR' : 'raceLoseR')}</dd>`).join('')
+    const slothRow = tally.slothSeen > 0 ? `<dt>${tr('slothR')}</dt><dd>${lang === 'en' ? `${tally.five} high five(s)` : `ハイタッチ ${tally.five}`}</dd>` : ''
     resultCard.innerHTML = `
       <h1 class="tr-h">${tr('arrive')}</h1>
       ${skipped ? `<p class="tr-sub">${tr('skipped')}</p>` : wasAuto ? `<p class="tr-sub">${tr('autoDone')}</p>` : ''}
@@ -1333,10 +1497,11 @@ export function startTrolleyMode(p: TrolleyParams): void {
       <ul class="tr-items">${items}</ul>
       <h2 class="tr-h2">${tr('mischief')}</h2>
       <dl class="tr-tally">
-        <dt>${tr('molesR')}</dt><dd>${moleTxt}</dd>
-        <dt>${tr('miceR')}</dt><dd>${mouseTxt}</dd>
+        ${throwerKinds.size ? `<dt>${names(throwerKinds, THROWER_NAME)}</dt><dd>${moleTxt}</dd>` : ''}
+        ${thiefKinds.size ? `<dt>${names(thiefKinds, THIEF_NAME)}</dt><dd>${mouseTxt}</dd>` : ''}
         <dt>${tr('batsR')}</dt><dd>${tally.bats}</dd>
-        ${boulder.seen && boulder.state === 'gone' ? `<dt>${tr('boulderR')}</dt><dd>${boulder.bumps === 0 ? tr('boulderClean') : tr('boulderHits', { n: String(boulder.bumps) })}</dd>` : ''}
+        ${raceRows}${slothRow}
+        ${boulder.seen && boulder.state === 'gone' ? `<dt>${tr('boulderR', { thing: CHASE_NAME[boulder.kind][lang] })}</dt><dd>${boulder.bumps === 0 ? tr('boulderClean') : tr('boulderHits', { n: String(boulder.bumps) })}</dd>` : ''}
       </dl>
       <div class="tr-actions">
         <button type="button" class="tr-btn tr-primary" data-act="go">${tr('goWorld')}</button>
@@ -1409,7 +1574,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
     shakeX: 0,
     shakeY: 0,
     reduce,
-    boulder: { on: false, x: 0, y: 0, rot: 0, r: BOULDER_R },
+    boulder: { on: false, x: 0, y: 0, rot: 0, r: BOULDER_R, kind: 'rock' },
+    racers,
+    sloths,
   }
   window.addEventListener('resize', () => {
     renderer.resize()
@@ -1427,6 +1594,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
         for (let i = 0; i < sub; i++) stepCart(dt / sub)
         if (phase === 'ride' || phase === 'ending') stepEvents(dt)
         stepBoulder(dt)
+        stepRacers(dt)
+        stepSloths(dt)
       }
       stepFx(dt)
       if (phase !== 'finale') stepCamera(dt)
@@ -1477,6 +1646,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     view.boulder.x = boulder.x
     view.boulder.y = boulder.y
     view.boulder.rot = boulder.rot
+    view.boulder.kind = boulder.kind
     view.dirt = dirt
     view.dirtSeed = dirtSeed
     view.speedLines = speedLines
@@ -1494,6 +1664,6 @@ export function startTrolleyMode(p: TrolleyParams): void {
 
   // 開発用の窓口（?debug=1 の時だけ）
   if (new URLSearchParams(location.search).get('debug') === '1') {
-    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
+    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, racers, sloths, raceLog, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
   }
 }

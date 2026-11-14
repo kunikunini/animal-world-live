@@ -9,7 +9,13 @@
 import type { TrolleyEnd } from './stations'
 
 export type Theme = TrolleyEnd | 'mid'
-export type ItemKind = 'shell' | 'gem' | 'feather'
+export type ItemKind = 'shell' | 'gem' | 'feather' | 'snow' | 'fruit' | 'star' | 'clover'
+/** 土を投げる・物を置くいたずらの生き物（モグラ・ビーバー・ヤギ・マーラ） */
+export type ThrowerKind = 'mole' | 'beaver' | 'goat' | 'mara'
+/** 乗ってきて物を持っていく生き物 */
+export type ThiefKind = 'mouse' | 'monkey'
+/** うしろから転がってくるもの */
+export type ChaseKind = 'rock' | 'redrock' | 'snow' | 'log' | 'hay'
 
 export interface Rail {
   xs: number[]
@@ -27,16 +33,24 @@ export interface Item {
 }
 
 export type CourseEvent =
-  | { type: 'hint'; x: number; key: 'jump' | 'fork' | 'mouse' }
-  | { type: 'mole'; x: number }
-  | { type: 'mouse'; x: number }
+  | { type: 'hint'; x: number; key: 'jump' | 'fork' | 'mouse' | 'monkey' | 'ice' | 'sloth' }
+  | { type: 'mole'; x: number; kind?: ThrowerKind }
+  | { type: 'mouse'; x: number; kind?: ThiefKind }
   | { type: 'bats'; x: number }
   | { type: 'vent'; x: number; w: number }
-  | { type: 'splash'; x0: number; x1: number }
-  | { type: 'boost'; x0: number; x1: number }
+  /** 水たまり（しぶき）・雪の吹きだまり・どろんこ（少し遅くなる） */
+  | { type: 'splash'; x0: number; x1: number; kind?: 'water' | 'snow' | 'mud' }
+  /** 下り坂の火花・氷のツルツル（速くなる） */
+  | { type: 'boost'; x0: number; x1: number; kind?: 'spark' | 'ice' }
+  /** 動物とかけっこ（x0 で並んで走り出し、x1 に先に着いた方の勝ち） */
+  | { type: 'race'; x0: number; x1: number; kind: 'kangaroo' | 'collie' }
+  /** 天井のナマケモノ（ジャンプで手にさわるとハイタッチ） */
+  | { type: 'sloth'; x: number }
+  /** 切れ目の下の川（カイマンが顔を出す） */
+  | { type: 'river'; x0: number; x1: number }
   | { type: 'fork'; x: number; dir: 'up' | 'down'; rail: number }
   /** うしろから大岩が転がってくる（x0 で天井から落ち、pit の切れ目に落ちて砕ける） */
-  | { type: 'boulder'; x0: number; pit: number }
+  | { type: 'boulder'; x0: number; pit: number; kind: ChaseKind }
 
 export interface Zone {
   x0: number
@@ -447,13 +461,271 @@ function boulderRun(c: Ctx): void {
   b.events.push({ type: 'hint', x: pit - 240, key: 'jump' })
   b.gap(240, 0)
   b.arc(pit, b.x, py, b.y, 4, it, 120)
-  b.events.push({ type: 'boulder', x0, pit })
+  b.events.push({ type: 'boulder', x0, pit, kind: CHASE_OF[c.theme] })
   b.flat(320)
+}
+
+const CHASE_OF: Record<Theme, ChaseKind> = { water: 'rock', sky: 'rock', mid: 'rock', north: 'snow', jungle: 'log', south: 'redrock', partner: 'hay' }
+
+/** はじめの区間の最初の切れ目（低く短い）。2 つめの区間からは山なり */
+function opener(c: Ctx, first: boolean, flatLen: number): void {
+  const { b } = c
+  const it = c.item
+  b.flat(flatLen)
+  if (first) {
+    b.events.push({ type: 'hint', x: b.x - 120, key: 'jump' })
+    b.row(b.x - 200, 4, 50, it)
+    const x0 = b.x
+    const y0 = b.y
+    b.gap(150, 0)
+    b.arc(x0, b.x, y0, b.y, 3, it, 70)
+  } else {
+    b.hill(360, 70)
+    b.row(b.x - 300, 5, 55, it, 60)
+  }
+}
+
+/**
+ * 北の世界の坑道（11/14）: 氷のツルツルの下り坂（勝手に速くなる）、雪の吹きだまり、ビーバーのダム（枝の山を線路に置く）、
+ * 上の氷の棚、ニホンザルの温泉の洞くつ、つららの切れ目
+ */
+function northZone(c: Ctx, first: boolean): void {
+  const { b } = c
+  const it = c.item
+  opener(c, first, 260)
+  b.flat(220)
+  // 氷のツルツル
+  b.events.push({ type: 'hint', x: b.x - 80, key: 'ice' })
+  const i0 = b.x
+  b.slope(760, -130)
+  b.events.push({ type: 'boost', x0: i0 + 40, x1: b.x, kind: 'ice' })
+  b.row(i0 + 120, 7, 90, it, 36)
+  b.flat(200)
+  // 雪の吹きだまり
+  const s0 = b.x
+  b.flat(320)
+  b.events.push({ type: 'splash', x0: s0 + 20, x1: b.x - 20, kind: 'snow' })
+  b.row(s0 + 40, 5, 60, it, 26)
+  b.waves(2, 300, 56)
+  // ビーバー 1
+  b.flat(380)
+  b.events.push({ type: 'mole', x: b.x - 60, kind: 'beaver' })
+  b.flat(300)
+  // 上の氷の棚
+  b.events.push({ type: 'hint', x: b.x - 160, key: 'fork' })
+  b.branch(
+    'up',
+    160,
+    () => {
+      b.flat(260).hill(420, 50).flat(280).hill(320, -40).flat(220)
+    },
+    (rail) => {
+      for (let i = 14; i < rail.xs.length - 14; i += 2) b.item(rail.xs[i], rail.ys[i] + 44, it)
+    },
+  )
+  b.flat(200)
+  // ニホンザルの温泉の洞くつ
+  b.slope(480, -140)
+  const cv0 = b.x
+  b.waves(3, 340, 46)
+  b.row(cv0 + 120, 7, 70, it, 54)
+  const gx = b.x
+  const gy = b.y
+  b.gap(b.r(200, 225), -10)
+  b.arc(gx, b.x, gy, b.y, 4, it, 115)
+  b.flat(300)
+  b.slope(420, 120)
+  ;(b as BuilderWithCaverns).caverns.push({ x0: cv0 - 260, x1: b.x, theme: c.theme })
+  // 2 つ続く切れ目
+  b.flat(260)
+  const dx0 = b.x
+  const dy0 = b.y
+  b.gap(170, 10).flat(150)
+  b.arc(dx0, b.x - 150, dy0, b.y, 3, it, 90)
+  const dx1 = b.x
+  const dy1 = b.y
+  b.gap(180, -10).flat(200)
+  b.arc(dx1, b.x - 200, dy1, b.y, 3, it, 90)
+  // ビーバー 2（少し下り坂で速い所）
+  b.slope(400, -60)
+  b.events.push({ type: 'mole', x: b.x + 60, kind: 'beaver' })
+  b.flat(380)
+}
+
+/**
+ * ジャングルの坑道（11/14）: 木の根とつる、リスザルの群れ（乗ってきて くだものを持っていく）、天井のナマケモノ（ジャンプでハイタッチ）、
+ * カイマンのいる川を跳ぶ切れ目、下の根っこの道、光るキノコの大きな洞くつ
+ */
+function jungleZone(c: Ctx, first: boolean): void {
+  const { b } = c
+  const it = c.item
+  opener(c, first, 240)
+  b.flat(240)
+  // ナマケモノ 1
+  b.events.push({ type: 'hint', x: b.x - 200, key: 'sloth' })
+  b.events.push({ type: 'sloth', x: b.x + 60 })
+  b.flat(320)
+  b.waves(2, 300, 52)
+  // リスザル
+  b.flat(260)
+  b.events.push({ type: 'hint', x: b.x - 260, key: 'monkey' })
+  b.events.push({ type: 'mouse', x: b.x, kind: 'monkey' })
+  b.flat(420)
+  // カイマンの川（長めの切れ目、下は川）
+  b.slope(300, -40)
+  const rx = b.x
+  const ry = b.y
+  b.gap(250, 0)
+  b.events.push({ type: 'river', x0: rx - 140, x1: b.x + 140 })
+  b.arc(rx, b.x, ry, b.y, 4, it, 130)
+  b.flat(260)
+  // 下の根っこの道
+  b.events.push({ type: 'hint', x: b.x - 160, key: 'fork' })
+  b.branch(
+    'down',
+    110,
+    () => {
+      b.slope(260, 30).hill(520, 60).slope(300, -30).flat(240)
+    },
+    (rail) => {
+      for (let i = 4; i < rail.xs.length - 6; i += 3) b.item(rail.xs[i], rail.ys[i] + 30, it)
+    },
+  )
+  b.flat(200)
+  // 光るキノコの大きな洞くつ
+  b.slope(460, -140)
+  const cv0 = b.x
+  b.hill(460, 110).flat(160).hill(380, -50)
+  b.row(cv0 + 100, 6, 90, it, 64)
+  b.events.push({ type: 'sloth', x: cv0 + 760 })
+  b.flat(200)
+  b.slope(420, 120)
+  ;(b as BuilderWithCaverns).caverns.push({ x0: cv0 - 200, x1: b.x, theme: c.theme })
+  // リスザル 2
+  b.flat(240)
+  b.events.push({ type: 'mouse', x: b.x + 80, kind: 'monkey' })
+  b.flat(400)
+  const gx = b.x
+  const gy = b.y
+  b.gap(200, 10)
+  b.arc(gx, b.x, gy, b.y, 3, it, 100)
+  b.flat(300).hill(340, 50)
+}
+
+/**
+ * 南半球の坑道（11/14）: 夕方の赤い岩、カンガルーとかけっこ（レバーで勝てる）、マーラの巣穴（土をけり出す）、
+ * 夕日の下り坂の加速、カピバラの温泉の洞くつ、上の岩だなの道
+ */
+function southZone(c: Ctx, first: boolean): void {
+  const { b } = c
+  const it = c.item
+  opener(c, first, 240)
+  b.flat(220)
+  // マーラ 1
+  b.flat(300)
+  b.events.push({ type: 'mole', x: b.x - 60, kind: 'mara' })
+  b.flat(300)
+  // カンガルーとかけっこ（平らに近い長い道。切れ目なし）
+  const r0 = b.x
+  b.flat(200).waves(3, 380, 30).flat(400)
+  b.events.push({ type: 'race', x0: r0 + 60, x1: b.x - 60, kind: 'kangaroo' })
+  b.row(r0 + 200, 9, 140, it, 40)
+  b.flat(200)
+  // 夕日の下り坂
+  const bx0 = b.x
+  b.slope(800, -220)
+  b.events.push({ type: 'boost', x0: bx0 + 100, x1: b.x })
+  b.row(bx0 + 160, 7, 90, it, 40)
+  b.flat(200)
+  const gx = b.x
+  const gy = b.y
+  b.gap(220, 20)
+  b.arc(gx, b.x, gy, b.y, 4, it, 125)
+  b.flat(220)
+  // カピバラの温泉の洞くつ
+  const cv0 = b.x
+  b.waves(3, 340, 44)
+  b.row(cv0 + 100, 6, 80, it, 56)
+  b.flat(200)
+  ;(b as BuilderWithCaverns).caverns.push({ x0: cv0 - 220, x1: b.x + 120, theme: c.theme })
+  // 上の岩だな
+  b.events.push({ type: 'hint', x: b.x - 160, key: 'fork' })
+  b.branch(
+    'up',
+    150,
+    () => {
+      b.flat(300).events.push({ type: 'mole', x: b.x - 80, kind: 'mara' })
+      b.flat(240).hill(300, 40).flat(260)
+    },
+    (rail) => {
+      for (let i = 14; i < rail.xs.length - 14; i += 3) b.item(rail.xs[i], rail.ys[i] + 40, it)
+    },
+  )
+  b.flat(260)
+  b.slope(400, 100).flat(300)
+}
+
+/**
+ * ふれあいワールドの坑道（11/14）: 木の柱と干し草の牧場の坑道、ヤギ（岩だなから干し草をけり落とす）、ブタのどろんこ（画面に泥がはねる）、
+ * ボーダーコリーとかけっこ、納屋のような大きな洞くつ、下の水路
+ */
+function partnerZone(c: Ctx, first: boolean): void {
+  const { b } = c
+  const it = c.item
+  opener(c, first, 260)
+  b.flat(240)
+  // ヤギ 1
+  b.flat(300)
+  b.events.push({ type: 'mole', x: b.x - 60, kind: 'goat' })
+  b.flat(300)
+  // ブタのどろんこ
+  const s0 = b.x
+  b.flat(340)
+  b.events.push({ type: 'splash', x0: s0 + 20, x1: b.x - 20, kind: 'mud' })
+  b.row(s0 + 40, 5, 64, it, 26)
+  b.waves(2, 300, 50)
+  // ボーダーコリーとかけっこ
+  b.flat(200)
+  const r0 = b.x
+  b.flat(200).waves(2, 420, 26).flat(500)
+  b.events.push({ type: 'race', x0: r0 + 60, x1: b.x - 60, kind: 'collie' })
+  b.row(r0 + 220, 8, 140, it, 40)
+  b.flat(200)
+  // 納屋の大きな洞くつ
+  b.slope(460, -140)
+  const cv0 = b.x
+  b.waves(2, 360, 50)
+  b.row(cv0 + 120, 6, 80, it, 54)
+  const gx = b.x
+  const gy = b.y
+  b.gap(b.r(195, 220), -10)
+  b.arc(gx, b.x, gy, b.y, 4, it, 110)
+  b.flat(260)
+  b.slope(420, 120)
+  ;(b as BuilderWithCaverns).caverns.push({ x0: cv0 - 240, x1: b.x, theme: c.theme })
+  // 下の水路
+  b.flat(220)
+  b.events.push({ type: 'hint', x: b.x - 160, key: 'fork' })
+  b.branch(
+    'down',
+    110,
+    () => {
+      b.slope(260, 30).hill(480, 60).slope(300, -30).flat(240)
+    },
+    (rail) => {
+      for (let i = 4; i < rail.xs.length - 6; i += 3) b.item(rail.xs[i], rail.ys[i] + 30, it)
+    },
+  )
+  b.flat(200)
+  // ヤギ 2
+  b.slope(400, -60)
+  b.events.push({ type: 'mole', x: b.x + 60, kind: 'goat' })
+  b.flat(380)
 }
 
 type BuilderWithCaverns = Builder & { caverns: Cavern[] }
 
-const ITEM_OF: Record<Theme, ItemKind> = { water: 'shell', sky: 'feather', mid: 'gem' }
+const ITEM_OF: Record<Theme, ItemKind> = { water: 'shell', sky: 'feather', mid: 'gem', north: 'snow', jungle: 'fruit', south: 'star', partner: 'clover' }
 
 export function buildCourse(from: TrolleyEnd, to: TrolleyEnd): Course {
   const rand = mulberry32(hashString(`${from}>${to}`))
@@ -469,6 +741,10 @@ export function buildCourse(from: TrolleyEnd, to: TrolleyEnd): Course {
     const c: Ctx = { b, theme, item: ITEM_OF[theme] }
     if (theme === 'water') waterZone(c, first)
     else if (theme === 'sky') skyZone(c, first)
+    else if (theme === 'north') northZone(c, first)
+    else if (theme === 'jungle') jungleZone(c, first)
+    else if (theme === 'south') southZone(c, first)
+    else if (theme === 'partner') partnerZone(c, first)
     else midZone(c)
   }
   // 出発の駅（明るい）

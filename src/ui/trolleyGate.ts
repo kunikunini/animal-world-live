@@ -1,8 +1,9 @@
-import { onLangChange, t } from './i18n'
+import { getLang, onLangChange, t } from './i18n'
 import { hideView, showView } from './transition'
 import type { Iris } from './iris'
 import type { StationHit } from '../world/trolleyStation'
 import { trolleyUrl } from '../trolley/game'
+import { TROLLEY_WORLD_NAME } from '../trolley/stations'
 
 /**
  * 駅のトロッコの前で出る「トロッコで ○○へ」のボタン（お店の「お店に入る」と同じ形・同じ場所）。
@@ -23,7 +24,7 @@ export function createTrolleyGate(iris: Iris, getBack: () => { x: number; z: num
   let near: StationHit | null = null
   let busy = false
   const paint = () => {
-    if (near) label.textContent = t(near.to.region === 'sky' ? 'trolleyToSky' : 'trolleyToWater')
+    if (near) label.textContent = t('trolleyTo', { world: TROLLEY_WORLD_NAME[near.to.region][getLang()] })
   }
   onLangChange(paint)
   btn.addEventListener('click', async () => {

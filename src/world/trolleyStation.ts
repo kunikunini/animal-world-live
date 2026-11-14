@@ -3,16 +3,22 @@ import type { Collider } from './props'
 import { terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { getLang, onLangChange } from '../ui/i18n'
-import { TROLLEY_REACH, TROLLEY_ROUTES, type TrolleyStation } from '../trolley/stations'
+import { TROLLEY_REACH, TROLLEY_ROUTES, TROLLEY_WORLD_NAME, type TrolleyEnd, type TrolleyStation } from '../trolley/stations'
 
 /**
  * トロッコの駅（ワールドの側）。山のすそのトンネルの口・木の枠・線路・トロッコ・行き先の看板。
  * トロッコの前に立つと「トロッコで ○○へ」が出る（src/ui/trolleyGate.ts）。乗ると、2D の坑道のモード（src/trolley/game.ts）で起動し直す。
  * 駅のまわり（半径 9m と、ワールドの内側へ 14m の通り道）の木・岩・草むらはどける（乱数の並びは変えず、大きさ 0 にする）。
  */
-const WORLD_NAME: Record<string, { ja: string; en: string }> = {
-  water: { ja: '水の世界', en: 'Water World' },
-  sky: { ja: '空の世界', en: 'Sky World' },
+const WORLD_NAME = TROLLEY_WORLD_NAME
+/** 駅の岩山の色（ワールドの地面になじむ色） */
+const ROCK: Record<TrolleyEnd, [string, string]> = {
+  water: ['#8f8a7e', '#6f6a60'],
+  sky: ['#9a9cb2', '#7a7c94'],
+  north: ['#aebccb', '#8797a8'],
+  jungle: ['#7f8466', '#5f6650'],
+  south: ['#b57a54', '#8a5638'],
+  partner: ['#9c8c74', '#7a6c58'],
 }
 
 export interface StationHit {
@@ -61,7 +67,7 @@ function clearAround(groups: THREE.Object3D[], colliders: Collider[], stations: 
 }
 
 /** 行き先の看板の字（言語を切り替えたら描き直す） */
-function signTexture(to: string): { tex: THREE.CanvasTexture; paint: () => void } {
+function signTexture(to: TrolleyEnd): { tex: THREE.CanvasTexture; paint: () => void } {
   const c = document.createElement('canvas')
   c.width = 512
   c.height = 256
@@ -102,7 +108,7 @@ function signTexture(to: string): { tex: THREE.CanvasTexture; paint: () => void 
 
 function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider[], mobile: boolean): THREE.Group {
   const g = new THREE.Group()
-  g.name = `trolley-station-${s.region}`
+  g.name = `trolley-station-${s.region}-${to.region}`
   // 床の高さ: 線路の範囲でいちばん高い地面（線路が埋まらないように）
   let base = -Infinity
   const fx = Math.sin(s.out)
@@ -113,8 +119,8 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
   g.position.set(s.x, base, s.z)
   g.rotation.y = s.out
 
-  const rock = toonMaterial({ color: s.region === 'sky' ? '#9a9cb2' : '#8f8a7e' })
-  const rockDark = toonMaterial({ color: s.region === 'sky' ? '#7a7c94' : '#6f6a60' })
+  const rock = toonMaterial({ color: ROCK[s.region][0] })
+  const rockDark = toonMaterial({ color: ROCK[s.region][1] })
   const wood = toonMaterial({ color: '#8a5a32' })
   const woodDark = toonMaterial({ color: '#5e3a1e' })
   const iron = toonMaterial({ color: '#4a4f58' })
