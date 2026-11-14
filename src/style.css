@@ -4161,6 +4161,7 @@ button.bk-tab:hover {
 .map3d-base.is-entry { --base-c: #d9452b; }
 .map3d-base.is-spot { --base-c: #f26a1b; }
 .map3d-base.is-pass { --base-c: #8a6a46; }
+.map3d-base.is-trolley { --base-c: #b5643a; }
 .map3d-base.is-animal { --base-c: #3f9a4a; }
 .map3d-base.is-target { outline: 3px solid #ffd21f; }
 /* となりのワールドの名前は木の看板（少し透ける。押すとそのワールドのスポットへ） */
@@ -4294,6 +4295,7 @@ button.bk-tab:hover {
 .lg-spot { width: auto; height: auto; border-radius: 0; color: #f6b800; font-size: 13px; line-height: 1; text-shadow: 0 0 2px #fff, 0 0 6px #ffd84d; }
 .lg-paw { background: #3f9a4a; box-shadow: 0 0 0 1.5px #fff; }
 .lg-met { background: #d9a95f; box-shadow: inset 0 0 0 1.5px #6a4727; }
+.lg-tunnel { width: 18px; height: 5px; border-radius: 3px; background: repeating-linear-gradient(90deg, #e8a25e 0 5px, transparent 5px 8px), rgba(60, 38, 18, 0.55); }
 .lg-friend { width: auto; height: auto; border-radius: 0; color: #f0508a; font-size: 12px; line-height: 1; }
 
 @media (min-width: 768px) {

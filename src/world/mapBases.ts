@@ -2,6 +2,7 @@ import { ANIMALS } from '../data/animals'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT, WALK_RADIUS } from './layout'
 import { OUTER_REGIONS, biomeAt, clampToWalkable, emptyWeights, isWalkable } from './regions'
 import type { RegionKey } from './regions'
+import { TROLLEY_ROUTES, arrivalSpot } from '../trolley/stations'
 
 /**
  * 地図の「拠点」と「道」（スーパーマリオブラザーズ 3 のワールドマップのパネルと道の考え方を借りる。11/6 のくにの要望）。
@@ -9,10 +10,11 @@ import type { RegionKey } from './regions'
  * - entry: ワールドの入口（サバンナはスタート地点、ほかのワールドはサバンナから来る峠の口）
  * - spot: 観察スポット
  * - pass: 峠（となりのワールドへの出口）。着く先は、となりのワールドの入口
+ * - trolley: トロッコの駅（11/14〜）。押すとその駅の前へ（となりのワールドの駅なら、地図の中でトンネルを通って行く）。トンネルは地面の下なので点線で描く
  * - animal: 代表的な動物のいる場所。動物は歩き回るので、場所は開いた時・着いた時の個体の位置（animalId）で決める
  * 道は、拠点どうしをまっすぐ結ぶ。ワールドの中は入口とスポットから放射状（動物の拠点は近い方から）、サバンナの峠と各ワールドの入口は峠の道でつながる
  */
-export type BaseKind = 'entry' | 'spot' | 'pass' | 'animal'
+export type BaseKind = 'entry' | 'spot' | 'pass' | 'trolley' | 'animal'
 
 export interface MapBase {
   id: string
@@ -25,13 +27,15 @@ export interface MapBase {
   animalId?: string
   /** 動物の拠点: 札に出す種の名前（ja） */
   species?: string
-  /** 峠: 行き先のワールド */
+  /** 峠・トロッコの駅: 行き先のワールド */
   to?: RegionKey
 }
 
 export interface MapRoad {
   a: string
   b: string
+  /** トロッコのトンネル（地面の下） */
+  tunnel?: boolean
 }
 
 /** 代表的な動物の拠点（ワールドごとに、種と、無ければ使う場所）。種のいちばん初めの子の位置を使う */
@@ -116,6 +120,18 @@ export function mapBases(): { bases: MapBase[]; roads: MapRoad[] } {
     roads.push({ a: `${r.key}:entry`, b: `${r.key}:spot` })
     // 峠の道（サバンナの峠の口 ↔ ワールドの入口）
     roads.push({ a: `africa:pass:${r.key}`, b: `${r.key}:entry` })
+  }
+  // トロッコの駅（駅の前、主人公が着く所）。駅とスポットを道で、2 つの駅をトンネルでつなぐ
+  for (const r of TROLLEY_ROUTES) {
+    for (const [from, to] of [
+      [r.a, r.b],
+      [r.b, r.a],
+    ] as const) {
+      const p = arrivalSpot(from)
+      bases.push({ id: `${from.region}:trolley`, world: from.region, kind: 'trolley', x: p.x, z: p.z, to: to.region })
+      roads.push({ a: `${from.region}:spot`, b: `${from.region}:trolley` })
+    }
+    roads.push({ a: `${r.a.region}:trolley`, b: `${r.b.region}:trolley`, tunnel: true })
   }
   const fixed: Record<string, { x: number; z: number }> = {
     ミーアキャット: SAVANNA_MEERKAT,
@@ -210,6 +226,10 @@ export function arrivalOf(base: MapBase, animalAt: (id: string) => { x: number; 
   if (base.kind === 'pass' && base.to) {
     const p = base.to === 'africa' ? savannaMouth(base.world) : outerMouth(base.to)
     return { ...p, heading: face(p, worldCenter(base.to)) }
+  }
+  if (base.kind === 'trolley') {
+    const st = TROLLEY_ROUTES.flatMap((r) => [r.a, r.b]).find((s) => s.region === base.world)
+    if (st) return arrivalSpot(st)
   }
   if (base.kind === 'spot') {
     if (base.world === 'africa') return { x: SPOT.x, z: SPOT.z + 2.5, heading: Math.PI }

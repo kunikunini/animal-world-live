@@ -1,4 +1,5 @@
 import { SHOP } from '../world/shop'
+import { TROLLEY_ROUTES } from '../trolley/stations'
 import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
@@ -83,11 +84,11 @@ export interface MapRenderer {
 
 /** 広げた地図の拠点（マリオ 3 のワールドマップのパネル）と道 */
 export interface MapOverlay {
-  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string; to?: string }>
+  bases: Array<{ id: string; kind: 'entry' | 'spot' | 'pass' | 'trolley' | 'animal'; x: number; z: number; label: string; friend?: boolean; world: string; to?: string }>
   /** 名前の札を出すワールド（いまいるワールド。ほかのワールドの拠点は記号のパネルだけにして、大陸の地図を札だらけにしない） */
   labelWorld: string
   /** x1, z1, x2, z2, 動物の拠点への道か（動物を隠している時は描かない） */
-  roads: Array<[number, number, number, number, boolean?]>
+  roads: Array<[number, number, number, number, boolean?, boolean?]>
   /** 選んで歩いている先 */
   target?: string | null
 }
@@ -920,6 +921,20 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       b.fill()
     }
 
+    // トロッコの駅: 灰色の岩山に、黒いトンネルの口
+    for (const st of TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])) {
+      const mx = st.x + Math.sin(st.out) * 7
+      const mz = st.z + Math.cos(st.out) * 7
+      b.fillStyle = '#8f8a86'
+      b.beginPath()
+      b.arc(px(mx), py(mz), Math.max(6.5 * k, 2.6 * u), 0, Math.PI * 2)
+      b.fill()
+      b.fillStyle = '#2a1d14'
+      b.beginPath()
+      b.arc(px(st.x + Math.sin(st.out) * 3.5), py(st.z + Math.cos(st.out) * 3.5), Math.max(2.2 * k, 1.2 * u), 0, Math.PI * 2)
+      b.fill()
+    }
+
     // 空の世界のフライトの輪（広場を回る小道。峠への道は上の峠の道と重なる）
     const skyWorld = OUTER_REGIONS.find((r) => r.key === 'sky')
     if (skyWorld) {
@@ -1046,6 +1061,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       // ワールドの名前（左上）に重ならないよう、お店の右に
       pill(shop, px(SHOP.x) + (SHOP.radius + 4) * k + 3 * u, py(SHOP.z) - 8 * u)
     }
+    for (const st of TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])) pill(t('trolleyStation'), px(st.x) + 9 * k + 3 * u, py(st.z) - 8 * u)
     return boxes
   }
 
@@ -1053,7 +1069,30 @@ export function createMapRenderer(options: { width: number; height?: number; lab
   let showMarkers = true
   let overlay: MapOverlay | null = null
   let traveler: { x: number; z: number; heading: number } | null = null
-  const BASE_FILL: Record<MapOverlay['bases'][number]['kind'], string> = { entry: '#2f6bff', spot: '#f26a1b', pass: '#7a5a3a', animal: '#3f9a4a' }
+  /** トロッコのトンネル（地面の下）: 茶色の縁に、レールの色の長い点線 */
+  const drawTunnels = (ctx: CanvasRenderingContext2D, roads: MapOverlay['roads'], at: (x: number, z: number) => [number, number]) => {
+    const list = roads.filter((r) => r[5])
+    if (!list.length) return
+    ctx.lineCap = 'round'
+    for (const [lw, col, dash] of [
+      [5.5, 'rgba(60, 38, 18, 0.5)', []],
+      [2.6, '#e8a25e', [6, 4.5]],
+    ] as Array<[number, string, number[]]>) {
+      ctx.strokeStyle = col
+      ctx.lineWidth = lw * u
+      ctx.setLineDash(dash.map((d) => d * u))
+      ctx.beginPath()
+      for (const [x1, z1, x2, z2] of list) {
+        const [a1, b1] = at(x1, z1)
+        const [a2, b2] = at(x2, z2)
+        ctx.moveTo(a1, b1)
+        ctx.lineTo(a2, b2)
+      }
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+  }
+  const BASE_FILL: Record<MapOverlay['bases'][number]['kind'], string> = { entry: '#2f6bff', spot: '#f26a1b', pass: '#7a5a3a', trolley: '#b5643a', animal: '#3f9a4a' }
   /** 道（ベージュの太線に濃い縁）と拠点（角の丸いパネル。種類で色と記号を変える） */
   const drawOverlay = (ctx: CanvasRenderingContext2D): Box[] => {
     if (!overlay) return []
@@ -1063,14 +1102,15 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       ctx.lineWidth = lw * u
       ctx.setLineDash(col === '#fff1cf' ? [1 * u, 5 * u] : [])
       ctx.beginPath()
-      for (const [x1, z1, x2, z2, animal] of overlay.roads) {
-        if (animal && !showMarkers) continue
+      for (const [x1, z1, x2, z2, animal, tunnel] of overlay.roads) {
+        if ((animal && !showMarkers) || tunnel) continue
         ctx.moveTo(px(x1), py(z1))
         ctx.lineTo(px(x2), py(z2))
       }
       ctx.stroke()
     }
     ctx.setLineDash([])
+    drawTunnels(ctx, overlay.roads, (x, z) => [px(x), py(z)])
     const boxes: Box[] = []
     for (const b of overlay.bases) {
       if (b.kind === 'animal' && !showMarkers) continue
@@ -1091,7 +1131,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       ctx.font = `900 ${Math.round(9 * u)}px ${FONT}`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      const mark = b.kind === 'entry' ? 'S' : b.kind === 'spot' ? '◎' : b.kind === 'pass' ? '➜' : b.friend ? '♥' : '●'
+      const mark = b.kind === 'entry' ? 'S' : b.kind === 'spot' ? '◎' : b.kind === 'pass' ? '➜' : b.kind === 'trolley' ? '⇄' : b.friend ? '♥' : '●'
       ctx.fillText(mark, x, y + 0.5 * u)
       boxes.push({ l: x - s, t: y - s, r: x + s, b: y + s })
     }
@@ -1514,6 +1554,30 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       ctx.restore()
       return { l: x - 7 * u, t: y - 7 * u, r: x + 7 * u, b: y + 7 * u }
     }
+    if (bs.kind === 'trolley') {
+      // トロッコの駅: 赤茶の札に、小さなトロッコ（箱と車輪）
+      ctx.fillStyle = '#b5643a'
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 1.8 * u
+      roundRect(ctx, x - 8 * u, y - 7 * u, 16 * u, 14 * u, 4 * u)
+      ctx.fill()
+      ctx.stroke()
+      ctx.fillStyle = '#fff1cf'
+      ctx.beginPath()
+      ctx.moveTo(x - 5 * u, y - 3.5 * u)
+      ctx.lineTo(x + 5 * u, y - 3.5 * u)
+      ctx.lineTo(x + 4 * u, y + 1.6 * u)
+      ctx.lineTo(x - 4 * u, y + 1.6 * u)
+      ctx.closePath()
+      ctx.fill()
+      ctx.fillStyle = '#3a2214'
+      for (const wx of [-2.4, 2.4]) {
+        ctx.beginPath()
+        ctx.arc(x + wx * u, y + 3.2 * u, 1.5 * u, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      return { l: x - 8 * u, t: y - 7 * u, r: x + 8 * u, b: y + 7 * u }
+    }
     // 動物: 緑の丸に足あと（ともだちはピンクにハート）
     const r = 7 * u
     ctx.fillStyle = bs.friend ? '#f0508a' : '#3f9a4a'
@@ -1611,8 +1675,8 @@ export function createMapRenderer(options: { width: number; height?: number; lab
         ctx.lineWidth = lw * u
         ctx.setLineDash(col === '#fff1cf' ? [1 * u, 4.5 * u] : [])
         ctx.beginPath()
-        for (const [x1, z1, x2, z2, animal] of overlay.roads) {
-          if (animal && !showMarkers) continue
+        for (const [x1, z1, x2, z2, animal, tunnel] of overlay.roads) {
+          if ((animal && !showMarkers) || tunnel) continue
           const [a1, b1] = S(x1, z1)
           const [a2, b2] = S(x2, z2)
           ctx.moveTo(a1, b1)
@@ -1621,6 +1685,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
         ctx.stroke()
       }
       ctx.setLineDash([])
+      drawTunnels(ctx, overlay.roads, S)
     }
 
     // 出会った動物の点（動物を出している時）

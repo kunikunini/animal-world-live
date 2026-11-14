@@ -8,6 +8,7 @@ import { SEA_LEVEL, WATER_LEVEL, terrainHeight } from '../world/terrain'
 import { loadHero } from '../player/heroModel'
 import type { HeroModel } from '../player/heroModel'
 import { mapGroundColor } from './minimap'
+import { TROLLEY_ROUTES } from '../trolley/stations'
 
 /**
  * 3D の地図: いまいるワールドを小さなジオラマにしたもの（スーパーマリオブラザーズ 3 のワールドマップの考え方を借りる。11/6 のくにの要望）。
@@ -24,7 +25,7 @@ import { mapGroundColor } from './minimap'
  */
 export interface DioramaBase {
   id: string
-  kind: 'entry' | 'spot' | 'pass' | 'animal'
+  kind: 'entry' | 'spot' | 'pass' | 'trolley' | 'animal'
   x: number
   z: number
   label: string
@@ -39,7 +40,7 @@ export interface DioramaState {
   world: RegionKey
   center: { x: number; z: number }
   bases: DioramaBase[]
-  roads: Array<[number, number, number, number, boolean?]>
+  roads: Array<[number, number, number, number, boolean?, boolean?]>
   markers: DioramaMarker[]
   showMarkers: boolean
   player: { x: number; z: number; heading: number }
@@ -94,7 +95,7 @@ const NEIGHBOR_DROP = -14
 /** 押しただけか、ドラッグか（px） */
 const DRAG_PX = 6
 
-const BASE_COLOR: Record<DioramaBase['kind'], number> = { entry: 0x2f6bff, spot: 0xf26a1b, pass: 0x8a6a46, animal: 0x3f9a4a }
+const BASE_COLOR: Record<DioramaBase['kind'], number> = { entry: 0x2f6bff, spot: 0xf26a1b, pass: 0x8a6a46, trolley: 0xb5643a, animal: 0x3f9a4a }
 const TREE_STYLE: Record<RegionKey, { leaf: number; shape: 'flat' | 'ball' | 'cone' }> = {
   africa: { leaf: 0x6faa3a, shape: 'flat' },
   south: { leaf: 0x7f9a3a, shape: 'flat' },
@@ -331,6 +332,30 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       })
       g.add(rock)
     }
+    // トロッコの駅: 灰色の岩山に、トンネルの口（黒）と木の枠、手前にトロッコ
+    for (const st of TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])) {
+      if (st.region !== world) continue
+      const sg = new THREE.Group()
+      sg.position.set(st.x, yAt(st.x, st.z), st.z)
+      sg.rotation.y = st.out
+      const mound = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: 0x9a948c, flatShading: true }))
+      mound.position.set(0, 2.5, 8.5)
+      mound.scale.set(8, 6.5, 6)
+      const mouth = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.6), new THREE.MeshBasicMaterial({ color: 0x1a120c }))
+      mouth.position.set(0, 2.5, 3.2)
+      const frameMat = new THREE.MeshLambertMaterial({ color: 0x8a5a32 })
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(6, 1, 1), frameMat)
+      beam.position.set(0, 5.4, 3)
+      const cart = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2, 3.4), new THREE.MeshLambertMaterial({ color: 0xb5643a }))
+      cart.position.set(0, 1.2, -0.5)
+      sg.add(mound, mouth, beam, cart)
+      for (const px of [-2.6, 2.6]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.9, 5.6, 0.9), frameMat)
+        post.position.set(px, 2.8, 3)
+        sg.add(post)
+      }
+      g.add(sg)
+    }
     return g
   }
 
@@ -432,8 +457,10 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const inside = (x: number, z: number) => Math.hypot(x - center.x, z - center.z) < radius - 1
     // 道: 5m ごとの飛び石（ワールドの中だけ）
     const stones: Array<[number, number]> = []
-    for (const [x1, z1, x2, z2, animal] of state.roads) {
+    for (const [x1, z1, x2, z2, animal, tunnel] of state.roads) {
       if (animal && !state.showMarkers) continue
+      // トロッコのトンネルは地面の下（飛び石は置かない）
+      if (tunnel) continue
       const len = Math.hypot(x2 - x1, z2 - z1)
       const n = Math.max(1, Math.floor(len / 5))
       for (let i = 0; i <= n; i++) {

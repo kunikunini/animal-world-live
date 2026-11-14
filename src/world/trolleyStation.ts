@@ -223,15 +223,15 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
   board.castShadow = false
   add(new THREE.BoxGeometry(2.0, 1.05, 0.08), woodDark, 2.3, 2.1, -1.24)
 
-  // 当たり判定（ワールドの座標）
+  // 当たり判定（ワールドの座標）。地図のジオラマには木や岩として描かない（駅は地図の側で描く。src/ui/mapDiorama.ts）
   const toWorld = (lx: number, lz: number) => ({ x: s.x + lx * Math.cos(s.out) + lz * fx, z: s.z - lx * Math.sin(s.out) + lz * fz })
-  colliders.push({ ...toWorld(0, 8.4), r: 5 })
-  colliders.push({ ...toWorld(-4.4, 7.2), r: 3 })
-  colliders.push({ ...toWorld(4.6, 7.4), r: 3 })
-  colliders.push({ ...toWorld(-2.05, 4.5), r: 0.4 })
-  colliders.push({ ...toWorld(2.05, 4.5), r: 0.4 })
-  colliders.push({ ...toWorld(0, 0), r: 1.1 })
-  colliders.push({ ...toWorld(2.3, -1.2), r: 0.3 })
+  colliders.push({ ...toWorld(0, 8.4), r: 5, map: false })
+  colliders.push({ ...toWorld(-4.4, 7.2), r: 3, map: false })
+  colliders.push({ ...toWorld(4.6, 7.4), r: 3, map: false })
+  colliders.push({ ...toWorld(-2.05, 4.5), r: 0.4, map: false })
+  colliders.push({ ...toWorld(2.05, 4.5), r: 0.4, map: false })
+  colliders.push({ ...toWorld(0, 0), r: 1.1, map: false })
+  colliders.push({ ...toWorld(2.3, -1.2), r: 0.3, map: false })
   return g
 }
 
