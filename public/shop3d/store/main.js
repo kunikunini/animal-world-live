@@ -51,6 +51,59 @@ const AWL = AWL_NAV || (params.has('awl') && window.parent !== window);
 if (AWL) document.getElementById('app').classList.add('awl');
 const EDIT = params.has('edit');
 
+// ---------- 店内に初めて入ったときの、歩き方と見回し方の案内 ----------
+// 絵の動きで見せて、文字は短く添えるだけ。指の端末とマウスで中身を替える。1つの端末で1回だけ（?coach をつけると毎回出る）
+const COACH_KEY = 'haw-store-coach-v1';
+const touchUI = matchMedia('(hover:none) and (pointer:coarse)');
+const MOUSE_BODY = '<rect class="ln" x="21" y="12" width="22" height="34" rx="11"/><path class="ln" d="M32 12v11"/>';
+// 指は、指先が画面に触れている形（指先のまわりの輪が、触れている所）
+const finger = (x, y) => `<circle class="halo" cx="${x}" cy="${y}" r="8.5"/><rect class="finger" x="${x - 5.5}" y="${y - 5.5}" width="11" height="34" rx="5.5"/><path class="nail" d="M${x - 3} ${y - 1.5}a3 3 0 0 1 6 0v2.5h-6z"/>`;
+const COACH_PICS = {
+  walkTouch:'<path class="guide" d="M50 10v40M45 15l5-5 5 5M45 45l5 5 5-5"/><g class="mv updown">' + finger(30, 26) + '</g>',
+  lookTouch:'<path class="guide" d="M10 8h44M15 3l-5 5 5 5M49 3l5 5-5 5"/><g class="mv sideways">' + finger(23, 26) + finger(41, 23) + '</g>',
+  tapTouch:'<circle class="ping" cx="32" cy="22" r="15"/><g class="press">' + finger(32, 22) + '</g>',
+  walkMouse:MOUSE_BODY + '<rect class="wheel" x="30" y="16" width="4" height="7" rx="2"/><path class="guide" d="M51 22l4-5 4 5M51 36l4 5 4-5"/>',
+  lookMouse:'<path class="guide" d="M9 56h46M14 51l-5 5 5 5M50 51l5 5-5 5"/><g class="mv sideways">' + MOUSE_BODY + '<path class="btn" d="M32 12a11 11 0 0 0-11 11h11z"/></g>',
+  clickMouse:'<circle class="ping" cx="26" cy="20" r="14"/><path class="cursor press" d="M26 20v25l6.5-6 4.5 10 4.5-2-4.5-10h9z"/>',
+  overview:'<g class="ln eye" transform="translate(8 8) scale(2)"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></g>',
+};
+// 行き止まり（台・棚・壁）に向かって何度も進もうとしたら、戻り方と向きの変え方をそっと出す（30秒に1回まで）
+// ぶつかってすぐではなく、0.7秒以上ぶつかり続けたとき（指でなで続ける・ホイールを回し続ける）
+const stuck = {n:0, t:0, from:0, shown:-1e9};
+function noteBlocked(){
+  const now = performance.now();
+  if (now - stuck.t > 1200) { stuck.n = 0; stuck.from = now; }
+  stuck.t = now; stuck.n++;
+  if (stuck.n >= 3 && now - stuck.from > 700 && now - stuck.shown > 30000 && $('#coach').hidden) { stuck.shown = now; stuck.n = 0; showCoach('stuck'); }
+}
+let coachTimer = 0, coachAt = 0, coachWait = 900;
+// how：'intro'（初めて入ったとき・1回だけ）／'help'（操作方法のボタン）／'stuck'（行き止まりで進めないとき。戻り方と向きの変え方だけ）
+function showCoach(how = 'intro'){
+  if (how === 'intro') { try { if (!params.has('coach') && localStorage.getItem(COACH_KEY)) return; localStorage.setItem(COACH_KEY, '1'); } catch { /* 覚えておけないときも出す */ } }
+  const t = touchUI.matches;
+  const items = how === 'stuck'
+    ? (t ? [['walkTouch', '戻る', '下へなでる'], ['lookTouch', '向きを変える', '指で左右に'], ['overview', 'はじめの場所へ', '目のボタン']]
+         : [['walkMouse', '戻る', '逆にスクロール'], ['lookMouse', '向きを変える', 'ドラッグ'], ['overview', 'はじめの場所へ', '目のボタン']])
+    : (t ? [['walkTouch', '歩く', '1本指で上下に'], ['lookTouch', '見回す', '指で左右に'], ['tapTouch', 'その場所へ', '床や棚をタップ']]
+         : [['walkMouse', '歩く', 'スクロール'], ['lookMouse', '見回す', 'ドラッグ'], ['clickMouse', 'その場所へ', '床や棚をクリック']]);
+  const box = $('#coach');
+  box.innerHTML = items.map(([pic, title, sub]) => `<div class="coach-item"><svg viewBox="0 0 64 64" aria-hidden="true">${COACH_PICS[pic]}</svg><b>${title}</b><small>${sub}</small></div>`).join('');
+  box.classList.toggle('tip', how === 'stuck');
+  box.classList.remove('out'); box.hidden = false; coachAt = performance.now();
+  coachWait = how === 'stuck' ? 2500 : 900;   // 行き止まりの案内は、操作を続けていても少しのあいだ残す
+  clearTimeout(coachTimer); coachTimer = setTimeout(hideCoach, how === 'stuck' ? 7000 : 15000);
+}
+// 動かしはじめたら消す（出た直後の指は、読むための操作かもしれないので少し待つ）
+function hideCoach(now){
+  const box = $('#coach');
+  if (box.hidden || box.classList.contains('out')) return;
+  if (!now && performance.now() - coachAt < coachWait) return;
+  clearTimeout(coachTimer);
+  if (now) { box.hidden = true; return; }
+  box.classList.add('out');
+  setTimeout(() => { if (box.classList.contains('out')) box.hidden = true; }, 400);
+}
+
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NeutralToneMapping;
@@ -278,11 +331,28 @@ function resize(){
 new ResizeObserver(resize).observe(stage);
 
 // ---------- 画面の表示 ----------
+// 売り場のボタンは、アイコンだけ（選んでいる売り場だけ名前も出す）。アイコンは売り場の id で選ぶ
+const ICONS = {
+  overview:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  tee:'<path d="M8.5 3.5 4 6l-1.5 4 3 1.3v9.2h13v-9.2l3-1.3L20 6l-4.5-2.5a3.5 3.5 0 0 1-7 0z"/>',
+  teeStar:'<path d="M8.5 3.5 4 6l-1.5 4 3 1.3v9.2h13v-9.2l3-1.3L20 6l-4.5-2.5a3.5 3.5 0 0 1-7 0z"/><path d="M12 10.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z"/>',
+  leaf:'<path d="M5 19c0-8 5-13.5 14.5-14.5C19 14 13.5 19 5 19z"/><path d="M5 19l8-8"/>',
+  mug:'<path d="M4.5 8h11v8.5A3.5 3.5 0 0 1 12 20H8a3.5 3.5 0 0 1-3.5-3.5z"/><path d="M15.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.5"/><path d="M8.5 3.5c0 1.2 1 1.2 1 2.6M12 3.5c0 1.2 1 1.2 1 2.6"/>',
+  sticker:'<path d="M4.5 4.5h15v9l-6 6h-9z"/><path d="M19.5 13.5H15a1.5 1.5 0 0 0-1.5 1.5v4.5"/>',
+  tag:'<path d="M3.5 12.5v-8h8l9 9-8 8z"/><circle cx="8" cy="9" r="1.5"/>',
+};
+const iconFor = f => /mug/.test(f.id) ? 'mug' : /sticker/.test(f.id) ? 'sticker' : /morinoa/.test(f.id) ? 'leaf' : /mark/.test(f.id) ? 'teeStar' : f.type === 'rack' ? 'tee' : 'tag';
 function buildChips(){
   const nav = $('#places'); nav.replaceChildren();
-  const add = (text, fn) => { const b = document.createElement('button'); b.textContent = text; b.addEventListener('click', fn); nav.append(b); return b; };
-  add('店内を見渡す', () => goOverview()).dataset.place = 'overview';
-  fixtures.forEach((f, i) => { add(f.label, () => walkToFixture(i)).dataset.place = String(i); });   // 売り場のボタンでも、歩いて行く
+  const add = (text, icon, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.title = text; b.setAttribute('aria-label', text);
+    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[icon]}</svg><span></span>`;
+    b.querySelector('span').textContent = text;
+    b.addEventListener('click', fn); nav.append(b); return b;
+  };
+  add('店内を見渡す', 'overview', () => goOverview()).dataset.place = 'overview';
+  fixtures.forEach((f, i) => { add(f.label, iconFor(f), () => walkToFixture(i)).dataset.place = String(i); });   // 売り場のボタンでも、歩いて行く
 }
 // プライスカードに書く価格：売り場の商品の価格をまとめる（ショップで買えるものは税込の価格、未登録のものは予定の価格）
 let paintCards = null;
@@ -296,11 +366,18 @@ function cardText(f){
   const price = lo === hi ? `${yen(lo)}円` : `${yen(lo)}〜${yen(hi)}円`;
   return {price, note:!ok.length ? '予定の価格・準備中' : plan.length ? '税込・一部は準備中' : '税込'};
 }
+let lastPlace = null, placeTimer = 0;
+function flashPlace(text){
+  const el = $('#place-name'); el.textContent = text; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(placeTimer); placeTimer = setTimeout(() => el.classList.remove('on'), 1800);
+}
 function refresh(){
   if (paintCards) { paintCards(cardText); dirty = true; }
   app.dataset.mode = mode;
   const inside = mode !== 'outside';
   // 一度お店に入ったあと外へ出たら、外のあいさつを「ようこそ」から、お礼に替える（外へ出るたびに、また現れる）
+  if (inside && !visited) showCoach();
+  if (!inside) hideCoach(true);
   if (inside) visited = true;
   else if (visited && !thanked) {
     thanked = true;
@@ -308,31 +385,29 @@ function refresh(){
     $('#greeting').replaceChildren(...['ありがとうございました！', 'またきてね！'].map(t => { const line = document.createElement('span'); line.append(Object.assign(document.createElement('span'), {textContent:t})); return line; }));   // 行ごとに、外の枠（マスク）と中の文字
   }
   if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => { if (!AWL_NAV) return tellParent('awl-shop-close'); curtain?.classList.remove('is-out'); setTimeout(() => { freeGL(); location.assign('/?shop'); }, 480); }, 1700); }   // ページごと戻る時は、暗い幕を閉じてから   // お礼を見せてから、ワールドへ
-  $('#hud').hidden = !inside; $('#leave').hidden = !inside;
+  $('#hud').hidden = !inside; $('#leave').hidden = !inside; $('#help').hidden = !inside;
   $('#enter').tabIndex = inside ? -1 : 0;
-  for (const b of $('#places').children) b.setAttribute('aria-pressed', String(b.dataset.place === (mode === 'fixture' ? String(current) : 'overview')));
+  const place = mode === 'fixture' ? String(current) : 'overview';
+  for (const b of $('#places').children) b.setAttribute('aria-pressed', String(b.dataset.place === place));
+  if (inside && place !== lastPlace && lastPlace !== null) flashPlace(mode === 'fixture' ? fixtures[current].label : '店内');
+  lastPlace = inside ? place : null;
   const f = mode === 'fixture' ? fixtures[current] : null, it = f && active >= 0 ? f.items[active] : null;
   const n = f ? f.items.length : 0;
+  // 売り場にいるときだけ、商品の名前と「詳細をチェック」を出す（ふだんは3Dを広く見せる）
+  $('#pick').hidden = !n;
   if (it) {
-    $('#h-kind').textContent = `${String(active + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
     const v = view(it.product);
-    $('#h-name').textContent = v.name;
-    $('#h-sub').textContent = (v.state === 'ok' ? `${v.price.toLocaleString('ja-JP')}円（税込）` : v.tentative ? `準備中・予定 ${v.tentative.toLocaleString('ja-JP')}円` : '準備中') + (v.sub ? '・' + v.sub : '');
-  } else if (f) {
-    $('#h-kind').textContent = f.label;
-    $('#h-name').textContent = n ? `${f.label}の売り場` : `${f.label}（準備中）`;
-    $('#h-sub').textContent = !n ? 'まだ商品が並んでいません' : mobile.matches ? 'タップで手前に、もう一度タップで詳しく' : '気になる商品にカーソルを合わせて、クリックで詳しく';
-  } else {
-    $('#h-kind').textContent = '店内';
-    $('#h-name').textContent = '見たい売り場を選んでください';
-    $('#h-sub').textContent = mobile.matches ? 'タップでそこまで歩く・上へなでると前へ・横へなでると見回す' : '床や売り場をクリックすると、そこまで歩きます。スクロールで前へ・うしろへ、ドラッグで見回せます';
+    $('#h-name').textContent = `${v.name}　${v.state === 'ok' ? `${v.price.toLocaleString('ja-JP')}円` : v.tentative ? `準備中・予定 ${v.tentative.toLocaleString('ja-JP')}円` : '準備中'}`;
+  } else if (n) {
+    $('#h-name').textContent = touchUI.matches || mobile.matches ? '商品をタップして選んでください' : '商品をクリックすると詳しく見られます';
   }
-  $('#h-prev').disabled = !f || !n || active <= 0;
-  $('#h-next').disabled = !f || !n || active >= n - 1;
+  $('#h-prev').disabled = !n || active <= 0;
+  $('#h-next').disabled = !n || active >= n - 1;
   $('#h-inspect').disabled = !it;
   const link = $('#cart-link'), inCart = shop && shop.linked ? shop.count() : 0;
   link.hidden = !(shop && shop.linked);
   link.querySelector('b').textContent = String(inCart);
+  link.title = `カート（${inCart}点）`;
   link.setAttribute('aria-label', `カートを開く（${inCart}点）`);
   resize();
 }
@@ -395,6 +470,7 @@ function walkBy(d){
     if (free) { ok = t; wasFree = true; } else if (wasFree || t > 1) break;
   }
   const len = Math.min(ok, Math.abs(s));
+  if (Math.abs(s) - len > 0.04) noteBlocked();
   walker.on = true; walker.face = null; walker.done = null; walker.steady = true; walker.top = SPEED * 1.2;
   walker.path = [{x:pos.x, z:pos.z}, {x:pos.x + dx * dir * len, z:pos.z + dz * dir * len}]; walker.seg = 1;
   if (reduced.matches) { pos.x = walker.path[1].x; pos.z = walker.path[1].z; walker.seg = 2; }
@@ -510,7 +586,7 @@ function intend(i){ // ラックは素通りで回らないよう少し待つ
 }
 function browse(step){
   const f = fixtures[current]; if (mode !== 'fixture' || !f || !f.items.length) return;
-  setActive(clamp(active + step, 0, f.items.length - 1));
+  setActive(active < 0 ? 0 : clamp(active + step, 0, f.items.length - 1));
 }
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -533,6 +609,7 @@ const spread = () => { const [a, b] = [...fingers.values()]; return Math.hypot(a
 const centre = () => { const [a, b] = [...fingers.values()]; return {x:(a.x + b.x) / 2, y:(a.y + b.y) / 2}; };
 stage.addEventListener('pointerdown', e => {
   if (e.target.closest('button,a') || $('#detail').open || $('#cart').open) return;
+  hideCoach();
   if (e.pointerType === 'touch') {
     fingers.set(e.pointerId, {x:e.clientX, y:e.clientY});
     if (fingers.size === 2) { pinch = {d:Math.max(spread(), 1), zoom:look.gz, at:centre(), yaw:look.gy, pitch:look.gp}; if (press) press.moved = true; return; }
@@ -611,6 +688,7 @@ stage.addEventListener('pointercancel', release);
 stage.addEventListener('wheel', e => {
   if (!ready || $('#detail').open || $('#cart').open) return;
   e.preventDefault();
+  hideCoach();
   // トラックパッドでつまむ（ctrl つき）ときは拡大・縮小。ふつうのスクロールは、前へ・うしろへ歩く
   if (e.ctrlKey) { look.gz *= Math.exp(-e.deltaY * 0.012); dirty = true; return; }
   const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
@@ -619,6 +697,7 @@ stage.addEventListener('wheel', e => {
 
 $('#enter').addEventListener('click', walkIn);
 $('#leave').addEventListener('click', walkOut);
+$('#help').addEventListener('click', () => { const box = $('#coach'); if (!box.hidden && !box.classList.contains('tip')) hideCoach(true); else showCoach('help'); });
 $('#h-prev').addEventListener('click', () => browse(-1));
 $('#h-next').addEventListener('click', () => browse(1));
 $('#h-inspect').addEventListener('click', () => { const it = fixtures[current]?.items[active]; if (it) openDetail(it); });

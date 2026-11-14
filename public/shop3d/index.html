@@ -25,8 +25,9 @@
     <header class="top">
       <span class="wordmark">北海道アニマルワールド <span>SHOP</span></span>
       <span class="badge">試作・見るだけ</span>
-      <button class="cartlink" id="cart-link" hidden>カート <b>0</b></button>
-      <button class="ghost" id="leave" hidden>外に出る</button>
+      <!-- 操作方法（店内に入ったときの案内を、いつでも出し直せる） -->
+      <button class="iconbtn" id="help" type="button" aria-label="操作方法" title="操作方法" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 21v-3.2L6.4 14a1.6 1.6 0 0 1 2.3-2.2l1 1V5.5a1.5 1.5 0 0 1 3 0V10l4.6.8a2 2 0 0 1 1.6 2.2L18.2 21"/><path d="M6 6.2a5.4 5.4 0 0 1 9 0" class="wave"/></svg></button>
+      <button class="cartlink" id="cart-link" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 3.5h2.6l2.3 11.2h10.8l2.1-8H6.2"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg><b>0</b></button>
     </header>
 
     <h1 class="greeting" id="greeting"><span><span>動物たちの</span></span><span><span>グッズのお店へ</span></span><span><span>ようこそ！</span></span></h1>
@@ -44,22 +45,25 @@
       <p class="pay-msg" id="pay-msg" role="status" hidden>カートはまだ空です。<br>商品を選んで「カートに入れる」を押してください</p>
       <button type="button" class="pay-btn" id="pay-btn">お会計にすすむ</button>
     </div>
+    <!-- せまい画面では売り場のボタンが名前なしのアイコンだけなので、売り場を移ったときに名前を少しだけ出す -->
+    <p class="place-name" id="place-name" aria-live="polite"></p>
+    <!-- 売り場で商品を選んでいるときだけ出る：商品の名前と「詳細をチェック」 -->
+    <div class="pick" id="pick" hidden>
+      <button class="arrow" id="h-prev" type="button" aria-label="前の商品"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="pick-main">
+        <p class="pick-name" id="h-name"></p>
+        <button class="inspect" id="h-inspect" type="button">詳細をチェック</button>
+      </div>
+      <button class="arrow" id="h-next" type="button" aria-label="次の商品"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <!-- 店内に初めて入ったときだけ出る、歩き方と見回し方の案内（中身は main.js が、指かマウスかで作る） -->
+    <div class="coach" id="coach" role="note" aria-label="店内の歩き方" hidden></div>
   </section>
 
+  <!-- 店内の下の列：外に出る（アイコン）＋売り場（アイコン。選んでいる売り場だけ名前も出す） -->
   <div class="hud" id="hud" hidden>
+    <button class="chip exit" id="leave" type="button" aria-label="外に出る" title="外に出る" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4H6.5A1.5 1.5 0 0 0 5 5.5v13A1.5 1.5 0 0 0 6.5 20H13"/><path d="M10 12h10M16.5 8.5 20 12l-3.5 3.5"/></svg></button>
     <nav class="places" id="places" aria-label="売り場"></nav>
-    <div class="bar">
-      <div class="selected">
-        <span id="h-kind">店内</span>
-        <h2 id="h-name">見たい売り場を選んでください</h2>
-        <p id="h-sub"></p>
-      </div>
-      <div class="controls">
-        <button class="arrow" id="h-prev" aria-label="前の商品">&larr;</button>
-        <button class="arrow" id="h-next" aria-label="次の商品">&rarr;</button>
-        <button class="inspect" id="h-inspect" disabled>詳しく見る</button>
-      </div>
-    </div>
   </div>
 
   <aside class="editor" id="editor" hidden aria-label="並べかえ">
