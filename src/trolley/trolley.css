@@ -178,6 +178,8 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
 /* 白い光（とばす・出口）と、ワールドへ移る時の暗転 */
 .tr-fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
 .tr-fade.is-on { opacity: 1; }
+/* ワールドへ向かう時は、出口の光と同じ白へ（着いた側の白い画面につながる。src/style.css の html.hop-trolley） */
+.tr-fade.is-white { background: #fffaf0; }
 
 /* 得点（上の帯） */
 .tr-score { display: flex; align-items: baseline; gap: 6px; padding: 3px 12px; border-radius: 999px; background: rgba(20, 12, 6, 0.55); border: 2px solid rgba(255, 217, 102, 0.6); }

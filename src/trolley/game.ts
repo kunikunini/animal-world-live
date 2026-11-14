@@ -11,7 +11,6 @@ import { sound } from '../audio/sound'
 import { getHeroId, heroById } from '../data/heroes'
 import { getLang } from '../ui/i18n'
 import { dropSplash } from '../ui/splash'
-import { saveHopShot } from '../scopeMode'
 import { createTrolleyAudio } from './audio'
 import { createFinale } from './finale'
 import { CART_W, buildCourse, railSlope, railY, sampleAt, themeAt, type Course, type CourseEvent, type ItemKind } from './course'
@@ -1229,16 +1228,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
   function leave(spot: { x: number; z: number; heading: number }, region: TrolleyStation['region'], viaTrolley: boolean): void {
     if (phase === 'leaving') return
     phase = 'leaving'
-    // 出口の明るい絵を、ワールドへ戻る「のぞき窓」の中に見せる
-    try {
-      const small = document.createElement('canvas')
-      small.width = 96
-      small.height = Math.max(1, Math.round((96 * canvas.height) / Math.max(1, canvas.width)))
-      small.getContext('2d')?.drawImage(canvas, 0, 0, small.width, small.height)
-      saveHopShot(small.toDataURL('image/jpeg', 0.6))
-    } catch {
-      // 取れなくても続ける
-    }
+    // トロッコで着く時は出口の光の白へ（着いた側も白い画面から始まり、ワールドができたら薄れる）
+    fadeEl.classList.toggle('is-white', viaTrolley)
     fadeEl.classList.add('is-on')
     audio.stop()
     const url = new URL(location.pathname, location.origin)
