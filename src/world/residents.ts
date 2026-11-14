@@ -10,7 +10,7 @@ import { createFarmfolk } from './farmfolk'
 import type { FarmKind } from './farmfolk'
 import { GOAT_ROCKS, farmPens, terrainHeight } from './terrain'
 import type { WaterfolkKind } from './waterfolk'
-import { JUNGLE_PERCH, skyPerches } from './biomes'
+import { JUNGLE_PERCH, goatRockSupport, skyPerches } from './biomes'
 import { createSkyfolk, mergeStatic } from './skyfolk'
 import { createWildfolk } from './wildfolk'
 import type { WildKind } from './wildfolk'
@@ -131,12 +131,70 @@ const FARM_RESIDENTS: FarmResident[] = [
   { species: 'ホットベリーピック（ブタ）', pick: 0, kind: 'pig', size: 1.2, plaza: [1.95, 11] },
 ]
 
+/** 坂に沿って体を前後に傾けてよい角度（rad） */
+const MAX_PITCH = 0.3
+
+/**
+ * (x, z) から reach m 以内で、向き yaw の体（前後 ±half、左右 ±side）の 4 本の足の下（support の高さ）がいちばんそろう所。
+ * 前後の差は体を傾けて合わせ（MAX_PITCH まで）、左右の差は合わせられないので小さい所を選ぶ。
+ * y は体の中心の高さ（前足・後ろ足それぞれの高い方の平均。どの足も潜らない）、pitch は rotation.x（正で頭が下がる）
+ */
+function flattestSpot(
+  x: number,
+  z: number,
+  yaw: number,
+  half: number,
+  side: number,
+  reach: number,
+  support: (x: number, z: number) => number,
+  ok: (x: number, z: number) => boolean = () => true,
+): { x: number; z: number; y: number; pitch: number } {
+  const fx = Math.sin(yaw)
+  const fz = Math.cos(yaw)
+  const at = (px: number, pz: number, f: number, s: number) => support(px + fx * f + fz * s, pz + fz * f - fx * s)
+  const maxRise = 2 * half * Math.tan(MAX_PITCH)
+  let best = { x, z, y: support(x, z), pitch: 0, score: Infinity }
+  for (let k = 0; k < 120; k++) {
+    // 元の場所から金角で外へ。同じくらいなら近い方
+    const rr = reach * Math.sqrt(k / 120)
+    const a = k * 2.39996
+    const px = x + Math.cos(a) * rr
+    const pz = z + Math.sin(a) * rr
+    if (k > 0 && !ok(px, pz)) continue
+    const fl = at(px, pz, half, side)
+    const fr = at(px, pz, half, -side)
+    const bl = at(px, pz, -half, side)
+    const br = at(px, pz, -half, -side)
+    const front = Math.max(fl, fr)
+    const back = Math.max(bl, br)
+    const tilt = Math.max(-maxRise, Math.min(maxRise, back - front))
+    const score = Math.max(Math.abs(fl - fr), Math.abs(bl - br)) + Math.abs(back - front - tilt) + Math.abs(tilt) * 0.15 + rr * 0.02
+    if (score < best.score) {
+      // 傾けきれない分は、高い方の足に合わせて持ち上げる
+      const y = (front + back) / 2 + Math.abs(back - front - tilt) / 2
+      best = { x: px, z: pz, y, pitch: Math.atan2(tilt, 2 * half), score }
+    }
+  }
+  return best
+}
+
 function createFarmResidents(out: Lion[]): void {
   const region = OUTER_REGIONS.find((g) => g.key === 'partner')
   if (!region) return
   const a0 = Math.atan2(-region.z, -region.x)
   const pens = farmPens()
   const faceTo = (fx: number, fz: number) => Math.atan2(fx, fz)
+  // 岩場のヤギどうしは重ならず、岩山のてっぺんから柱へ渡す橋の上と両端（主人公の通り道）はあける
+  const rockGoats: Array<{ x: number; z: number }> = []
+  const gx0 = region.x + GOAT_ROCKS.dx
+  const gz0 = region.z + GOAT_ROCKS.dz
+  const side = GOAT_ROCKS.gate + Math.PI / 2
+  const clearForGoat = (px: number, pz: number) => {
+    if (rockGoats.some((g) => Math.hypot(g.x - px, g.z - pz) < 1.8)) return false
+    const along = (px - gx0) * Math.cos(side) + (pz - gz0) * Math.sin(side)
+    const across = -(px - gx0) * Math.sin(side) + (pz - gz0) * Math.cos(side)
+    return !(along > 1.5 && along < 14.5 && Math.abs(across) < 1.6)
+  }
   for (const r of FARM_RESIDENTS) {
     const animal = ANIMALS.filter((a) => a.species === r.species)[r.pick]
     if (!animal) continue
@@ -161,6 +219,21 @@ function createFarmResidents(out: Lion[]): void {
       x += Math.cos(a) * r.plaza[1]
       z += Math.sin(a) * r.plaza[1]
       yaw = faceTo(Math.cos(a0), Math.sin(a0))
+    }
+    if (r.rocks && r.rocks[1] < 1.05) {
+      // 岩山の急な坂や板の岩の縁では、前足と後ろ足の下の高さが 0.5〜1m ちがい、足が宙に浮いて見えた（11/14 くに「動物が浮いて見える」）。
+      // 近く（4m 以内）で 4 本の足の下（地面と板の岩の上面）がいちばんそろう所へ寄せ、足の下でいちばん高い所に立たせる（どの足も岩に潜らない）
+      // 坂では体を前後に少し傾けて、前足と後ろ足の両方を着ける
+      const fit = flattestSpot(x, z, yaw + (r.turn ?? 0), 0.5 * r.size, 0.2 * r.size, 4, goatRockSupport, clearForGoat)
+      x = fit.x
+      z = fit.z
+      rockGoats.push({ x, z })
+      lift = fit.y - terrainHeight(x, z) + 0.02
+      const goat = createFarmfolk({ id: animal.id, kind: r.kind, x, z, yaw: yaw + (r.turn ?? 0), size: r.size, lift })
+      goat.group.rotation.order = 'YXZ'
+      goat.group.rotation.x = fit.pitch
+      out.push(goat)
+      continue
     }
     out.push(createFarmfolk({ id: animal.id, kind: r.kind, x, z, yaw: yaw + (r.turn ?? 0), size: r.size, lift }))
   }

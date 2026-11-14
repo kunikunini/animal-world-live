@@ -5,7 +5,7 @@ import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
-import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, skyPathDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { SUN_LIGHT_DIR } from './scene'
 import { createShopHouse, shopClears } from './shop'
@@ -478,8 +478,8 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
  */
 function createWater(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('water')
-  /** 海面からの高さ */
-  const rel = (x: number, z: number) => terrainHeight(x, z) - SEA_LEVEL
+  /** 海面からの高さ（置き場所を選ぶ条件。描いた地面に合わせる前の形の式で測る） */
+  const rel = (x: number, z: number) => shapeHeight(x, z) - SEA_LEVEL
   /** 潟・小川の中か、そのすぐそば */
   const wet = (x: number, z: number, margin: number) => {
     const lx = x - r.x
@@ -715,6 +715,22 @@ function partnerToOrigin(r: Region): number {
   return Math.atan2(-r.z, -r.x)
 }
 
+/** ヤギの岩場の板の岩（createPartner で作る）。ヤギを板の上に立たせるのに使う */
+let goatSlabs: THREE.InstancedMesh | null = null
+const _ray = new THREE.Raycaster()
+const _down = new THREE.Vector3(0, -1, 0)
+const _from = new THREE.Vector3()
+/** ヤギの岩場で足を置ける高さ: 地面と、板の岩の上面の高いほう（置き物を作った後に呼ぶ） */
+export function goatRockSupport(x: number, z: number): number {
+  const g = terrainHeight(x, z)
+  if (!goatSlabs) return g
+  _from.set(x, g + 3, z)
+  _ray.set(_from, _down)
+  _ray.far = 3.5
+  const hit = _ray.intersectObject(goatSlabs, false)[0]
+  return hit && hit.point.y > g ? hit.point.y : g
+}
+
 /** ふれあいワールド: 放牧場の木の柵、赤い納屋、干し草、丸い木、花。乱数は別の列 */
 function createPartner(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('partner')
@@ -937,6 +953,7 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
     })
     finish(slabMesh)
     group.add(slabMesh)
+    goatSlabs = slabMesh
     // 岩の柱: 岩山の横（入り口から見て左）。平らな頂に板を張る
     const side = GOAT_ROCKS.gate + Math.PI / 2
     const px = gx + Math.cos(side) * 12.5

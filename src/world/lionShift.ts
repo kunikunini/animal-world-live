@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { terrainHeight } from './terrain'
+import { shapeHeight, terrainHeight } from './terrain'
 import { isWalkable } from './regions'
 import { WATERHOLE } from './layout'
 import type { Collider } from './props'
@@ -131,13 +131,14 @@ export function createLionShift(lions: Lion[], colliders: Collider[]): LionShift
 function findNear(riley: Lion, colliders: Collider[]): { x: number; z: number; yaw: number } | null {
   const cx = riley.group.position.x
   const cz = riley.group.position.z
-  const h = terrainHeight(cx, cz)
+  // 平らかどうかは形の式で測る（選ぶ場所を変えない）
+  const h = shapeHeight(cx, cz)
   for (const r of [5, 6, 4, 7]) {
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * Math.PI * 2
       const x = cx + Math.cos(a) * r
       const z = cz + Math.sin(a) * r
-      if (Math.abs(terrainHeight(x, z) - h) > 0.3) continue
+      if (Math.abs(shapeHeight(x, z) - h) > 0.3) continue
       if (!isWalkable(x, z)) continue
       if (Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) < WATERHOLE.radius + 2) continue
       if (colliders.some((c) => c !== riley.collider && Math.hypot(c.x - x, c.z - z) < c.r + 1.6)) continue

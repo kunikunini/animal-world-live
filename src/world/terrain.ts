@@ -289,7 +289,8 @@ const _w: BiomeWeights = emptyWeights()
  * 地形の高さ関数。地形メッシュ、置き物の足元、プレイヤーの高さがすべてこれを使う。
  * サバンナの歩ける範囲の中はサバンナの高さそのもの。峠の途中でとなりのワールドの起伏へつながる。
  */
-export function terrainHeight(x: number, z: number): number {
+/** 形の式どおりの高さ。地面の頂点・色・傾きはこちらから作る（立つ高さは terrainHeight） */
+function rawHeight(x: number, z: number): number {
   const w = biomeAt(x, z, _w)
   if (w.africa >= 0.9999) return savannaHeight(x, z)
   let h = 0
@@ -303,10 +304,90 @@ export function terrainHeight(x: number, z: number): number {
   return h
 }
 
-/** 地形の傾き（法線の y 成分。1 が水平） */
+/**
+ * 地面のタイル（createTile）。真ん中のサバンナは 1.33m、外の 6 つは 2.67m の格子。
+ * 立つ高さ（terrainHeight）は、この格子の三角形の上の高さ＝描いている地面そのものにする。
+ * 形の式（rawHeight）のままだと、ヤギの岩場やコピエの段・水辺の土手のような格子より細かい形の所で、
+ * 描いた地面（段がなだらかな坂になる）から最大 1.4m ずれ、動物や主人公が浮いたり地面に潜ったりして見えた（11/14 くに）
+ */
+interface TileDef {
+  cx: number
+  cz: number
+  w: number
+  d: number
+  segX: number
+  segZ: number
+  /** 頂点の高さ（ix + iz × (segX + 1)、iz は z の小さい方から）。初めて使う時に作る */
+  heights?: Float32Array
+}
+const TILE_STEP = (TERRAIN_SIZE / TERRAIN_SEGMENTS) * 2
+const OUTER_SEGS = 100
+const OUTER_DEPTH = TILE_STEP * OUTER_SEGS
+const FULL_SEGS = TERRAIN_SEGMENTS / 2
+const HALF = TERRAIN_SIZE / 2
+const TILES: TileDef[] = [
+  { cx: 0, cz: 0, w: TERRAIN_SIZE, d: TERRAIN_SIZE, segX: TERRAIN_SEGMENTS, segZ: TERRAIN_SEGMENTS },
+  // 北（-z）と南（+z）
+  { cx: 0, cz: -HALF - OUTER_DEPTH / 2, w: TERRAIN_SIZE, d: OUTER_DEPTH, segX: FULL_SEGS, segZ: OUTER_SEGS },
+  { cx: 0, cz: HALF + OUTER_DEPTH / 2, w: TERRAIN_SIZE, d: OUTER_DEPTH, segX: FULL_SEGS, segZ: OUTER_SEGS },
+  // 西（-x）と東（+x、水の世界）
+  { cx: -HALF - OUTER_DEPTH / 2, cz: 0, w: OUTER_DEPTH, d: TERRAIN_SIZE, segX: OUTER_SEGS, segZ: FULL_SEGS },
+  { cx: HALF + OUTER_DEPTH / 2, cz: 0, w: OUTER_DEPTH, d: TERRAIN_SIZE, segX: OUTER_SEGS, segZ: FULL_SEGS },
+  // 南西の角（ふれあいワールド）と北西の角（空の世界）
+  { cx: -HALF - OUTER_DEPTH / 2, cz: HALF + OUTER_DEPTH / 2, w: OUTER_DEPTH, d: OUTER_DEPTH, segX: OUTER_SEGS, segZ: OUTER_SEGS },
+  { cx: -HALF - OUTER_DEPTH / 2, cz: -HALF - OUTER_DEPTH / 2, w: OUTER_DEPTH, d: OUTER_DEPTH, segX: OUTER_SEGS, segZ: OUTER_SEGS },
+]
+
+function tileHeights(t: TileDef): Float32Array {
+  if (t.heights) return t.heights
+  const nx = t.segX + 1
+  const h = new Float32Array(nx * (t.segZ + 1))
+  const x0 = t.cx - t.w / 2
+  const z0 = t.cz - t.d / 2
+  for (let iz = 0; iz <= t.segZ; iz++) {
+    const z = z0 + (iz * t.d) / t.segZ
+    for (let ix = 0; ix <= t.segX; ix++) h[ix + iz * nx] = rawHeight(x0 + (ix * t.w) / t.segX, z)
+  }
+  t.heights = h
+  return h
+}
+
+/**
+ * 立つ高さ: 描いている地面（タイルの格子の三角形）の上の高さ。主人公・動物・置き物はこれに立たせる。
+ * 三角形の分け方は PlaneGeometry と同じ（格子の 1 マスを、x の小さい・z の大きい角と x の大きい・z の小さい角を結ぶ線で 2 つに）。
+ * タイルの外（使っていない遠く）は形の式のまま
+ */
+export function terrainHeight(x: number, z: number): number {
+  for (const t of TILES) {
+    const x0 = t.cx - t.w / 2
+    const z0 = t.cz - t.d / 2
+    if (x < x0 || x > x0 + t.w || z < z0 || z > z0 + t.d) continue
+    const u = ((x - x0) / t.w) * t.segX
+    const v = ((z - z0) / t.d) * t.segZ
+    const ix = Math.min(t.segX - 1, Math.floor(u))
+    const iz = Math.min(t.segZ - 1, Math.floor(v))
+    const fu = u - ix
+    const fv = v - iz
+    const h = tileHeights(t)
+    const nx = t.segX + 1
+    const ha = h[ix + iz * nx]
+    const hb = h[ix + (iz + 1) * nx]
+    const hc = h[ix + 1 + (iz + 1) * nx]
+    const hd = h[ix + 1 + iz * nx]
+    return fu + fv <= 1 ? ha + (hd - ha) * fu + (hb - ha) * fv : hc + (hb - hc) * (1 - fu) + (hd - hc) * (1 - fv)
+  }
+  return rawHeight(x, z)
+}
+
+/** 形の式どおりの高さ。置き場所を選ぶ条件（海面からの高さなど）は、選び方が変わらないようこちらで測る */
+export function shapeHeight(x: number, z: number): number {
+  return rawHeight(x, z)
+}
+
+/** 地形の傾き（法線の y 成分。1 が水平）。色と置き場所の選び方に使うので、形の式から測る */
 export function terrainSlope(x: number, z: number, e = 0.75): number {
-  const hx = terrainHeight(x + e, z) - terrainHeight(x - e, z)
-  const hz = terrainHeight(x, z + e) - terrainHeight(x, z - e)
+  const hx = rawHeight(x + e, z) - rawHeight(x - e, z)
+  const hz = rawHeight(x, z + e) - rawHeight(x, z - e)
   const n = new THREE.Vector3(-hx, 2 * e, -hz).normalize()
   return n.y
 }
@@ -422,7 +503,7 @@ const _mapRgb = { r: 0, g: 0, b: 0 }
  * 数 m の細かいむらと踏み分け道は、地図の格子（5m）より細かいので入れない
  */
 export function savannaMapColor(x: number, z: number, out: [number, number, number]): void {
-  savannaColor(x, z, terrainHeight(x, z), _mapCol, true)
+  savannaColor(x, z, rawHeight(x, z), _mapCol, true)
   _mapCol.getRGB(_mapRgb, THREE.SRGBColorSpace)
   out[0] = _mapRgb.r * 255
   out[1] = _mapRgb.g * 255
@@ -598,10 +679,13 @@ function vertexColor(x: number, z: number, h: number, out: THREE.Color): void {
 }
 
 /** 地形の 1 枚。cx, cz は中心、w, d は幅と奥行き、segX, segZ は分割数 */
-function createTile(cx: number, cz: number, w: number, d: number, segX: number, segZ: number, mat: THREE.Material): THREE.Mesh {
+function createTile(t: TileDef, mat: THREE.Material): THREE.Mesh {
+  const { cx, cz, w, d, segX, segZ } = t
   const geo = new THREE.PlaneGeometry(w, d, segX, segZ)
   geo.rotateX(-Math.PI / 2)
   geo.translate(cx, 0, cz)
+  // 頂点の並びは高さの表と同じ（x の小さい方から、z の小さい方の列から）
+  const heights = tileHeights(t)
 
   const pos = geo.attributes.position as THREE.BufferAttribute
   const colors = new Float32Array(pos.count * 3)
@@ -609,7 +693,7 @@ function createTile(cx: number, cz: number, w: number, d: number, segX: number, 
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i)
     const z = pos.getZ(i)
-    const h = terrainHeight(x, z)
+    const h = heights[i]
     pos.setY(i, h)
     vertexColor(x, z, h, c)
     colors[i * 3] = c.r
@@ -687,22 +771,7 @@ export function createTerrain(): THREE.Group {
   group.name = 'terrain'
   // 面の割れ目を見せない滑らかな陰影に、段差のあるトゥーンを乗せる
   const mat = toonMaterial({ vertexColors: true })
-  const half = TERRAIN_SIZE / 2
-  const step = (TERRAIN_SIZE / TERRAIN_SEGMENTS) * 2
-  const outerSegs = 100
-  const outerDepth = step * outerSegs
-  const fullSegs = TERRAIN_SEGMENTS / 2
-  group.add(createTile(0, 0, TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_SEGMENTS, TERRAIN_SEGMENTS, mat))
-  // 北（-z）と南（+z）
-  group.add(createTile(0, -half - outerDepth / 2, TERRAIN_SIZE, outerDepth, fullSegs, outerSegs, mat))
-  group.add(createTile(0, half + outerDepth / 2, TERRAIN_SIZE, outerDepth, fullSegs, outerSegs, mat))
-  // 西（-x）
-  group.add(createTile(-half - outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
-  // 東（+x）: 水の世界
-  group.add(createTile(half + outerDepth / 2, 0, outerDepth, TERRAIN_SIZE, outerSegs, fullSegs, mat))
-  // 南西の角（-x, +z）: ふれあいワールド
-  group.add(createTile(-half - outerDepth / 2, half + outerDepth / 2, outerDepth, outerDepth, outerSegs, outerSegs, mat))
-  // 北西の角（-x, -z）: 空の世界
-  group.add(createTile(-half - outerDepth / 2, -half - outerDepth / 2, outerDepth, outerDepth, outerSegs, outerSegs, mat))
+  // サバンナ、北・南・西・東（水の世界）、南西の角（ふれあいワールド）、北西の角（空の世界）
+  for (const t of TILES) group.add(createTile(t, mat))
   return group
 }
