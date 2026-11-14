@@ -183,3 +183,4 @@ artwork/
 !public/models/owl-indianscops.glb
 !public/models/owl-tropicalscreech.glb
 !public/models/owl-little.glb
+.claude_audit.log
