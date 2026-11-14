@@ -326,6 +326,8 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
     }
   })
   finish(fernMesh)
+  // 葉は株の中心から 1m ほど広がる
+  fernMesh.userData.clearAroundAnimals = 1.0
   group.add(fernMesh)
 
   // ワニの沼の水面: 青い水に、空の映り込み（斜めから見るほど空色）・ゆっくり動くさざ波・日の光の照り返しときらめき
@@ -449,6 +451,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
     tuftMesh.setColorAt(i, _c.copy(tuftA).lerp(tuftB, rand()))
   })
   finish(tuftMesh)
+  tuftMesh.userData.clearAroundAnimals = 1.0
   group.add(tuftMesh)
 
   // 目印の赤い一枚岩: 中心の奥（サバンナと反対側）に、横長で角の丸い岩
@@ -1357,6 +1360,35 @@ function createSky(rand: () => number, group: THREE.Group, colliders: Collider[]
   })
   finish(flowerMesh)
   group.add(flowerMesh)
+}
+
+const _cm = new THREE.Matrix4()
+const _cp = new THREE.Vector3()
+/**
+ * 動物の体に重なるシダ・草むらの株を消す（大きさ 0 にする）。動物は置き物の後に置くので、
+ * 当たり判定の無い低い葉の中に体が埋もれて見えていた（ジャングルのビントロングなど 4 頭、南半球の 2 頭）。
+ * userData.clearAroundAnimals（株の中心から葉の届く m）を付けた InstancedMesh だけが対象
+ */
+export function clearPlantsAround(group: THREE.Object3D, bodies: Array<{ x: number; z: number; r: number }>): number {
+  let cleared = 0
+  group.traverse((o) => {
+    const m = o as THREE.InstancedMesh
+    const reach = m.userData?.clearAroundAnimals as number | undefined
+    if (!m.isInstancedMesh || reach === undefined) return
+    for (let i = 0; i < m.count; i++) {
+      m.getMatrixAt(i, _cm)
+      const sx = _cm.elements[0] * _cm.elements[0] + _cm.elements[1] * _cm.elements[1] + _cm.elements[2] * _cm.elements[2]
+      if (sx === 0) continue
+      _cp.setFromMatrixPosition(_cm)
+      const ext = reach * Math.sqrt(sx)
+      if (!bodies.some((b) => Math.hypot(b.x - _cp.x, b.z - _cp.z) < b.r + ext * 0.7)) continue
+      _cm.scale(_cp.set(0, 0, 0))
+      m.setMatrixAt(i, _cm)
+      cleared++
+    }
+    m.instanceMatrix.needsUpdate = true
+  })
+  return cleared
 }
 
 export function createBiomeProps(options: { mobile: boolean; colliders: Collider[] }): BiomeProps {

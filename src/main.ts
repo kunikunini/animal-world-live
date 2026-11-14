@@ -3,7 +3,7 @@ import { createScene, sunDiscDir } from './world/scene'
 import { createTerrain, terrainHeight } from './world/terrain'
 import { groundUnder } from './world/walkSurfaces'
 import { NO_REFLECT_LAYER, createProps } from './world/props'
-import { createBiomeProps } from './world/biomes'
+import { clearPlantsAround, createBiomeProps } from './world/biomes'
 import { createSea } from './world/sea'
 import { createResidents, residentPlace } from './world/residents'
 import { OUTER_REGIONS, REGIONS, REGION_KEYS, biomeAt, emptyWeights, regionAt, routeTo } from './world/regions'
@@ -221,7 +221,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const props = createProps({ mobile, camera })
   scene.add(props.group)
   // サバンナから峠を抜けた先の 5 つのワールドの木や岩
-  scene.add(createBiomeProps({ mobile, colliders: props.colliders }).group)
+  const biomeGroup = createBiomeProps({ mobile, colliders: props.colliders }).group
+  scene.add(biomeGroup)
   // 水の世界の海（潟と小川も）
   const sea = createSea()
   scene.add(sea.mesh)
@@ -266,6 +267,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     scene.add(lion.group)
     props.colliders.push(lion.collider)
   }
+  // 動物の体に重なるシダ・草むらの株を消す（葉に埋もれて見えない子がいた）
+  clearPlantsAround(biomeGroup, lions.map((l) => ({ x: l.group.position.x, z: l.group.position.z, r: l.collider.r })))
   // ライオン 4 頭の丘と水辺の行き来（アレックスは丘のまま）
   const lionShift = createLionShift(lions, props.colliders)
   // 実験: ?lion=v2 で Blender 製モデルに差し替える。読めなければプリミティブのまま
@@ -637,6 +640,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
             vividToon(host.group)
             scene.add(host.group)
             props.colliders.push(host.collider)
+            clearPlantsAround(biomeGroup, [{ x: place.x, z: place.z, r: host.collider.r }])
             host.setReduceMotion(reduceMotionNow)
             const at = old ? lions.indexOf(old) : -1
             if (old && at >= 0) {
