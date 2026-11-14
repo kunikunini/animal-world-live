@@ -1065,7 +1065,11 @@ export function startTrolleyMode(p: TrolleyParams): void {
         phase = 'result'
       }
       const theme = themeAt(course, cart.x)
-      audio.update(dt, theme, cart.v, cart.ri >= 0, cart.ri >= 0 && !!inRange('boost', cart.x))
+      try {
+        audio.update(dt, theme, cart.v, cart.ri >= 0, cart.ri >= 0 && !!inRange('boost', cart.x))
+      } catch {
+        // 音が鳴らせなくても走る
+      }
       const prog = Math.min(1, Math.max(0, (cart.x - course.mouthX) / (course.exitX - course.mouthX)))
       fill.style.width = `${(prog * 100).toFixed(1)}%`
       dot.style.left = `${(prog * 100).toFixed(1)}%`
@@ -1074,7 +1078,13 @@ export function startTrolleyMode(p: TrolleyParams): void {
   const frame = (now: number) => {
     const dt = Math.min(0.05, Math.max(0, (now - last) / 1000))
     last = now
-    tick(dt)
+    // 次のコマを先に頼む（1 コマで何か失敗しても、止まらずに走り続ける）
+    requestAnimationFrame(frame)
+    try {
+      tick(dt)
+    } catch (err) {
+      console.warn('[awl] トロッコの 1 コマで失敗（続けます）', err)
+    }
     view.t = t
     view.camX = camX
     view.camY = camY
@@ -1094,13 +1104,16 @@ export function startTrolleyMode(p: TrolleyParams): void {
     view.flash = flash
     view.shakeX = shake > 0 ? (Math.random() - 0.5) * shake : 0
     view.shakeY = shake > 0 ? (Math.random() - 0.5) * shake : 0
-    renderer.draw(view)
-    requestAnimationFrame(frame)
+    try {
+      renderer.draw(view)
+    } catch (err) {
+      console.warn('[awl] トロッコの絵で失敗（続けます）', err)
+    }
   }
   requestAnimationFrame(frame)
 
   // 開発用の窓口（?debug=1 の時だけ）
   if (new URLSearchParams(location.search).get('debug') === '1') {
-    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
+    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
   }
 }
