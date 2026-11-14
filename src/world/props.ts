@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
-import { SEA_LEVEL, WATER_LEVEL, savannaTrail, terrainHeight } from './terrain'
+import { SEA_LEVEL, WATER_LEVEL, savannaTrail, shapeHeight, terrainHeight } from './terrain'
 import { MAP_BOUNDS, OUTER_REGIONS, PASS_HALF_WIDTH, REACH_BINS, REGIONS, biomeAt, distToPassAxis, distToPassAxisOf, emptyWeights, reachBin, setReach } from './regions'
 import type { Region } from './regions'
 import { toonMaterial } from '../render/toon'
@@ -616,7 +616,8 @@ function createRange(group: THREE.Group, o: RangeOptions): void {
       for (let row = 0; row < RANGE_ROWS; row++) {
         const x = o.cx + ca * rs[row]
         const z = o.cz + sa * rs[row]
-        const g = terrainHeight(x, z)
+        // 山の麓は形の式の地面から立てる（遠くの山は格子との差が小さく、山並みの形と歩ける範囲の端を 11/14 の前と同じに保つ）
+        const g = shapeHeight(x, z)
         grounds.push(g)
         const b = o.islands ? Math.max(g, 0) : g
         // 肩もほかのワールドの円に近い所は低く（尾根の外へはみ出す裾を、となりの歩ける地面にかけない）
@@ -679,7 +680,7 @@ function measureReach(group: THREE.Group): void {
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i)
       const z = pos.getZ(i)
-      if (pos.getY(i) > (grounds ? grounds[i] : terrainHeight(x, z)) + 1) {
+      if (pos.getY(i) > (grounds ? grounds[i] : shapeHeight(x, z)) + 1) {
         above[i] = 1
         peaks.push(x, z)
       }
@@ -691,7 +692,7 @@ function measureReach(group: THREE.Group): void {
         const sx = pos.getX(i) + (pos.getX(i + 1) - pos.getX(i)) * t
         const sy = pos.getY(i) + (pos.getY(i + 1) - pos.getY(i)) * t
         const sz = pos.getZ(i) + (pos.getZ(i + 1) - pos.getZ(i)) * t
-        if (sy > terrainHeight(sx, sz) + 1) peaks.push(sx, sz)
+        if (sy > shapeHeight(sx, sz) + 1) peaks.push(sx, sz)
       }
     }
   })
@@ -717,11 +718,12 @@ function measureReach(group: THREE.Group): void {
       const a = j * step
       const ca = Math.cos(a)
       const sa = Math.sin(a)
-      let prev = terrainHeight(r.x + ca * r.walk, r.z + sa * r.walk)
+      // 段差・海の見分けは形の式で（歩ける範囲の端を変えない）
+      let prev = shapeHeight(r.x + ca * r.walk, r.z + sa * r.walk)
       for (let rr = r.walk + 2; rr <= table[j]; rr += 2) {
         const x = r.x + ca * rr
         const z = r.z + sa * rr
-        const h = terrainHeight(x, z)
+        const h = shapeHeight(x, z)
         const off = x < MAP_BOUNDS.minX + 8 || x > MAP_BOUNDS.maxX - 8 || z < MAP_BOUNDS.minZ + 8 || z > MAP_BOUNDS.maxZ - 8
         if (off || isSea(x, z, h) || Math.abs(h - prev) > 1.6) {
           table[j] = Math.max(r.walk, rr - 4)

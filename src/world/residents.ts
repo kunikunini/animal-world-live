@@ -189,8 +189,12 @@ function createFarmResidents(out: Lion[]): void {
   const gx0 = region.x + GOAT_ROCKS.dx
   const gz0 = region.z + GOAT_ROCKS.dz
   const side = GOAT_ROCKS.gate + Math.PI / 2
+  const goatPen = pens[1]
   const clearForGoat = (px: number, pz: number) => {
     if (rockGoats.some((g) => Math.hypot(g.x - px, g.z - pz) < 1.8)) return false
+    // 柵（ヤギの放牧場）の内側 1.6m まで、橋の先の岩の柱（半径 1.9m）から 2.6m 離す
+    if (Math.hypot(px - region.x - goatPen.x, pz - region.z - goatPen.z) > goatPen.r - 1.6) return false
+    if (Math.hypot(px - gx0 - Math.cos(side) * 12.5, pz - gz0 - Math.sin(side) * 12.5) < 2.6) return false
     const along = (px - gx0) * Math.cos(side) + (pz - gz0) * Math.sin(side)
     const across = -(px - gx0) * Math.sin(side) + (pz - gz0) * Math.cos(side)
     return !(along > 1.5 && along < 14.5 && Math.abs(across) < 1.6)
