@@ -21,6 +21,7 @@ import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { createGpuRelease } from './render/gpuRelease'
 import { getClay, setClay, vividToon } from './render/toon'
+import { ANIME_LOOK } from './render/look'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
 import { createLion, type Lion } from './world/lions'
 import { loadLionModel } from './world/lionModel'
@@ -1888,6 +1889,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         lightTarget.horizon.r += L.horizon.r * wk
         lightTarget.horizon.g += L.horizon.g * wk
         lightTarget.horizon.b += L.horizon.b * wk
+      }
+      if (ANIME_LOOK) {
+        // 空気遠近: 霧を近くからかけ、色を地平線の空の青へ寄せる（遠くほど青白くかすむ）
+        lightTarget.near *= 0.4
+        lightTarget.far *= 0.85
+        fogTarget.lerp(lightTarget.horizon, 0.45)
       }
     }
     fogColor.lerp(fogTarget, Math.min(1, dt * 2))

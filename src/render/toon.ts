@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { ANIME_LOOK } from './look'
 
 /**
  * 様式化（トゥーン）の陰影。段差のあるグラデーションをコードで作り、全マテリアルで共有する。
@@ -60,8 +61,12 @@ export function toonMaterial(options: ToonOptions = {}): THREE.MeshToonMaterial 
  * 強さが 0 のワールドでは、いままでのトゥーンと同じ絵になる
  */
 const clayUniform = { value: 0 }
+/** アニメ塗り（日なたと影の 2 色をくっきり分け、横向きの面の縁に日の光の輪郭を足す）。0 でいままでの段のトゥーン */
+const animeUniform = { value: ANIME_LOOK ? 1 : 0 }
 
 export function setClay(value: number): void {
+  // アニメ塗りの時はクレイを使わない（なめらかな坂とくっきりした 2 色はぶつかる）
+  if (ANIME_LOOK) value = 0
   // 寄せきったら 0 / 1 で止める（ほかのワールドでクレイの計算をしない）
   clayUniform.value = value < 0.004 ? 0 : value > 0.996 ? 1 : value
 }
@@ -75,6 +80,7 @@ const RAMP = TOON_STEPS.map((v) => v.toFixed(3))
 
 const CLAY_COMMON_FRAG = /* glsl */ `
 uniform float uClay;
+uniform float uAnime;
 varying vec3 vClayP;
 float clayK = 0.0;
 float clayHash( vec3 p ) {
@@ -112,7 +118,11 @@ vec3 getGradientIrradiance( vec3 normal, vec3 lightDirection ) {
     vec2 fw = fwidth( coord ) * 0.5;
     float banded = mix( 0.7, 1.0, smoothstep( 0.7 - fw.x, 0.7 + fw.x, coord.x ) );
   #endif
-  return vec3( mix( banded, clayRamp( coord.x ), clayK ) );
+  vec3 base = vec3( mix( banded, clayRamp( coord.x ), clayK ) );
+  // アニメ塗り: 光の境目を 1 本の線に。境目は画面で 1〜2 画素だけぼかしてギザギザを消す。影は黒くせず 0.5
+  float animeEdge = fwidth( dotNL ) * 1.5 + 0.015;
+  float anime = mix( 0.5, 1.0, smoothstep( 0.06 - animeEdge, 0.06 + animeEdge, dotNL ) );
+  return mix( base, vec3( anime ), uAnime );
 }
 `
 
@@ -142,6 +152,21 @@ if ( clayK > 0.001 ) {
   // 色のむら。筋の谷は少し暗く（指で押した跡に影がたまる）
   diffuseColor.rgb *= 1.0 + ( ( n1 - 0.5 ) * 0.09 * f1 + ( n2 - 0.5 ) * 0.07 * f2 + ( n3 - 0.5 ) * 0.06 * f3 ) * clayK;
 }
+`
+
+// 縁の光（リムライト）。横を向いた面の輪郭だけ明るくし、地面（上向きの面）には出さない。日の当たる側を強く
+const ANIME_RIM = /* glsl */ `
+#if NUM_DIR_LIGHTS > 0
+if ( uAnime > 0.001 ) {
+  vec3 rimV = normalize( vViewPosition );
+  float rimF = 1.0 - max( dot( normal, rimV ), 0.0 );
+  vec3 rimUp = normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );
+  float rimSide = 1.0 - smoothstep( 0.5, 0.85, dot( normal, rimUp ) );
+  float rimSun = 0.35 + 0.65 * max( dot( normal, directionalLights[ 0 ].direction ), 0.0 );
+  float rim = smoothstep( 0.6, 0.76, rimF ) * rimSide * rimSun;
+  outgoingLight += mix( diffuseColor.rgb, vec3( 1.0 ), 0.55 ) * directionalLights[ 0 ].color * rim * 0.32 * uAnime;
+}
+#endif
 `
 
 const CLAY_DIRECT = /* glsl */ `
@@ -178,6 +203,7 @@ function swap(src: string, find: string, to: string): string {
 /** トゥーンのシェーダーにクレイの見た目を足す（強さ 0 ならいままでと同じ） */
 export function clayCompile(shader: THREE.WebGLProgramParametersWithUniforms): void {
   shader.uniforms.uClay = clayUniform
+  shader.uniforms.uAnime = animeUniform
   let v = shader.vertexShader
   v = swap(v, '#include <common>', '#include <common>\nvarying vec3 vClayP;')
   v = swap(v, '#include <worldpos_vertex>', '#include <worldpos_vertex>\nvClayP = transformed;')
@@ -190,7 +216,7 @@ export function clayCompile(shader: THREE.WebGLProgramParametersWithUniforms): v
   f = swap(
     f,
     'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
-    'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + totalEmissiveRadiance;',
+    `vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + totalEmissiveRadiance;\n${ANIME_RIM}`,
   )
   shader.fragmentShader = f
 }
