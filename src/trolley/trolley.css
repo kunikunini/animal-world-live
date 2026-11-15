@@ -17,6 +17,9 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
   touch-action: none;
 }
 .trolley-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+/* ドット絵の絵（小さなキャンバスを角ばったまま引き伸ばす）と、その上の文字だけの細かいキャンバス（src/trolley/render.ts） */
+.trolley-canvas:not(.trolley-hi) { right: auto; bottom: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+.trolley-hi { pointer-events: none; }
 
 /* 上の帯: 集めた数・道のり・とばす */
 .tr-hud {

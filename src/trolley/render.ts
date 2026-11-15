@@ -188,26 +188,45 @@ export interface Renderer {
 }
 
 export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: { img: HTMLImageElement | null; jacket: string; jacketDark: string }): Renderer {
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+  // ドット絵の見た目（11/15 くに: 「ドット風のほうが良さそう」）: 絵は小さなキャンバス（縦 約 270 ドット）に描き、
+  // 画面いっぱいに角ばったまま引き伸ばす。文字だけは細かいキャンバス（hi）に重ねて読めるようにする
+  const art = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D
+  let ctx = art
+  const hi = document.createElement('canvas')
+  hi.className = 'trolley-canvas trolley-hi'
+  hi.setAttribute('aria-hidden', 'true')
+  const hctx = hi.getContext('2d') as CanvasRenderingContext2D
   const light = document.createElement('canvas')
   const lctx = light.getContext('2d') as CanvasRenderingContext2D
   let W = 1
   let H = 1
   let dpr = 1
   let base = 1
+  /** 1 ドットの大きさ（CSS px） */
+  let dot = 1
+  /** あとで細かいキャンバスに描く文字 */
+  const hiQueue: Array<() => void> = []
   const font = getComputedStyle(document.body).getPropertyValue('--font-home').trim() || 'system-ui, sans-serif'
 
   const resize = () => {
     dpr = Math.min(window.devicePixelRatio || 1, 2)
     W = Math.max(1, window.innerWidth)
     H = Math.max(1, window.innerHeight)
-    canvas.width = Math.round(W * dpr)
-    canvas.height = Math.round(H * dpr)
-    canvas.style.width = `${W}px`
-    canvas.style.height = `${H}px`
-    // 明かりの地図は半分の細かさ（ぼけてちょうどいい）
-    light.width = Math.max(1, Math.round((W * dpr) / 2))
-    light.height = Math.max(1, Math.round((H * dpr) / 2))
+    // 1 ドット = 画面の点の整数倍。短い辺がおよそ 270 ドット（縦長は横 200 ドットくらい）
+    const px = Math.max(2, Math.round((Math.min(H, W * 1.35) * dpr) / 270))
+    dot = px / dpr
+    canvas.width = Math.max(1, Math.ceil(W / dot))
+    canvas.height = Math.max(1, Math.ceil(H / dot))
+    canvas.style.width = `${canvas.width * dot}px`
+    canvas.style.height = `${canvas.height * dot}px`
+    canvas.style.imageRendering = 'pixelated'
+    hi.width = Math.round(W * dpr)
+    hi.height = Math.round(H * dpr)
+    hi.style.width = `${W}px`
+    hi.style.height = `${H}px`
+    // 明かりの地図はドットと同じ細かさ
+    light.width = canvas.width
+    light.height = canvas.height
     // 横長は高さ 400u、縦長は幅 470u が入る大きさ（縦長は上下に岩が広く見える）
     base = Math.min(H / 400, W / 470)
   }
@@ -1076,11 +1095,14 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     ctx.strokeStyle = '#6b4526'
     ctx.lineWidth = 3 * s
     ctx.stroke()
-    ctx.fillStyle = '#4a2f18'
-    ctx.font = `800 ${Math.round(15 * s)}px ${font}`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(label, sx, by + 16.5 * s)
+    const ls = s
+    hiQueue.push(() => {
+      hctx.fillStyle = '#4a2f18'
+      hctx.font = `800 ${Math.round(15 * ls)}px ${font}`
+      hctx.textAlign = 'center'
+      hctx.textBaseline = 'middle'
+      hctx.fillText(label, sx, by + 16.5 * ls)
+    })
     // ランタン
     const lx = sx + 46 * s
     const ly = top + 30 * s
@@ -2700,6 +2722,41 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     }
   }
 
+  // 色の段: 1 色あたり 12 段にそろえ、あいだは 4×4 の格子のディザで混ぜる（なめらかなグラデーションをドット絵の色の帯に）
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((n) => (n + 0.5) / 16)
+  const QSTEP = 255 / 11
+  const LUT: Uint8ClampedArray[] = BAYER.map((th) => {
+    const t = new Uint8ClampedArray(256)
+    for (let c = 0; c < 256; c++) {
+      const v = c / QSTEP
+      const b = Math.floor(v)
+      t[c] = Math.round((v - b > th ? b + 1 : b) * QSTEP)
+    }
+    return t
+  })
+  function posterize(): void {
+    const w = canvas.width
+    const h = canvas.height
+    let img: ImageData
+    try {
+      img = art.getImageData(0, 0, w, h)
+    } catch {
+      return
+    }
+    const d = img.data
+    for (let y = 0; y < h; y++) {
+      const row = (y & 3) * 4
+      let i = y * w * 4
+      for (let x = 0; x < w; x++, i += 4) {
+        const lut = LUT[row + (x & 3)]
+        d[i] = lut[d[i]]
+        d[i + 1] = lut[d[i + 1]]
+        d[i + 2] = lut[d[i + 2]]
+      }
+    }
+    art.putImageData(img, 0, 0)
+  }
+
   return {
     resize,
     scale: () => base,
@@ -2708,12 +2765,18 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     draw(v) {
       v_t = v.t
       lang = document.documentElement.lang === 'en' ? 'en' : 'ja'
+      if (!hi.parentNode && canvas.parentNode) canvas.after(hi)
       s = base * v.zoom
-      camX = v.camX
-      camY = v.camY
-      cx = W * 0.5 + v.shakeX
-      cy = H * 0.56 + v.shakeY
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      // カメラはドットの格子にそろえる（動く時に絵がちらつかないように）
+      const q = dot / s
+      camX = Math.round(v.camX / q) * q
+      camY = Math.round(v.camY / q) * q
+      cx = Math.round((W * 0.5 + v.shakeX) / dot) * dot
+      cy = Math.round((H * 0.56 + v.shakeY) / dot) * dot
+      ctx = art
+      ctx.imageSmoothingEnabled = false
+      ctx.setTransform(1 / dot, 0, 0, 1 / dot, 0, 0)
+      hiQueue.length = 0
       const xa = camX - cx / s - 80
       const xb = camX + (W - cx) / s + 80
       ctx.fillStyle = palColor(camX, 'back')
@@ -2743,7 +2806,6 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       ctx.globalCompositeOperation = 'lighter'
       drawParticles(v.particles, true)
       ctx.globalCompositeOperation = 'source-over'
-      drawTexts(v.texts)
       if (v.boulder.on) drawBoulderMark(v.boulder, v.t)
       drawSpeedLines(v.speedLines, v.t)
       drawDirt(v.dirt, v.dirtSeed)
@@ -2751,6 +2813,14 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
         ctx.fillStyle = `rgba(255,252,240,${Math.min(1, v.flash)})`
         ctx.fillRect(0, 0, W, H)
       }
+      posterize()
+      // 文字は細かいキャンバスに
+      ctx = hctx
+      hctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      hctx.clearRect(0, 0, W, H)
+      for (const f of hiQueue) f()
+      drawTexts(v.texts)
+      ctx = art
     },
   }
 }
