@@ -1833,6 +1833,10 @@ export function startTrolleyMode(p: TrolleyParams): void {
     } catch (err) {
       console.warn('[awl] トロッコの 1 コマで失敗（続けます）', err)
     }
+    syncView()
+    drawNow()
+  }
+  function syncView(): void {
     view.t = t
     view.camX = camX
     view.camY = camY
@@ -1860,6 +1864,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
     view.turbo = turboT > 0 ? Math.min(1, turboT / 0.4, (TURBO_LEN - turboT) / 0.2 + 0.3) : 0
     view.shakeX = shake > 0 ? (Math.random() - 0.5) * shake : 0
     view.shakeY = shake > 0 ? (Math.random() - 0.5) * shake : 0
+  }
+  function drawNow(): void {
     try {
       if (phase === 'finale') finale.draw({ k: fin.k, t, scroll: fin.scroll, rush: fin.rush, white: fin.white, cheer: cart.cheer, reduce })
       else renderer.draw(view)
@@ -1871,6 +1877,26 @@ export function startTrolleyMode(p: TrolleyParams): void {
 
   // 開発用の窓口（?debug=1 の時だけ）
   if (new URLSearchParams(location.search).get('debug') === '1') {
-    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, racers, sloths, raceLog, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(coach ? 0 : 1 / 60) }, get coach() { return coach }, get turbo() { return { turbo, turboT } } }
+    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, racers, sloths, raceLog, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(coach ? 0 : 1 / 60) }, get coach() { return coach }, get turbo() { return { turbo, turboT } },
+      /** 開発用: いまの場面を n 回描いて、1 回あたりの時間（ms）の中央値と最大 */
+      bench: (n: number) => {
+        const a: number[] = []
+        for (let i = 0; i < n; i++) {
+          const d0 = performance.now()
+          syncView()
+          drawNow()
+          a.push(performance.now() - d0)
+        }
+        a.sort((x, y) => x - y)
+        return { phase, med: a[a.length >> 1], max: a[a.length - 1] }
+      },
+      /** 開発用: 1/60 秒進めて描き、トロッコの画面上の位置と拡大率を返す（カメラのがたつきを見る） */
+      probe: () => {
+        tick(1 / 60)
+        syncView()
+        drawNow()
+        const p = renderer.toScreen(view.cart.x, view.cart.y)
+        return { phase, x: p.x, y: p.y, zoom, cx: cart.x, v: cart.v }
+      } }
   }
 }

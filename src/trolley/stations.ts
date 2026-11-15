@@ -56,7 +56,7 @@ const at = (region: TrolleyEnd, angleDeg: number, d: number) => station(region, 
  * 歩ける範囲の縁から 9m 内側（動物とは 50m 以上離れている。11/14 に動いているワールドで測った）
  */
 export const TROLLEY_ROUTES: readonly TrolleyRoute[] = [
-  { id: 'water-sky', a: at('water', 225, 116), b: at('sky', 300, 111) },
+  // 水⇔空は 11/15 にやめた（くに: 地図で北の世界を通りすぎて不自然。北⇔空があるので無くても輪はつながる）
   { id: 'north-sky', a: at('north', 150, 129), b: at('sky', 350, 129) },
   { id: 'sky-jungle', a: at('sky', 130, 117.5), b: at('jungle', 290, 129) },
   { id: 'jungle-partner', a: at('jungle', 80, 129), b: at('partner', 250, 128.5) },

@@ -2382,7 +2382,11 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       s = base * v.zoom
       // カメラはドットの格子にそろえる（動く時に絵がちらつかないように）
       const q = dot / s
-      camX = Math.round(v.camX / q) * q
+      // 横は、トロッコをドットの格子にのせ、カメラはトロッコからのずれをドット単位で持つ。
+      // カメラとトロッコを別々に丸めると、1 ドット行ったり来たりしてカクつく（11/15 くに: ゴールの画面）
+      const cartX = Math.round(v.cart.x / q) * q
+      camX = cartX + Math.round((v.camX - v.cart.x) / q) * q
+      v.cart.x = cartX
       camY = Math.round(v.camY / q) * q
       cx = Math.round((W * 0.5 + v.shakeX) / dot) * dot
       cy = Math.round((H * 0.56 + v.shakeY) / dot) * dot
