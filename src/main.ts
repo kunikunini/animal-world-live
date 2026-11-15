@@ -366,6 +366,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       lie?: boolean
       /** ぶら下がる子（ナマケモノ）: 名前の札の高さは入れ物のまま（枝の下） */
       hang?: boolean
+      /** 直立の姿の別モデル（リグなし）。歩く姿と時間で交互に入れ替える（ミーアキャットの見張り） */
+      stand?: string
     }[] = [
       // ティガー: 接地を入れると腰が立ち姿の 83〜93% に落ちる忍び足。アレックス並みに強く寄せる（後ろ脚 0.95・背骨 0.85・尾 0.5・前脚 0.7）
       { key: 'tiger', species: 'ベンガルトラ', name: 'ティガー', file: 'tiger-tigger', posture: { hind: 0.7, hindCenter: true, spine: 0.85, tail: 0.5, front: 0.7, frontCenter: true, ground: true } },
@@ -480,7 +482,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 虎: サバンナのスタート（0, 72）からスポットへ向かう途中、左手 4.5 m の踏み分け道の上（−4.5, 43.5）。背の高い草の中だと体が隠れるので、草の生えない道に置き、
       // まわり 1 m だけ歩く。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.55 m（鼻先〜尾の先）は実物の成獣の目安。
       // 接地だけだと腰 81〜85%。後ろ脚 0.7・背骨 0.95・尾 0.5・前脚 0.65 で腰 99.6〜102.8%（虎で測って決めた値）
-      { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, place: { ...SAVANNA_MEERKAT, length: 0.55 } },
+      { key: 'meerkat', species: 'ミーアキャット', name: '虎', file: 'meerkat-tora', posture: { hind: 0.7, spine: 0.95, tail: 0.5, front: 0.65, ground: true }, place: { ...SAVANNA_MEERKAT, length: 1.12 }, stand: 'meerkat-tora-stand' },
       // テル: ジャングルの中心の西、ゆめこ（南米）の北 13 m。群れの場所に自動で置いたプリミティブ版と入れ替える（読めなければプリミティブ版のまま）。体の長さ 0.75 m（鼻先〜尾の先、尾が体より長い）は実物の目安。
       // 補正の弱い組では前足が沈み、腰が上がりすぎる（最大 111〜122%）。後ろ脚 0.95・背骨 0.95・尾 0.5・前脚 0.95 で腰 99.5〜101.8%（テルで測って決めた値）
       { key: 'squirrelMonkey', species: 'コモンリスザル', name: 'テル', file: 'squirrel-monkey-teru', posture: { hind: 0.6, hindCenter: true, spine: 0.95, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, place: { ...residentPlace('jungle', 'コモンリスザル'), yaw: 1.3, length: 0.75 } },
@@ -590,14 +592,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'coatiPupu', species: 'アカハナグマ', name: 'ぷぷ', file: 'coati-pupu', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'coatiRin', species: 'アカハナグマ', name: 'リン', file: 'coati-rin', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'coatiRua', species: 'アカハナグマ', name: 'ルア', file: 'coati-rua', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
-      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatKai', species: 'ミーアキャット', name: 'かい', file: 'meerkat-kai', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatBine', species: 'ミーアキャット', name: 'ビネ', file: 'meerkat-bine', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatNerine', species: 'ミーアキャット', name: 'ネリネ', file: 'meerkat-nerine', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
-      { key: 'meerkatSou', species: 'ミーアキャット', name: 'そう', file: 'meerkat-sou', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true },
+      { key: 'meerkatMoa', species: 'ミーアキャット', name: 'モア', file: 'meerkat-moa', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-moa-stand' },
+      { key: 'meerkatKai', species: 'ミーアキャット', name: 'かい', file: 'meerkat-kai', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-kai-stand' },
+      { key: 'meerkatBine', species: 'ミーアキャット', name: 'ビネ', file: 'meerkat-bine', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.65, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-bine-stand' },
+      { key: 'meerkatNerine', species: 'ミーアキャット', name: 'ネリネ', file: 'meerkat-nerine', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-nerine-stand' },
+      { key: 'meerkatYomogi', species: 'ミーアキャット', name: 'ヨモギ', file: 'meerkat-yomogi', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-yomogi-stand' },
+      { key: 'meerkatSuzu', species: 'ミーアキャット', name: 'すず', file: 'meerkat-suzu', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-suzu-stand' },
+      { key: 'meerkatHaruka', species: 'ミーアキャット', name: 'はるか', file: 'meerkat-haruka', posture: { hind: 0.65, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-haruka-stand' },
+      { key: 'meerkatSou', species: 'ミーアキャット', name: 'そう', file: 'meerkat-sou', posture: { hind: 0.6, hindCenter: true, spine: 0.8, tail: 0.5, front: 0.7, frontCenter: true, ground: true }, replaceHost: true, stand: 'meerkat-sou-stand' },
       { key: 'sandcatSheri', species: 'スナネコ', name: 'シェリ', file: 'sandcat-sheri', posture: { hind: 1, spine: 0.8, tail: 0.5, front: 1, ground: true }, replaceHost: true },
       { key: 'tortoiseLeonardo', species: 'ケヅメリクガメ', name: 'レオナルド', file: 'tortoise-leonardo', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
       { key: 'tortoiseLarc', species: 'ケヅメリクガメ', name: 'ラルク', file: 'tortoise-larc', posture: { hind: 1, spine: 0.9, tail: 0.5, front: 0.9, ground: true }, replaceHost: true },
@@ -621,6 +623,45 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     ]
     // 各子のプリミティブ版の、入れ物の倍率込みのワールドでの大きさ（読み込みの前、入れ物がまだプリミティブ版のうちに測る）。
     // sizeOf の子は基準の子とワールドで同じ大きさになるよう、自分の入れ物の倍率（個体ごとに少し違う）で割り戻す
+    // ミーアキャットの見張り（11/15 くにの指示）: アレックスの「座る⇔歩く」と同じ歩き回りの sit の時間で、歩く姿（リグあり）と
+    // 直立の姿（リグなしの別モデル）を入れ替える。直立の間は歩く姿の中身を隠し、直立の姿をその場に立てて、ゆっくり左右を見渡す。
+    // 入れ物（ai.model）の子にするので、遠景で隠す・向き・場所は歩く姿と同じ。?stand=off で歩く姿だけ
+    const STAND_HEIGHT = 0.6
+    const STAND_TIMES = { sit: [6, 12] as [number, number], roam: [12, 24] as [number, number] }
+    const standOf = new WeakSet<AiLion>()
+    const attachStand = (ai: AiLion, st: AiLion) => {
+      const wrap = ai.model
+      const body = wrap.children[0]
+      const holder = new THREE.Group()
+      holder.add(st.model)
+      holder.visible = false
+      st.model.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh) o.castShadow = true
+      })
+      wrap.add(holder)
+      let on = false
+      let t = 0
+      const phase = Math.random() * Math.PI * 2
+      ai.setSitting = (v) => {
+        on = v
+        t = 0
+        holder.visible = v
+        body.visible = !v
+      }
+      const tick = ai.tick
+      ai.tick = (dt) => {
+        tick(dt)
+        if (!on) return
+        t += dt
+        // 接地の補正で入れ物が上下しても、直立の足は地面に置いたまま。出てくる時は 0.25 秒で背が伸びる
+        holder.position.y = -wrap.position.y
+        const pop = Math.min(1, t / 0.25)
+        holder.scale.set(1, 0.85 + 0.15 * pop, 1)
+        holder.rotation.y = reduceMotionNow ? 0 : Math.sin(t * 0.5 + phase) * 0.5
+      }
+      standOf.add(ai)
+      return ai
+    }
     const baseWorld: Record<string, number> = {}
     const sizeFor = (key: string, ref: string | undefined, own: number, hostScale: number) => {
       baseWorld[key] = own * hostScale
@@ -634,7 +675,17 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       const place = r.place ?? (r.replaceHost && host ? { x: host.group.position.x, z: host.group.position.z, yaw: host.group.rotation.y, length: primitiveLength(host.group, r.upright ? 'y' : 'z') } : undefined)
       if (!host && !place) continue
       const posture = q.get('fix') === 'off' ? { hind: 0, spine: 0, tail: 0, front: 0, ground: false } : r.posture
-      loadAiLion(`/models/${r.file}.glb`, { length: sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1), posture, upright: r.upright, lie: r.lie, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
+      const len = sizeFor(r.key, r.sizeOf, place ? place.length : primitiveLength(host!.group, r.upright ? 'y' : 'z'), place ? 1 : host!.group.scale.y) * (q.has(`${r.key}Scale`) ? Number(q.get(`${r.key}Scale`)) : r.scale ?? 1)
+      const standOn = !!r.stand && q.get('stand') !== 'off'
+      loadAiLion(`/models/${r.file}.glb`, { length: len, posture, upright: r.upright, lie: r.lie, brighten: q.has(`${r.key}Bright`) ? Number(q.get(`${r.key}Bright`)) : r.brighten })
+        // 直立の姿も読み終えてから置く（歩き回りが最初に「立つ」を呼ぶので、その前に入れ替えの口を付ける）。読めなければ歩く姿だけ
+        .then((ai) =>
+          standOn
+            ? loadAiLion(`/models/${r.stand}.glb`, { length: len * STAND_HEIGHT, posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true })
+                .then((st) => attachStand(ai, st))
+                .catch((err) => (console.warn('[animals-ai] stand model not loaded', r.key, err), ai))
+            : ai,
+        )
         .then((ai) => {
           if (place) {
             // place の子: place の場所に入れ物を作る（中のプリミティブは swapModel で隠れる）。出会い・名前の札・地図に乗せる。
@@ -664,7 +715,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           if (!r.hang) host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const roam = roamFor(r.species, animal.id)
-          const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, r.slopeFit ? { ...roam, slopeFit: r.slopeFit } : roam)
+          const opts = { ...roam, ...(r.slopeFit ? { slopeFit: r.slopeFit } : {}), ...(standOn && standOf.has(ai) ? { sit: STAND_TIMES } : {}) }
+          const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, opts)
           if (w) {
             w.setReduceMotion(reduceMotionNow)
             wanderers.push(w)
