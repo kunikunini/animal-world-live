@@ -2145,11 +2145,13 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       const k = Math.min(1, ft.t / 0.15)
       const fade = ft.t > 1.1 ? Math.max(0, 1 - (ft.t - 1.1) / 0.4) : 1
       const pop = 0.6 + 0.4 * k + (k < 1 ? 0 : Math.max(0, 0.12 - (ft.t - 0.15)) )
-      const x = X(ft.x)
-      const y = Y(ft.y) - ft.t * 30 * s
       const size = (ft.big ? 26 : 18) * s * pop
       ctx.globalAlpha = fade
       ctx.font = `900 ${Math.round(Math.max(10, size))}px ${font}`
+      // 画面のはしで切れないよう、文字の幅ぶん内側に寄せる（11/15 くに: 出口の「にげきった！」が左で切れた）
+      const half = ctx.measureText(ft.text).width / 2 + Math.max(3, 5 * s) + 8
+      const x = Math.min(Math.max(X(ft.x), half), Math.max(half, W - half))
+      const y = Math.min(Math.max(Y(ft.y) - ft.t * 30 * s, size), H - size)
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.lineWidth = Math.max(3, 5 * s)
