@@ -15,6 +15,7 @@ import type { AiLion } from './aiLionModel'
  * - 範囲と速さは種ごとに data/roam.ts
  * - 岩・木・ほかの個体の当たり判定、観察スポットとその登り道、プレイヤーのそばは避ける
  * - プレイヤーが出会いの範囲に来ている間は新しく歩き出さない（名前のピンが逃げない）
+ *   小さい子（engaged）は、いま出会っている子だけがその場で止まり、ほかの子はプレイヤーのそばでも歩く
  * - 動きをへらす設定では歩かない
  */
 export interface LionWander {
@@ -45,6 +46,14 @@ export interface WanderOptions {
   slopeFit?: number
   /** この判定は素通りしてよい（同じ群れの子）。ほかの子・岩・木の判定は今まで通り避ける */
   passThrough?: (c: Collider) => boolean
+  /**
+   * 小さい子: プレイヤーが近くにいても、いま出会っている子（名前の札の子）でなければ歩く。
+   * 近づかないと見えないので、近くの子がみんな止まると「動かない」に見える（11/15 くに「キンカジューは近くにいましたが動かなかった」）。
+   * 省略時は今まで通り、プレイヤーが出会いの範囲＋2m にいる間は新しく歩き出さない
+   */
+  engaged?: () => boolean
+  /** 行き先をプレイヤーからこれ以上離す（m）。省略時 PLAYER_CLEARANCE */
+  playerClearance?: number
 }
 
 /** 斜面に沿って傾ける角度の上限（rad） */
@@ -118,7 +127,7 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
     }
     if (Math.hypot(SPOT.x - x, SPOT.z - z) < spotKeep) return false
     if (distanceToSegment(x, z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) < pathKeep) return false
-    if (Math.hypot(player.x - x, player.z - z) < PLAYER_CLEARANCE) return false
+    if (Math.hypot(player.x - x, player.z - z) < (opts.playerClearance ?? PLAYER_CLEARANCE)) return false
     return true
   }
 
@@ -172,6 +181,13 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
         return
       }
     }
+    // いま出会っている子は、歩き途中でもその場で止まる（名前の札が逃げない）
+    if (opts.engaged?.()) {
+      target = null
+      ai.setWalking(false)
+      timer = 1.5
+      return
+    }
     if (target) {
       const dx = target.x - group.position.x
       const dz = target.z - group.position.z
@@ -202,7 +218,7 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
     if (timer > 0) return
     // プレイヤーが出会いの範囲（ピンが出る距離）にいる間は、そのまま立っている
     const d = Math.hypot(player.x - group.position.x, player.z - group.position.z)
-    if (d < own.r + 4.2 + 2.0) {
+    if (!opts.engaged && d < own.r + 4.2 + 2.0) {
       timer = 1.5
       return
     }
