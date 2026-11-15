@@ -35,7 +35,9 @@ function stationClears(s: TrolleyStation, x: number, z: number): boolean {
   // ワールドの内側（トンネルと逆）へ 14m、幅 7m
   const back = -(dx * Math.sin(s.out) + dz * Math.cos(s.out))
   const side = dx * Math.cos(s.out) - dz * Math.sin(s.out)
-  return back > 0 && back < 14 && Math.abs(side) < 3.5
+  if (back > 0 && back < 14 && Math.abs(side) < 3.5) return true
+  // トンネルの奥の岩山（11/15 くに: 口の向こうに何も無いと どこでもドアみたい）
+  return back < 0 && back > -21 && Math.abs(side) < 11
 }
 
 const _m = new THREE.Matrix4()
@@ -148,6 +150,17 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
     [-6.6, 0.6, 6.4, 2.2, 2.2, 2.4],
     [6.8, 0.7, 6.6, 2.3, 2.2, 2.4],
   ]
+  // トンネルの奥にもう一つ分の岩山（口のすぐ向こうが空にならず、山の中へもぐっていくように見せる）
+  lumps.push(
+    [0, 3.2, 14.2, 7.6, 8.4, 6.2],
+    [-5.8, 2.2, 13.2, 5.2, 6.2, 4.8],
+    [6, 2.4, 13.6, 5.4, 6.4, 5],
+    [-1.6, 9.6, 13.4, 4.2, 3.4, 3.8],
+    [2.4, 11.2, 14.6, 3.2, 2.8, 3],
+    [-8.6, 0.4, 11.4, 3, 3.4, 3],
+    [8.8, 0.6, 11.8, 3.2, 3.4, 3],
+    [0, 1, 18.4, 6.4, 5.4, 4.4],
+  )
   lumps.forEach(([x, y, z, sx, sy, sz], i) => {
     const m = add(rockGeo, i % 3 === 0 ? rockDark : rock, x, y, z, i * 0.9, i * 0.4)
     m.scale.set(sx, sy, sz)
@@ -232,6 +245,9 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
   // 当たり判定（ワールドの座標）。地図のジオラマには木や岩として描かない（駅は地図の側で描く。src/ui/mapDiorama.ts）
   const toWorld = (lx: number, lz: number) => ({ x: s.x + lx * Math.cos(s.out) + lz * fx, z: s.z - lx * Math.sin(s.out) + lz * fz })
   colliders.push({ ...toWorld(0, 8.4), r: 5, map: false })
+  colliders.push({ ...toWorld(0, 14.2), r: 7, map: false })
+  colliders.push({ ...toWorld(-6.4, 12.6), r: 5, map: false })
+  colliders.push({ ...toWorld(6.6, 13), r: 5, map: false })
   colliders.push({ ...toWorld(-4.4, 7.2), r: 3, map: false })
   colliders.push({ ...toWorld(4.6, 7.4), r: 3, map: false })
   colliders.push({ ...toWorld(-2.05, 4.5), r: 0.4, map: false })
