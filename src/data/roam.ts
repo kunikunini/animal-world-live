@@ -46,6 +46,9 @@ export const ROAM: Record<string, Roam> = {
   ワオキツネザル: { tier: 'small', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.5, passGroup: true },
   // 11/15 くにの指示（歩きの実証）: 表に無くて動いていなかった。バジルとパセリが寄り合っているので群れの中は素通り（ビンは木の上なので下の PER_ANIMAL で動かさない）。体が重くゆっくり歩く
   ビントロング: { tier: 'small', radius: 4, speed: 0.45, idle: [6, 14], maxRise: 0.5, passGroup: true },
+  // 11/15 くにの指示（歩きの実証）: 表に無くて動いていなかった。どちらも 1 頭。ビーバーは陸ではのそのそ歩く
+  ホンドタヌキ: { tier: 'small', radius: 4, speed: 0.55, idle: [5, 12], maxRise: 0.5 },
+  アメリカビーバー: { tier: 'small', radius: 3, speed: 0.4, idle: [6, 14], maxRise: 0.5 },
   コツメカワウソ: { tier: 'habitat', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.4 },
   ケープペンギン: STILL,
 }
