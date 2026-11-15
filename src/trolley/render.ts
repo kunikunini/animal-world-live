@@ -5,6 +5,8 @@
  */
 import { CART_W, STEP, railY, sampleAt, themeAt, type ChaseKind, type Course, type Item, type ThiefKind, type ThrowerKind, type Theme } from './course'
 import { TROLLEY_WORLD_NAME, type TrolleyEnd } from './stations'
+import { blit, itemSprite } from './pixel'
+import { batSprite, collieSprite, huskySprite, kangarooSprite, lemurSprite, monkeySprite, moleSprite, mouseSprite, owlSprite, penguinSprite, sheepSprite, throwerSprite } from './animals'
 
 export interface Particle {
   x: number
@@ -204,6 +206,10 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
   let base = 1
   /** 1 ドットの大きさ（CSS px） */
   let dot = 1
+  /** ドット絵の 1 ドットの大きさ（画面のドットの整数倍。1 ドット ≒ 1.5u × scale） */
+  const pu = (scale = 1) => Math.max(1, Math.round((1.5 * s * scale) / dot)) * dot
+  /** 画面のドットの格子にそろえる */
+  const snap = (v: number) => Math.round(v / dot) * dot
   /** あとで細かいキャンバスに描く文字 */
   const hiQueue: Array<() => void> = []
   const font = getComputedStyle(document.body).getPropertyValue('--font-home').trim() || 'system-ui, sans-serif'
@@ -1180,194 +1186,30 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
 
   /** シベリアンハスキー（北）: 座って、しっぽを振る */
   function drawHusky(x: number, y: number, wag: number): void {
-    const k = s * 1.1
-    ctx.save()
-    ctx.translate(x - 14 * k, y - 10 * k)
-    ctx.rotate(-0.9 + wag * 0.35)
-    blob(0, -8 * k, 5 * k, 11 * k, '#59606e')
-    ctx.restore()
-    blob(x - 2 * k, y - 14 * k, 14 * k, 14 * k, '#59606e')
-    blob(x + 2 * k, y - 12 * k, 8 * k, 11 * k, '#f2f2f2')
-    blob(x + 4 * k, y - 34 * k, 11 * k, 10 * k, '#59606e')
-    blob(x + 7 * k, y - 31 * k, 8 * k, 7 * k, '#f2f2f2')
-    blob(x + 15 * k, y - 30 * k, 5 * k, 3.6 * k, '#f2f2f2')
-    blob(x + 19 * k, y - 31 * k, 2 * k, 1.6 * k, '#111')
-    ctx.fillStyle = '#59606e'
-    ctx.beginPath()
-    ctx.moveTo(x - 4 * k, y - 40 * k)
-    ctx.lineTo(x - 2 * k, y - 52 * k)
-    ctx.lineTo(x + 4 * k, y - 42 * k)
-    ctx.moveTo(x + 6 * k, y - 42 * k)
-    ctx.lineTo(x + 10 * k, y - 53 * k)
-    ctx.lineTo(x + 13 * k, y - 41 * k)
-    ctx.fill()
-    eye(x + 9 * k, y - 36 * k, 1.8 * k)
-    blob(x + 4 * k, y - 2 * k, 4 * k, 2.5 * k, '#f2f2f2')
-    blob(x + 12 * k, y - 2 * k, 4 * k, 2.5 * k, '#f2f2f2')
+    blit(ctx, huskySprite(wag > 0 ? 1 : 0), snap(x), snap(y), pu())
   }
 
   /** ワオキツネザル（ジャングル）: しましまのしっぽを立てて、手を振る */
   function drawLemur(x: number, y: number, wave: number): void {
-    const k = s * 1.1
-    ctx.lineCap = 'round'
-    for (let i = 0; i < 9; i++) {
-      const a = i / 9
-      ctx.strokeStyle = i % 2 ? '#222' : '#f4f4f0'
-      ctx.lineWidth = 6 * k
-      ctx.beginPath()
-      const t0 = a
-      const t1 = a + 1 / 9
-      const px = (t: number) => x - 10 * k - Math.sin(t * 2.6) * 14 * k
-      const py = (t: number) => y - 8 * k - t * 56 * k
-      ctx.moveTo(px(t0), py(t0))
-      ctx.lineTo(px(t1), py(t1))
-      ctx.stroke()
-    }
-    blob(x, y - 16 * k, 11 * k, 15 * k, '#9a9a9e')
-    blob(x + 1 * k, y - 13 * k, 7 * k, 10 * k, '#ececec')
-    blob(x + 2 * k, y - 37 * k, 9 * k, 8 * k, '#ececec')
-    blob(x + 10 * k, y - 34 * k, 5 * k, 3 * k, '#2a2a2a')
-    eye(x + 1 * k, y - 38 * k, 2.6 * k)
-    ctx.fillStyle = '#f5a623'
-    ctx.beginPath()
-    ctx.arc(x + 1 * k, y - 38 * k, 1.2 * k, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = '#9a9a9e'
-    ctx.lineWidth = 4 * k
-    ctx.beginPath()
-    ctx.moveTo(x + 8 * k, y - 22 * k)
-    ctx.lineTo(x + 18 * k, y - 34 * k - wave * 6 * k)
-    ctx.stroke()
-    ctx.lineCap = 'butt'
+    blit(ctx, lemurSprite(wave > 0.3 ? 1 : 0), snap(x), snap(y), pu())
   }
 
   /** カンガルー（南）: hop = 0..1 の跳ね上がり。dir = 1 で右向き */
   function drawKangaroo(x: number, y: number, hop: number, dir: number): void {
-    const k = s * 1.15
-    ctx.save()
-    ctx.translate(x, y - hop * 26 * k)
-    ctx.scale(dir, 1)
-    ctx.strokeStyle = '#b8743f'
-    ctx.lineCap = 'round'
-    ctx.lineWidth = 6 * k
-    ctx.beginPath()
-    ctx.moveTo(-8 * k, -12 * k)
-    ctx.quadraticCurveTo(-26 * k, -4 * k, -34 * k, 2 * k + hop * 6 * k)
-    ctx.stroke()
-    blob(-2 * k, -20 * k, 12 * k, 17 * k, '#c4834a', -0.25)
-    blob(2 * k, -16 * k, 6 * k, 10 * k, '#e9c9a0', -0.25)
-    blob(-2 * k, -3 * k, 11 * k, 5 * k, '#b8743f')
-    blob(8 * k, -1 * k, 9 * k, 2.6 * k, '#9c5f30')
-    blob(8 * k, -42 * k, 7 * k, 7 * k, '#c4834a')
-    blob(15 * k, -40 * k, 6 * k, 3.6 * k, '#c4834a')
-    blob(4 * k, -52 * k, 2.6 * k, 6 * k, '#b8743f', -0.3)
-    blob(9 * k, -53 * k, 2.6 * k, 6 * k, '#b8743f', 0.2)
-    eye(11 * k, -44 * k, 1.8 * k)
-    blob(20 * k, -41 * k, 1.4 * k, 1.2 * k, '#222')
-    ctx.lineWidth = 3 * k
-    ctx.beginPath()
-    ctx.moveTo(6 * k, -28 * k)
-    ctx.lineTo(12 * k, -24 * k + hop * 4 * k)
-    ctx.stroke()
-    ctx.lineCap = 'butt'
-    ctx.restore()
+    blit(ctx, kangarooSprite(), snap(x), snap(y - hop * 22 * s), pu(), { flip: dir < 0 })
   }
 
   /** ヒツジ（ふれあい）: もこもこ。足踏みする */
   function drawSheep(x: number, y: number, step: number): void {
-    const k = s * 1.1
-    ctx.fillStyle = '#3a3a3a'
-    ctx.fillRect(x - 10 * k, y - 10 * k + Math.max(0, step) * 2 * k, 3.4 * k, 10 * k)
-    ctx.fillRect(x + 8 * k, y - 10 * k + Math.max(0, -step) * 2 * k, 3.4 * k, 10 * k)
-    for (const [dx, dy, r] of [[-12, -18, 8], [-4, -22, 9], [6, -21, 9], [13, -17, 7], [0, -14, 10], [-9, -12, 7], [10, -12, 7]] as const) {
-      blob(x + dx * k, y + dy * k, r * k, r * k, '#f8f6ee')
-    }
-    blob(x + 19 * k, y - 22 * k, 6 * k, 8 * k, '#3a3a3a', 0.4)
-    blob(x + 14 * k, y - 27 * k, 5 * k, 2.4 * k, '#3a3a3a', -0.4)
-    eye(x + 21 * k, y - 24 * k, 1.5 * k)
-    blob(x + 17 * k, y - 29 * k, 5 * k, 4 * k, '#f8f6ee')
+    blit(ctx, sheepSprite(step > 0 ? 1 : 0), snap(x), snap(y), pu())
   }
 
   function drawPenguin(x: number, y: number, wave: number): void {
-    const k = s * 1.1
-    ctx.fillStyle = '#1f2633'
-    ctx.beginPath()
-    ctx.ellipse(x, y - 22 * k, 13 * k, 22 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#f7f7f2'
-    ctx.beginPath()
-    ctx.ellipse(x + 2 * k, y - 19 * k, 9 * k, 17 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#1f2633'
-    ctx.save()
-    ctx.translate(x - 11 * k, y - 26 * k)
-    ctx.rotate(-0.6 - wave)
-    ctx.beginPath()
-    ctx.ellipse(0, 8 * k, 4 * k, 11 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.restore()
-    ctx.fillStyle = '#f2a33a'
-    ctx.beginPath()
-    ctx.moveTo(x + 9 * k, y - 36 * k)
-    ctx.lineTo(x + 17 * k, y - 34 * k)
-    ctx.lineTo(x + 9 * k, y - 32 * k)
-    ctx.fill()
-    ctx.fillStyle = '#fff'
-    ctx.beginPath()
-    ctx.arc(x + 5 * k, y - 37 * k, 2.6 * k, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#111'
-    ctx.beginPath()
-    ctx.arc(x + 5.6 * k, y - 37 * k, 1.4 * k, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#f2a33a'
-    ctx.fillRect(x - 6 * k, y - 2 * k, 7 * k, 3 * k)
-    ctx.fillRect(x + 3 * k, y - 2 * k, 7 * k, 3 * k)
+    blit(ctx, penguinSprite(wave > 0.2 ? 1 : 0), snap(x), snap(y), pu())
   }
 
   function drawOwl(x: number, y: number, tilt: number): void {
-    const k = s * 1.1
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.rotate(tilt * 0.08)
-    ctx.fillStyle = '#9b7653'
-    ctx.beginPath()
-    ctx.ellipse(0, -20 * k, 15 * k, 20 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#e9d6b5'
-    ctx.beginPath()
-    ctx.ellipse(0, -15 * k, 9 * k, 12 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    for (const sx of [-6, 6]) {
-      ctx.fillStyle = '#fff'
-      ctx.beginPath()
-      ctx.arc(sx * k, -30 * k, 6 * k, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = '#f3b33d'
-      ctx.beginPath()
-      ctx.arc(sx * k, -30 * k, 4 * k, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = '#111'
-      ctx.beginPath()
-      ctx.arc(sx * k, -30 * k, 2 * k, 0, Math.PI * 2)
-      ctx.fill()
-    }
-    ctx.fillStyle = '#e39a2d'
-    ctx.beginPath()
-    ctx.moveTo(-2 * k, -25 * k)
-    ctx.lineTo(2 * k, -25 * k)
-    ctx.lineTo(0, -20 * k)
-    ctx.fill()
-    ctx.fillStyle = '#9b7653'
-    ctx.beginPath()
-    ctx.moveTo(-13 * k, -36 * k)
-    ctx.lineTo(-9 * k, -45 * k)
-    ctx.lineTo(-5 * k, -37 * k)
-    ctx.moveTo(13 * k, -36 * k)
-    ctx.lineTo(9 * k, -45 * k)
-    ctx.lineTo(5 * k, -37 * k)
-    ctx.fill()
-    ctx.restore()
+    blit(ctx, owlSprite(tilt > 0 ? 1 : 0), snap(x), snap(y), pu())
   }
 
   const railYMain = (x: number): number | null => {
@@ -1527,7 +1369,10 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     gl.addColorStop(1, `rgba(${glow},0)`)
     ctx.fillStyle = gl
     ctx.fillRect(x - 26 * s, y - 26 * s, 52 * s, 52 * s)
-    drawItemIcon(ctx, it.kind, x, y, 13 * s, t + it.x)
+    // 1 ドットを画面のドットの整数倍に（にじまないように）
+    const spr = itemSprite(it.kind)
+    const unit = Math.max(1, Math.round((26 * s) / Math.max(spr.width, spr.height) / dot)) * dot
+    drawItemIcon(ctx, it.kind, Math.round(x / dot) * dot, Math.round(y / dot) * dot, 13 * s, t + it.x, unit)
   }
 
   // ---- 生き物 ----
@@ -1563,46 +1408,8 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     ctx.clip()
     const k = s * 1.15
     const bodyY = gy + (1 - up) * 46 * k
-    const wob = m.state === 'laugh' ? Math.sin(t * 22) * 2 * k : 0
-    ctx.fillStyle = '#4a4248'
-    ctx.beginPath()
-    ctx.ellipse(x, bodyY - 20 * k + wob, 18 * k, 24 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#5b525a'
-    ctx.beginPath()
-    ctx.ellipse(x - 4 * k, bodyY - 28 * k + wob, 9 * k, 10 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    // 鼻
-    ctx.fillStyle = '#ff9fb3'
-    ctx.beginPath()
-    ctx.ellipse(x - 12 * k, bodyY - 30 * k + wob, 6 * k, 5 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    // 目（細い線）
-    ctx.strokeStyle = '#111'
-    ctx.lineWidth = 2 * k
-    ctx.beginPath()
-    if (m.state === 'laugh') {
-      ctx.arc(x - 3 * k, bodyY - 36 * k + wob, 3 * k, Math.PI * 1.1, Math.PI * 1.9)
-    } else if (m.state === 'pout') {
-      ctx.moveTo(x - 6 * k, bodyY - 37 * k)
-      ctx.lineTo(x, bodyY - 35 * k)
-    } else {
-      ctx.moveTo(x - 5 * k, bodyY - 36 * k)
-      ctx.lineTo(x - 1 * k, bodyY - 36 * k)
-    }
-    ctx.stroke()
-    // 大きなピンクの手
-    const throwA = m.state === 'throw' ? -1.4 + Math.min(1, m.t / 0.2) * 1.6 : m.state === 'laugh' ? Math.sin(t * 16) * 0.4 : 0
-    for (const side of [-1, 1]) {
-      ctx.save()
-      ctx.translate(x + side * 15 * k, bodyY - 14 * k + wob)
-      ctx.rotate(side === -1 ? throwA : -throwA * 0.3)
-      ctx.fillStyle = '#ffb3c1'
-      ctx.beginPath()
-      ctx.ellipse(side * 3 * k, -6 * k, 7 * k, 9 * k, 0, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.restore()
-    }
+    const st = m.state === 'laugh' || m.state === 'pout' || m.state === 'throw' ? m.state : 'idle'
+    blit(ctx, moleSprite(st, Math.sin(t * 22) > 0 ? 1 : 0), snap(x), snap(bodyY + 4 * k), pu(1.15))
     ctx.restore()
   }
 
@@ -1614,89 +1421,9 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     ctx.clip()
     const k = s * 1.15
     const by = gy + (1 - up) * 56 * k
-    const wob = m.state === 'laugh' ? Math.sin(t * 22) * 2 * k : 0
-    const throwA = m.state === 'throw' ? -1.4 + Math.min(1, m.t / 0.2) * 1.6 : m.state === 'laugh' ? Math.sin(t * 16) * 0.4 : 0
-    const happy = m.state === 'laugh'
-    const pout = m.state === 'pout'
-    const face = (ex: number, ey: number): void => {
-      ctx.strokeStyle = '#111'
-      ctx.lineWidth = 2 * k
-      ctx.beginPath()
-      if (happy) ctx.arc(ex, ey + 1 * k, 3 * k, Math.PI * 1.1, Math.PI * 1.9)
-      else if (pout) {
-        ctx.moveTo(ex - 3 * k, ey - 1 * k)
-        ctx.lineTo(ex + 3 * k, ey + 1 * k)
-      } else {
-        ctx.stroke()
-        eye(ex, ey, 2.2 * k)
-        return
-      }
-      ctx.stroke()
-    }
-    if (m.kind === 'beaver') {
-      // 平たいしっぽ
-      ctx.save()
-      ctx.translate(x + 14 * k, by - 10 * k)
-      ctx.rotate(0.5 + (happy ? Math.sin(t * 20) * 0.3 : 0))
-      blob(8 * k, 0, 12 * k, 5 * k, '#4a3424')
-      ctx.restore()
-      blob(x, by - 22 * k + wob, 17 * k, 22 * k, '#8a5a34')
-      blob(x - 2 * k, by - 18 * k + wob, 10 * k, 14 * k, '#b07a4c')
-      blob(x - 6 * k, by - 42 * k + wob, 12 * k, 11 * k, '#8a5a34')
-      blob(x - 15 * k, by - 39 * k + wob, 6 * k, 5 * k, '#b07a4c')
-      blob(x - 19 * k, by - 42 * k + wob, 2.6 * k, 2 * k, '#222')
-      ctx.fillStyle = '#f08a2a'
-      ctx.fillRect(x - 17 * k, by - 36 * k + wob, 5 * k, 5 * k)
-      blob(x + 1 * k, by - 51 * k + wob, 3 * k, 3 * k, '#6a4426')
-      face(x - 8 * k, by - 45 * k + wob)
-      for (const side of [-1, 1]) {
-        ctx.save()
-        ctx.translate(x + side * 12 * k, by - 22 * k + wob)
-        ctx.rotate(side === -1 ? throwA : -throwA * 0.3)
-        blob(side * 3 * k, -6 * k, 5 * k, 8 * k, '#6a4426')
-        ctx.restore()
-      }
-    } else if (m.kind === 'goat') {
-      // シバヤギ: 白い体、つの、あごひげ。頭で干し草をすくって投げる
-      blob(x + 4 * k, by - 18 * k + wob, 20 * k, 15 * k, '#f4f1ea')
-      ctx.save()
-      ctx.translate(x - 12 * k, by - 28 * k + wob)
-      ctx.rotate(throwA * 0.6)
-      blob(-4 * k, -10 * k, 9 * k, 11 * k, '#f4f1ea')
-      blob(-10 * k, -4 * k, 5 * k, 4 * k, '#e8ddd0')
-      ctx.fillStyle = '#ddd2c2'
-      ctx.beginPath()
-      ctx.moveTo(-8 * k, 2 * k)
-      ctx.lineTo(-4 * k, 12 * k)
-      ctx.lineTo(-2 * k, 2 * k)
-      ctx.fill()
-      ctx.strokeStyle = '#9a8a70'
-      ctx.lineWidth = 3 * k
-      ctx.lineCap = 'round'
-      ctx.beginPath()
-      ctx.moveTo(-2 * k, -18 * k)
-      ctx.quadraticCurveTo(4 * k, -26 * k, 8 * k, -22 * k)
-      ctx.stroke()
-      ctx.lineCap = 'butt'
-      blob(4 * k, -14 * k, 6 * k, 2.6 * k, '#f4f1ea', 0.5)
-      face(-6 * k, -13 * k)
-      ctx.restore()
-    } else {
-      // マーラ: 長い足、うさぎのような顔、白いおしり
-      blob(x + 2 * k, by - 22 * k + wob, 18 * k, 14 * k, '#9a7a58')
-      blob(x + 14 * k, by - 18 * k + wob, 8 * k, 8 * k, '#f4efe4')
-      blob(x - 2 * k, by - 18 * k + wob, 10 * k, 8 * k, '#c9b08a')
-      blob(x - 12 * k, by - 38 * k + wob, 9 * k, 10 * k, '#9a7a58')
-      blob(x - 18 * k, by - 35 * k + wob, 5 * k, 4 * k, '#b89a74')
-      blob(x - 9 * k, by - 52 * k + wob, 3 * k, 7 * k, '#8a6a4a', -0.2)
-      blob(x - 4 * k, by - 51 * k + wob, 3 * k, 7 * k, '#8a6a4a', 0.2)
-      face(x - 13 * k, by - 40 * k + wob)
-      ctx.save()
-      ctx.translate(x + 8 * k, by - 12 * k + wob)
-      ctx.rotate(-throwA * 0.8)
-      blob(6 * k, 4 * k, 4 * k, 12 * k, '#8a6a4a', -0.6)
-      ctx.restore()
-    }
+    const st = m.state === 'laugh' || m.state === 'pout' || m.state === 'throw' ? m.state : 'idle'
+    const kind = m.kind === 'goat' ? 'goat' : m.kind === 'mara' ? 'mara' : 'beaver'
+    blit(ctx, throwerSprite(kind, st, Math.sin(t * 22) > 0 ? 1 : 0), snap(x), snap(by), pu(1.15))
     ctx.restore()
   }
 
@@ -1959,58 +1686,8 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
 
   function drawMouseAt(x: number, y: number, flip: number, t: number, carry: Item['kind'] | null, run: boolean): void {
     const k = s * 1.05
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(flip, 1)
-    // しっぽ
-    ctx.strokeStyle = '#d99aa2'
-    ctx.lineWidth = 2 * k
-    ctx.beginPath()
-    ctx.moveTo(-12 * k, -6 * k)
-    ctx.quadraticCurveTo(-26 * k, -6 * k + Math.sin(t * 10) * 6 * k, -30 * k, -16 * k)
-    ctx.stroke()
-    ctx.fillStyle = '#9a9198'
-    ctx.beginPath()
-    ctx.ellipse(0, -9 * k, 14 * k, 9 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.beginPath()
-    ctx.ellipse(12 * k, -13 * k, 8 * k, 7 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    // 耳
-    ctx.fillStyle = '#9a9198'
-    ctx.beginPath()
-    ctx.arc(9 * k, -22 * k, 6 * k, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#f2b6c0'
-    ctx.beginPath()
-    ctx.arc(9 * k, -22 * k, 3.6 * k, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#111'
-    ctx.beginPath()
-    ctx.arc(15 * k, -15 * k, 1.8 * k, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#ff8fa3'
-    ctx.beginPath()
-    ctx.arc(20 * k, -12 * k, 2 * k, 0, Math.PI * 2)
-    ctx.fill()
-    // ひげ
-    ctx.strokeStyle = 'rgba(40,40,40,0.6)'
-    ctx.lineWidth = 0.8 * k
-    ctx.beginPath()
-    ctx.moveTo(19 * k, -12 * k)
-    ctx.lineTo(27 * k, -15 * k)
-    ctx.moveTo(19 * k, -11 * k)
-    ctx.lineTo(27 * k, -10 * k)
-    ctx.stroke()
-    // 足
-    if (run) {
-      const ph = Math.sin(t * 30)
-      ctx.fillStyle = '#e5a7b1'
-      ctx.fillRect(-6 * k + ph * 3 * k, -2 * k, 4 * k, 3 * k)
-      ctx.fillRect(6 * k - ph * 3 * k, -2 * k, 4 * k, 3 * k)
-    }
-    if (carry) drawItemIcon(ctx, carry, 22 * k, -26 * k, 8 * k, t)
-    ctx.restore()
+    blit(ctx, mouseSprite(run, Math.sin(t * 30) > 0 ? 1 : 0), snap(x), snap(y), pu(1.05), { flip: flip < 0 })
+    if (carry) drawItemIcon(ctx, carry, x + flip * 22 * k, y - 26 * k, 8 * k, t)
   }
 
   function drawMouse(m: Mouse, t: number, cart: ViewState['cart']): void {
@@ -2069,51 +1746,12 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
 
   function drawMonkeyAt(x: number, y: number, flip: number, t: number, carry: Item['kind'] | null, run: boolean, hang: boolean): void {
     const k = s * 1.05
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(flip, 1)
-    // 長いしっぽ（先が黒い）
-    ctx.strokeStyle = '#c9a050'
-    ctx.lineCap = 'round'
-    ctx.lineWidth = 3 * k
-    ctx.beginPath()
-    ctx.moveTo(-10 * k, -8 * k)
-    ctx.bezierCurveTo(-30 * k, -4 * k, -34 * k, -30 * k + Math.sin(t * 6) * 6 * k, -24 * k, -38 * k)
-    ctx.stroke()
-    ctx.strokeStyle = '#2a2a2a'
-    ctx.beginPath()
-    ctx.moveTo(-26 * k, -34 * k + Math.sin(t * 6) * 5 * k)
-    ctx.lineTo(-24 * k, -38 * k)
-    ctx.stroke()
-    // 体（黄色い腕・足、灰色の背中）
-    blob(0, -10 * k, 12 * k, 9 * k, '#9a9488')
-    blob(4 * k, -6 * k, 8 * k, 6 * k, '#f2c84a')
-    if (hang) {
-      ctx.strokeStyle = '#f2c84a'
-      ctx.lineWidth = 3.4 * k
-      ctx.beginPath()
-      ctx.moveTo(6 * k, -14 * k)
-      ctx.lineTo(2 * k, -28 * k)
-      ctx.stroke()
-    }
-    // 頭: 白いお面、黒い口
-    blob(11 * k, -18 * k, 8 * k, 8 * k, '#6a645a')
-    blob(13 * k, -16 * k, 6 * k, 6.4 * k, '#f8f4ea')
-    blob(16 * k, -12 * k, 3.4 * k, 2.6 * k, '#2a2a2a')
-    eye(14 * k, -18 * k, 1.7 * k)
-    ctx.fillStyle = '#f8f4ea'
-    ctx.beginPath()
-    ctx.arc(6 * k, -20 * k, 3 * k, 0, Math.PI * 2)
-    ctx.fill()
-    if (run) {
-      const ph = Math.sin(t * 30)
-      ctx.fillStyle = '#f2c84a'
-      ctx.fillRect(-6 * k + ph * 3 * k, -2 * k, 4 * k, 3 * k)
-      ctx.fillRect(6 * k - ph * 3 * k, -2 * k, 4 * k, 3 * k)
-    }
-    ctx.lineCap = 'butt'
-    if (carry) drawItemIcon(ctx, carry, 22 * k, -28 * k, 8 * k, t)
-    ctx.restore()
+    const u = pu(1.05)
+    const spr = monkeySprite(run, hang, Math.sin(t * 24) > 0 ? 1 : 0)
+    // ぶら下がる時は、上の手がつるの先（y - 26s）に来るように
+    const by = hang ? y - 26 * s + spr.height * u : y
+    blit(ctx, spr, snap(x), snap(by), u, { flip: flip < 0 })
+    if (carry) drawItemIcon(ctx, carry, x + flip * 20 * k, y - 34 * k, 8 * k, t)
   }
 
   /** かけっこの相手（カンガルー・ボーダーコリー）。線路の横の地面を走る */
@@ -2140,37 +1778,7 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
 
   /** ボーダーコリー（ふれあい）: 白黒。run = 走る足の位相、wag = しっぽ */
   function drawCollie(x: number, y: number, run: number, wag: number): void {
-    const k = s * 1.1
-    const lg = Math.sin(run)
-    ctx.strokeStyle = '#222'
-    ctx.lineCap = 'round'
-    ctx.lineWidth = 4 * k
-    ctx.beginPath()
-    ctx.moveTo(x - 10 * k, y - 14 * k)
-    ctx.lineTo(x - 10 * k - lg * 8 * k, y - 1 * k)
-    ctx.moveTo(x + 10 * k, y - 14 * k)
-    ctx.lineTo(x + 10 * k + lg * 8 * k, y - 1 * k)
-    ctx.stroke()
-    ctx.strokeStyle = '#f4f4f0'
-    ctx.beginPath()
-    ctx.moveTo(x + 12 * k, y - 14 * k)
-    ctx.lineTo(x + 12 * k - lg * 8 * k, y - 1 * k)
-    ctx.stroke()
-    ctx.save()
-    ctx.translate(x - 18 * k, y - 22 * k)
-    ctx.rotate(-0.4 + wag * 0.4 + lg * 0.15)
-    blob(-10 * k, 0, 12 * k, 4 * k, '#222')
-    blob(-20 * k, 0, 4 * k, 3.4 * k, '#f4f4f0')
-    ctx.restore()
-    blob(x, y - 22 * k, 20 * k, 10 * k, '#222')
-    blob(x + 12 * k, y - 20 * k, 8 * k, 8 * k, '#f4f4f0')
-    blob(x + 20 * k, y - 32 * k, 9 * k, 8 * k, '#222')
-    blob(x + 23 * k, y - 30 * k, 4 * k, 7 * k, '#f4f4f0')
-    blob(x + 29 * k, y - 29 * k, 5 * k, 3.4 * k, '#f4f4f0')
-    blob(x + 33 * k, y - 30 * k, 1.8 * k, 1.6 * k, '#222')
-    blob(x + 15 * k, y - 39 * k, 3.4 * k, 4.4 * k, '#222', -0.5)
-    eye(x + 23 * k, y - 35 * k, 1.6 * k)
-    ctx.lineCap = 'butt'
+    blit(ctx, collieSprite(Math.sin(run) > 0 || wag > 0.5 ? 1 : 0), snap(x), snap(y), pu(1.1))
   }
 
   /** 天井からぶら下がるナマケモノ。ハイタッチすると笑い、しなければ手を振る */
@@ -2284,25 +1892,7 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
   }
 
   function drawBat(b: Bat, t: number): void {
-    const x = X(b.x)
-    const y = Y(b.y)
-    const f = Math.sin(t * 26 + b.phase)
-    const k = s
-    ctx.fillStyle = '#2a1f3d'
-    ctx.beginPath()
-    ctx.ellipse(x, y, 6 * k, 5 * k, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.beginPath()
-    ctx.moveTo(x - 3 * k, y)
-    ctx.quadraticCurveTo(x - 12 * k, y - 10 * k * f, x - 20 * k, y + 2 * k * f)
-    ctx.quadraticCurveTo(x - 12 * k, y + 2 * k, x - 3 * k, y + 2 * k)
-    ctx.moveTo(x + 3 * k, y)
-    ctx.quadraticCurveTo(x + 12 * k, y - 10 * k * f, x + 20 * k, y + 2 * k * f)
-    ctx.quadraticCurveTo(x + 12 * k, y + 2 * k, x + 3 * k, y + 2 * k)
-    ctx.fill()
-    ctx.fillStyle = '#ffe36b'
-    ctx.fillRect(x - 3 * k, y - 2 * k, 1.6 * k, 1.6 * k)
-    ctx.fillRect(x + 1.4 * k, y - 2 * k, 1.6 * k, 1.6 * k)
+    blit(ctx, batSprite(Math.sin(t * 26 + b.phase) > 0 ? 1 : 0), snap(X(b.x)), snap(Y(b.y)), pu(), { anchor: 'center' })
   }
 
   // ---- トロッコと主人公 ----
@@ -2825,174 +2415,22 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
   }
 }
 
-/** 拾うものの絵（HUD の数の横でも使う） */
-export function drawItemIcon(ctx: CanvasRenderingContext2D, kind: Item['kind'], x: number, y: number, r: number, t: number): void {
-  ctx.save()
-  ctx.translate(x, y)
-  if (kind === 'shell') {
-    ctx.rotate(Math.sin(t * 2) * 0.15)
-    ctx.fillStyle = '#ffb3c6'
-    ctx.beginPath()
-    ctx.moveTo(0, r * 0.9)
-    for (let i = 0; i <= 8; i++) {
-      const a = Math.PI + (i / 8) * Math.PI
-      const rr = r * (i % 2 ? 1.0 : 0.9)
-      ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr * 0.95 + r * 0.1)
-    }
-    ctx.closePath()
-    ctx.fill()
-    ctx.strokeStyle = '#e07a97'
-    ctx.lineWidth = Math.max(1, r * 0.1)
-    for (let i = 1; i < 8; i += 1.5) {
-      const a = Math.PI + (i / 8) * Math.PI
-      ctx.beginPath()
-      ctx.moveTo(0, r * 0.85)
-      ctx.lineTo(Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.8 + r * 0.1)
-      ctx.stroke()
-    }
-    ctx.fillStyle = '#ffd6e2'
-    ctx.fillRect(-r * 0.3, r * 0.7, r * 0.6, r * 0.3)
-  } else if (kind === 'gem') {
-    ctx.rotate(Math.sin(t * 1.5) * 0.1)
-    ctx.fillStyle = '#a78bff'
-    ctx.beginPath()
-    ctx.moveTo(0, -r)
-    ctx.lineTo(r * 0.8, -r * 0.2)
-    ctx.lineTo(0, r)
-    ctx.lineTo(-r * 0.8, -r * 0.2)
-    ctx.closePath()
-    ctx.fill()
-    ctx.fillStyle = '#e1d6ff'
-    ctx.beginPath()
-    ctx.moveTo(0, -r)
-    ctx.lineTo(r * 0.8, -r * 0.2)
-    ctx.lineTo(0, -r * 0.05)
-    ctx.closePath()
-    ctx.fill()
-    ctx.fillStyle = '#6f4fe0'
-    ctx.beginPath()
-    ctx.moveTo(-r * 0.8, -r * 0.2)
-    ctx.lineTo(0, -r * 0.05)
-    ctx.lineTo(0, r)
-    ctx.closePath()
-    ctx.fill()
-  } else if (kind === 'snow') {
-    ctx.rotate(t * 0.6)
-    ctx.strokeStyle = '#ffffff'
-    ctx.lineCap = 'round'
-    ctx.lineWidth = Math.max(1.5, r * 0.18)
-    ctx.beginPath()
-    for (let i = 0; i < 6; i++) {
-      const a = (i * Math.PI) / 3
-      const ca = Math.cos(a)
-      const sa = Math.sin(a)
-      ctx.moveTo(0, 0)
-      ctx.lineTo(ca * r, sa * r)
-      const bx = ca * r * 0.6
-      const by = sa * r * 0.6
-      ctx.moveTo(bx, by)
-      ctx.lineTo(bx + Math.cos(a + 0.7) * r * 0.3, by + Math.sin(a + 0.7) * r * 0.3)
-      ctx.moveTo(bx, by)
-      ctx.lineTo(bx + Math.cos(a - 0.7) * r * 0.3, by + Math.sin(a - 0.7) * r * 0.3)
-    }
-    ctx.stroke()
-    ctx.strokeStyle = '#8fd0ff'
-    ctx.lineWidth = Math.max(1, r * 0.07)
-    ctx.stroke()
-    ctx.lineCap = 'butt'
-  } else if (kind === 'fruit') {
-    // マンゴーのような丸い実と葉
-    ctx.rotate(Math.sin(t * 2) * 0.15)
-    const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r)
-    g.addColorStop(0, '#ffe07a')
-    g.addColorStop(0.6, '#ff9a3a')
-    g.addColorStop(1, '#e8502a')
-    ctx.fillStyle = g
-    ctx.beginPath()
-    ctx.ellipse(0, r * 0.1, r * 0.85, r * 0.95, 0.3, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#4caf50'
-    ctx.beginPath()
-    ctx.ellipse(r * 0.35, -r * 0.85, r * 0.45, r * 0.2, -0.5, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = '#5a3a1a'
-    ctx.lineWidth = Math.max(1, r * 0.12)
-    ctx.beginPath()
-    ctx.moveTo(0, -r * 0.8)
-    ctx.lineTo(0.05 * r, -r * 1.05)
-    ctx.stroke()
-  } else if (kind === 'star') {
-    ctx.rotate(Math.sin(t * 2) * 0.3)
-    ctx.fillStyle = '#ffd84a'
-    ctx.beginPath()
-    for (let i = 0; i < 10; i++) {
-      const a = -Math.PI / 2 + (i * Math.PI) / 5
-      const rr = i % 2 ? r * 0.45 : r * 1.05
-      if (i === 0) ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr)
-      else ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr)
-    }
-    ctx.closePath()
-    ctx.fill()
-    ctx.strokeStyle = '#e8a020'
-    ctx.lineWidth = Math.max(1, r * 0.1)
-    ctx.stroke()
-    ctx.fillStyle = '#fff6c0'
-    ctx.beginPath()
-    ctx.arc(-r * 0.15, -r * 0.2, r * 0.18, 0, Math.PI * 2)
-    ctx.fill()
-  } else if (kind === 'clover') {
-    ctx.rotate(Math.sin(t * 2) * 0.2)
-    ctx.fillStyle = '#4fbf4a'
-    for (let i = 0; i < 4; i++) {
-      const a = (i * Math.PI) / 2 + Math.PI / 4
-      const cx = Math.cos(a) * r * 0.55
-      const cy = Math.sin(a) * r * 0.55
-      const ox = Math.cos(a + Math.PI / 2) * r * 0.22
-      const oy = Math.sin(a + Math.PI / 2) * r * 0.22
-      // ハートの形の葉（丸 2 つ + 中心へのとがり）
-      ctx.beginPath()
-      ctx.arc(cx + ox, cy + oy, r * 0.3, 0, Math.PI * 2)
-      ctx.arc(cx - ox, cy - oy, r * 0.3, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.beginPath()
-      ctx.moveTo(cx + ox * 2.1, cy + oy * 2.1)
-      ctx.lineTo(0, 0)
-      ctx.lineTo(cx - ox * 2.1, cy - oy * 2.1)
-      ctx.fill()
-    }
-    ctx.strokeStyle = '#2f8a2c'
-    ctx.lineWidth = Math.max(1, r * 0.08)
-    ctx.beginPath()
-    for (let i = 0; i < 4; i++) {
-      const a = (i * Math.PI) / 2 + Math.PI / 4
-      ctx.moveTo(0, 0)
-      ctx.lineTo(Math.cos(a) * r * 0.75, Math.sin(a) * r * 0.75)
-    }
-    ctx.stroke()
-    ctx.fillStyle = '#8fe07a'
-    ctx.beginPath()
-    ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = '#3a8a36'
-    ctx.lineWidth = Math.max(1, r * 0.12)
-    ctx.beginPath()
-    ctx.moveTo(0, 0)
-    ctx.quadraticCurveTo(r * 0.2, r * 0.7, r * 0.5, r * 1.1)
-    ctx.stroke()
-  } else {
-    ctx.rotate(-0.6 + Math.sin(t * 2.5) * 0.25)
+/** 拾うものの絵（HUD の数の横でも使う）。ドット絵を r（半径ほど）の大きさで置く */
+export function drawItemIcon(ctx: CanvasRenderingContext2D, kind: Item['kind'], x: number, y: number, r: number, t: number, unit?: number): void {
+  const spr = itemSprite(kind)
+  const u = unit ?? (r * 2) / Math.max(spr.width, spr.height)
+  blit(ctx, spr, x, y, u, { anchor: 'center' })
+  // ときどき、きらりと光る
+  const tw = (t * 0.7) % 1
+  if (tw < 0.18) {
+    const a = Math.sin((tw / 0.18) * Math.PI)
+    ctx.save()
+    ctx.globalAlpha *= a
     ctx.fillStyle = '#ffffff'
-    ctx.beginPath()
-    ctx.moveTo(0, -r * 1.2)
-    ctx.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.15, r * 1.1)
-    ctx.quadraticCurveTo(-r * 0.7, -r * 0.1, 0, -r * 1.2)
-    ctx.fill()
-    ctx.strokeStyle = '#b9c7e6'
-    ctx.lineWidth = Math.max(1, r * 0.12)
-    ctx.beginPath()
-    ctx.moveTo(0, -r * 1.0)
-    ctx.quadraticCurveTo(r * 0.15, 0, r * 0.1, r * 1.3)
-    ctx.stroke()
+    const px = x - spr.width * u * 0.22
+    const py = y - spr.height * u * 0.22
+    ctx.fillRect(px - u * 0.5, py - u * 2.5, u, u * 5)
+    ctx.fillRect(px - u * 2.5, py - u * 0.5, u * 5, u)
+    ctx.restore()
   }
-  ctx.restore()
 }
