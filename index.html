@@ -43,7 +43,14 @@
     <!-- トロッコ（?trolley=）は別のページとして読み直すので、本体（JS）が届くまでのあいだ HTML のホーム画面が一瞬見えていた（11/15 くに）。
          駅で閉じた幕と同じ色（src/ui/iris.ts の CURTAIN）だけにしておき、坑道の画面（src/trolley/trolley.css）に引き継ぐ -->
     <script>
-      if (/[?&]trolley=/.test(location.search)) document.documentElement.classList.add('is-trolley')
+      if (/[?&]trolley=/.test(location.search)) {
+        document.documentElement.classList.add('is-trolley')
+        // トロッコの文字はドットのフォント（DotGothic16、Google Fonts・SIL OFL）
+        var f = document.createElement('link')
+        f.rel = 'stylesheet'
+        f.href = 'https://fonts.googleapis.com/css2?family=DotGothic16&display=swap'
+        document.head.appendChild(f)
+      }
     </script>
     <style>
       html.is-trolley body { background: #13192b; }

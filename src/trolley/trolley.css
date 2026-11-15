@@ -9,7 +9,9 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
   overflow: hidden;
   background: #120d0a;
   color: #fff6e6;
-  font-family: var(--font-home);
+  font-family: 'DotGothic16', var(--font-home);
+  /* ドットのフォントは太字が無い。にせの太字でにじませない */
+  font-synthesis: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -163,8 +165,7 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
 .tr-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #5a3a1c; }
 .tr-btn.tr-primary { background: #ffcc33; }
 .tr-btn:focus-visible, .tr-link:focus-visible, .tr-skip:focus-visible, .tr-down:focus-visible { outline: 3px solid #2f8fd8; outline-offset: 3px; }
-.tr-how { margin: 12px 0 4px; padding: 0; list-style: none; font-size: 13px; font-weight: 700; line-height: 1.7; color: #5a3a1c; }
-.tr-how .tr-note { color: #8a6a4e; }
+.tr-note { margin: 8px 0 0; font-size: 13px; color: #8a6a4e; }
 .tr-best, .tr-rotate { margin: 6px 0 0; font-size: 13px; font-weight: 800; color: #8a5a2e; }
 .tr-link { margin-top: 10px; padding: 8px; border: 0; background: none; color: #8a5a2e; font: inherit; font-size: 14px; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .tr-items { display: flex; justify-content: center; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -191,10 +192,20 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
 .tr-score.is-pop { animation: tr-pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
 
 /* こぐレバー（左下。押している間こぐ） */
-.tr-lever {
+/* レバーと、その右の速さのメーター（押している間メーターがのびる） */
+.tr-lever-wrap {
   position: absolute;
   left: max(16px, env(safe-area-inset-left));
   bottom: max(18px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.tr-lever-wrap[hidden] { display: none; }
+.tr-speed { position: relative; width: 14px; height: 96px; border: 3px solid #fff; border-radius: 4px; background: rgba(20, 12, 6, 0.6); overflow: hidden; }
+.tr-speed i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(0deg, #5bc7f0, #ffd966 60%, #ff7a2f); }
+.tr-lever {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -214,7 +225,6 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
   cursor: pointer;
   touch-action: none;
 }
-.tr-lever[hidden] { display: none; }
 .tr-lever i {
   position: absolute;
   left: 50%;
@@ -233,6 +243,84 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
 .tr-lever.is-on i { animation: tr-pump 0.32s ease-in-out infinite alternate; }
 @keyframes tr-pump { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
 .tr-lever:focus-visible { outline: 3px solid #2f8fd8; outline-offset: 3px; }
+/* 押していない時は、押してほしいことが分かるようにゆっくり光る */
+.tr-lever:not(.is-on) { animation: tr-lever-idle 1.6s ease-in-out infinite; }
+@keyframes tr-lever-idle { 50% { box-shadow: 0 6px 0 #8c2414, 0 0 0 6px rgba(255, 217, 102, 0.55), 0 10px 24px rgba(0, 0, 0, 0.4); } }
+.tr-lever.is-on span::after { content: ' ≫'; }
+.tr-lever span { font-size: 12px; white-space: nowrap; letter-spacing: -0.04em; }
+
+/* はじめの画面の左上: もどる */
+.tr-back {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 16px 6px 10px;
+  border: 3px solid #5a3a1c;
+  border-radius: 14px;
+  background: #fff8e8;
+  color: #3b2414;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 #5a3a1c;
+  cursor: pointer;
+}
+.tr-back svg { width: 22px; height: 22px; }
+.tr-back:active { transform: translateY(3px); box-shadow: 0 1px 0 #5a3a1c; }
+.tr-back[hidden] { display: none; }
+.tr-back:focus-visible { outline: 3px solid #2f8fd8; outline-offset: 3px; }
+
+/* ターボのゲージ（上の帯）。アイテムでたまり、いっぱいで光る */
+.tr-turbo { display: flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: rgba(20, 12, 6, 0.55); border: 2px solid rgba(255, 217, 102, 0.6); }
+.tr-turbo b { font-size: 12px; font-weight: 900; color: #ffe36b; }
+.tr-turbo-bar { position: relative; width: 70px; height: 10px; border: 2px solid #fff6e6; border-radius: 2px; background: rgba(0, 0, 0, 0.5); overflow: hidden; }
+.tr-turbo-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: repeating-linear-gradient(90deg, #ffd966 0 5px, #ffb020 5px 7px); }
+.tr-turbo.is-on { border-color: #fff; background: rgba(255, 176, 32, 0.55); animation: tr-turbo-on 0.3s steps(2) infinite; }
+.tr-turbo.is-on .tr-turbo-bar i { background: repeating-linear-gradient(90deg, #fff6a6 0 5px, #9cf0ff 5px 7px); }
+@keyframes tr-turbo-on { 50% { border-color: #ffd966; } }
+.tr-turbo.is-drain { animation: tr-drain 0.5s steps(4); }
+@keyframes tr-drain { 0%, 50% { border-color: #ff6b8a; background: rgba(160, 30, 50, 0.7); } }
+
+/* ゲーム画面の説明: 止めて、上に札、やることを指でさす */
+.tr-coach { position: absolute; inset: 0; pointer-events: none; }
+/* 暗幕は目あて（z-index 5）の下、札と指は上 */
+.tr-coach::before { content: ''; position: absolute; inset: 0; z-index: 4; background: rgba(8, 6, 14, 0.45); }
+.tr-coach-card, .tr-coach-hand { z-index: 6; }
+.tr-coach[hidden] { display: none; }
+.tr-coach-card {
+  position: absolute;
+  left: 50%;
+  top: calc(max(10px, env(safe-area-inset-top)) + 58px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 12px 22px;
+  border: 3px solid #5a3a1c;
+  border-radius: 6px;
+  background: #fff8e8;
+  color: #3b2414;
+  text-align: center;
+  box-shadow: 0 0 0 3px #fff8e8, 0 0 0 6px #5a3a1c, 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+.tr-coach-text { margin: 0; font-size: 17px; line-height: 1.55; }
+.tr-coach-ok { margin: 6px 0 0; font-size: 13px; color: #8a5a2e; }
+.tr-coach-ok[hidden] { display: none; }
+.tr-coach-hand { position: absolute; width: 0; height: 0; }
+.tr-coach-hand b { position: absolute; left: -34px; top: -34px; width: 68px; height: 68px; border: 4px solid #ffe36b; border-radius: 50%; box-sizing: border-box; animation: tr-ring 1s ease-out infinite; }
+.tr-coach-hand b::after { content: '👆'; position: absolute; left: 22px; top: 30px; font-size: 40px; line-height: 1; animation: tr-poke 1s ease-in-out infinite; }
+.tr-coach-hand span { position: absolute; left: 50%; top: 82px; transform: translateX(-50%); padding: 3px 10px; border-radius: 4px; background: #ffe36b; color: #3b2414; font-size: 15px; white-space: nowrap; }
+.tr-coach-hand span:empty { display: none; }
+.tr-coach[data-k='lever'] .tr-coach-hand span, .tr-coach[data-k='down'] .tr-coach-hand span { top: -78px; }
+.tr-coach[data-k='turbo'] .tr-coach-hand { display: none; }
+@keyframes tr-ring { from { transform: scale(0.6); opacity: 1; } to { transform: scale(1.3); opacity: 0.2; } }
+@keyframes tr-poke { 50% { transform: translate(-4px, -8px); } }
+.is-coach { z-index: 5; }
+.tr-turbo.is-coach { position: relative; box-shadow: 0 0 0 4px #ffe36b; }
 
 /* 出発: はじめの札が飛んでいく・「ぼうけんに しゅっぱつ！」・3 2 1 GO */
 .tr-card.tr-title.is-out { animation: tr-card-out 0.38s cubic-bezier(0.5, 0, 0.8, 0.4) both; pointer-events: none; }
@@ -329,15 +417,18 @@ body.trolley-mode > :not(.trolley):not(script) { display: none !important; }
 /* 横向きの低い画面: 札を詰める */
 @media (max-height: 460px) {
   .tr-card { padding: 14px 18px 10px; }
-  .tr-how { display: none; }
   .tr-sub { margin-bottom: 6px; }
   .tr-hint { top: calc(max(8px, env(safe-area-inset-top)) + 46px); }
-  .tr-lever { width: 84px; height: 88px; }
+  .tr-lever { width: 90px; height: 88px; }
+  .tr-speed { height: 80px; }
+  .tr-coach-card { top: calc(max(8px, env(safe-area-inset-top)) + 46px); padding: 8px 18px; }
+  .tr-coach-text { font-size: 15px; }
   .tr-big b { font-size: 36px; }
   .tr-big-time b { font-size: 28px; }
   .tr-h2 { margin-top: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .tr-lever, .tr-turbo.is-on, .tr-coach-hand b, .tr-coach-hand b::after,
   .tr-card, .tr-down, .tr-count.is-pop, .tr-score.is-pop, .tr-tap b, .tr-banner.is-on, .tr-big.is-done .tr-big-score b { animation: none; }
   .tr-cd.is-on.is-anim, .tr-cd.is-go.is-anim { animation: tr-fadeout 0.6s both; }
   .tr-card.tr-title.is-out { animation: tr-fadeout 0.2s both; }
@@ -347,7 +438,11 @@ body.is-reduce-motion .tr-card,
 body.is-reduce-motion .tr-down,
 body.is-reduce-motion .tr-score.is-pop,
 body.is-reduce-motion .tr-tap b,
-body.is-reduce-motion .tr-count.is-pop { animation: none; }
+body.is-reduce-motion .tr-count.is-pop,
+body.is-reduce-motion .tr-lever,
+body.is-reduce-motion .tr-turbo.is-on,
+body.is-reduce-motion .tr-coach-hand b,
+body.is-reduce-motion .tr-coach-hand b::after { animation: none; }
 
 /* 縦長のスマホ: 道のりは 2 段目に */
 @media (max-width: 560px) {
@@ -355,5 +450,6 @@ body.is-reduce-motion .tr-count.is-pop { animation: none; }
   .tr-counts { flex: 1; }
   .tr-progress { order: 3; flex-basis: 100%; }
   .tr-hint { top: calc(max(10px, env(safe-area-inset-top)) + 92px); }
+  .tr-coach-card { top: calc(max(10px, env(safe-area-inset-top)) + 96px); }
   .tr-tap { top: calc(max(10px, env(safe-area-inset-top)) + 96px); }
 }

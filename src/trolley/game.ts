@@ -51,6 +51,8 @@ type Key =
   | 'boulderCome' | 'hintBoulder' | 'boulderBump' | 'boulderBoom' | 'boulderSafe' | 'boulderClose' | 'boulderR' | 'boulderClean' | 'boulderHits'
   | 'hintMonkey' | 'hintIce' | 'hintSloth' | 'iceOn' | 'raceStart' | 'hintRace' | 'raceWin' | 'raceLose' | 'raceR' | 'raceWinR' | 'raceLoseR'
   | 'slothFive' | 'slothBye' | 'slothR' | 'mudOn' | 'riverOn'
+  | 'back' | 'leverHold' | 'turbo' | 'turboOn' | 'turboBlock' | 'turboSmash' | 'turboDrain' | 'turboR'
+  | 'coachLever' | 'coachJump' | 'coachDown' | 'coachMouse' | 'coachTurbo' | 'coachTap' | 'coachHold' | 'coachOk'
 const WORLD = TROLLEY_WORLD_NAME
 const ITEM_NAME: Record<ItemKind, { ja: string; en: string }> = {
   shell: { ja: 'かいがら', en: 'shell' },
@@ -163,6 +165,22 @@ const DICT: Record<Key, { ja: string; en: string }> = {
   riverOn: { ja: 'カイマンが みてる！', en: 'Caimans are watching!' },
   boulderClean: { ja: 'ぶつからずに にげきった', en: 'escaped without a bump' },
   boulderHits: { ja: 'ゴツン {n}かい', en: '{n} bump(s)' },
+  back: { ja: '{from}に もどる', en: 'Back to {from}' },
+  leverHold: { ja: 'おしっぱなしで<br>はやく', en: 'Hold to<br>go fast' },
+  turbo: { ja: 'ターボ', en: 'Turbo' },
+  turboOn: { ja: 'ターボ！', en: 'Turbo!' },
+  turboBlock: { ja: 'ターボで はねかえした！', en: 'Turbo bounced it off!' },
+  turboSmash: { ja: 'ターボで こなごな！', en: 'Turbo smash!' },
+  turboDrain: { ja: 'ターボの ゲージも へった…', en: 'Your turbo gauge dropped…' },
+  turboR: { ja: 'ターボ', en: 'Turbo' },
+  coachLever: { ja: 'レバーを おしっぱなしに すると<br>トロッコが はやく なるよ', en: 'Hold the lever<br>to make the cart go faster' },
+  coachJump: { ja: 'せんろが きれてる！<br>がめんを タップして ジャンプ', en: 'The track ends!<br>Tap the screen to jump' },
+  coachDown: { ja: '▼を おすと したの みちへ<br>おさなければ そのまま すすむよ', en: 'Press ▼ for the lower track<br>or just keep going' },
+  coachMouse: { ja: 'ネズミは あつめた ものを とっていくよ！<br>ジャンプで ふりおとそう', en: 'Mice steal what you collected!<br>Jump to shake them off' },
+  coachTurbo: { ja: 'ターボ！ しばらく はやく なって<br>アイテムを すいよせ、いたずらも はねかえすよ', en: 'Turbo! For a while you go faster,<br>pull in items and bounce off pranks' },
+  coachTap: { ja: 'タップ', en: 'Tap' },
+  coachHold: { ja: 'おしっぱなし', en: 'Hold' },
+  coachOk: { ja: 'タップで つづける', en: 'Tap to continue' },
 }
 
 // ---- 動き ----
@@ -185,6 +203,13 @@ const RACE_V = 470
 const V_MIN = 150
 const V_MAX = 680
 const SLOPE_G = 950
+/** ターボ: アイテム 1 つでゲージが 1/10 たまり、いっぱいで 5 秒。はやくなり、アイテムをすいよせ、いたずらをはねかえす */
+const TURBO_PER = 0.1
+const TURBO_LEN = 5
+const TURBO_V = 660
+const TURBO_PULL = 260
+/** ネズミ・リスザルにとられた時に減るゲージ */
+const STEAL_DRAIN = 0.3
 
 export function startTrolleyMode(p: TrolleyParams): void {
   const found = routeFrom(p.route, p.from)
@@ -238,13 +263,16 @@ export function startTrolleyMode(p: TrolleyParams): void {
     'beforeend',
     `<div class="tr-hud" hidden>
       <div class="tr-counts"></div>
+      <div class="tr-turbo" aria-hidden="true"><b></b><div class="tr-turbo-bar"><i></i></div></div>
       <div class="tr-score"><span></span><b>0</b></div>
       <div class="tr-progress" aria-hidden="true"><span class="tr-pl"></span><div class="tr-bar"><i class="tr-fill"></i><b class="tr-dot"></b></div><span class="tr-pr"></span></div>
       <button type="button" class="tr-skip"></button>
     </div>
     <p class="tr-hint" role="status" aria-live="polite"></p>
     <button type="button" class="tr-down" hidden></button>
-    <button type="button" class="tr-lever" hidden><i aria-hidden="true"></i><span></span></button>
+    <button type="button" class="tr-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span></button>
+    <div class="tr-lever-wrap" hidden><div class="tr-speed" aria-hidden="true"><i></i></div><button type="button" class="tr-lever"><i aria-hidden="true"></i><span></span></button></div>
+    <div class="tr-coach" hidden><div class="tr-coach-card" role="status"><p class="tr-coach-text"></p><p class="tr-coach-ok"></p></div><div class="tr-coach-hand" aria-hidden="true"><b></b><span></span></div></div>
     <div class="tr-banner" aria-hidden="true"></div>
     <div class="tr-cd" role="status" aria-live="assertive"></div>
     <div class="tr-tap" hidden><b></b><span></span><div class="tr-tap-bar"><i></i></div></div>
@@ -271,7 +299,16 @@ export function startTrolleyMode(p: TrolleyParams): void {
   const tapEl = $<HTMLDivElement>('.tr-tap')
   const tapFill = $<HTMLElement>('.tr-tap-bar i')
   scoreEl.querySelector('span')!.textContent = tr('score')
-  leverBtn.querySelector('span')!.innerHTML = tr('lever')
+  leverBtn.querySelector('span')!.innerHTML = tr('leverHold')
+  const leverWrap = $<HTMLDivElement>('.tr-lever-wrap')
+  const speedFill = $<HTMLElement>('.tr-speed i')
+  const backBtn = $<HTMLButtonElement>('.tr-back')
+  backBtn.querySelector('span')!.textContent = tr('back')
+  backBtn.addEventListener('click', () => {
+    if (phase !== 'title') return
+    sound.play('tap')
+    leave(origin, fromKey, false)
+  })
   leverBtn.setAttribute('aria-label', tr('howLever'))
   bannerEl.textContent = tr('adventure')
   tapEl.querySelector('b')!.textContent = tr('tapTap')
@@ -327,7 +364,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   let autopilot = false
   let skipped = false
   const counts: Record<ItemKind, number> = { shell: 0, gem: 0, feather: 0, snow: 0, fruit: 0, star: 0, clover: 0 }
-  const tally = { moleHit: 0, moleDodge: 0, mouseSteal: 0, mouseShake: 0, bats: 0, five: 0, slothSeen: 0 }
+  const tally = { moleHit: 0, moleDodge: 0, mouseSteal: 0, mouseShake: 0, bats: 0, five: 0, slothSeen: 0, turbo: 0 }
   /** このコースに出てくる、いたずらの生き物の種類（結果の札の行の名前） */
   const throwerKinds = new Set<ThrowerKind>()
   const thiefKinds = new Set<ThiefKind>()
@@ -358,6 +395,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
   }
   let lever = false
   let score = 0
+  /** ターボのゲージ（0〜1）と、のこりの秒 */
+  let turbo = 0
+  let turboT = 0
   let introT = 0
   let cdShown = -1
   const fin = { k: 0, scroll: 0, rush: 0, white: 0, taps: 0, done: false }
@@ -483,6 +523,34 @@ export function startTrolleyMode(p: TrolleyParams): void {
     }
   }
 
+  // ---- ターボ ----
+  const turboEl = $<HTMLElement>('.tr-turbo')
+  const turboFill = turboEl.querySelector('i') as HTMLElement
+  ;(turboEl.querySelector('b') as HTMLElement).textContent = tr('turbo')
+  let turboShown = -1
+  const paintTurbo = () => {
+    const k = turboT > 0 ? turboT / TURBO_LEN : turbo
+    const q = Math.round(k * 50) / 50
+    if (q === turboShown) return
+    turboShown = q
+    turboFill.style.width = `${q * 100}%`
+    turboEl.classList.toggle('is-on', turboT > 0)
+  }
+  const startTurbo = () => {
+    turbo = 0
+    turboT = TURBO_LEN
+    tally.turbo++
+    flash = Math.max(flash, 0.5)
+    audio.item()
+    say(tr('turboOn'), cart.x, cart.y + 170, '#ffe36b', true)
+    coachOpen('turbo')
+  }
+  const gainTurbo = (n: number) => {
+    if (turboT > 0) return
+    turbo = Math.min(1, turbo + n)
+    if (turbo >= 1) startTurbo()
+  }
+
   // ---- はじめの画面 ----
   const fmt = (sec: number) => {
     const m = Math.floor(sec / 60)
@@ -509,15 +577,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
         <button type="button" class="tr-btn tr-primary" data-act="play">${tr('play')}</button>
         <button type="button" class="tr-btn" data-act="auto">${tr('auto')}</button>
       </div>
-      <ul class="tr-how">
-        <li>${tr('howJump')}</li>
-        <li>${tr('howLever')}</li>
-        <li>${tr('howDown')}</li>
-        <li class="tr-note">${tr('autoNote')}</li>
-      </ul>
+      <p class="tr-note">${tr('autoNote')}</p>
       ${best ? `<p class="tr-best">${tr('best', { t: fmt(best) })}</p>` : ''}
-      ${portrait() ? `<p class="tr-rotate">${tr('rotate')}</p>` : ''}
-      <button type="button" class="tr-link" data-act="cancel">${tr('cancel')}</button>`
+      ${portrait() ? `<p class="tr-rotate">${tr('rotate')}</p>` : ''}`
     if (reduce) titleCard.querySelector('[data-act="auto"]')?.classList.add('tr-primary')
   }
   paintTitle()
@@ -543,6 +605,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     introT = 0
     cdShown = -1
     titleCard.classList.add('is-out')
+    backBtn.hidden = true
     window.setTimeout(() => (titleCard.hidden = true), reduce ? 10 : 380)
     if (!reduce) bannerEl.classList.add('is-on')
     audio.whoosh()
@@ -579,7 +642,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   function go(): void {
     phase = 'ride'
     hud.hidden = false
-    if (!autopilot) leverBtn.hidden = false
+    if (!autopilot) leverWrap.hidden = false
     audio.music(true)
     sound.say('start')
     cart.v = 220
@@ -592,12 +655,86 @@ export function startTrolleyMode(p: TrolleyParams): void {
       cdEl.className = 'tr-cd'
       cdEl.textContent = ''
     }, 1000)
-    if (!autopilot) window.setTimeout(() => showHint('lever', tr('hintLever')), 1800)
+    if (!autopilot)
+      window.setTimeout(() => {
+        if (coachDone.has('lever')) showHint('lever', tr('hintLever'))
+        else coachOpen('lever')
+      }, 1800)
+  }
+
+  // ---- ゲーム画面の説明（はじめての時だけ。自分で運転する時だけ） ----
+  // その場面でゲームを止め、やることを指でさす。言われたことをすると、そのまま続きが動く
+  type CoachKey = 'lever' | 'jump' | 'down' | 'mouse' | 'turbo'
+  const COACH_KEY = 'awl.trolley.coach'
+  const coachDone = new Set<CoachKey>()
+  try {
+    const raw = localStorage.getItem(COACH_KEY)
+    if (raw) for (const k of JSON.parse(raw) as CoachKey[]) coachDone.add(k)
+  } catch {
+    // 読めなければ毎回出す
+  }
+  const coachEl = $<HTMLDivElement>('.tr-coach')
+  const coachText = coachEl.querySelector('.tr-coach-text') as HTMLElement
+  const coachOk = coachEl.querySelector('.tr-coach-ok') as HTMLElement
+  const coachHand = coachEl.querySelector('.tr-coach-hand') as HTMLElement
+  let coach: CoachKey | null = null
+  let coachTarget: HTMLElement | null = null
+  const coachTargetOf = (k: CoachKey): HTMLElement | null =>
+    k === 'lever' ? leverBtn : k === 'down' ? downBtn : k === 'turbo' ? turboEl : null
+  function coachOpen(k: CoachKey): void {
+    if (autopilot || coach || coachDone.has(k) || phase !== 'ride') return
+    coach = k
+    coachDone.add(k)
+    try {
+      localStorage.setItem(COACH_KEY, JSON.stringify([...coachDone]))
+    } catch {
+      // 保存できなくても続ける
+    }
+    leverOn(false)
+    hintEl.classList.remove('is-on')
+    const textKey = ({ lever: 'coachLever', jump: 'coachJump', down: 'coachDown', mouse: 'coachMouse', turbo: 'coachTurbo' } as const)[k]
+    coachText.innerHTML = tr(textKey)
+    coachOk.textContent = k === 'turbo' ? tr('coachOk') : ''
+    coachOk.hidden = k !== 'turbo'
+    coachEl.dataset.k = k
+    coachEl.hidden = false
+    coachTarget = coachTargetOf(k)
+    coachTarget?.classList.add('is-coach')
+    ;(coachHand.querySelector('span') as HTMLElement).textContent = k === 'lever' ? tr('coachHold') : k === 'turbo' ? '' : tr('coachTap')
+    placeHand()
+  }
+  /** 指を目あての上に（目あてが無い時は画面のまん中＝どこでもタップ） */
+  function placeHand(): void {
+    if (!coach) return
+    const box = root.getBoundingClientRect()
+    const r = coachTarget?.getBoundingClientRect()
+    const x = r ? r.left + r.width / 2 - box.left : box.width * 0.62
+    const y = r ? r.top + r.height / 2 - box.top : box.height * 0.62
+    coachHand.style.left = `${x}px`
+    coachHand.style.top = `${y}px`
+  }
+  window.addEventListener('resize', placeHand)
+  function coachClose(): void {
+    if (!coach) return
+    coach = null
+    coachEl.hidden = true
+    coachTarget?.classList.remove('is-coach')
+    coachTarget = null
+    last = performance.now()
+    // レバーの説明が ほかの説明と重なって出せなかった時は、少しあとで出す
+    if (!coachDone.has('lever')) window.setTimeout(() => coachOpen('lever'), 1500)
   }
 
   // ---- 入力 ----
   const jumpPress = () => {
     if (phase !== 'ride' || autopilot) return
+    if (coach === 'lever') return
+    if (coach === 'down' || coach === 'turbo') {
+      // 下の道の説明でタップ＝そのまま進む。ターボの説明はタップで閉じるだけ
+      coachClose()
+      return
+    }
+    coachClose()
     tryJump()
     cart.holding = true
   }
@@ -613,6 +750,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   const leverOn = (on: boolean) => {
     lever = on && phase === 'ride' && !autopilot
     leverBtn.classList.toggle('is-on', lever)
+    if (lever && coach === 'lever') coachClose()
   }
   leverBtn.addEventListener('pointerdown', (e) => {
     e.preventDefault()
@@ -654,6 +792,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   })
   const chooseDown = () => {
     if (!downCue) return
+    if (coach === 'down') coachClose()
     forkChoice = 'down'
     downBtn.classList.add('is-on')
     downBtn.querySelector('span')!.textContent = tr('downOn')
@@ -709,8 +848,9 @@ export function startTrolleyMode(p: TrolleyParams): void {
       return
     }
     if (phase !== 'ride') return
+    coachClose()
     leverOn(false)
-    leverBtn.hidden = true
+    leverWrap.hidden = true
     skipped = true
     autopilot = true
     flash = 1
@@ -760,7 +900,8 @@ export function startTrolleyMode(p: TrolleyParams): void {
       const slope = railSlope(r, cart.x)
       const sinA = slope / Math.sqrt(1 + slope * slope)
       let target = lever ? LEVER_V : CRUISE
-      let acc = -SLOPE_G * sinA + (target - cart.v) * (lever ? 1.1 : 0.7)
+      if (turboT > 0) target = Math.max(target, TURBO_V)
+      let acc = -SLOPE_G * sinA + (target - cart.v) * (lever || turboT > 0 ? 1.1 : 0.7)
       const boost = inRange('boost', cart.x)
       if (boost) acc += 380
       if (inRange('splash', cart.x)) {
@@ -954,7 +1095,10 @@ export function startTrolleyMode(p: TrolleyParams): void {
           forkChoice = autopilot ? 'down' : null
           downBtn.hidden = autopilot
           downBtn.querySelector('span')!.textContent = tr('down')
-          if (!autopilot) showHint('down', tr('hintDown'))
+          if (!autopilot) {
+            showHint('down', tr('hintDown'))
+            coachOpen('down')
+          }
         }
       }
     }
@@ -1019,7 +1163,23 @@ export function startTrolleyMode(p: TrolleyParams): void {
       }
       if (c.state === 'rest' || (c.state === 'fly' && c.t > c.dur * 0.7)) {
         const near = Math.abs(cart.x - c.x) < CART_W / 2 + 6
-        if (near && cart.y - c.y < 24 && cart.y - c.y > -30) {
+        if (near && cart.y - c.y < 24 && cart.y - c.y > -30 && turboT > 0) {
+          // ターボ中は くだいて進む（遅くならない）
+          c.state = 'burst'
+          tally.moleDodge++
+          addShake(4)
+          audio.thud()
+          say(tr('turboSmash'), cart.x + 20, cart.y + 140, '#ffe36b')
+          addScore(300, c.x, c.y + 170)
+          const cc = c.kind === 'hay' ? ['#e8c766', '#c9a23f'] : c.kind === 'sticks' ? ['#8a5a32', '#5e3a1e'] : ['#7a5434', '#5d3e24']
+          emit(16, () => ({ x: c.x, y: c.y + 12, vx: (Math.random() - 0.3) * 300, vy: 100 + Math.random() * 260, life: 0.7, size: 3 + Math.random() * 4, kind: 'dirt', color: Math.random() < 0.5 ? cc[0] : cc[1], g: 900 }))
+          for (const m of moles) {
+            if (m.state === 'laugh' && Math.abs(((m as Mole & { target?: number }).target ?? 0) - c.x) < 4) {
+              m.state = 'pout'
+              m.t = 0
+            }
+          }
+        } else if (near && cart.y - c.y < 24 && cart.y - c.y > -30) {
           // 当たった: 遅くなり、画面に土がつき、目が回る（止まらない）
           c.state = 'burst'
           cart.v *= 0.55
@@ -1057,11 +1217,26 @@ export function startTrolleyMode(p: TrolleyParams): void {
         m.state = 'drop'
         m.t = 0
         audio.squeak()
+      } else if (m.state === 'drop' && m.t > 0.3 && turboT > 0) {
+        // ターボ中は のってこられない（はねかえす）
+        m.state = 'tumble'
+        m.t = 0
+        m.x = cart.x - 14
+        m.y = cart.y + 46
+        m.vx = -200
+        m.vy = 380
+        tally.mouseShake++
+        addScore(300, cart.x, cart.y + 190)
+        audio.squeak()
+        say(tr('turboBlock'), cart.x, cart.y + 150, '#9cf0ff')
       } else if (m.state === 'drop' && m.t > 0.3) {
         m.state = 'ride'
         m.t = 0
         say(m.kind === 'monkey' ? (lang === 'en' ? 'A monkey hopped in!' : 'リスザルが のってきた！') : tr('mouseOn'), cart.x, cart.y + 150, '#ffd0d8')
-        if (!autopilot) showHint('mouseOn', tr(m.kind === 'monkey' ? 'hintMonkey' : 'hintMouse'))
+        if (!autopilot) {
+          showHint('mouseOn', tr(m.kind === 'monkey' ? 'hintMonkey' : 'hintMouse'))
+          coachOpen('mouse')
+        }
       } else if (m.state === 'ride') {
         if (autopilot && m.t > 0.55 && cart.ri >= 0) autoJump()
         if (m.state === 'ride' && m.t > 1.8) {
@@ -1079,6 +1254,12 @@ export function startTrolleyMode(p: TrolleyParams): void {
             paintCount(kind, true)
             tally.mouseSteal++
             addScore(-ITEM_PT[kind])
+            if (turbo > 0) {
+              turbo = Math.max(0, turbo - STEAL_DRAIN)
+              turboEl.classList.remove('is-drain')
+              void turboEl.offsetWidth
+              turboEl.classList.add('is-drain')
+            }
             say(m.kind === 'monkey' ? (lang === 'en' ? `The monkey took a ${ITEM_NAME[kind].en}!` : `リスザルが ${ITEM_NAME[kind].ja}を もっていった！`) : tr('mouseSteal', { item: ITEM_NAME[kind][lang] }), cart.x, cart.y + 150, '#ffb3c6')
           } else say(tr('mouseEmpty'), cart.x, cart.y + 150, '#e8e0ff')
         }
@@ -1104,8 +1285,15 @@ export function startTrolleyMode(p: TrolleyParams): void {
     for (let i = bats.length - 1; i >= 0; i--) if (bats[i].life <= 0) bats.splice(i, 1)
 
     // 拾う
+    const pull = turboT > 0
     for (const it of course.items) {
-      if (it.taken || Math.abs(it.x - cx) > 60) continue
+      if (it.taken || it.x - cx > (pull ? TURBO_PULL : 60) || cx - it.x > 60) continue
+      if (pull) {
+        // ターボ中は まわりのアイテムを すいよせる
+        const k = Math.min(1, dt * 7)
+        it.x += (cx + 10 - it.x) * k
+        it.y += (cart.y + 44 - it.y) * k
+      }
       const dx = it.x - cx
       const dy = it.y - (cart.y + 44)
       if (dx * dx + dy * dy < 48 * 48) {
@@ -1113,12 +1301,20 @@ export function startTrolleyMode(p: TrolleyParams): void {
         it.at = t
         counts[it.kind]++
         paintCount(it.kind, true)
-        addScore(ITEM_PT[it.kind], it.x, it.y + 40)
+        addScore(ITEM_PT[it.kind] * (turboT > 0 ? 2 : 1), it.x, it.y + 40)
+        gainTurbo(TURBO_PER)
         audio.item()
         emit(6, () => ({ x: it.x, y: it.y, vx: (Math.random() - 0.5) * 220, vy: (Math.random() - 0.5) * 220, life: 0.45, size: 5, kind: 'star', color: it.kind === 'gem' ? '#c9b2ff' : it.kind === 'shell' ? '#ffc4d4' : '#ffffff', rot: Math.random() * 6 }))
       }
     }
 
+    // はじめての切れ目: おまかせがジャンプする所で止めて、タップを教える
+    if (!autopilot && !coachDone.has('jump') && cart.ri >= 0 && phase === 'ride') {
+      const r = course.rails[cart.ri]
+      const end = r.xs[r.xs.length - 1]
+      const continues = course.rails.some((o, oi) => oi !== cart.ri && o.xs[0] <= end + 2 && o.xs[o.xs.length - 1] > end + 2 && Math.abs((railY(o, end + 2) ?? 1e9) - r.ys[r.ys.length - 1]) < 16)
+      if (!continues && end - cx > 0 && end - cx < cart.v * 0.04 + 16) coachOpen('jump')
+    }
     // おまかせ: 切れ目・土のかたまりの手前でジャンプ、上の道へはジャンプで乗りうつる
     if (autopilot && cart.ri >= 0 && phase === 'ride') {
       const r = course.rails[cart.ri]
@@ -1337,6 +1533,13 @@ export function startTrolleyMode(p: TrolleyParams): void {
     const boost = cart.ri >= 0 && !!inRange('boost', cart.x)
     speedLines += ((boost ? 1 : cart.v > 520 ? 0.5 : 0) - speedLines) * Math.min(1, dt * 4)
     if (lever && cart.v > 460) speedLines = Math.max(speedLines, Math.min(0.7, (cart.v - 460) / 180))
+    if (turboT > 0) {
+      turboT = Math.max(0, turboT - dt)
+      speedLines = Math.max(speedLines, 0.8)
+      if (Math.random() < dt * 30) emit(1, () => ({ x: cart.x - 40, y: cart.y + 20 + Math.random() * 50, vx: -120 - Math.random() * 80, vy: (Math.random() - 0.5) * 60, life: 0.5, size: 5, kind: 'star', color: Math.random() < 0.5 ? '#ffe36b' : '#9cf0ff', rot: Math.random() * 6 }))
+    }
+    paintTurbo()
+    speedFill.style.height = `${Math.round(Math.min(1, Math.max(0, (cart.v - 150) / (V_MAX - 150))) * 100)}%`
     if (reduce) speedLines = 0
     // レバーをこぐ手の動き（こいでいる時だけ回す。1 回こぐごとに音）
     cart.pump += ((lever ? 1 : 0) - cart.pump) * Math.min(1, dt * 10)
@@ -1389,7 +1592,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   function startFinale(): void {
     phase = 'finale'
     leverOn(false)
-    leverBtn.hidden = true
+    leverWrap.hidden = true
     hideDown()
     hintEl.classList.remove('is-on')
     Object.assign(fin, { k: 0, scroll: 0, rush: 0, white: 0, taps: 0, done: false })
@@ -1500,6 +1703,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
         ${throwerKinds.size ? `<dt>${names(throwerKinds, THROWER_NAME)}</dt><dd>${moleTxt}</dd>` : ''}
         ${thiefKinds.size ? `<dt>${names(thiefKinds, THIEF_NAME)}</dt><dd>${mouseTxt}</dd>` : ''}
         <dt>${tr('batsR')}</dt><dd>${tally.bats}</dd>
+        <dt>${tr('turboR')}</dt><dd>${lang === 'en' ? `${tally.turbo} time(s)` : `${tally.turbo}かい`}</dd>
         ${raceRows}${slothRow}
         ${boulder.seen && boulder.state === 'gone' ? `<dt>${tr('boulderR', { thing: CHASE_NAME[boulder.kind][lang] })}</dt><dd>${boulder.bumps === 0 ? tr('boulderClean') : tr('boulderHits', { n: String(boulder.bumps) })}</dd>` : ''}
       </dl>
@@ -1570,6 +1774,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     dirt: 0,
     dirtSeed: 1,
     speedLines: 0,
+    turbo: 0,
     flash: 0,
     shakeX: 0,
     shakeY: 0,
@@ -1623,7 +1828,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     // 次のコマを先に頼む（1 コマで何か失敗しても、止まらずに走り続ける）
     requestAnimationFrame(frame)
     try {
-      tick(dt)
+      tick(coach ? 0 : dt)
     } catch (err) {
       console.warn('[awl] トロッコの 1 コマで失敗（続けます）', err)
     }
@@ -1651,6 +1856,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     view.dirtSeed = dirtSeed
     view.speedLines = speedLines
     view.flash = flash
+    view.turbo = turboT > 0 ? Math.min(1, turboT / 0.4, (TURBO_LEN - turboT) / 0.2 + 0.3) : 0
     view.shakeX = shake > 0 ? (Math.random() - 0.5) * shake : 0
     view.shakeY = shake > 0 ? (Math.random() - 0.5) * shake : 0
     try {
@@ -1664,6 +1870,6 @@ export function startTrolleyMode(p: TrolleyParams): void {
 
   // 開発用の窓口（?debug=1 の時だけ）
   if (new URLSearchParams(location.search).get('debug') === '1') {
-    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, racers, sloths, raceLog, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60) } }
+    ;(window as unknown as { __trolley?: unknown }).__trolley = { course, cart, counts, tally, depart, doSkip, get phase() { return phase }, audioOn: () => sound.synthOut('bgm') !== null, fin, finaleTap, get score() { return score }, boulder, racers, sloths, raceLog, lever: (on: boolean) => leverOn(on), sim: (sec: number) => { for (let i = 0; i < sec * 60; i++) tick(coach ? 0 : 1 / 60) }, get coach() { return coach }, get turbo() { return { turbo, turboT } } }
   }
 }

@@ -105,6 +105,8 @@ export interface ViewState {
   dirt: number
   dirtSeed: number
   speedLines: number
+  /** ターボ中のトロッコのまわりの光（0〜1） */
+  turbo: number
   flash: number
   shakeX: number
   shakeY: number
@@ -1905,6 +1907,24 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
     return { x: X(wx), y: Y(wy) }
   }
 
+  /** ターボ中: トロッコのうしろに光の輪（色はドット処理でディザになる） */
+  function drawTurboAura(v: ViewState): void {
+    const p = cartPoint(v.cart, 0, 30)
+    const pulse = v.reduce ? 1 : 1 + Math.sin(v.t * 14) * 0.08
+    const r = 80 * s * pulse
+    ctx.save()
+    ctx.globalAlpha = 0.55 * v.turbo
+    const g = ctx.createRadialGradient(p.x, p.y, r * 0.3, p.x, p.y, r)
+    g.addColorStop(0, 'rgba(255,240,150,0.9)')
+    g.addColorStop(0.6, 'rgba(255,200,80,0.45)')
+    g.addColorStop(1, 'rgba(255,200,80,0)')
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.ellipse(p.x, p.y, r * 1.2, r, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+
   function drawCart(c: ViewState['cart'], t: number): void {
     const p = cartPoint(c, 0, 0)
     ctx.save()
@@ -2389,6 +2409,7 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       drawParticles(v.particles, false)
       for (const r of v.racers) drawRacer(r, v.t)
       for (const sl of v.sloths) drawSloth(sl, v.t)
+      if (v.turbo > 0) drawTurboAura(v)
       drawCart(v.cart, v.t)
       for (const m of v.mice) drawMouse(m, v.t, v.cart)
       for (const b of v.bats) drawBat(b, v.t)
