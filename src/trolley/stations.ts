@@ -1,6 +1,6 @@
 /**
  * トロッコの駅（11/14、くにの案「島の配置は変えず、ワールドのあいだはトンネル。トロッコに乗って隣のワールドへ」）。
- * 1 本目は 水の世界 ⇔ 空の世界（いちばん孤立していた組）。駅はワールドの歩ける範囲の縁の、峠・動物から離れた平らな所。
+ * 駅は 11/15 からワールドに 1 つ（下の TROLLEY_STATIONS）。行き先は駅で 2 つから選ぶ。
  * 位置は 11/14 に、歩ける範囲（regions.ts の reachAt）の縁から内へ測って決めた定数（3D を作らないトロッコのモードでも、着く場所が分かるように）。
  * - x, z: トロッコ（3D の駅の車両）の位置。主人公はこの前で「トロッコにのる」を押す
  * - out: トンネルの奥へ向かう向き（three.js の rotation.y。向きのベクトルは (sin, cos)）
@@ -50,20 +50,43 @@ const C: Record<TrolleyEnd, [number, number]> = {
 const at = (region: TrolleyEnd, angleDeg: number, d: number) => station(region, C[region][0], C[region][1], angleDeg, d)
 
 /**
- * 1 本目: 水の世界は北西の縁（225°、歩ける範囲 125m）、空の世界は北東の縁（300°、120m）。
- * 2〜7 本目（11/14 くに「のこりのワールド同士もつなぐ」）: となりあうワールドを輪のようにつなぐ（北⇔空⇔ジャングル⇔ふれあい⇔南半球⇔水⇔北）。
- * 駅はとなりのワールドの向き（±30°）で、サバンナへの峠から 45° 以上離れ、線路の下の地面の高さの差が 1m 未満の所。
- * 歩ける範囲の縁から 9m 内側（動物とは 50m 以上離れている。11/14 に動いているワールドで測った）
+ * 駅はワールドに 1 つ（11/15 くに: 入口が 2 つあると、となりの世界の駅が見えて迷う。同じ所を出入り口にして 1 つに）。
+ * 置き場所は、サバンナと反対の外側の縁（となりのワールドとの境目から離れ、となりの駅が見えない所）。
+ * 11/15 に動いているワールドで、歩ける範囲の縁から 9m 内側・線路の下の地面の高さの差が 1m 未満・動物から 50m 以上・サバンナへの峠の道から 40m 以上の所を選んだ。
+ * 水の世界の外側は海なので、歩ける範囲が短い（91m）
+ */
+export const TROLLEY_STATIONS: Readonly<Record<TrolleyEnd, TrolleyStation>> = {
+  north: at('north', -110, 129),
+  sky: at('sky', -130, 129),
+  jungle: at('jungle', 187.5, 129),
+  partner: at('partner', 140, 129),
+  south: at('south', 95, 129),
+  water: at('water', 0, 91),
+}
+const S = TROLLEY_STATIONS
+
+/**
+ * となりあうワールドを輪のようにつなぐ 6 本（北⇔空⇔ジャングル⇔ふれあい⇔南半球⇔水⇔北）。
+ * 水⇔空は 11/15 にやめた（くに: 地図で北の世界を通りすぎて不自然。北⇔空があるので無くても輪はつながる）
  */
 export const TROLLEY_ROUTES: readonly TrolleyRoute[] = [
-  // 水⇔空は 11/15 にやめた（くに: 地図で北の世界を通りすぎて不自然。北⇔空があるので無くても輪はつながる）
-  { id: 'north-sky', a: at('north', 150, 129), b: at('sky', 350, 129) },
-  { id: 'sky-jungle', a: at('sky', 130, 117.5), b: at('jungle', 290, 129) },
-  { id: 'jungle-partner', a: at('jungle', 80, 129), b: at('partner', 250, 128.5) },
-  { id: 'partner-south', a: at('partner', 20, 129), b: at('south', 160, 117.5) },
-  { id: 'south-water', a: at('south', 335, 117), b: at('water', 125, 117) },
-  { id: 'water-north', a: at('water', 245, 117), b: at('north', 25, 117) },
+  { id: 'north-sky', a: S.north, b: S.sky },
+  { id: 'sky-jungle', a: S.sky, b: S.jungle },
+  { id: 'jungle-partner', a: S.jungle, b: S.partner },
+  { id: 'partner-south', a: S.partner, b: S.south },
+  { id: 'south-water', a: S.south, b: S.water },
+  { id: 'water-north', a: S.water, b: S.north },
 ]
+
+/** その駅から行ける所（線と行き先） */
+export function routesFrom(region: TrolleyEnd): Array<{ route: string; to: TrolleyStation }> {
+  const out: Array<{ route: string; to: TrolleyStation }> = []
+  for (const r of TROLLEY_ROUTES) {
+    if (r.a.region === region) out.push({ route: r.id, to: r.b })
+    else if (r.b.region === region) out.push({ route: r.id, to: r.a })
+  }
+  return out
+}
 
 /** 主人公が駅に立って「トロッコにのる」が出る距離（m） */
 export const TROLLEY_REACH = 6

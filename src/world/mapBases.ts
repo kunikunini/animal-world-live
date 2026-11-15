@@ -2,7 +2,7 @@ import { ANIMALS } from '../data/animals'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT, WALK_RADIUS } from './layout'
 import { OUTER_REGIONS, biomeAt, clampToWalkable, emptyWeights, isWalkable } from './regions'
 import type { RegionKey } from './regions'
-import { TROLLEY_ROUTES, arrivalSpot } from '../trolley/stations'
+import { TROLLEY_ROUTES, TROLLEY_STATIONS, arrivalSpot } from '../trolley/stations'
 import { SHOP } from './shop'
 
 /**
@@ -123,18 +123,13 @@ export function mapBases(): { bases: MapBase[]; roads: MapRoad[] } {
     // 峠の道（サバンナの峠の口 ↔ ワールドの入口）
     roads.push({ a: `africa:pass:${r.key}`, b: `${r.key}:entry` })
   }
-  // トロッコの駅（駅の前、主人公が着く所）。駅とスポットを道で、2 つの駅をトンネルでつなぐ
-  for (const r of TROLLEY_ROUTES) {
-    for (const [from, to] of [
-      [r.a, r.b],
-      [r.b, r.a],
-    ] as const) {
-      const p = arrivalSpot(from)
-      bases.push({ id: `${from.region}:trolley:${to.region}`, world: from.region, kind: 'trolley', x: p.x, z: p.z, to: to.region })
-      roads.push({ a: `${from.region}:spot`, b: `${from.region}:trolley:${to.region}` })
-    }
-    roads.push({ a: `${r.a.region}:trolley:${r.b.region}`, b: `${r.b.region}:trolley:${r.a.region}`, tunnel: true })
+  // トロッコの駅（駅の前、主人公が着く所。ワールドに 1 つ）。駅とスポットを道で、となりの駅とトンネルでつなぐ
+  for (const st of Object.values(TROLLEY_STATIONS)) {
+    const p = arrivalSpot(st)
+    bases.push({ id: `${st.region}:trolley`, world: st.region, kind: 'trolley', x: p.x, z: p.z })
+    roads.push({ a: `${st.region}:spot`, b: `${st.region}:trolley` })
   }
+  for (const r of TROLLEY_ROUTES) roads.push({ a: `${r.a.region}:trolley`, b: `${r.b.region}:trolley`, tunnel: true })
   // グッズのお店（扉の前の石畳）。ふれあいワールドのスポットと道でつなぐ
   bases.push({ id: 'partner:shop', world: 'partner', kind: 'shop', x: SHOP.doorX, z: SHOP.doorZ })
   roads.push({ a: 'partner:spot', b: 'partner:shop' })
@@ -233,10 +228,7 @@ export function arrivalOf(base: MapBase, animalAt: (id: string) => { x: number; 
     return { ...p, heading: face(p, worldCenter(base.to)) }
   }
   if (base.kind === 'trolley') {
-    const st = TROLLEY_ROUTES.flatMap((r) => [
-      { s: r.a, to: r.b.region },
-      { s: r.b, to: r.a.region },
-    ]).find((e) => e.s.region === base.world && e.to === base.to)?.s
+    const st = Object.values(TROLLEY_STATIONS).find((s) => s.region === base.world)
     if (st) return arrivalSpot(st)
   }
   if (base.kind === 'shop') {

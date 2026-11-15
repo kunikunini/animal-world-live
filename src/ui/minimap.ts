@@ -1,5 +1,5 @@
 import { SHOP } from '../world/shop'
-import { TROLLEY_ROUTES } from '../trolley/stations'
+import { TROLLEY_STATIONS } from '../trolley/stations'
 import { ACACIAS, KOPJE, SPOT, WALK_RADIUS, WATERHOLE } from '../world/layout'
 import { OUTER_REGIONS, PASS_HALF_WIDTH, REGIONS, distToPassAxis, isWalkable, regionAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
@@ -922,7 +922,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
     }
 
     // トロッコの駅: 灰色の岩山に、黒いトンネルの口
-    for (const st of TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])) {
+    for (const st of Object.values(TROLLEY_STATIONS)) {
       const mx = st.x + Math.sin(st.out) * 7
       const mz = st.z + Math.cos(st.out) * 7
       b.fillStyle = '#8f8a86'
@@ -1061,7 +1061,7 @@ export function createMapRenderer(options: { width: number; height?: number; lab
       // ワールドの名前（左上）に重ならないよう、お店の右に
       pill(shop, px(SHOP.x) + (SHOP.radius + 4) * k + 3 * u, py(SHOP.z) - 8 * u)
     }
-    for (const st of TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])) pill(t('trolleyStation'), px(st.x) + 9 * k + 3 * u, py(st.z) - 8 * u)
+    for (const st of Object.values(TROLLEY_STATIONS)) pill(t('trolleyStation'), px(st.x) + 9 * k + 3 * u, py(st.z) - 8 * u)
     return boxes
   }
 

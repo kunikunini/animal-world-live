@@ -14,23 +14,33 @@ export interface TrolleyGate {
 }
 
 export function createTrolleyGate(iris: Iris, getBack: () => { x: number; z: number; heading: number }, beforeLeave: () => void): TrolleyGate {
-  const btn = document.createElement('button')
-  btn.type = 'button'
-  btn.className = 'shop-enter trolley-enter'
-  btn.hidden = true
-  const label = document.createElement('span')
-  btn.append(label)
-  document.body.append(btn)
+  // 駅はワールドに 1 つで、行き先はとなりの 2 つ（11/15）。行き先ごとにボタンを縦に 2 つ
+  const btns = [0, 1].map((i) => {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    // 看板と同じ並び（1 つ目の行き先が上）
+    btn.className = i === 0 ? 'shop-enter trolley-enter trolley-enter-2' : 'shop-enter trolley-enter'
+    btn.hidden = true
+    const label = document.createElement('span')
+    btn.append(label)
+    document.body.append(btn)
+    btn.addEventListener('click', () => void go(i))
+    return { btn, label }
+  })
   let near: StationHit | null = null
   let busy = false
   const paint = () => {
-    if (near) label.textContent = t('trolleyTo', { world: TROLLEY_WORLD_NAME[near.to.region][getLang()] })
+    if (!near) return
+    near.options.forEach((o, i) => {
+      if (btns[i]) btns[i].label.textContent = t('trolleyTo', { world: TROLLEY_WORLD_NAME[o.to.region][getLang()] })
+    })
   }
   onLangChange(paint)
-  btn.addEventListener('click', async () => {
-    if (!near || busy) return
+  const go = async (i: number) => {
+    const o = near?.options[i]
+    if (!near || !o || busy) return
     busy = true
-    const url = trolleyUrl(near.route, near.from.region, getBack())
+    const url = trolleyUrl(o.route, near.from.region, getBack())
     try {
       await iris.close()
     } catch {
@@ -38,7 +48,7 @@ export function createTrolleyGate(iris: Iris, getBack: () => { x: number; z: num
     }
     beforeLeave()
     location.replace(url)
-  })
+  }
   // ブラウザの「戻る」でこのページが出し直された時は、押せるように戻す
   window.addEventListener('pageshow', (e) => {
     if (e.persisted) busy = false
@@ -50,8 +60,12 @@ export function createTrolleyGate(iris: Iris, getBack: () => { x: number; z: num
       const was = near
       near = hit
       paint()
-      if (hit && !was) showView(btn)
-      else if (!hit && was) hideView(btn)
+      btns.forEach((b, i) => {
+        const on = !!hit && i < hit.options.length
+        const wasOn = !!was && i < was.options.length
+        if (on && !wasOn) showView(b.btn)
+        else if (!on && wasOn) hideView(b.btn)
+      })
     },
   }
 }

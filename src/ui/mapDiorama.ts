@@ -8,7 +8,7 @@ import { SEA_LEVEL, WATER_LEVEL, terrainHeight } from '../world/terrain'
 import { loadHero } from '../player/heroModel'
 import type { HeroModel } from '../player/heroModel'
 import { mapGroundColor } from './minimap'
-import { TROLLEY_ROUTES } from '../trolley/stations'
+import { TROLLEY_STATIONS } from '../trolley/stations'
 
 /**
  * 3D の地図: いまいるワールドを小さなジオラマにしたもの（スーパーマリオブラザーズ 3 のワールドマップの考え方を借りる。11/6 のくにの要望）。
@@ -429,7 +429,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       g.add(rock)
     }
     // トロッコの駅: 灰色の岩山に、トンネルの口（黒）と木の枠、手前にトロッコ
-    for (const st of TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])) {
+    for (const st of Object.values(TROLLEY_STATIONS)) {
       if (st.region !== world) continue
       const sg = new THREE.Group()
       sg.position.set(st.x, yAt(st.x, st.z), st.z)

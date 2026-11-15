@@ -3,7 +3,7 @@ import type { Collider } from './props'
 import { terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { getLang, onLangChange } from '../ui/i18n'
-import { TROLLEY_REACH, TROLLEY_ROUTES, TROLLEY_WORLD_NAME, type TrolleyEnd, type TrolleyStation } from '../trolley/stations'
+import { TROLLEY_REACH, TROLLEY_STATIONS, TROLLEY_WORLD_NAME, routesFrom, type TrolleyEnd, type TrolleyStation } from '../trolley/stations'
 
 /**
  * トロッコの駅（ワールドの側）。山のすそのトンネルの口・木の枠・線路・トロッコ・行き先の看板。
@@ -22,9 +22,9 @@ const ROCK: Record<TrolleyEnd, [string, string]> = {
 }
 
 export interface StationHit {
-  route: string
   from: TrolleyStation
-  to: TrolleyStation
+  /** 行き先（ワールドに駅は 1 つで、となりの 2 つへ行ける） */
+  options: Array<{ route: string; to: TrolleyStation }>
 }
 
 /** 駅のまわりで、物を置かない所か */
@@ -69,7 +69,7 @@ function clearAround(groups: THREE.Object3D[], colliders: Collider[], stations: 
 }
 
 /** 行き先の看板の字（言語を切り替えたら描き直す） */
-function signTexture(to: TrolleyEnd): { tex: THREE.CanvasTexture; paint: () => void } {
+function signTexture(tos: TrolleyEnd[]): { tex: THREE.CanvasTexture; paint: () => void } {
   const c = document.createElement('canvas')
   c.width = 512
   c.height = 256
@@ -97,20 +97,20 @@ function signTexture(to: TrolleyEnd): { tex: THREE.CanvasTexture; paint: () => v
     ctx.fillStyle = '#fff6e0'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.font = `900 ${lang === 'en' ? 52 : 60}px 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif`
-    ctx.fillText(lang === 'en' ? 'MINE CART' : 'トロッコ', 256, 84)
-    ctx.font = `900 ${lang === 'en' ? 44 : 50}px 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif`
+    ctx.font = `900 ${lang === 'en' ? 46 : 54}px 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif`
+    ctx.fillText(lang === 'en' ? 'MINE CART' : 'トロッコ', 256, 62)
+    ctx.font = `900 ${lang === 'en' ? 36 : 42}px 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif`
     ctx.fillStyle = '#ffd966'
-    ctx.fillText(`${WORLD_NAME[to][lang]} ➜`, 256, 178)
+    tos.forEach((to, i) => ctx.fillText(`${WORLD_NAME[to][lang]} ➜`, 256, 140 + i * 62))
     tex.needsUpdate = true
   }
   paint()
   return { tex, paint }
 }
 
-function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider[], mobile: boolean): THREE.Group {
+function buildStation(s: TrolleyStation, tos: TrolleyStation[], colliders: Collider[], mobile: boolean): THREE.Group {
   const g = new THREE.Group()
-  g.name = `trolley-station-${s.region}-${to.region}`
+  g.name = `trolley-station-${s.region}`
   // 床の高さ: 線路の範囲でいちばん高い地面（線路が埋まらないように）
   let base = -Infinity
   const fx = Math.sin(s.out)
@@ -235,7 +235,7 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
   })
 
   // 行き先の看板（トロッコの横。ワールドの方を向く）
-  const sign = signTexture(to.region)
+  const sign = signTexture(tos.map((t) => t.region))
   onLangChange(sign.paint)
   add(new THREE.BoxGeometry(0.2, 2.2, 0.2), wood, 2.3, 1.1, -1.2)
   const board = add(new THREE.PlaneGeometry(1.9, 0.95), new THREE.MeshBasicMaterial({ map: sign.tex }), 2.3, 2.1, -1.32, Math.PI)
@@ -261,26 +261,18 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
 }
 
 export function createTrolleyStations(scene: THREE.Object3D, clearIn: THREE.Object3D[], colliders: Collider[], mobile: boolean): void {
-  const all = TROLLEY_ROUTES.flatMap((r) => [r.a, r.b])
+  const all = Object.values(TROLLEY_STATIONS)
   clearAround(clearIn, colliders, all)
-  for (const r of TROLLEY_ROUTES) {
-    scene.add(buildStation(r.a, r.b, colliders, mobile))
-    scene.add(buildStation(r.b, r.a, colliders, mobile))
-  }
+  for (const s of all) scene.add(buildStation(s, routesFrom(s.region).map((o) => o.to), colliders, mobile))
 }
 
 /** いま立っている所が、どこかの駅のトロッコの前か（前＝ワールドの内側。トンネルの側は岩でふさがっている） */
 export function nearStation(x: number, z: number): StationHit | null {
-  for (const r of TROLLEY_ROUTES) {
-    for (const [from, to] of [
-      [r.a, r.b],
-      [r.b, r.a],
-    ] as const) {
-      // トロッコの 2.5m 手前を中心に測る（トロッコの当たりの外に立った時に届く）
-      const cx = from.x - Math.sin(from.out) * 2.5
-      const cz = from.z - Math.cos(from.out) * 2.5
-      if (Math.hypot(x - cx, z - cz) < TROLLEY_REACH) return { route: r.id, from, to }
-    }
+  for (const from of Object.values(TROLLEY_STATIONS)) {
+    // トロッコの 2.5m 手前を中心に測る（トロッコの当たりの外に立った時に届く）
+    const cx = from.x - Math.sin(from.out) * 2.5
+    const cz = from.z - Math.cos(from.out) * 2.5
+    if (Math.hypot(x - cx, z - cz) < TROLLEY_REACH) return { from, options: routesFrom(from.region) }
   }
   return null
 }

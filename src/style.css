@@ -6608,6 +6608,8 @@ body.is-reduce-motion .hop.is-focus .hop-view { transition: none; }
 .shop-enter:hover { background: var(--sun-deep); }
 .shop-enter:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 body:is(.is-scoping, .is-viewing, .observe-open, .book-open, .map-open) .shop-enter { opacity: 0; pointer-events: none; }
+/* トロッコの駅は行き先が 2 つ: 2 つ目のボタンは 1 つ目の上に */
+.shop-enter.trolley-enter-2 { bottom: calc(132px + var(--btn-l) + 12px + var(--safe-bottom)); }
 
 .shop-view {
   position: fixed;
