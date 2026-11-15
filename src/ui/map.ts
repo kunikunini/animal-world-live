@@ -251,6 +251,7 @@ export function createMapView(): MapView {
         heroModel: deps.heroModel(),
         target,
         worlds: REGIONS.map((r) => ({ world: r.key, label: worldName(r.key), base: `${r.key}:spot` })),
+        allBases: o.bases.map((b) => ({ x: b.x, z: b.z, world: b.world as RegionKey })),
       },
       deps.colliders,
     )

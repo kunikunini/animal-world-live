@@ -50,6 +50,8 @@ export interface DioramaState {
   target: string | null
   /** ワールドの名前と、押した時に向かう拠点（となりのワールドの札に使う） */
   worlds: Array<{ world: RegionKey; label: string; base: string }>
+  /** すべてのワールドの拠点の場所（橋の端が、どのワールドの拠点か分かるように） */
+  allBases?: Array<{ x: number; z: number; world: RegionKey }>
 }
 
 export interface Diorama {
@@ -198,6 +200,100 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     return (h - b0) * V_SCALE
   }
   const yAt = (x: number, z: number) => heightOf(state?.world ?? 'africa', base0, x, z)
+
+  // ---- 島と島をつなぐ陸の帯（11/15 くに: 地図で隣のワールドへ行く時、主人公が空中を歩いて見える。橋は本編にないので地続きに） ----
+  /** 島（ワールドのジオラマ）の中心・半径・高さの基準 */
+  const ISLANDS = REGIONS.map((r) => {
+    const c = r.key === 'africa' ? { x: 0, z: 0 } : worldCenter(r.key)
+    return { world: r.key, cx: c.x, cz: c.z, r: RADIUS[r.key] ?? R_DEFAULT, b0: terrainHeight(c.x, c.z) }
+  })
+  type Island = (typeof ISLANDS)[number]
+  /** 陸の帯の幅 */
+  const STRIP_W = 30
+  /** その島の見えている高さ（となりのワールドは少し下げて透かしている） */
+  const islandY = (isl: Island, x: number, z: number) => heightOf(isl.world, isl.b0, x, z) + (isl.world === state?.world ? 0 : NEIGHBOR_DROP)
+  const islandAt = (x: number, z: number, pad = 0.5): Island | null => {
+    for (const isl of ISLANDS) if (Math.hypot(x - isl.cx, z - isl.cz) < isl.r - pad) return isl
+    return null
+  }
+  /** 島と島のあいだの地面（本編の地面の高さをそのまま使う、細長い陸の帯）。A・B はつながる島 */
+  interface Strip {
+    ax: number
+    az: number
+    bx: number
+    bz: number
+    A: Island | null
+    B: Island | null
+    tunnel: boolean
+  }
+  let strips: Strip[] = []
+  /** 帯の上の高さ: 本編の地面の高さを、両はしの島の基準のあいだでなめらかに切りかえて出す（ふちで島の地面とつながる） */
+  const stripY = (st: Strip, x: number, z: number) => {
+    // 切りかえの割合は場所だけで決める（両はしの島のふちからの近さ）。帯どうしが重なっても高さがそろう
+    const A = st.A ?? st.B
+    const B = st.B ?? st.A
+    if (!A || !B) return yAt(x, z)
+    const dA = Math.max(0, Math.hypot(x - A.cx, z - A.cz) - A.r)
+    const dB = Math.max(0, Math.hypot(x - B.cx, z - B.cz) - B.r)
+    const t = dA + dB > 0 ? dA / (dA + dB) : 0
+    const b0 = A.b0 + (B.b0 - A.b0) * t
+    const oA = A.world !== state?.world ? NEIGHBOR_DROP : 0
+    const oB = B.world !== state?.world ? NEIGHBOR_DROP : 0
+    // 本編の地面には急な段差もあるので、帯にそってならす（島のふちの近くはならさず、島の地面とそのままつなぐ）
+    const len = Math.hypot(st.bx - st.ax, st.bz - st.az) || 1
+    const ux = (st.bx - st.ax) / len
+    const uz = (st.bz - st.az) / len
+    let sum = 0
+    for (let k = -4; k <= 4; k++) sum += terrainHeight(x + ux * k * 6, z + uz * k * 6)
+    const k = Math.min(1, Math.min(dA, dB) / 15)
+    const h = terrainHeight(x, z) * (1 - k) + (sum / 9) * k
+    return (h - b0) * V_SCALE + oA + (oB - oA) * t
+  }
+  /** 道のうち、どの島にも乗っていない所を陸の帯にする */
+  const stripsOf = (roads: DioramaState['roads'], worldOfPoint: (x: number, z: number) => RegionKey | null): Strip[] => {
+    const out: Strip[] = []
+    const islandOf = (w: RegionKey | null) => (w ? (ISLANDS.find((i) => i.world === w) ?? null) : null)
+    for (const [x1, z1, x2, z2, , tunnel] of roads) {
+      const len = Math.hypot(x2 - x1, z2 - z1)
+      if (len < 1) continue
+      const n = Math.ceil(len / 1.5)
+      const P = (t: number) => ({ x: x1 + (x2 - x1) * t, z: z1 + (z2 - z1) * t })
+      let start = -1
+      let from: Island | null = null
+      let prevIsl: Island | null = null
+      for (let i = 0; i <= n; i++) {
+        const p = P(i / n)
+        const isl = islandAt(p.x, p.z, 1)
+        if (!isl && start < 0) {
+          start = i
+          from = i === 0 ? islandOf(worldOfPoint(x1, z1)) : prevIsl
+        }
+        if ((isl || i === n) && start >= 0) {
+          const a = P(start / n)
+          const b = P(isl ? i / n : 1)
+          const to = isl ?? islandOf(worldOfPoint(x2, z2))
+          if (Math.hypot(b.x - a.x, b.z - a.z) > 1) out.push({ ax: a.x, az: a.z, bx: b.x, bz: b.z, A: from, B: to, tunnel: !!tunnel })
+          start = -1
+        }
+        prevIsl = isl
+      }
+    }
+    return out
+  }
+  /** 地面の高さ: 島の上ならその島、帯の上なら帯、どちらでもなければ今のワールドの式 */
+  const groundY = (x: number, z: number) => {
+    const isl = islandAt(x, z, 0.5)
+    if (isl) return islandY(isl, x, z)
+    let best: { d: number; st: Strip } | null = null
+    for (const st of strips) {
+      const dx = st.bx - st.ax
+      const dz = st.bz - st.az
+      const t = Math.min(1, Math.max(0, ((x - st.ax) * dx + (z - st.az) * dz) / (dx * dx + dz * dz || 1)))
+      const d = Math.hypot(st.ax + dx * t - x, st.az + dz * t - z)
+      if (d < STRIP_W / 2 && (!best || d < best.d)) best = { d, st }
+    }
+    return best ? stripY(best.st, x, z) : yAt(x, z)
+  }
 
   /** ワールドのジオラマを作る（いまのワールドでも、となりのワールドでも同じ形。中心・半径・高さの基準はそのワールドのもの） */
   const buildWorld = (world: RegionKey, colliders: Collider[]): THREE.Group => {
@@ -429,6 +525,10 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   const panelGeo = new THREE.CylinderGeometry(5, 5.6, 1.8, 6)
   const stoneGeo = new THREE.CylinderGeometry(1.5, 1.7, 0.6, 7)
   const stoneMat = new THREE.MeshLambertMaterial({ color: 0xfff1cf })
+  const stripMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })
+  const stripHazeMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, transparent: true, opacity: HAZE_OPACITY })
+  const dashGeo = new THREE.BoxGeometry(1.4, 0.5, 3.2)
+  const dashMat = new THREE.MeshLambertMaterial({ color: 0x8a5a32 })
   const pinHeadGeo = new THREE.SphereGeometry(4.5, 12, 9)
   const pinTipGeo = new THREE.ConeGeometry(3, 8, 8)
   const pinMat = new THREE.MeshLambertMaterial({ color: 0xe2a64a })
@@ -449,6 +549,10 @@ export function createDiorama(wrap: HTMLElement): Diorama {
 
   const rebuildDynamic = () => {
     if (!state) return
+    // 陸の帯は作るたびに形がちがうので、前の形を捨てる
+    dynamic.traverse((o) => {
+      if (o.userData.ownGeo) (o as THREE.Mesh).geometry.dispose()
+    })
     dynamic.clear()
     overlay.textContent = ''
     tags = []
@@ -474,6 +578,91 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       const m4 = new THREE.Matrix4()
       stones.forEach(([x, z], i) => m.setMatrixAt(i, m4.makeTranslation(x, yAt(x, z) + 0.3, z)))
       dynamic.add(m)
+    }
+    // 島と島のあいだの陸の帯（本編では大陸は地続き。地図では島を切り出しているので、道の通る所だけ地面をつなげる）
+    {
+      const roadWorld = new Map<string, RegionKey>()
+      for (const b of state.allBases ?? []) roadWorld.set(`${b.x.toFixed(2)},${b.z.toFixed(2)}`, b.world)
+      strips = stripsOf(state.roads.filter((r) => !r[4]), (x, z) => roadWorld.get(`${x.toFixed(2)},${z.toFixed(2)}`) ?? islandAt(x, z, -12)?.world ?? null)
+      const here = state.world
+      const c: [number, number, number] = [0, 0, 0]
+      for (const st of strips) {
+        const near = st.A?.world === here || st.B?.world === here
+        const len = Math.hypot(st.bx - st.ax, st.bz - st.az)
+        const ux = (st.bx - st.ax) / len
+        const uz = (st.bz - st.az) / len
+        // 島の中へ少しはみ出させて、ふちとのすき間をなくす
+        const EXT = 8
+        const along = Math.max(2, Math.ceil((len + EXT * 2) / 3))
+        const across = 6
+        const pos: number[] = []
+        const col: number[] = []
+        const idx: number[] = []
+        const edgeL: number[] = []
+        const edgeR: number[] = []
+        let low = Infinity
+        for (let i = 0; i <= along; i++) {
+          const d = -EXT + ((len + EXT * 2) * i) / along
+          for (let j = 0; j <= across; j++) {
+            const w = -STRIP_W / 2 + (STRIP_W * j) / across
+            // 両わきは少し下げて、丸みのある尾根にする
+            const x = st.ax + ux * d - uz * w
+            const z = st.az + uz * d + ux * w
+            const y = stripY(st, x, z) - 0.35 - Math.pow(Math.abs(w) / (STRIP_W / 2), 2) * 1.6
+            low = Math.min(low, y)
+            mapGroundColor(x, z, c)
+            pos.push(x, y, z)
+            col.push(c[0] / 255, c[1] / 255, c[2] / 255)
+          }
+        }
+        const row = across + 1
+        for (let i = 0; i < along; i++)
+          for (let j = 0; j < across; j++) {
+            const a0 = i * row + j
+            idx.push(a0, a0 + 1, a0 + row + 1, a0, a0 + row + 1, a0 + row)
+          }
+        // 両わきの崖（島のふちと同じ粘土の色）
+        const bottom = low - SKIRT
+        for (const side of [0, across]) {
+          const list = side === 0 ? edgeL : edgeR
+          for (let i = 0; i <= along; i++) {
+            const k = i * row + side
+            const top = pos.length / 3
+            pos.push(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2])
+            col.push(i % 2 ? 176 / 255 : 140 / 255, i % 2 ? 122 / 255 : 92 / 255, i % 2 ? 76 / 255 : 56 / 255)
+            pos.push(pos[k * 3], bottom, pos[k * 3 + 2])
+            col.push(140 / 255, 92 / 255, 56 / 255)
+            list.push(top)
+          }
+          for (let i = 0; i < along; i++) {
+            const t0 = list[i]
+            const t1 = list[i + 1]
+            if (side === 0) idx.push(t0, t0 + 1, t1 + 1, t0, t1 + 1, t1)
+            else idx.push(t0, t1 + 1, t0 + 1, t0, t1, t1 + 1)
+          }
+        }
+        const geo = new THREE.BufferGeometry()
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3))
+        geo.setIndex(idx)
+        geo.computeVertexNormals()
+        const land = new THREE.Mesh(geo, near ? stripMat : stripHazeMat)
+        land.userData.ownGeo = true
+        dynamic.add(land)
+        // 道のしるし: 峠の道は飛び石、トロッコのトンネルは地面の下を通るので木の色の点線
+        if (near) {
+          const step = st.tunnel ? 6 : 5
+          const n = Math.max(1, Math.floor(len / step))
+          for (let i = 0; i <= n; i++) {
+            const x = st.ax + ((st.bx - st.ax) * i) / n
+            const z = st.az + ((st.bz - st.az) * i) / n
+            const mk = new THREE.Mesh(st.tunnel ? dashGeo : stoneGeo, st.tunnel ? dashMat : stoneMat)
+            mk.position.set(x, stripY(st, x, z) + 0.3, z)
+            if (st.tunnel) mk.rotation.y = Math.atan2(st.bx - st.ax, st.bz - st.az)
+            dynamic.add(mk)
+          }
+        }
+      }
     }
     // 拠点
     for (const b of state.bases) {
@@ -931,7 +1120,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   let onDone: (() => void) | null = null
   let last = 0
   const putHero = (x: number, z: number, heading: number) => {
-    hero.position.set(x, yAt(x, z), z)
+    hero.position.set(x, groundY(x, z), z)
     heroFig.rotation.y = heading
     heroPiece.rotation.y = heading
   }
@@ -989,6 +1178,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       hero,
       camera,
       yAt,
+      strips: () => strips.map((s) => ({ a: [Math.round(s.ax), Math.round(s.az)], b: [Math.round(s.bx), Math.round(s.bz)], A: s.A?.world, B: s.B?.world, tunnel: s.tunnel })),
       info: () => renderer?.info,
       view,
       setView: (v: Partial<typeof view>) => {
