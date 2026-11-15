@@ -40,6 +40,15 @@
          消すのは src/ui/splash.ts（ホームの絵が読めたら）。JS が動かない時も 7 秒で CSS だけで消える -->
     <link rel="preload" as="image" type="image/webp" href="/splash-scop.webp" />
     <link rel="stylesheet" href="/splash.css" />
+    <!-- トロッコ（?trolley=）は別のページとして読み直すので、本体（JS）が届くまでのあいだ HTML のホーム画面が一瞬見えていた（11/15 くに）。
+         駅で閉じた幕と同じ色（src/ui/iris.ts の CURTAIN）だけにしておき、坑道の画面（src/trolley/trolley.css）に引き継ぐ -->
+    <script>
+      if (/[?&]trolley=/.test(location.search)) document.documentElement.classList.add('is-trolley')
+    </script>
+    <style>
+      html.is-trolley body { background: #13192b; }
+      html.is-trolley body > :not(.trolley):not(script) { display: none !important; }
+    </style>
     <!-- ホームのキービジュアル: 画面の縦横比に合う 1 枚だけを先に読む（CSS の切り替えと同じ境目） -->
     <link rel="preload" as="image" type="image/webp" href="/home/kv-phone-portrait.webp" media="(max-aspect-ratio: 13/20)" />
     <link rel="preload" as="image" type="image/webp" href="/home/kv-tablet-portrait.webp" media="(min-aspect-ratio: 13/20) and (max-aspect-ratio: 1/1)" />
