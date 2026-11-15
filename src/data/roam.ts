@@ -19,6 +19,8 @@ export interface Roam {
   /** 立ち止まる時間の幅（秒） */
   idle: [number, number]
   maxRise: number
+  /** 同じ群れ（同じ種）の子のぶつかり判定は素通りする。固まって暮らす群れで、行き先がほかの子の判定にふさがれて歩き出せないのを防ぐ */
+  passGroup?: boolean
 }
 
 const STILL: Roam = { tier: 'still', radius: 0, speed: 0, idle: [10, 20], maxRise: 0 }
@@ -36,6 +38,8 @@ export const ROAM: Record<string, Roam> = {
   カピバラ: { tier: 'medium', radius: 5, speed: 0.6, idle: [8, 18], maxRise: 0.6 },
   ミーアキャット: { tier: 'small', radius: 3, speed: 0.6, idle: [4, 10], maxRise: 0.5 },
   コモンリスザル: { tier: 'small', radius: 2, speed: 0.6, idle: [4, 10], maxRise: 0.5 },
+  // 11/15 くに「アカハナグマが歩いているのを見たことがない」: 表に無くて動いていなかった。6 頭が固まっていて、互いの判定で行き先がふさがるので群れの中は素通り
+  アカハナグマ: { tier: 'small', radius: 3, speed: 0.6, idle: [4, 10], maxRise: 0.5, passGroup: true },
   コツメカワウソ: { tier: 'habitat', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.4 },
   ケープペンギン: STILL,
 }

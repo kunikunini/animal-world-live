@@ -760,7 +760,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
           if (!r.hang) host.headHeight = ai.headHeight
           aiLions[r.key] = ai
           const roam = roamFor(r.species, animal.id)
-          const opts = { ...roam, ...(r.slopeFit ? { slopeFit: r.slopeFit } : {}), ...(standOn && standOf.has(ai) ? { sit: STAND_TIMES } : {}) }
+          const opts = { ...roam, ...(r.slopeFit ? { slopeFit: r.slopeFit } : {}), ...(standOn && standOf.has(ai) ? { sit: STAND_TIMES } : {}), ...(roam.passGroup ? { passThrough: (c: { x: number; z: number; r: number }) => lions.some((l) => l.collider === c && getAnimal(l.id)?.species === r.species) } : {}) }
           const w = r.still || roam.tier === 'still' ? null : createLionWander(host, ai, props.colliders, opts)
           if (w) {
             w.setReduceMotion(reduceMotionNow)

@@ -43,6 +43,8 @@ export interface WanderOptions {
    * 前後の足の地面の高さを測って体を斜面に沿って傾け、高さは前後の平均にする。省略時は傾けない（ほかの子は今まで通り）
    */
   slopeFit?: number
+  /** この判定は素通りしてよい（同じ群れの子）。ほかの子・岩・木の判定は今まで通り避ける */
+  passThrough?: (c: Collider) => boolean
 }
 
 /** 斜面に沿って傾ける角度の上限（rad） */
@@ -112,7 +114,7 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
     if (Math.hypot(x - WATERHOLE.x, z - WATERHOLE.z) < WATERHOLE.radius + 0.5) return false
     for (const c of colliders) {
       if (c === own) continue
-      if (Math.hypot(c.x - x, c.z - z) < c.r + own.r + 0.25) return false
+      if (Math.hypot(c.x - x, c.z - z) < c.r + own.r + 0.25 && !opts.passThrough?.(c)) return false
     }
     if (Math.hypot(SPOT.x - x, SPOT.z - z) < spotKeep) return false
     if (distanceToSegment(x, z, SPOT.approach.x, SPOT.approach.z, SPOT.x, SPOT.z) < pathKeep) return false
