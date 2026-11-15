@@ -629,6 +629,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const STAND_HEIGHT = 0.6
     const STAND_TIMES = { sit: [6, 12] as [number, number], roam: [12, 24] as [number, number] }
     const standOf = new WeakSet<AiLion>()
+    // 切り替え（11/15 くに「パッと切り替わるのが不自然」）: 消える側がしゃがみながら薄れ、出る側はしゃがんだ低さから伸びながら濃くなる。
+    // 歩く→立つも立つ→歩くも同じ流れの逆回し。STAND_SWAP 秒で、真ん中の 2 割は両方うっすら重なる
+    const STAND_SWAP = 1.1
+    const ease = (x: number) => {
+      const v = Math.min(1, Math.max(0, x))
+      return v * v * (3 - 2 * v)
+    }
     const attachStand = (ai: AiLion, st: AiLion) => {
       const wrap = ai.model
       const body = wrap.children[0]
@@ -639,25 +646,56 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
         if ((o as THREE.Mesh).isMesh) o.castShadow = true
       })
       wrap.add(holder)
+      // 素材はこの子のモデルごとに作られている（aiLionModel の toonMaterial）ので、薄くしてもほかの子に移らない
+      const matsOf = (root: THREE.Object3D) => {
+        const list: THREE.Material[] = []
+        root.traverse((o) => {
+          const m = o as THREE.Mesh
+          if (m.isMesh) list.push(...([] as THREE.Material[]).concat(m.material))
+        })
+        return list
+      }
+      const bodyMats = matsOf(body)
+      const standMats = matsOf(holder)
+      const setAlpha = (list: THREE.Material[], a: number) => {
+        for (const m of list) {
+          m.opacity = a
+          m.transparent = a < 1
+        }
+      }
+      // 歩く姿は足が入れ物の y=0 にある（位置 = -最下点 × 倍率）ので、縦の倍率と位置を同じ割合で縮めると足を地面に置いたまましゃがむ
+      const baseSy = body.scale.y
+      const baseY = body.position.y
       let on = false
+      let s = 0 // 0 = 歩く姿、1 = 直立
       let t = 0
       const phase = Math.random() * Math.PI * 2
       ai.setSitting = (v) => {
+        if (v && !on) t = 0
         on = v
-        t = 0
-        holder.visible = v
-        body.visible = !v
       }
       const tick = ai.tick
       ai.tick = (dt) => {
         tick(dt)
-        if (!on) return
+        const goal = on ? 1 : 0
+        if (s !== goal) s = goal > s ? Math.min(1, s + dt / STAND_SWAP) : Math.max(0, s - dt / STAND_SWAP)
+        const gone = ease(s / 0.6) // 歩く姿のしゃがみ・薄れ
+        const shown = ease((s - 0.4) / 0.6) // 直立の伸び・濃さ
+        const squash = reduceMotionNow ? 0 : 1
+        body.visible = gone < 1
+        const k = 1 - 0.35 * gone * squash
+        body.scale.y = baseSy * k
+        body.position.y = baseY * k
+        setAlpha(bodyMats, 1 - gone)
+        holder.visible = shown > 0
+        if (!holder.visible) return
         t += dt
-        // 接地の補正で入れ物が上下しても、直立の足は地面に置いたまま。出てくる時は 0.25 秒で背が伸びる
+        // 接地の補正で入れ物が上下しても、直立の足は地面に置いたまま。しゃがんだ低さ（55%）から背を伸ばし、少し横に広がった体が細くなる
         holder.position.y = -wrap.position.y
-        const pop = Math.min(1, t / 0.25)
-        holder.scale.set(1, 0.85 + 0.15 * pop, 1)
-        holder.rotation.y = reduceMotionNow ? 0 : Math.sin(t * 0.5 + phase) * 0.5
+        const crouch = (1 - shown) * squash
+        holder.scale.set(1 + 0.12 * crouch, 1 - 0.45 * crouch, 1 + 0.12 * crouch)
+        setAlpha(standMats, shown)
+        holder.rotation.y = reduceMotionNow ? 0 : Math.sin(t * 0.5 + phase) * 0.5 * shown
       }
       standOf.add(ai)
       return ai
