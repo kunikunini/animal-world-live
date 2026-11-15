@@ -44,6 +44,8 @@ export const ROAM: Record<string, Roam> = {
   キンカジュー: { tier: 'small', radius: 3, speed: 0.5, idle: [5, 12], maxRise: 0.5, passGroup: true },
   // 11/15 くにの指示（歩きの実証）: 表に無くて動いていなかった。8 頭が固まっているので群れの中は素通り
   ワオキツネザル: { tier: 'small', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.5, passGroup: true },
+  // 11/15 くにの指示（歩きの実証）: 表に無くて動いていなかった。バジルとパセリが寄り合っているので群れの中は素通り（ビンは木の上なので下の PER_ANIMAL で動かさない）。体が重くゆっくり歩く
+  ビントロング: { tier: 'small', radius: 4, speed: 0.45, idle: [6, 14], maxRise: 0.5, passGroup: true },
   コツメカワウソ: { tier: 'habitat', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.4 },
   ケープペンギン: STILL,
 }
@@ -54,6 +56,8 @@ const PER_ANIMAL: Record<string, Partial<Roam>> = {
   claire: { radius: 5, speed: 0.75, idle: [4, 10] },
   carla: { radius: 5, speed: 0.75, idle: [4, 10] },
   riley: { radius: 10 },
+  // ビン（ビントロング）は木の上（地面から 4.4m）にいる。歩くと地面へ落ちるので、今まで通りその場にいる
+  'r-14a9x66': { tier: 'still', radius: 0, speed: 0 },
 }
 
 /** 種と個体 id から歩く範囲を引く。表に無い種は動かない */
