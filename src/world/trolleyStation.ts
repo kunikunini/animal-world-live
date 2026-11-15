@@ -253,6 +253,9 @@ function buildStation(s: TrolleyStation, to: TrolleyStation, colliders: Collider
   colliders.push({ ...toWorld(-2.05, 4.5), r: 0.4, map: false })
   colliders.push({ ...toWorld(2.05, 4.5), r: 0.4, map: false })
   colliders.push({ ...toWorld(0, 0), r: 1.1, map: false })
+  // 車止め（線路のワールド側の端、幅 1.8m）。11/15 くに: 主人公がめりこんだ
+  colliders.push({ ...toWorld(-0.55, railZ - railLen / 2 - 0.1), r: 0.55, map: false })
+  colliders.push({ ...toWorld(0.55, railZ - railLen / 2 - 0.1), r: 0.55, map: false })
   colliders.push({ ...toWorld(2.3, -1.2), r: 0.3, map: false })
   return g
 }
