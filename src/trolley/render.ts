@@ -835,8 +835,9 @@ export function createRenderer(canvas: HTMLCanvasElement, course: Course, hero: 
       const g = groundAt(wx)
       const c = ceilAt(wx)
       const sx = X(wx + 30)
-      const gy = Y(g + (c - g) * 0.08)
-      const h = (60 + hash(i, 141) * 70) * s
+      // 足もとは洞窟の床（11/15 くに: 宙に浮いて見えた）。かさの高さは今までどおり床から少し上
+      const gy = Y(g) + 6 * s
+      const h = (60 + hash(i, 141) * 70) * s + (Y(g) - Y(g + (c - g) * 0.08)) + 6 * s
       const r = (30 + hash(i, 142) * 26) * s
       const tw = 0.6 + 0.4 * Math.sin(v_t * 1.6 + i * 1.3)
       const col = i % 2 ? '#b6ff7a' : '#7af0ff'
