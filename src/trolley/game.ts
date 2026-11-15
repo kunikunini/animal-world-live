@@ -52,7 +52,7 @@ type Key =
   | 'hintMonkey' | 'hintIce' | 'hintSloth' | 'iceOn' | 'raceStart' | 'hintRace' | 'raceWin' | 'raceLose' | 'raceR' | 'raceWinR' | 'raceLoseR'
   | 'slothFive' | 'slothBye' | 'slothR' | 'mudOn' | 'riverOn'
   | 'back' | 'leverHold' | 'turbo' | 'turboOn' | 'turboBlock' | 'turboSmash' | 'turboDrain' | 'turboR'
-  | 'coachLever' | 'coachJump' | 'coachDown' | 'coachMouse' | 'coachTurbo' | 'coachTap' | 'coachHold' | 'coachOk'
+  | 'coachLever' | 'coachJump' | 'coachDown' | 'coachMouse' | 'coachMonkey' | 'coachTurbo' | 'coachTap' | 'coachHold' | 'coachOk'
 const WORLD = TROLLEY_WORLD_NAME
 const ITEM_NAME: Record<ItemKind, { ja: string; en: string }> = {
   shell: { ja: 'かいがら', en: 'shell' },
@@ -177,6 +177,7 @@ const DICT: Record<Key, { ja: string; en: string }> = {
   coachJump: { ja: 'せんろが きれてる！<br>がめんを タップして ジャンプ', en: 'The track ends!<br>Tap the screen to jump' },
   coachDown: { ja: '▼を おすと したの みちへ<br>おさなければ そのまま すすむよ', en: 'Press ▼ for the lower track<br>or just keep going' },
   coachMouse: { ja: 'ネズミは あつめた ものを とっていくよ！<br>ジャンプで ふりおとそう', en: 'Mice steal what you collected!<br>Jump to shake them off' },
+  coachMonkey: { ja: 'リスザルは あつめた ものを とっていくよ！<br>ジャンプで ふりおとそう', en: 'Monkeys steal what you collected!<br>Jump to shake them off' },
   coachTurbo: { ja: 'ターボ！ しばらく はやく なって<br>アイテムを すいよせ、いたずらも はねかえすよ', en: 'Turbo! For a while you go faster,<br>pull in items and bounce off pranks' },
   coachTap: { ja: 'タップ', en: 'Tap' },
   coachHold: { ja: 'おしっぱなし', en: 'Hold' },
@@ -681,7 +682,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
   let coachTarget: HTMLElement | null = null
   const coachTargetOf = (k: CoachKey): HTMLElement | null =>
     k === 'lever' ? leverBtn : k === 'down' ? downBtn : k === 'turbo' ? turboEl : null
-  function coachOpen(k: CoachKey): void {
+  function coachOpen(k: CoachKey, monkey = false): void {
     if (autopilot || coach || coachDone.has(k) || phase !== 'ride') return
     coach = k
     coachDone.add(k)
@@ -693,7 +694,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
     leverOn(false)
     hintEl.classList.remove('is-on')
     const textKey = ({ lever: 'coachLever', jump: 'coachJump', down: 'coachDown', mouse: 'coachMouse', turbo: 'coachTurbo' } as const)[k]
-    coachText.innerHTML = tr(textKey)
+    coachText.innerHTML = tr(monkey && k === 'mouse' ? 'coachMonkey' : textKey)
     coachOk.textContent = k === 'turbo' ? tr('coachOk') : ''
     coachOk.hidden = k !== 'turbo'
     coachEl.dataset.k = k
@@ -1235,7 +1236,7 @@ export function startTrolleyMode(p: TrolleyParams): void {
         say(m.kind === 'monkey' ? (lang === 'en' ? 'A monkey hopped in!' : 'リスザルが のってきた！') : tr('mouseOn'), cart.x, cart.y + 150, '#ffd0d8')
         if (!autopilot) {
           showHint('mouseOn', tr(m.kind === 'monkey' ? 'hintMonkey' : 'hintMouse'))
-          coachOpen('mouse')
+          coachOpen('mouse', m.kind === 'monkey')
         }
       } else if (m.state === 'ride') {
         if (autopilot && m.t > 0.55 && cart.ri >= 0) autoJump()
