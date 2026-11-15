@@ -622,6 +622,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       { key: 'lorisOyaki', species: 'スローロリス', name: 'おやき', file: 'loris-oyaki', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true, scale: 3.5 },
       // ウリン（フタユビナマケモノ、ジャングル）: 本人の写真は無いので一般的なフタユビナマケモノの姿（11/8 くに：本人に似せるのは将来）。リグなしの静止モデル（4 本の手足で枝にぶら下がる）。
       // 今の場所の枝にぶら下げたまま、手足の先を枝の高さに合わせる（sloth.ts の swapModel）。大きさはプリミティブ版の高さ。呼吸は胴の太さだけ。名前の札は枝の下のまま
+      // ワニ 2 頭（ジャングルの沼、11/15 くにの指示）: 本人の写真は無いので種の特徴から描いたクレイ風の絵で生成。リグなしの伏せた静止モデル。
+      // プリミティブ版（wildfolk の伏せたワニ）と同じく歩かせず、入れ物の呼吸の拡縮だけ。大きさは水平の長い方の辺（鼻先〜尾の先）をプリミティブ版の体の長さに合わせる
+      { key: 'crocChiroru', species: 'シャムワニ', name: 'チロル', file: 'croc-chiroru', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true },
+      { key: 'caimanKichi', species: 'メガネカイマン', name: '吉', file: 'caiman-kichi', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, replaceHost: true, still: true, lie: true },
       { key: 'slothUrin', species: 'フタユビナマケモノ', name: 'ウリン', file: 'sloth-urin', posture: { hind: 0, spine: 0, tail: 0, front: 0, ground: false }, upright: true, still: true, hang: true },
     ]
     // 各子のプリミティブ版の、入れ物の倍率込みのワールドでの大きさ（読み込みの前、入れ物がまだプリミティブ版のうちに測る）。
