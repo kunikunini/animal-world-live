@@ -42,6 +42,8 @@ export const ROAM: Record<string, Roam> = {
   アカハナグマ: { tier: 'small', radius: 3, speed: 0.6, idle: [4, 10], maxRise: 0.5, passGroup: true },
   // 11/15 くにの指示（歩きの実証）: アカハナグマと同じく表に無くて動いていなかった。8 頭が固まっているので群れの中は素通り
   キンカジュー: { tier: 'small', radius: 3, speed: 0.5, idle: [5, 12], maxRise: 0.5, passGroup: true },
+  // 11/15 くにの指示（歩きの実証）: 表に無くて動いていなかった。8 頭が固まっているので群れの中は素通り
+  ワオキツネザル: { tier: 'small', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.5, passGroup: true },
   コツメカワウソ: { tier: 'habitat', radius: 3, speed: 0.6, idle: [5, 12], maxRise: 0.4 },
   ケープペンギン: STILL,
 }
