@@ -88,6 +88,7 @@ const DICT = {
   firstMet: { ja: '初めて出会った日', en: 'First met' },
   seeBook: { ja: 'ともだち帳を見る', en: 'Open Friend Book' },
   backBook: { ja: 'ともだち帳に戻る', en: 'Back to Friend Book' },
+  goAnimalWorld: { ja: '{world}へ あそびに行く', en: 'Visit {world}' },
   memoryNote: {
     ja: 'この環境では保存できないため、ページを閉じるとともだち帳は消えます。',
     en: 'Saving isn’t available here, so your Friend Book will be cleared when you close the page.',

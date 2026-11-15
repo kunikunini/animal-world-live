@@ -251,3 +251,22 @@ export function arrivalOf(base: MapBase, animalAt: (id: string) => { x: number; 
   }
   return { x: base.x, z: base.z, heading: base.world === 'africa' ? Math.PI : face(base, worldCenter(base.world)) }
 }
+
+/**
+ * 「〇〇のいるワールドへあそびに行く」（ともだち帳・スコープの映像から）: その子のそばに、その子の方を向いて立つ場所。
+ * ワールドの中の今の位置（animalAt）が分かればそこから。分からない時（ワールドを作っていない時・ワールドにいない子）は、その子のワールドの観察スポット
+ */
+export function animalArrival(
+  animalId: string,
+  animalAt: (id: string) => { x: number; z: number } | null,
+): { x: number; z: number; heading: number; world: RegionKey } | null {
+  const animal = ANIMALS.find((a) => a.id === animalId)
+  if (!animal?.world) return null
+  const world = animal.world as RegionKey
+  const at = animalAt(animalId)
+  const base: MapBase | undefined = at
+    ? { id: `${world}:animal:${animalId}`, world, kind: 'animal', x: at.x, z: at.z, animalId }
+    : mapBases().bases.find((b) => b.id === `${world}:spot`)
+  if (!base) return null
+  return { ...arrivalOf(base, animalAt), world }
+}

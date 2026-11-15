@@ -19,9 +19,11 @@ export interface ScopeHandoff {
   spot: ReturnSpot | null
   /** あそびかたツアーを途中で持ってきた時の段（無ければ null） */
   guide: number | null
+  /** 「〇〇へあそびに行く」で戻った時: その子のそばに立つ（無ければ null） */
+  animal: string | null
 }
 
-const KEYS = ['scope', 'rx', 'rz', 'rh', 'rg', 'g', 'via'] as const
+const KEYS = ['scope', 'rx', 'rz', 'rh', 'rg', 'g', 'via', 'ra'] as const
 
 export function isScopeMode(): boolean {
   return new URLSearchParams(location.search).get('scope') === '1'
@@ -41,6 +43,7 @@ export function readHandoff(): ScopeHandoff {
   const heading = num(q.get('rh'))
   const g = num(q.get('g'))
   const spot = x !== null && z !== null ? { x, z, heading: heading ?? Math.PI, region: q.get('rg') ?? '' } : null
+  const animal = isScopeMode() ? null : q.get('ra')
   const keep = isScopeMode()
   try {
     const url = new URL(location.href)
@@ -51,7 +54,7 @@ export function readHandoff(): ScopeHandoff {
   } catch {
     // 書き換えられなくても続ける
   }
-  return { spot, guide: g === null ? null : Math.max(0, Math.round(g)) }
+  return { spot, guide: g === null ? null : Math.max(0, Math.round(g)), animal }
 }
 
 function setSpot(url: URL, spot: ReturnSpot, guide: number | null): void {
@@ -266,12 +269,13 @@ export function goScope(spot: ReturnSpot, guide: number | null): void {
 }
 
 /** スコープ専用モードから、通常起動（ワールド）へ。戻り先があればそこへ */
-export function goWorld(spot: ReturnSpot | null, guide: number | null): void {
+export function goWorld(spot: ReturnSpot | null, guide: number | null, animal: string | null = null): void {
   if (leaving) return
   leaving = true
   const url = new URL(location.href)
   for (const k of KEYS) url.searchParams.delete(k)
   if (spot) setSpot(url, spot, guide)
   else if (guide !== null) url.searchParams.set('g', String(guide))
+  if (animal) url.searchParams.set('ra', animal)
   void showHop('back').then(() => location.replace(url.toString()))
 }

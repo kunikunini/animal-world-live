@@ -3921,6 +3921,20 @@ button.bk-tab:hover {
   margin-top: 10px;
 }
 
+/* その子のいるワールドへ: 帳へのボタン（空の青）と並ぶので、白地に青の縁 */
+.go-world {
+  width: 100%;
+  min-height: var(--btn-l);
+  margin-top: 10px;
+  color: var(--sky-deep);
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--sky);
+}
+
+.go-world:hover {
+  background: #eef5ff;
+}
+
 @media (min-width: 768px) {
   .observe-panel {
     left: 50%;
@@ -3974,6 +3988,7 @@ button.bk-tab:hover {
   .fields { margin-top: 10px; gap: 8px; }
   .field { padding: 10px 12px; }
   .see-book { min-height: 48px; margin-top: 8px; }
+  .go-world { min-height: 48px; margin-top: 8px; }
 }
 
 /* ==========================================================================

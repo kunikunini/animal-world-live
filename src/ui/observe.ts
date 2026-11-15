@@ -8,7 +8,8 @@ import { faceMarkup } from './faces'
 import { esc } from './html'
 import { renderHero, renderProfile } from './profile'
 import { sound } from '../audio/sound'
-import { animalName, getLang, speciesName, t } from './i18n'
+import { animalName, getLang, onLangChange, speciesName, t } from './i18n'
+import { getWorld } from '../data/worlds'
 import { refreshIn, setViewOpen } from './transition'
 import { handleReactClick, reactButtonsMarkup, syncReactButtons } from './reactButtons'
 import { reactions, videoKeyOf } from '../data/reactions'
@@ -24,6 +25,10 @@ export interface ObserveView {
   onBefriend: (fn: (animal: Animal) => void) => void
   /** 登録直後の「ともだち帳を見る」 */
   onSeeBook: (fn: (animal: Animal) => void) => void
+  /** 「〇〇へあそびに行く」（ともだち帳から開いた時と、スコープ専用モードの時に出る） */
+  onGoWorld: (fn: (animal: Animal) => void) => void
+  /** スコープ専用モード: どこから開いても「〇〇へあそびに行く」を出す */
+  setGoWorldAlways: (on: boolean) => void
   setReduceMotion: (on: boolean) => void
 }
 
@@ -76,6 +81,10 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
   const openListeners: Array<(open: boolean) => void> = []
   const befriendListeners: Array<(animal: Animal) => void> = []
   const seeBookListeners: Array<(animal: Animal) => void> = []
+  const goWorldBtn = document.getElementById('observe-go-world') as HTMLButtonElement
+  const goWorldLabel = document.getElementById('observe-go-world-label') as HTMLElement
+  const goWorldListeners: Array<(animal: Animal) => void> = []
+  let goWorldAlways = false
   let open = false
   let current: Animal | null = null
   let origin: ObserveOrigin = 'world'
@@ -201,6 +210,13 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
    * 登録したばかりでまだ帳で見ていない子は「加わりました」。登録済みなら、どこから開いても帳へ行くボタンを出す
    * （帳から開いた時は、下に開いている帳へ戻る）
    */
+  /** その子のいるワールドの名前で「〇〇へあそびに行く」。ワールドの中で出会って開いた時は出さない（もうそこにいる） */
+  const renderGoWorld = (animal: Animal) => {
+    const w = animal.world ? getWorld(animal.world) : undefined
+    goWorldBtn.hidden = !w || !(origin === 'book' || goWorldAlways)
+    if (w) goWorldLabel.textContent = t('goAnimalWorld', { world: w.name[getLang()] })
+  }
+
   const renderFriendState = (animal: Animal) => {
     const entry = store.get(animal.id)
     const fresh = entry?.seenAt === null
@@ -210,6 +226,7 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     befriendedText.textContent = fresh ? t('addedBook') : t('inBook')
     seeBookBtn.hidden = !entry
     seeBookLabel.textContent = origin === 'book' ? t('backBook') : t('seeBook')
+    renderGoWorld(animal)
     if (entry) befriendedDate.textContent = formatMetDate(entry.firstMetAt)
     memoryNote.hidden = store.isPersistent
   }
@@ -427,6 +444,12 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     befriendListeners.forEach((fn) => fn(current as Animal))
   })
 
+  goWorldBtn.addEventListener('click', () => {
+    if (current) goWorldListeners.forEach((fn) => fn(current as Animal))
+  })
+  onLangChange(() => {
+    if (current) renderGoWorld(current)
+  })
   seeBookBtn.addEventListener('click', () => {
     if (current) seeBookListeners.forEach((fn) => fn(current as Animal))
   })
@@ -483,6 +506,12 @@ export function createObserveView(store: FriendBookStore, met: EncounterStore): 
     },
     onSeeBook: (fn) => {
       seeBookListeners.push(fn)
+    },
+    onGoWorld: (fn) => {
+      goWorldListeners.push(fn)
+    },
+    setGoWorldAlways: (on) => {
+      goWorldAlways = on
     },
     setReduceMotion: (on) => {
       reduceMotion = on

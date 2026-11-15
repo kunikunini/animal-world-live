@@ -39,7 +39,7 @@ import { createTrolleyGate } from './ui/trolleyGate'
 import { createTrolleyStations, nearStation } from './world/trolleyStation'
 import { SHOP, updateShopHouse } from './world/shop'
 import { createMinimap } from './ui/minimap'
-import { arrivalOf } from './world/mapBases'
+import { animalArrival, arrivalOf } from './world/mapBases'
 import { createMapView } from './ui/map'
 import { createJoystick } from './ui/joystick'
 import { createHome } from './ui/home'
@@ -205,6 +205,8 @@ interface WorldHandle {
   toStart: () => void
   /** スコープ専用モードから戻った時: 前にいた場所と向きに立たせる */
   placeAt: (x: number, z: number, heading: number) => void
+  /** 「〇〇へあそびに行く」: その子のいるワールドの、その子のそばに立たせる */
+  visitAnimal: (id: string) => void
 }
 
 /**
@@ -2175,6 +2177,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     placeAt: (x, z, heading) => {
       player.teleport(x, z, heading)
     },
+    visitAnimal: (id) => {
+      const a = animalArrival(id, animalAt)
+      if (a) player.teleport(a.x, a.z, a.heading)
+    },
     pause: () => {
       paused = true
       player.setInputEnabled(false)
@@ -2267,6 +2273,17 @@ function startScopeMode(handoff: ScopeHandoff): void {
     shell.guide.reach('scopeClose')
     goWorld(handoff.spot, shell.guide.at())
   })
+  // 映像の「〇〇へあそびに行く」: 通常起動に戻し、その子のそばに立つ（場所はワールドができてから、その子の今の位置で決める）
+  shell.observe.setGoWorldAlways(true)
+  shell.observe.onGoWorld((animal) => {
+    const a = animalArrival(animal.id, () => null)
+    goWorld(a ? { x: a.x, z: a.z, heading: a.heading, region: a.world } : handoff.spot, shell.guide.at(), animal.id)
+  })
+  // 帳の下の「ワールド」: スコープの一覧に戻らず、そのままワールドへ（前にいた場所から）
+  shell.book.onGoWorld(() => {
+    shell.book.close()
+    goWorld(handoff.spot, shell.guide.at())
+  })
   shell.catalog.open(false)
   shell.guide.reach('scope')
   dropSplash(false)
@@ -2326,7 +2343,7 @@ function main(): void {
   else setShopBack(null)
 
   // ホーム → 幕が双眼鏡の形に閉じる → ワールド → 幕が開く
-  const enterWorld = async () => {
+  const enterWorld = async (animalId: string | null = null) => {
     if (busy || !webgl) return
     busy = true
     try {
@@ -2349,7 +2366,14 @@ function main(): void {
       await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
       // お店のページから戻ってきた時は、入る演出とあそび方ナビをせず、お店の前（石畳の手前）にお店を向いて立つ
       if (toShop) world.placeAt(SHOP.x + Math.sin(SHOP.yaw) * 16, SHOP.z + Math.cos(SHOP.yaw) * 16, SHOP.yaw + Math.PI)
-      else world.prepareIntro()
+      else {
+        // 帳の映像の「〇〇へあそびに行く」でホームから入る時: その子のそばに立ってから、そのワールドの入る演出
+        if (animalId) {
+          world.visitAnimal(animalId)
+          await nextFrames(2)
+        }
+        world.prepareIntro()
+      }
       shell.home.hide()
       document.body.classList.add('in-world')
       canvas.focus()
@@ -2431,6 +2455,8 @@ function main(): void {
       await nextFrames(2)
       world = startWorld(canvas, shell)
       world.placeAt(spot.x, spot.z, spot.heading)
+      // スコープの映像の「〇〇へあそびに行く」から: その子の今の位置のそばに立ち直す
+      if (handoff.animal) world.visitAnimal(handoff.animal)
       await Promise.race([world.heroReady(), new Promise((r) => window.setTimeout(r, 2500))])
       shell.home.hide()
       document.body.classList.add('in-world')
@@ -2485,6 +2511,29 @@ function main(): void {
   })
   shell.hud.onGoHome(() => {
     void goHome()
+  })
+  // 帳の映像の「〇〇へあそびに行く」: 映像と帳を閉じ、幕を閉じてその子のそばへ移って開く。ホームからなら、そのまま入る
+  shell.observe.onGoWorld((animal) => {
+    if (busy) return
+    shell.observe.close()
+    shell.book.close()
+    if (shell.catalog.isOpen()) shell.catalog.close()
+    const inWorld = !!world && document.body.classList.contains('in-world')
+    if (!inWorld) {
+      void enterWorld(animal.id)
+      return
+    }
+    busy = true
+    void (async () => {
+      try {
+        await shell.iris.close()
+        world?.visitAnimal(animal.id)
+        await nextFrames(2)
+        await shell.iris.open()
+      } finally {
+        busy = false
+      }
+    })()
   })
   // 設定の「あそび方をもう一度見る」: ナビを最初に戻してワールドへ
   shell.settings.onReplayGuide(() => {
