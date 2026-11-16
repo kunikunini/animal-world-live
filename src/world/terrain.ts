@@ -148,10 +148,32 @@ function jungleHeight(x: number, z: number): number {
   if (d >= 1) return h
   return lerp(h, pondBottom, 1 - smoothstep(0.55, 1, d))
 }
-/** 南半球: 平らな赤い大地に低い砂の波 */
-function southHeight(x: number, z: number): number {
+/** 南半球: 平らな赤い大地に低い砂の波（水場の加工前） */
+function southRaw(x: number, z: number): number {
   const dunes = Math.sin(x * 0.045 + outerNoise.noise(x * 0.01, z * 0.01) * 2.2) * 0.35
   return simplex.fbm(x * 0.008, z * 0.008, 3, 2.0, 0.5) * 2.4 + dunes
+}
+/**
+ * 11/16 南半球の見本の絵に寄せた、空を映す小さな水場。カピバラの拠点の西（動物・峠の道・一枚岩から離れた所）。
+ * 地面を浅い皿にして、水面は縁のいちばん低い所より少し下。くるぶしほどの浅さで、入って歩ける
+ */
+const SOUTH_REGION = OUTER_REGIONS.find((r) => r.key === 'south') ?? { x: 0, z: 300 }
+const southPondX = SOUTH_REGION.x - 46
+const southPondZ = SOUTH_REGION.z + 4
+const southPondR = 6.5
+let southPondRim = Infinity
+for (let i = 0; i < 32; i++) {
+  const a = (i / 32) * Math.PI * 2
+  southPondRim = Math.min(southPondRim, southRaw(southPondX + Math.cos(a) * southPondR * 1.15, southPondZ + Math.sin(a) * southPondR * 1.15))
+}
+export const SOUTH_POND = { x: southPondX, z: southPondZ, radius: southPondR, level: southPondRim - 0.12 }
+const southPondBottom = SOUTH_POND.level - 0.18
+/** 南半球: 平らな赤い大地に低い砂の波。水場は浅い皿に */
+function southHeight(x: number, z: number): number {
+  const h = southRaw(x, z)
+  const d = Math.hypot(x - southPondX, z - southPondZ) / (southPondR * 1.6)
+  if (d >= 1) return h
+  return lerp(h, southPondBottom, 1 - smoothstep(0.55, 1, d))
 }
 
 /**
@@ -616,13 +638,24 @@ function jungleColor(x: number, z: number, _h: number, slope: number, out: THREE
 }
 
 // 南半球: 赤い土、乾いた草のまだら、白っぽい砂（トップの絵のオレンジの土と黄金色の草に寄せる）
-const colRed = new THREE.Color('#d8773f')
-const colRedDeep = new THREE.Color('#b8562c')
+// 11/16 南半球の見本の絵に寄せて、赤土を濃く鮮やかに
+const colRed = new THREE.Color('#d0562c')
+const colRedDeep = new THREE.Color('#a83c20')
 const colSpinifex = new THREE.Color('#e3b64a')
 const colSand = new THREE.Color('#ebc58c')
+// 11/16 南半球の見本の絵に寄せて、砂の波の日なたの峰を明るいオレンジ、風下のくぼみを濃い赤に
+const colRedCrest = new THREE.Color('#e8783c')
+const colRedTrough = new THREE.Color('#a4462a')
 function southColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.035 + 1, z * 0.035 - 4) * 0.5 + 0.5
   out.copy(colRed).lerp(colRedDeep, n * 0.8)
+  // southHeight の砂の波と同じ式（峰ほど明るく、谷ほど濃い）
+  const wave = Math.sin(x * 0.045 + outerNoise.noise(x * 0.01, z * 0.01) * 2.2)
+  out.lerp(colRedCrest, smoothstep(0.35, 0.95, wave) * 0.55)
+  out.lerp(colRedTrough, smoothstep(-0.35, -0.95, wave) * 0.45)
+  // 水場のまわりは湿った濃い赤土
+  const dpS = Math.hypot(x - SOUTH_POND.x, z - SOUTH_POND.z) / SOUTH_POND.radius
+  if (dpS < 1.7) out.lerp(colRedTrough, (1 - smoothstep(1.0, 1.7, dpS)) * 0.7)
   const big = patch.noise(x * 0.02 - 6, z * 0.02 + 5) * 0.5 + 0.5
   out.lerp(colSpinifex, Math.max(0, big - 0.55) * 1.5)
   out.lerp(colSand, Math.max(0, 0.32 - big) * 1.6)

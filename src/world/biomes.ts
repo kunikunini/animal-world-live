@@ -5,7 +5,7 @@ import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
-import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, NORTH_POND, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, JUNGLE_POND, SOUTH_POND, LAGOON, NORTH_POND, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { SUN_LIGHT_DIR } from './scene'
 import { createShopHouse, shopClears } from './shop'
@@ -252,20 +252,36 @@ function createIceMaterial(): THREE.ShaderMaterial {
  * - さざ波: 向きの違う波を重ねて面の向きをゆらし、日の向き（SUN_LIGHT_DIR）の照り返しを細く散らす
  * - きらめき: 小さなます目ごとに、照り返しの強い所で時々ちかっと光る点
  */
-function createPondMaterial(): THREE.ShaderMaterial {
+interface PondLook {
+  x: number
+  z: number
+  radius: number
+  deep: string
+  shallow: string
+  sky: string
+}
+// 11/16 ジャングルの見本の絵に寄せて、深い青緑の水に。映り込みは空と葉の混ざった緑がかった水色（灰色に白くとばない）
+const JUNGLE_POND_LOOK: PondLook = {
+  x: JUNGLE_POND.x,
+  z: JUNGLE_POND.z,
+  radius: JUNGLE_POND.radius * 1.12,
+  deep: '#0e4a62',
+  shallow: '#2a8a86',
+  sky: '#8fcac4',
+}
+function createPondMaterial(look: PondLook = JUNGLE_POND_LOOK): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     transparent: true,
     fog: true,
     uniforms: {
       ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
       uTime: { value: 0 },
-      uCenter: { value: new THREE.Vector2(JUNGLE_POND.x, JUNGLE_POND.z) },
-      uRadius: { value: JUNGLE_POND.radius * 1.12 },
+      uCenter: { value: new THREE.Vector2(look.x, look.z) },
+      uRadius: { value: look.radius },
       uSun: { value: SUN_LIGHT_DIR.clone().normalize() },
-      // 11/16 ジャングルの見本の絵に寄せて、深い青緑の水に。映り込みは空と葉の混ざった緑がかった水色（灰色に白くとばない）
-      uDeep: { value: new THREE.Color('#0e4a62') },
-      uShallow: { value: new THREE.Color('#2a8a86') },
-      uSky: { value: new THREE.Color('#8fcac4') },
+      uDeep: { value: new THREE.Color(look.deep) },
+      uShallow: { value: new THREE.Color(look.shallow) },
+      uSky: { value: new THREE.Color(look.sky) },
     },
     vertexShader: /* glsl */ `
       #include <fog_pars_vertex>
@@ -597,7 +613,9 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
 /** 南半球: 白い幹のユーカリ、赤い岩、とげとげの草むら。目印は奥の赤い一枚岩 */
 function createSouth(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('south')
-  const trees = scatter(rand, r, 34, { max: r.walk + 30, clearing: 16, path: 8 })
+  // 水場の中と岸には木・岩・草むらを置かない（rand は同じ数だけ使うので、ほかの場所の並びは変わらない）
+  const offPond = (m: number) => (p: { x: number; z: number }) => Math.hypot(p.x - SOUTH_POND.x, p.z - SOUTH_POND.z) > SOUTH_POND.radius + m
+  const trees = scatter(rand, r, 34, { max: r.walk + 30, clearing: 16, path: 8 }).filter(offPond(4))
   const trunkGeo = new THREE.CylinderGeometry(0.16, 0.32, 1, 6)
   trunkGeo.translate(0, 0.5, 0)
   const blobGeo = new THREE.IcosahedronGeometry(1, 0)
@@ -632,7 +650,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   group.add(trunks, blobs)
 
   // 赤い岩
-  const rocks = scatter(rand, r, 50, { max: r.walk + 25, clearing: 10, path: 6 })
+  const rocks = scatter(rand, r, 50, { max: r.walk + 25, clearing: 10, path: 6 }).filter(offPond(2.5))
   const rockMesh = instanced(blobGeo, toonMaterial({ color: '#c4583a' }), rocks.length)
   rocks.forEach((p, i) => {
     const s = 0.5 + rand() * 1.6
@@ -645,7 +663,7 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   group.add(rockMesh)
 
   // とげとげの草むら（スピニフェックス風の丸い株）
-  const tufts = scatter(rand, r, mobile ? 300 : 600, { max: r.walk + 15, clearing: 4, path: 3 })
+  const tufts = scatter(rand, r, mobile ? 300 : 600, { max: r.walk + 15, clearing: 4, path: 3 }).filter(offPond(0.8))
   const tuftGeo = new THREE.IcosahedronGeometry(1, 0)
   const tuftMesh = instanced(tuftGeo, toonMaterial(), tufts.length, false)
   const tuftA = new THREE.Color('#dbb24a')
@@ -660,6 +678,18 @@ function createSouth(rand: () => number, group: THREE.Group, colliders: Collider
   finish(tuftMesh)
   tuftMesh.userData.clearAroundAnimals = 1.0
   group.add(tuftMesh)
+
+  // 11/16 空を映す小さな水場（南半球の見本の絵）。沼と同じ水の塗り方で、色は空の深い青と赤土の岸
+  {
+    const pondMat = createPondMaterial({ x: SOUTH_POND.x, z: SOUTH_POND.z, radius: SOUTH_POND.radius * 1.12, deep: '#163f9a', shallow: '#3f7fc0', sky: '#6fa4e6' })
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(SOUTH_POND.radius * 1.12, 40).rotateX(-Math.PI / 2), pondMat)
+    pond.position.set(SOUTH_POND.x, SOUTH_POND.level, SOUTH_POND.z)
+    pond.name = 'south-pond'
+    pond.onBeforeRender = () => {
+      pondMat.uniforms.uTime.value = performance.now() / 1000
+    }
+    group.add(pond)
+  }
 
   // 目印の赤い一枚岩: 中心の奥（サバンナと反対側）に、横長で角の丸い岩
   const mx = r.x

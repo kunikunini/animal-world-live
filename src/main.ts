@@ -1225,7 +1225,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     north: new THREE.Color('#e2dcf0'),
     // 11/16 見本の絵の、山のあいだにたまる霧の青みがかった緑へ
     jungle: new THREE.Color('#c4dfd6'),
-    south: new THREE.Color('#dcd6d2'),
+    // 11/16 南半球の見本の絵の、地平線の暖かい淡いオレンジへ
+    south: new THREE.Color('#ecbca4'),
     // 水の世界: 海の上の明るい水色（遠くの水平線が空に溶ける）
     water: new THREE.Color('#c4e6f4'),
     // ふれあいワールド: 春の牧場のやわらかい明るい霞（少し黄緑がかった白）
@@ -1269,6 +1270,33 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     farLit: new THREE.Color('#e9e2f0'),
     near: new THREE.Color('#9097c8'),
     nearLit: new THREE.Color('#dcd6ec'),
+  }
+  // 11/16 南半球は霞む赤い台地、ふれあいは明るい緑の丘、空は藤色の麓とクリーム色の岩の峰（各ワールドの見本の絵）
+  const RANGE_SOUTH = {
+    far: new THREE.Color('#d9a08e'),
+    farLit: new THREE.Color('#f2c6a6'),
+    near: new THREE.Color('#b8603e'),
+    nearLit: new THREE.Color('#e8905e'),
+  }
+  const RANGE_PARTNER = {
+    far: new THREE.Color('#9cc8a8'),
+    farLit: new THREE.Color('#c8e6b4'),
+    near: new THREE.Color('#6aa860'),
+    nearLit: new THREE.Color('#a6d47c'),
+  }
+  const RANGE_SKY = {
+    far: new THREE.Color('#c4c2e6'),
+    farLit: new THREE.Color('#f6eee2'),
+    near: new THREE.Color('#a4a0d4'),
+    nearLit: new THREE.Color('#f2e4cc'),
+  }
+  const RANGE: Partial<Record<RegionKey, typeof RANGE_SAVANNA>> = {
+    africa: RANGE_SAVANNA,
+    north: RANGE_NORTH,
+    jungle: RANGE_JUNGLE,
+    south: RANGE_SOUTH,
+    partner: RANGE_PARTNER,
+    sky: RANGE_SKY,
   }
   const fog = scene.fog as THREE.Fog
   interface Light {
@@ -1379,21 +1407,23 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     },
     // 南半球: いちばん深い青空と遠くまで澄んだ空気、照り返しは赤土。少し低く、オレンジがかった大きな太陽
     south: {
-      exposure: 0.96,
-      sky: new THREE.Color('#c8dcff'),
-      ground: new THREE.Color('#cf8e58'),
-      intensity: 0.66,
-      sun: 2.3,
-      top: new THREE.Color('#0f52d4'),
-      horizon: new THREE.Color('#7cbcf0'),
-      near: 120,
-      far: 500,
-      gradeSat: 1.06,
-      gradeContrast: 1.06,
+      exposure: 0.95,
+      // 11/16 南半球の見本の絵に寄せて、赤土が暖かいオレンジに輝く日差し、空は深い青から地平線の桃色がかったオレンジ、影は青紫。
+      // 霞を遠くへ（120・500 → 260・760。中景の赤土と一枚岩が白っぽくかすまない）、色を濃く
+      sky: new THREE.Color('#ffd8b8'),
+      ground: new THREE.Color('#c0603c'),
+      intensity: 0.92,
+      sun: 2.5,
+      top: new THREE.Color('#1838c4'),
+      horizon: new THREE.Color('#f4bc98'),
+      near: 260,
+      far: 760,
+      gradeSat: 1.16,
+      gradeContrast: 1.1,
       sunElev: 18,
-      sunGlow: new THREE.Color('#ffdca6'),
+      sunGlow: new THREE.Color('#ffd49a'),
       sunDisc: 4.6,
-      sunHalo: 1.2,
+      sunHalo: 1.0,
     },
     // 水の世界: 澄んだ明るい青空、照り返しは海と砂の明るい水色（影が青く澄む）。霞は遠く、高めの白い太陽に広い輪（海の照り返し）
     water: {
@@ -1460,6 +1490,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const SHADE_DEFAULT = shadeColor.value.clone()
   const SHADE_TINT: Partial<Record<RegionKey, THREE.Color>> = {
     jungle: new THREE.Color('#0a2c34'),
+    south: new THREE.Color('#241a56'),
   }
   const shadeTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
@@ -1971,21 +2002,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     }
     shadeColor.value.lerp(shadeTarget, lk)
     // 遠くの山並みの帯（空に描く背景）もサバンナだけ。峠でほかのワールドへ溶ける
-    // 11/16 北にも広げた（色は北の雪山）
-    // 11/16 ジャングルにも広げた。色は重みで混ぜる
-    const rangeW = weights.africa + weights.north + weights.jungle
+    // 11/16 北・ジャングル・南半球・ふれあい・空にも広げた。色は重みで混ぜる（水の世界は水平線をあけるので帯なし）
+    let rangeW = 0
+    for (const k of REGION_KEYS) if (RANGE[k]) rangeW += weights[k]
     skyU.uRange.value += (rangeW - skyU.uRange.value) * lk
     if (rangeW > 0.001) {
-      const ws = [weights.africa / rangeW, weights.north / rangeW, weights.jungle / rangeW]
-      const sets = [RANGE_SAVANNA, RANGE_NORTH, RANGE_JUNGLE]
       for (const key of ['far', 'farLit', 'near', 'nearLit'] as const) {
         const u = key === 'far' ? skyU.uRangeFar : key === 'farLit' ? skyU.uRangeFarLit : key === 'near' ? skyU.uRangeNear : skyU.uRangeNearLit
         u.value.setRGB(0, 0, 0)
-        sets.forEach((set, i) => {
-          u.value.r += set[key].r * ws[i]
-          u.value.g += set[key].g * ws[i]
-          u.value.b += set[key].b * ws[i]
-        })
+        for (const k of REGION_KEYS) {
+          const set = RANGE[k]
+          if (!set) continue
+          const w = weights[k] / rangeW
+          u.value.r += set[key].r * w
+          u.value.g += set[key].g * w
+          u.value.b += set[key].b * w
+        }
       }
     }
     skyU.uTop.value.lerp(lightTarget.top, lk)

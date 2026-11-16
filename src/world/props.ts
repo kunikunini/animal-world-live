@@ -843,11 +843,11 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
     { r: 188, h: 48, spread: 16, foot: '#2f6a50', peak: '#5ea65e' },
     { r: 230, h: 70, spread: 22, foot: '#4f8a80', peak: '#80b884' },
   ],
-  // 南半球: 赤い台地
+  // 南半球: 赤い台地。11/16 見本の絵に寄せて、手前は濃い赤、奥ほど霞む桃色がかった赤に（層を分ける）。少し高く
   south: [
-    { r: 150, h: 14, spread: 6, foot: '#b5452a', peak: '#e8804a' },
-    { r: 188, h: 24, spread: 9, foot: '#c45f3a', peak: '#f09c66' },
-    { r: 230, h: 36, spread: 12, foot: '#d08a6e', peak: '#f3c3a4' },
+    { r: 150, h: 20, spread: 7, foot: '#963820', peak: '#dc7040' },
+    { r: 188, h: 32, spread: 10, foot: '#ad583c', peak: '#ec9864' },
+    { r: 230, h: 46, spread: 13, foot: '#c4887c', peak: '#f2bea0' },
   ],
   // 水の世界: 沖に浮かぶ緑の島々（麓は岩の灰色、頂は明るい緑）。遠い島ほど淡く
   water: [
