@@ -1330,10 +1330,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 北の世界: 深い青空と白い雪明かり。照り返しは雪の青白、影は青く。低く白い冬の太陽（輪は弱い）
     north: {
       exposure: 0.95,
-      sky: new THREE.Color('#d2e6ff'),
-      ground: new THREE.Color('#bccfe4'),
-      intensity: 0.72,
-      sun: 2.2,
+      // 11/16 北の見本の絵に寄せて、雪の日なたを暖かいクリーム色に。低い日差しは平らな雪にほとんど当たらず照り返しで見えるので、
+      // 照り返しを強く暖かく（0.72 → 1.25、青白 → クリーム）。地面からの照り返しは藤色（下を向いた面・影が青紫に）
+      sky: new THREE.Color('#fff0e0'),
+      ground: new THREE.Color('#b9b2e4'),
+      intensity: 1.25,
+      sun: 2.6,
       // 11/16 北の見本の絵に寄せて、空は上の淡い水色から地平線の桃色へ。霞を少し遠くへ（120・470 → 240・640。雪山の層が見分けられるように）
       top: new THREE.Color('#2f6fe0'),
       horizon: new THREE.Color('#e9a8c0'),
