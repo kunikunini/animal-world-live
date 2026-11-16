@@ -72,9 +72,32 @@ function savannaHeight(x: number, z: number): number {
 
 // ほかのワールドの起伏。サバンナと同じノイズを使い、強さと細かさだけ変える
 const outerNoise = new Simplex2D(WORLD_SEED + 211)
-/** 北の世界: 雪の積もったゆるい丘 */
+/**
+ * 11/16 北の見本の絵に寄せた、風で波打つ雪の吹きだまり。風上はゆるく長い坂、風下は短く急な坂（砂丘と同じ形）。
+ * 波の向きをノイズで曲げ、強さも場所で変える（一面の縞にしない）。格子は 2.7m なので、波長は 15m 前後
+ * phase: 0..1（0.72 より先が風下の陰の坂）、amp: 0..1
+ */
+const DRIFT_WAVE = 15
+const DRIFT_HEIGHT = 0.8
+const _drift = { phase: 0, amp: 0 }
+function northDrift(x: number, z: number): typeof _drift {
+  const warp = outerNoise.noise(x * 0.018 + 3, z * 0.018 - 7) * 9
+  const p = (x * 0.78 + z * 0.62 + warp) / DRIFT_WAVE
+  _drift.phase = p - Math.floor(p)
+  _drift.amp = 0.35 + 0.65 * smoothstep(-0.4, 0.5, patch.noise(x * 0.011 - 8, z * 0.011 + 5))
+  return _drift
+}
+function driftShape(phase: number): number {
+  return phase < 0.72 ? smoothstep(0, 0.72, phase) : 1 - smoothstep(0.72, 1, phase)
+}
+/** 北の世界: 雪の積もったゆるい丘と、吹きだまりの波 */
 function northHeight(x: number, z: number): number {
-  return simplex.fbm(x * 0.012, z * 0.012, 4, 2.1, 0.5) * 5.2 + outerNoise.fbm(x * 0.06, z * 0.06, 2, 2, 0.5) * 0.25
+  const d = northDrift(x, z)
+  return (
+    simplex.fbm(x * 0.012, z * 0.012, 4, 2.1, 0.5) * 5.2 +
+    outerNoise.fbm(x * 0.06, z * 0.06, 2, 2, 0.5) * 0.25 +
+    driftShape(d.phase) * d.amp * DRIFT_HEIGHT
+  )
 }
 /** ジャングル: こぶの多い森の地面（沼の加工前） */
 function jungleRaw(x: number, z: number): number {
@@ -522,17 +545,23 @@ export function savannaMapColor(x: number, z: number, out: [number, number, numb
   out[2] = _mapRgb.b * 255
 }
 
-// 北の世界: 雪と、風で雪の飛んだ岩・枯れ草。トップの絵に寄せて、雪は白く、影はうすい水色に
-const colSnow = new THREE.Color('#eef4fb')
-const colSnowShade = new THREE.Color('#c3d6ea')
-const colTundra = new THREE.Color('#c2bd9a')
-const colNorthRock = new THREE.Color('#8d98a8')
+// 北の世界: 雪と、風で雪の飛んだ岩・枯れ草。
+// 11/16 北の見本の絵に寄せて、日の当たる雪は暖かいクリーム色、吹きだまりの風下の坂と大きなむらは青紫の影に。岩は灰青
+const colSnow = new THREE.Color('#fff6ec')
+const colSnowShade = new THREE.Color('#e2dcf2')
+const colSnowLee = new THREE.Color('#a7a3df')
+const colTundra = new THREE.Color('#c9bfa6')
+const colNorthRock = new THREE.Color('#8a90b6')
 function northColor(x: number, z: number, h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.03 + 5, z * 0.03 + 9) * 0.5 + 0.5
-  out.copy(colSnow).lerp(colSnowShade, n * 0.8)
+  out.copy(colSnow).lerp(colSnowShade, n * 0.7)
+  // 吹きだまりの風下の坂（短く急な側）を青紫の影に。波の頂のすぐ手前は日を受けて明るいまま
+  const d = northDrift(x, z)
+  const lee = d.phase < 0.72 ? smoothstep(0.55, 0.72, d.phase) * 0.25 : 1 - smoothstep(0.88, 1, d.phase)
+  out.lerp(colSnowLee, Math.min(1, lee * d.amp * 1.15))
   const big = patch.noise(x * 0.018 - 4, z * 0.018 + 2) * 0.5 + 0.5
   // 低いところに雪の薄い草地
-  out.lerp(colTundra, Math.max(0, 0.38 - big) * 1.4 * smoothstep(1.5, -2.5, h))
+  out.lerp(colTundra, Math.max(0, 0.38 - big) * 1.2 * smoothstep(1.5, -2.5, h))
   if (slope < 0.93) out.lerp(colNorthRock, Math.min(1, (0.93 - slope) * 5))
 }
 
