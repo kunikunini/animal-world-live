@@ -663,14 +663,15 @@ function southColor(x: number, z: number, _h: number, slope: number, out: THREE.
 }
 
 // 水の世界: 白い砂浜、ぬれた砂、砂丘の浜の草（明るい黄緑）、潟と小川のふちの湿った草、岩
-const colSandDry = new THREE.Color('#f3da9c')
-const colSandWarm = new THREE.Color('#e9c47e')
-const colSandWet = new THREE.Color('#d6b77a')
-const colSandUnder = new THREE.Color('#e6cf96')
-const colDuneGrass = new THREE.Color('#a8d25a')
+// 11/16 水の世界の見本の絵に寄せて、白い砂浜（黄色くにごらない）と濃い灰色の岩
+const colSandDry = new THREE.Color('#f8eedb')
+const colSandWarm = new THREE.Color('#efdfc0')
+const colSandWet = new THREE.Color('#d9c6a0')
+const colSandUnder = new THREE.Color('#ece0c4')
+const colDuneGrass = new THREE.Color('#9ccc52')
 const colDuneGrassDeep = new THREE.Color('#7fbb48')
 const colMarsh = new THREE.Color('#6fb85a')
-const colShoreRock = new THREE.Color('#98a2a8')
+const colShoreRock = new THREE.Color('#6a717c')
 function waterColor(x: number, z: number, h: number, slope: number, out: THREE.Color): void {
   const rel = h - SEA_LEVEL
   const n = detail.noise(x * 0.04 + 2, z * 0.04 - 6) * 0.5 + 0.5

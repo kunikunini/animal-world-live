@@ -850,10 +850,11 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
     { r: 230, h: 46, spread: 13, foot: '#c4887c', peak: '#f2bea0' },
   ],
   // 水の世界: 沖に浮かぶ緑の島々（麓は岩の灰色、頂は明るい緑）。遠い島ほど淡く
+  // 11/16 見本の絵に寄せて、麓を濃い灰色の岩に、頂を濃い緑に（白っぽくかすまない）。遠い島は青みに
   water: [
-    { r: 150, h: 11, spread: 6, foot: '#8d9a90', peak: '#6cc06a' },
-    { r: 188, h: 19, spread: 9, foot: '#94aaa2', peak: '#86cc7e' },
-    { r: 230, h: 30, spread: 13, foot: '#a8c0c6', peak: '#b4dcb0' },
+    { r: 150, h: 13, spread: 7, foot: '#5c646e', peak: '#4c9e48' },
+    { r: 188, h: 22, spread: 10, foot: '#6a7a86', peak: '#6aae64' },
+    { r: 230, h: 34, spread: 14, foot: '#7f98ac', peak: '#8cb8a8' },
   ],
   // ふれあいワールド: 牧場を囲むなだらかな明るい緑の丘。遠いほど淡い
   partner: [

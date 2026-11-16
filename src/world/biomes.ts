@@ -859,8 +859,9 @@ function createWater(rand: () => number, group: THREE.Group, colliders: Collider
     rockPlaces.push({ x, z, s: 0.5 + rand() * 1.4 })
   }
   const rocks = instanced(rockGeo, toonMaterial(), rockPlaces.length)
-  const rockA = new THREE.Color('#8f9aa2')
-  const rockB = new THREE.Color('#b6bcc0')
+  // 11/16 水の世界の見本の絵に寄せて、濃い灰色の岩（白い砂と青い水の中で形が立つ）
+  const rockA = new THREE.Color('#545c66')
+  const rockB = new THREE.Color('#7a828c')
   rockPlaces.forEach((p, i) => {
     _q.setFromEuler(_e.set(rand(), rand() * 3, rand()))
     _m.compose(_p.set(p.x, terrainHeight(p.x, p.z) - p.s * 0.3, p.z), _q, _s.set(p.s * 1.3, p.s * 0.75, p.s))

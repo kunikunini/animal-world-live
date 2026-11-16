@@ -69,9 +69,10 @@ export function createSea(): Sea {
     uBox: { value: new THREE.Vector4(BOX.minX - STEP / 2, BOX.minZ - STEP / 2, BOX.maxX - BOX.minX + STEP, BOX.maxZ - BOX.minZ + STEP) },
     uMaxDepth: { value: MAX_DEPTH },
     uTime: { value: 0 },
-    uShallow: { value: new THREE.Color('#58d4dc') },
-    uMid: { value: new THREE.Color('#2fb4d4') },
-    uDeep: { value: new THREE.Color('#1675bd') },
+    // 11/16 水の世界の見本の絵に寄せて、浅瀬は澄んだ青緑、沖は深い青
+    uShallow: { value: new THREE.Color('#48e0d8') },
+    uMid: { value: new THREE.Color('#1cb0d8') },
+    uDeep: { value: new THREE.Color('#0d58c4') },
     uFoam: { value: new THREE.Color('#ffffff') },
   }
   const mat = new THREE.ShaderMaterial({
@@ -119,6 +120,12 @@ export function createSea(): Sea {
         float w2 = sin(dot(p, vec2(-0.04, 0.15)) - uTime * 0.7);
         float glint = smoothstep(0.55, 0.95, w1 * w2);
         c = mix(c, vec3(1.0), glint * 0.16 * smoothstep(0.3, 3.0, d));
+        // 11/16 浅瀬の水底にゆらぐ光の網目（見本の絵）。2 つの網を重ね、細い明るい線だけ残す
+        vec2 q = p * 0.55;
+        float n1 = abs(sin(q.x + sin(q.y * 1.3 + uTime * 0.8) * 1.2) * sin(q.y + sin(q.x * 1.1 - uTime * 0.6) * 1.2));
+        float n2 = abs(sin(q.x * 1.7 - 2.0 + sin(q.y * 1.9 - uTime * 0.7)) * sin(q.y * 1.6 + 1.0 + sin(q.x * 1.5 + uTime * 0.9)));
+        float caustic = smoothstep(0.12, 0.0, min(n1, n2));
+        c += vec3(0.9, 1.0, 0.95) * caustic * 0.22 * (1.0 - smoothstep(0.4, 2.2, d));
         // 波打ちぎわの泡: 寄せては返す白い帯
         float surge = 0.16 + 0.1 * sin(uTime * 1.1 + p.x * 0.07 + p.y * 0.05);
         float foam = 1.0 - smoothstep(surge * 0.4, surge + 0.12, d);

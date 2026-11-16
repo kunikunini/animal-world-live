@@ -1428,20 +1428,22 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 水の世界: 澄んだ明るい青空、照り返しは海と砂の明るい水色（影が青く澄む）。霞は遠く、高めの白い太陽に広い輪（海の照り返し）
     water: {
       exposure: 0.97,
-      sky: new THREE.Color('#cfe6ff'),
-      ground: new THREE.Color('#a9d4dc'),
-      intensity: 0.7,
-      sun: 2.25,
-      top: new THREE.Color('#1462d8'),
-      horizon: new THREE.Color('#86cdf2'),
-      near: 130,
-      far: 520,
-      gradeSat: 1.08,
-      gradeContrast: 1.05,
+      // 11/16 水の世界の見本の絵に寄せて、霞を遠くへ（130・520 → 280・800。沖の島と水平線がかすまない）、
+      // 白い砂が明るく、影は澄んだ青（照り返しを上げる）、色を濃く
+      sky: new THREE.Color('#eef6ff'),
+      ground: new THREE.Color('#a6d8e4'),
+      intensity: 1.0,
+      sun: 2.35,
+      top: new THREE.Color('#0f56dc'),
+      horizon: new THREE.Color('#8fd0f4'),
+      near: 280,
+      far: 800,
+      gradeSat: 1.18,
+      gradeContrast: 1.07,
       sunElev: 24,
       sunGlow: new THREE.Color('#fff8e2'),
       sunDisc: 3.8,
-      sunHalo: 1.6,
+      sunHalo: 1.3,
     },
     // ふれあいワールド: やさしい青空、照り返しは牧草の明るい緑。影はやわらかく、暖かい午後の太陽
     partner: {
@@ -1491,6 +1493,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const SHADE_TINT: Partial<Record<RegionKey, THREE.Color>> = {
     jungle: new THREE.Color('#0a2c34'),
     south: new THREE.Color('#241a56'),
+    water: new THREE.Color('#0c2a5a'),
   }
   const shadeTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
