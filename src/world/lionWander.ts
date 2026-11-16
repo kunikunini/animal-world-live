@@ -216,6 +216,8 @@ export function createLionWander(lion: Lion, ai: AiLion, colliders: Collider[], 
     ai.setWalking(false)
     timer -= dt
     if (timer > 0) return
+    // 座る子は、立ち上がり切るまで歩き出さない（ミーアキャットは直立から座った姿に戻ってから立つので、立ち上がりが長い）
+    if (sitOpt && ai.sitWeight() > 0.05) return
     // プレイヤーが出会いの範囲（ピンが出る距離）にいる間は、そのまま立っている
     const d = Math.hypot(player.x - group.position.x, player.z - group.position.z)
     if (!opts.engaged && d < own.r + 4.2 + 2.0) {

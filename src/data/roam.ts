@@ -36,7 +36,8 @@ export const ROAM: Record<string, Roam> = {
   マーラ: { tier: 'medium', radius: 6, speed: 0.7, idle: [6, 14], maxRise: 0.8 },
   アメリカバク: { tier: 'medium', radius: 6, speed: 0.6, idle: [8, 18], maxRise: 0.8 },
   カピバラ: { tier: 'medium', radius: 5, speed: 0.6, idle: [8, 18], maxRise: 0.6 },
-  ミーアキャット: { tier: 'small', radius: 3, speed: 0.6, idle: [4, 10], maxRise: 0.5 },
+  // 11/16: 9 頭が固まっていて、互いの判定で行き先がふさがり歩けない子がいた（はるかは 200 か所中 3 か所しか空いていない）ので群れの中は素通り
+  ミーアキャット: { tier: 'small', radius: 3, speed: 0.6, idle: [4, 10], maxRise: 0.5, passGroup: true },
   コモンリスザル: { tier: 'small', radius: 2, speed: 0.6, idle: [4, 10], maxRise: 0.5 },
   // 11/15 くに「アカハナグマが歩いているのを見たことがない」: 表に無くて動いていなかった。6 頭が固まっていて、互いの判定で行き先がふさがるので群れの中は素通り
   アカハナグマ: { tier: 'small', radius: 3, speed: 0.6, idle: [4, 10], maxRise: 0.5, passGroup: true },
