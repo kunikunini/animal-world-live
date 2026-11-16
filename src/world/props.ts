@@ -3,7 +3,7 @@ import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
 import { SEA_LEVEL, WATER_LEVEL, savannaBare, savannaTrail, shapeHeight, terrainHeight } from './terrain'
-import { MAP_BOUNDS, OUTER_REGIONS, PASS_HALF_WIDTH, REACH_BINS, REGIONS, biomeAt, distToPassAxis, distToPassAxisOf, emptyWeights, reachBin, setReach } from './regions'
+import { MAP_BOUNDS, OUTER_REGIONS, PASS_HALF_WIDTH, REACH_BINS, REGIONS, biomeAt, distToPassAxis, distToPassAxisOf, emptyWeights, isWalkable, reachAt, reachBin, setReach } from './regions'
 import type { Region } from './regions'
 import { toonMaterial } from '../render/toon'
 
@@ -796,6 +796,80 @@ function measureReach(group: THREE.Group): void {
 }
 
 /**
+ * 11/16 歩ける範囲の端が何もない地面の途中で切れているところ（くに「北で見えない壁がある」）に、
+ * 雪の吹きだまりと岩を並べて、行き止まりが目で分かるようにする。山・海・段差で止まる向き、
+ * 峠やとなりのワールドへ続く向きには置かない。いまは北だけ
+ */
+const REACH_EDGE_LOOKS: Partial<Record<Region['key'], { mound: [string, string]; rock: [string, string] }>> = {
+  north: { mound: ['#f6f4fb', '#e4e2f2'], rock: ['#7c8298', '#a0a6ba'] },
+}
+function createReachEdge(group: THREE.Group): void {
+  const rand = mulberry32(WORLD_SEED + 1611)
+  const place: Array<{ x: number; z: number; a: number; s: number; rock: boolean; key: Region['key'] }> = []
+  for (const r of REGIONS) {
+    if (!REACH_EDGE_LOOKS[r.key]) continue
+    const cap = r.walk + (r.key === 'africa' ? REACH_EXTRA_SAVANNA : REACH_EXTRA_OUTER)
+    for (let j = 0; j < REACH_BINS; j++) {
+      const a = (j / REACH_BINS) * Math.PI * 2
+      const ca = Math.cos(a)
+      const sa = Math.sin(a)
+      const d = reachAt(r, r.x + ca * (r.walk + 5), r.z + sa * (r.walk + 5))
+      if (d < cap - 0.01) continue
+      if (isWalkable(r.x + ca * (d + 3), r.z + sa * (d + 3))) continue
+      // 手前の列（端にかかる吹きだまり）と、奥の列（重ねて土手に見せる）
+      for (let row = 0; row < 2; row++) {
+        const rr = d + 3.2 + row * 4.5 + (rand() - 0.5) * 1.2
+        const aa = a + ((rand() - 0.5) * 0.6 * Math.PI * 2) / REACH_BINS
+        place.push({ x: r.x + Math.cos(aa) * rr, z: r.z + Math.sin(aa) * rr, a: aa, s: row === 0 ? 1 : 1.25, rock: rand() < (row === 0 ? 0.18 : 0.3), key: r.key })
+      }
+    }
+  }
+  if (place.length === 0) return
+  const moundGeo = new THREE.IcosahedronGeometry(1, 1)
+  const rockGeo = new THREE.DodecahedronGeometry(1, 0)
+  const nMound = place.filter((p) => !p.rock).length
+  const mounds = new THREE.InstancedMesh(moundGeo, toonMaterial(), Math.max(1, nMound))
+  const rocks = new THREE.InstancedMesh(rockGeo, toonMaterial(), Math.max(1, place.length - nMound))
+  mounds.name = 'reach-edge-mounds'
+  rocks.name = 'reach-edge-rocks'
+  let im = 0
+  let ir = 0
+  const cA = new THREE.Color()
+  const cB = new THREE.Color()
+  for (const p of place) {
+    const look = REACH_EDGE_LOOKS[p.key]!
+    const y = terrainHeight(p.x, p.z)
+    if (p.rock) {
+      const k = (1.4 + rand() * 1.4) * p.s
+      _e.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI)
+      _q.setFromEuler(_e)
+      _s.set(k * (0.9 + rand() * 0.4), k * (0.8 + rand() * 0.5), k * (0.9 + rand() * 0.4))
+      _p.set(p.x, y + _s.y * 0.25, p.z)
+      _m.compose(_p, _q, _s)
+      rocks.setMatrixAt(ir, _m)
+      rocks.setColorAt(ir++, _c.copy(cA.set(look.rock[0])).lerp(cB.set(look.rock[1]), rand()))
+    } else {
+      // 横に長い吹きだまり。長い辺を端の線（円の接線）にそろえる
+      _e.set(0, -p.a, 0)
+      _q.setFromEuler(_e)
+      _s.set((2.6 + rand() * 1.2) * p.s, (1.5 + rand() * 1.1) * p.s, (4.2 + rand() * 1.8) * p.s)
+      _p.set(p.x, y - _s.y * 0.3, p.z)
+      _m.compose(_p, _q, _s)
+      mounds.setMatrixAt(im, _m)
+      mounds.setColorAt(im++, _c.copy(cA.set(look.mound[0])).lerp(cB.set(look.mound[1]), rand()))
+    }
+  }
+  mounds.count = im
+  rocks.count = ir
+  for (const m of [mounds, rocks]) {
+    m.castShadow = true
+    m.receiveShadow = true
+    m.computeBoundingSphere()
+    group.add(m)
+  }
+}
+
+/**
  * 遠くの山脈。サバンナの輪（いままでの 3 層）には各ワールドへの峠を切る。
  * ほかのワールドにも、それぞれの色の山並みを、サバンナに面した側を開けて置く
  */
@@ -1196,6 +1270,7 @@ export function createProps(options: PropsOptions): Props {
   const water = createWater(group, options)
   createMountains(group)
   measureReach(group)
+  createReachEdge(group)
   const grass = createGrass(rand, group, options.mobile ? 6000 : 16000, options.mobile ? 110 : 175)
   createBushes(rand2, group, options.mobile ? 110 : 150)
   createTermiteMounds(rand2, group, colliders, 7)
