@@ -1223,7 +1223,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 北は雪明かりの白、ジャングルは湿った淡い緑、南半球はベージュをやめて空に近い薄い色（遠くが茶色くにごらない）
     // 11/16 北の見本の絵に寄せて、地平線の桃色に合う薄い藤色へ（遠くが灰色ににごらない）
     north: new THREE.Color('#e2dcf0'),
-    jungle: new THREE.Color('#d6eadb'),
+    // 11/16 見本の絵の、山のあいだにたまる霧の青みがかった緑へ
+    jungle: new THREE.Color('#c4dfd6'),
     south: new THREE.Color('#dcd6d2'),
     // 水の世界: 海の上の明るい水色（遠くの水平線が空に溶ける）
     water: new THREE.Color('#c4e6f4'),
@@ -1255,6 +1256,13 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     farLit: skyU.uRangeFarLit.value.clone(),
     near: skyU.uRangeNear.value.clone(),
     nearLit: skyU.uRangeNearLit.value.clone(),
+  }
+  // ジャングルは霧にかすむ緑の山（手前は深い緑、奥は青みの緑）
+  const RANGE_JUNGLE = {
+    far: new THREE.Color('#5f948a'),
+    farLit: new THREE.Color('#8cc09c'),
+    near: new THREE.Color('#2f6e4a'),
+    nearLit: new THREE.Color('#5aa466'),
   }
   const RANGE_NORTH = {
     far: new THREE.Color('#b9b8dc'),
@@ -1358,8 +1366,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       sun: 2.25,
       top: new THREE.Color('#1a5bd6'),
       horizon: new THREE.Color('#8ecaf0'),
-      near: 90,
-      far: 420,
+      // 11/16 ジャングルの見本の絵に寄せて、霞を遠くへ（90・420 → 200・620。霧にかすむ緑の山の層が見分けられるように）
+      near: 200,
+      far: 620,
       gradeSat: 1.1,
       gradeContrast: 1.06,
       sunElev: 26,
@@ -1947,14 +1956,21 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     setShadeTint(getShadeTint() + (1 - getShadeTint()) * lk)
     // 遠くの山並みの帯（空に描く背景）もサバンナだけ。峠でほかのワールドへ溶ける
     // 11/16 北にも広げた（色は北の雪山）
-    const rangeW = weights.africa + weights.north
+    // 11/16 ジャングルにも広げた。色は重みで混ぜる
+    const rangeW = weights.africa + weights.north + weights.jungle
     skyU.uRange.value += (rangeW - skyU.uRange.value) * lk
     if (rangeW > 0.001) {
-      const nk = weights.north / rangeW
-      skyU.uRangeFar.value.lerpColors(RANGE_SAVANNA.far, RANGE_NORTH.far, nk)
-      skyU.uRangeFarLit.value.lerpColors(RANGE_SAVANNA.farLit, RANGE_NORTH.farLit, nk)
-      skyU.uRangeNear.value.lerpColors(RANGE_SAVANNA.near, RANGE_NORTH.near, nk)
-      skyU.uRangeNearLit.value.lerpColors(RANGE_SAVANNA.nearLit, RANGE_NORTH.nearLit, nk)
+      const ws = [weights.africa / rangeW, weights.north / rangeW, weights.jungle / rangeW]
+      const sets = [RANGE_SAVANNA, RANGE_NORTH, RANGE_JUNGLE]
+      for (const key of ['far', 'farLit', 'near', 'nearLit'] as const) {
+        const u = key === 'far' ? skyU.uRangeFar : key === 'farLit' ? skyU.uRangeFarLit : key === 'near' ? skyU.uRangeNear : skyU.uRangeNearLit
+        u.value.setRGB(0, 0, 0)
+        sets.forEach((set, i) => {
+          u.value.r += set[key].r * ws[i]
+          u.value.g += set[key].g * ws[i]
+          u.value.b += set[key].b * ws[i]
+        })
+      }
     }
     skyU.uTop.value.lerp(lightTarget.top, lk)
     skyU.uHorizon.value.lerp(lightTarget.horizon, lk)

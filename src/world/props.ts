@@ -837,11 +837,11 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
     { r: 188, h: 44, spread: 20, foot: '#7479bc', peak: '#fbf1ec' },
     { r: 230, h: 64, spread: 26, foot: '#9798d0', peak: '#f5eff4' },
   ],
-  // ジャングル: 濃い緑の丸い山
+  // ジャングル: 濃い緑の丸い山。11/16 見本の絵に寄せて、手前は深い緑、奥ほど霧で青みの緑（層を分ける）。木より高く見えるよう山を高く
   jungle: [
-    { r: 150, h: 20, spread: 8, foot: '#2a8a4a', peak: '#62c05e' },
-    { r: 188, h: 32, spread: 12, foot: '#3a9a58', peak: '#7fcc72' },
-    { r: 230, h: 46, spread: 16, foot: '#6aae84', peak: '#aadcaa' },
+    { r: 150, h: 30, spread: 10, foot: '#1d5232', peak: '#3f9440' },
+    { r: 188, h: 48, spread: 16, foot: '#2f6a50', peak: '#5ea65e' },
+    { r: 230, h: 70, spread: 22, foot: '#4f8a80', peak: '#80b884' },
   ],
   // 南半球: 赤い台地
   south: [
