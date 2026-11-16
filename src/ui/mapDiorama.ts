@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { ACACIAS, WATERHOLE } from '../world/layout'
 import type { Collider } from '../world/props'
-import { REGIONS } from '../world/regions'
+import { REGIONS, reachAt } from '../world/regions'
 import type { RegionKey } from '../world/regions'
 import { worldCenter } from '../world/mapBases'
 import { SEA_LEVEL, WATER_LEVEL, terrainHeight } from '../world/terrain'
@@ -82,6 +82,47 @@ const R_DEFAULT = 112
 const V_SCALE = 2.6
 const RINGS = 34
 const SEGS = 96
+
+/**
+ * 11/16 島のふちを、本編で歩ける範囲（regions.ts の reachAt）の形に合わせる（くに「地図の形も変えて」）。
+ * 円のままだと、歩ける範囲が円の外へ広がった所で、主人公が島の外を歩いて見えていた。
+ * 向きごとに「歩ける端 + 6m（端に並べた茂み・岩・吹きだまりが乗る分）」まで広げる。もとの円より小さくはしない
+ */
+const islandRadii = new Map<RegionKey, Float32Array>()
+function islandRadiusTable(world: RegionKey): Float32Array {
+  const hit = islandRadii.get(world)
+  if (hit) return hit
+  const r = REGIONS.find((g) => g.key === world)!
+  const base = RADIUS[world] ?? R_DEFAULT
+  const raw = new Float32Array(SEGS)
+  for (let j = 0; j < SEGS; j++) {
+    let m = 0
+    // 1 区切り（3.75°）の中を細かく見て、いちばん遠い端を取る（細い出っぱりを落とさない）
+    for (let t = -0.5; t <= 0.5; t += 0.25) {
+      const a = ((j + t) / SEGS) * Math.PI * 2
+      m = Math.max(m, reachAt(r, r.x + Math.cos(a) * (r.walk + 5), r.z + Math.sin(a) * (r.walk + 5)))
+    }
+    raw[j] = Math.max(base, m + 6)
+  }
+  // となりどうしをならす（ぎざぎざの崖にしない）
+  const out = new Float32Array(SEGS)
+  for (let j = 0; j < SEGS; j++) {
+    let sum = 0
+    for (let k = -2; k <= 2; k++) sum += raw[(j + k + SEGS) % SEGS]
+    out[j] = Math.max(sum / 5, raw[j] - 4)
+  }
+  islandRadii.set(world, out)
+  return out
+}
+/** 中心 (cx, cz) から (x, z) の向きの、島のふちまでの距離 */
+function islandRadiusToward(world: RegionKey, cx: number, cz: number, x: number, z: number): number {
+  const t = islandRadiusTable(world)
+  let f = (Math.atan2(z - cz, x - cx) / (Math.PI * 2)) * SEGS
+  if (f < 0) f += SEGS
+  const i = Math.floor(f) % SEGS
+  const u = f - Math.floor(f)
+  return t[i] * (1 - u) + t[(i + 1) % SEGS] * u
+}
 const SKIRT = 9
 /** 小さな主人公のモデルの高さ（粘土の人形と同じくらい。ワールドマップのコマのように大きく） */
 const HERO_PIECE_H = 27
@@ -213,7 +254,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
   /** その島の見えている高さ（となりのワールドは少し下げて透かしている） */
   const islandY = (isl: Island, x: number, z: number) => heightOf(isl.world, isl.b0, x, z) + (isl.world === state?.world ? 0 : NEIGHBOR_DROP)
   const islandAt = (x: number, z: number, pad = 0.5): Island | null => {
-    for (const isl of ISLANDS) if (Math.hypot(x - isl.cx, z - isl.cz) < isl.r - pad) return isl
+    for (const isl of ISLANDS) if (Math.hypot(x - isl.cx, z - isl.cz) < islandRadiusToward(isl.world, isl.cx, isl.cz, x, z) - pad) return isl
     return null
   }
   /** 島と島のあいだの地面（本編の地面の高さをそのまま使う、細長い陸の帯）。A・B はつながる島 */
@@ -233,8 +274,8 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     const A = st.A ?? st.B
     const B = st.B ?? st.A
     if (!A || !B) return yAt(x, z)
-    const dA = Math.max(0, Math.hypot(x - A.cx, z - A.cz) - A.r)
-    const dB = Math.max(0, Math.hypot(x - B.cx, z - B.cz) - B.r)
+    const dA = Math.max(0, Math.hypot(x - A.cx, z - A.cz) - islandRadiusToward(A.world, A.cx, A.cz, x, z))
+    const dB = Math.max(0, Math.hypot(x - B.cx, z - B.cz) - islandRadiusToward(B.world, B.cx, B.cz, x, z))
     const t = dA + dB > 0 ? dA / (dA + dB) : 0
     const b0 = A.b0 + (B.b0 - A.b0) * t
     const oA = A.world !== state?.world ? NEIGHBOR_DROP : 0
@@ -322,11 +363,12 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     }
     // 上面: 中心から外への同心円の格子
     const ringIdx: number[][] = []
+    const rad = islandRadiusTable(world)
     for (let i = 0; i <= RINGS; i++) {
-      const rr = (radius * i) / RINGS
       const row: number[] = []
       const n = i === 0 ? 1 : SEGS
       for (let j = 0; j < n; j++) {
+        const rr = (rad[j] * i) / RINGS
         const a = (j / SEGS) * Math.PI * 2
         const x = center.x + Math.cos(a) * rr
         const z = center.z + Math.sin(a) * rr
@@ -378,7 +420,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     g.add(plate)
 
     // 木と岩（当たり判定の場所から。サバンナの大きなアカシアは置き場所の表から）
-    const inside = (x: number, z: number) => Math.hypot(x - center.x, z - center.z) < radius - 3
+    const inside = (x: number, z: number) => Math.hypot(x - center.x, z - center.z) < islandRadiusToward(world, center.x, center.z, x, z) - 3
     const trees: Array<{ x: number; z: number; s: number }> = []
     const rocks: Array<{ x: number; z: number; s: number }> = []
     const posts: Array<{ x: number; z: number; s: number }> = []
@@ -558,7 +600,7 @@ export function createDiorama(wrap: HTMLElement): Diorama {
     tags = []
     pins = []
     stars = []
-    const inside = (x: number, z: number) => Math.hypot(x - center.x, z - center.z) < radius - 1
+    const inside = (x: number, z: number) => Math.hypot(x - center.x, z - center.z) < islandRadiusToward(state!.world, center.x, center.z, x, z) - 1
     // 道: 5m ごとの飛び石（ワールドの中だけ）
     const stones: Array<[number, number]> = []
     for (const [x1, z1, x2, z2, animal, tunnel] of state.roads) {
@@ -1222,7 +1264,8 @@ export function createDiorama(wrap: HTMLElement): Diorama {
       const worldChanged = !state || state.world !== s.world
       state = s
       center = s.center
-      radius = RADIUS[s.world] ?? R_DEFAULT
+      // 島は歩ける範囲の形まで広げたので、カメラの引きはいちばん遠いふちに合わせる
+      radius = Math.max(RADIUS[s.world] ?? R_DEFAULT, ...islandRadiusTable(s.world))
       base0 = terrainHeight(center.x, center.z)
       lastColliders = colliders
       if (worldChanged) {
