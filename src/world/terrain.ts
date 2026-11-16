@@ -724,12 +724,13 @@ function partnerColor(x: number, z: number, _h: number, slope: number, out: THRE
 }
 
 // 空の世界: 高原の明るい草、うす紫と白の花のまだら、広場の敷石と小道の白っぽい土、斜面の青みがかった岩
-const colAlpine = new THREE.Color('#a4d66a')
-const colAlpineDeep = new THREE.Color('#78bd52')
+// 11/16 空の世界の見本の絵に寄せて、高原の草を鮮やかな黄緑に、輪の道を暖かい土の色に
+const colAlpine = new THREE.Color('#8ccc44')
+const colAlpineDeep = new THREE.Color('#5aae38')
 const colAlpineFlower = new THREE.Color('#cdbdf2')
 const colAlpineWhite = new THREE.Color('#eef2e0')
 const colSkyStone = new THREE.Color('#d9d4c8')
-const colSkyPath = new THREE.Color('#e6dcc4')
+const colSkyPath = new THREE.Color('#cc9a62')
 const colSkyRock = new THREE.Color('#9aa2b6')
 function skyColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.05 - 3, z * 0.05 + 6) * 0.5 + 0.5
