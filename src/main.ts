@@ -1221,7 +1221,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 11/16 見本の絵に寄せて、はっきりした青へ（遠くの山が白くとばず、青い山並みの層として残る）
     africa: new THREE.Color('#8a9be0'),
     // 北は雪明かりの白、ジャングルは湿った淡い緑、南半球はベージュをやめて空に近い薄い色（遠くが茶色くにごらない）
-    north: new THREE.Color('#dfeaf6'),
+    // 11/16 北の見本の絵に寄せて、地平線の桃色に合う薄い藤色へ（遠くが灰色ににごらない）
+    north: new THREE.Color('#e2dcf0'),
     jungle: new THREE.Color('#d6eadb'),
     south: new THREE.Color('#dcd6d2'),
     // 水の世界: 海の上の明るい水色（遠くの水平線が空に溶ける）
@@ -1243,6 +1244,23 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     uDisc: { value: number }
     uHalo: { value: number }
     uRange: { value: number }
+    uRangeFar: { value: THREE.Color }
+    uRangeFarLit: { value: THREE.Color }
+    uRangeNear: { value: THREE.Color }
+    uRangeNearLit: { value: THREE.Color }
+  }
+  // 遠くの山並みの帯の色。サバンナは青い山、北は白くかすむ雪山（11/16 北の見本の絵に寄せる）
+  const RANGE_SAVANNA = {
+    far: skyU.uRangeFar.value.clone(),
+    farLit: skyU.uRangeFarLit.value.clone(),
+    near: skyU.uRangeNear.value.clone(),
+    nearLit: skyU.uRangeNearLit.value.clone(),
+  }
+  const RANGE_NORTH = {
+    far: new THREE.Color('#b9b8dc'),
+    farLit: new THREE.Color('#e9e2f0'),
+    near: new THREE.Color('#9097c8'),
+    nearLit: new THREE.Color('#dcd6ec'),
   }
   const fog = scene.fog as THREE.Fog
   interface Light {
@@ -1316,14 +1334,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       ground: new THREE.Color('#bccfe4'),
       intensity: 0.72,
       sun: 2.2,
-      top: new THREE.Color('#1b5fd8'),
-      horizon: new THREE.Color('#8ac4f2'),
-      near: 120,
-      far: 470,
+      // 11/16 北の見本の絵に寄せて、空は上の淡い水色から地平線の桃色へ。霞を少し遠くへ（120・470 → 240・640。雪山の層が見分けられるように）
+      top: new THREE.Color('#2f6fe0'),
+      horizon: new THREE.Color('#e9a8c0'),
+      near: 240,
+      far: 640,
       gradeSat: 1.08,
       gradeContrast: 1.06,
       sunElev: 13,
-      sunGlow: new THREE.Color('#f7f3ec'),
+      // 11/16 低い冬の日差しを少し暖かく
+      sunGlow: new THREE.Color('#ffe6d2'),
       sunDisc: 3.2,
       sunHalo: 0.7,
     },
@@ -1924,7 +1944,16 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 影の青み・動物の塗り（色を何段かにまとめる）・足もとの影。11/16 にサバンナで試し、全ワールドに広げた
     setShadeTint(getShadeTint() + (1 - getShadeTint()) * lk)
     // 遠くの山並みの帯（空に描く背景）もサバンナだけ。峠でほかのワールドへ溶ける
-    skyU.uRange.value += (weights.africa - skyU.uRange.value) * lk
+    // 11/16 北にも広げた（色は北の雪山）
+    const rangeW = weights.africa + weights.north
+    skyU.uRange.value += (rangeW - skyU.uRange.value) * lk
+    if (rangeW > 0.001) {
+      const nk = weights.north / rangeW
+      skyU.uRangeFar.value.lerpColors(RANGE_SAVANNA.far, RANGE_NORTH.far, nk)
+      skyU.uRangeFarLit.value.lerpColors(RANGE_SAVANNA.farLit, RANGE_NORTH.farLit, nk)
+      skyU.uRangeNear.value.lerpColors(RANGE_SAVANNA.near, RANGE_NORTH.near, nk)
+      skyU.uRangeNearLit.value.lerpColors(RANGE_SAVANNA.nearLit, RANGE_NORTH.nearLit, nk)
+    }
     skyU.uTop.value.lerp(lightTarget.top, lk)
     skyU.uHorizon.value.lerp(lightTarget.horizon, lk)
     skyU.uGlow.value.lerp(lightTarget.sunGlow, lk)

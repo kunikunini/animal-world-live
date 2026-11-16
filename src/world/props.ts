@@ -831,11 +831,11 @@ function createMountains(group: THREE.Group): void {
 type OuterLookKey = 'north' | 'jungle' | 'south' | 'water' | 'partner' | 'sky'
 /** ほかのワールドの山並みの色と高さ */
 const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>> = {
-  // 北: 青い麓に白い雪の峰
+  // 北: 藤色の麓に、日を受けたクリーム色の雪の峰（11/16 北の見本の絵に寄せる。手前ほど麓を濃くして層を分ける）
   north: [
-    { r: 150, h: 26, spread: 14, foot: '#9bb4d8', peak: '#ffffff' },
-    { r: 188, h: 44, spread: 20, foot: '#aac0dc', peak: '#ffffff' },
-    { r: 230, h: 64, spread: 26, foot: '#bccde6', peak: '#ffffff' },
+    { r: 150, h: 26, spread: 14, foot: '#585ea8', peak: '#fff3e6' },
+    { r: 188, h: 44, spread: 20, foot: '#7479bc', peak: '#fbf1ec' },
+    { r: 230, h: 64, spread: 26, foot: '#9798d0', peak: '#f5eff4' },
   ],
   // ジャングル: 濃い緑の丸い山
   jungle: [
