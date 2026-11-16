@@ -797,11 +797,18 @@ function measureReach(group: THREE.Group): void {
 
 /**
  * 11/16 歩ける範囲の端が何もない地面の途中で切れているところ（くに「北で見えない壁がある」）に、
- * 雪の吹きだまりと岩を並べて、行き止まりが目で分かるようにする。山・海・段差で止まる向き、
- * 峠やとなりのワールドへ続く向きには置かない。いまは北だけ
+ * 雪の吹きだまり（北）や茂みと岩を並べて、行き止まりが目で分かるようにする。山・海・段差で止まる向き、
+ * 峠やとなりのワールドへ続く向きには置かない。11/16 に全ワールドへ広げた
  */
 const REACH_EDGE_LOOKS: Partial<Record<Region['key'], { mound: [string, string]; rock: [string, string] }>> = {
+  // 北は雪の吹きだまり、ほかは茂み（mound）と、そのワールドの岩の色
   north: { mound: ['#f6f4fb', '#e4e2f2'], rock: ['#7c8298', '#a0a6ba'] },
+  africa: { mound: ['#7f8a34', '#a0a444'], rock: ['#a8604a', '#c4865c'] },
+  jungle: { mound: ['#2f7a2c', '#4f9a38'], rock: ['#5f6658', '#848a74'] },
+  south: { mound: ['#8a7a34', '#a89444'], rock: ['#963820', '#b8583a'] },
+  water: { mound: ['#7cb444', '#9ccc52'], rock: ['#545c66', '#7a828c'] },
+  partner: { mound: ['#4a9a2e', '#6cb838'], rock: ['#8a8478', '#a8a294'] },
+  sky: { mound: ['#4fa034', '#7cc040'], rock: ['#9a96b4', '#b8b4cc'] },
 }
 function createReachEdge(group: THREE.Group): void {
   const rand = mulberry32(WORLD_SEED + 1611)
