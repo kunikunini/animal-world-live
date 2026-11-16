@@ -292,6 +292,8 @@ const ANIMAL_MAP = /* glsl */ `
   // 見た目の明るさ（ガンマ寄り）で 5 段にまとめる。段の境目は少しだけなめらかに
   float animalG = sqrt( animalL ) * 5.0;
   float animalQ = ( floor( animalG ) + smoothstep( 0.4, 0.6, fract( animalG ) ) ) / 5.0;
+  // 11/16 いちばん暗い段はまとめない（0 の段に落ちて、黒い毛の子が模様のない黒い影絵になっていた。ビントロング・クマなど）
+  animalQ = mix( sqrt( animalL ), animalQ, smoothstep( 0.8, 1.2, animalG ) );
   animalTex *= mix( 1.0, ( animalQ * animalQ ) / animalL, uShade * 0.8 );
   diffuseColor *= vec4( animalTex, sampledDiffuseColor.a );
 #else
