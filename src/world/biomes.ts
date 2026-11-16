@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 import { mulberry32 } from './noise'
 import { WORLD_SEED } from './layout'
-import { OUTER_REGIONS } from './regions'
+import { OUTER_REGIONS, PASS_HALF_WIDTH, distToPassAxisOf } from './regions'
 import type { Region, RegionKey } from './regions'
 import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
-import { CREEK, GOAT_ROCKS, JUNGLE_POND, SOUTH_POND, LAGOON, NORTH_POND, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, JUNGLE_POND, SKY_LIFT, SOUTH_POND, LAGOON, NORTH_POND, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { SUN_LIGHT_DIR } from './scene'
 import { createShopHouse, shopClears } from './shop'
@@ -1599,6 +1599,56 @@ function createSky(rand: () => number, group: THREE.Group, colliders: Collider[]
   })
   finish(flowerMesh)
   group.add(flowerMesh)
+
+  // 11/16 雲海（空の世界の見本の絵）: 歩ける円の外から山並みの麓まで、高原のすぐ下にふくらんだ雲の塊を敷きつめる。
+  // 岩の峰が雲から突き出て見える。峠の道とほかのワールドの近くはあける。rand は使わない（ほかの並びを変えない）
+  {
+    const hash = (n: number) => {
+      const v = Math.sin(n * 127.1 + 311.7) * 43758.5453
+      return v - Math.floor(v)
+    }
+    const others = OUTER_REGIONS.filter((g) => g.key !== 'sky')
+    const spots: Array<{ x: number; z: number; w: number; h: number; y: number }> = []
+    const COUNT = mobile ? 420 : 620
+    for (let i = 0; i < COUNT; i++) {
+      const a = i * 2.39996323 + hash(i) * 0.4
+      // 内側ほど密に（円の外すぐは雲の縁として細かく、遠くは大きな塊）
+      const t = Math.pow(hash(i + 0.5), 1.4)
+      const rr = r.walk + 12 + t * 160
+      const x = r.x + Math.cos(a) * rr
+      const z = r.z + Math.sin(a) * rr
+      if (distToPassAxisOf(r, x, z) < PASS_HALF_WIDTH + 10) continue
+      if (others.some((g) => Math.hypot(x - g.x, z - g.z) < g.walk + 40)) continue
+      if (Math.hypot(x, z) < 130) continue
+      const w = (3.5 + hash(i + 1.7) * 4.5) * (0.7 + t * 0.9)
+      spots.push({ x, z, w, h: w * (0.32 + hash(i + 2.3) * 0.18), y: SKY_LIFT - 4.5 + hash(i + 3.1) * 2.5 })
+    }
+    // 1 か所に 3 つのふくらみ（真ん中が大きい）。下半分は雲の中へ沈め、上のまるい頭だけ見せる
+    const PUFFS = 3
+    const cloudGeo = new THREE.IcosahedronGeometry(1, 1)
+    const cloudMat = toonMaterial()
+    // 陰の側も白っぽい藤色に（灰色の円盤に見えない）
+    cloudMat.emissive.set('#8c88b8')
+    const clouds = instanced(cloudGeo, cloudMat, spots.length * PUFFS, false)
+    clouds.receiveShadow = false
+    const cloudA = new THREE.Color('#ffffff')
+    const cloudB = new THREE.Color('#ece8fa')
+    spots.forEach((c, i) => {
+      const yaw = hash(i + 4.4) * 6.28
+      for (let k = 0; k < PUFFS; k++) {
+        const side = k === 0 ? 0 : k === 1 ? 1 : -1
+        const sc = k === 0 ? 1 : 0.62 + hash(i * 3 + k) * 0.2
+        const w = c.w * sc
+        _p.set(c.x + Math.cos(yaw) * side * c.w * 0.75, c.y - w * 0.2, c.z + Math.sin(yaw) * side * c.w * 0.75)
+        _m.compose(_p, _q.setFromEuler(_e.set(0, yaw + k, 0)), _s.set(w, w * 0.62, w * 0.85))
+        clouds.setMatrixAt(i * PUFFS + k, _m)
+        clouds.setColorAt(i * PUFFS + k, _c.copy(cloudA).lerp(cloudB, hash(i + 6.6 + k)))
+      }
+    })
+    finish(clouds)
+    clouds.name = 'sky-cloud-sea'
+    group.add(clouds)
+  }
 }
 
 const _cm = new THREE.Matrix4()

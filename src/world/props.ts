@@ -866,9 +866,10 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
   // 空の世界: 高原（地面が約 10m 高い）を囲む、低めのとがった岩の峰（空を広く見せる）。麓はうす紫、日の当たる頂はクリーム色。北の世界の雪の峰と見分けがつく色
   // 11/16 見本の絵に寄せて、麓の藤色を濃く、峰を高くとがらせる（空が広いまま、層が見分けられるように）
   sky: [
-    { r: 150, h: 26, spread: 14, foot: '#8a84cc', peak: '#f6e8d4' },
-    { r: 188, h: 40, spread: 20, foot: '#9a96d4', peak: '#faeee0' },
-    { r: 230, h: 58, spread: 26, foot: '#aeacdf', peak: '#fdf6ec' },
+    // 11/16 雲海を見せるため、輪を外へ（150・188・230 → 172・206・244）。崖から最初の峰までが雲の海になる
+    { r: 172, h: 30, spread: 14, foot: '#8a84cc', peak: '#f6e8d4' },
+    { r: 206, h: 44, spread: 20, foot: '#9a96d4', peak: '#faeee0' },
+    { r: 244, h: 60, spread: 26, foot: '#aeacdf', peak: '#fdf6ec' },
   ],
 }
 

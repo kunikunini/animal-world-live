@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Simplex2D, lerp, smoothstep } from './noise'
 import { KOPJE, TERRAIN_SEGMENTS, TERRAIN_SIZE, WATERHOLE, WORLD_SEED } from './layout'
-import { OUTER_REGIONS, biomeAt, emptyWeights } from './regions'
+import { OUTER_REGIONS, PASS_HALF_WIDTH, biomeAt, distToPassAxisOf, emptyWeights } from './regions'
 import type { BiomeWeights } from './regions'
 import { toonMaterial } from '../render/toon'
 
@@ -343,10 +343,17 @@ export function skyPathDist(lx: number, lz: number): number {
   const toPass = t > SKY_RING - 2 ? Math.abs(lx * uz - lz * ux) : Infinity
   return Math.min(ring, toPass)
 }
+/** 雲海の下へ落ちる深さ（m） */
+const SKY_CLOUD_DROP = 16
 function skyHeight(x: number, z: number): number {
   const r = Math.hypot(x - SKY.x, z - SKY.z)
   const hills = simplex.fbm(x * 0.01 + 3, z * 0.01 - 7, 3, 2.0, 0.5) * 3.0 + outerNoise.fbm(x * 0.045, z * 0.045, 2, 2, 0.5) * 0.25
-  return SKY_LIFT + lerp(hills * 0.12 + 0.3, hills, smoothstep(16, 48, r))
+  const top = SKY_LIFT + lerp(hills * 0.12 + 0.3, hills, smoothstep(16, 48, r))
+  // 11/16 雲海: 歩ける円の外は崖になって雲の下へ落ちる（高原が雲の上に浮かぶ）。峠の道の筋は高さを残す
+  const out = smoothstep(SKY.walk + 8, SKY.walk + 36, r)
+  if (out <= 0) return top
+  const keep = 1 - smoothstep(PASS_HALF_WIDTH + 6, PASS_HALF_WIDTH + 30, distToPassAxisOf(SKY as Parameters<typeof distToPassAxisOf>[0], x, z))
+  return top - SKY_CLOUD_DROP * out * (1 - keep)
 }
 
 const _w: BiomeWeights = emptyWeights()
