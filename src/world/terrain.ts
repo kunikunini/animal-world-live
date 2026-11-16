@@ -695,11 +695,12 @@ function waterColor(x: number, z: number, h: number, slope: number, out: THREE.C
 }
 
 // ふれあいワールド: 刈りそろえた牧草の明るい緑、クローバーの淡いまだら、小道と広場の土、斜面の濃い緑
-const colPasture = new THREE.Color('#8fd052')
-const colPastureDeep = new THREE.Color('#6cba42')
-const colClover = new THREE.Color('#b8e070')
-const colFarmPath = new THREE.Color('#d6b47c')
-const colFarmYard = new THREE.Color('#cfb07a')
+// 11/16 ふれあいワールドの見本の絵に寄せて、牧草を鮮やかな黄緑に、道と広場を暖かい土の色に（黄色くにごらない）
+const colPasture = new THREE.Color('#7cc63a')
+const colPastureDeep = new THREE.Color('#52a832')
+const colClover = new THREE.Color('#b4e05a')
+const colFarmPath = new THREE.Color('#c8925a')
+const colFarmYard = new THREE.Color('#c49a66')
 const colGoatRock = new THREE.Color('#a8a09a')
 const colGoatRockDark = new THREE.Color('#8a817c')
 function partnerColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {

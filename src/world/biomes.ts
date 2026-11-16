@@ -1131,11 +1131,12 @@ function createPartner(rand: () => number, group: THREE.Group, colliders: Collid
     if (onPath(c.x, c.z, 1) || inPen(c.x, c.z, 1)) continue
     for (let k = 0; k < 9; k++) flowerSpots.push({ x: c.x + (rand() - 0.5) * 3.2, z: c.z + (rand() - 0.5) * 3.2 })
   }
-  const flowerGeo = new THREE.IcosahedronGeometry(0.13, 0)
+  // 11/16 見本の絵に寄せて、花を少し大きく（0.13 → 0.2）、水色をやめて桃色を多めに
+  const flowerGeo = new THREE.IcosahedronGeometry(0.2, 0)
   const flowerMesh = instanced(flowerGeo, toonMaterial(), flowerSpots.length, false)
-  const flowerColors = ['#ffffff', '#ffe066', '#ff9ec4', '#9fd8ff'].map((c) => new THREE.Color(c))
+  const flowerColors = ['#ffffff', '#ffe066', '#ff9ec4', '#ffc4dc'].map((c) => new THREE.Color(c))
   flowerSpots.forEach((f, i) => {
-    _m.compose(_p.set(f.x, terrainHeight(f.x, f.z) + 0.16, f.z), _q.identity(), _s.set(1, 0.7, 1))
+    _m.compose(_p.set(f.x, terrainHeight(f.x, f.z) + 0.2, f.z), _q.identity(), _s.set(1, 0.6, 1))
     flowerMesh.setMatrixAt(i, _m)
     flowerMesh.setColorAt(i, flowerColors[Math.floor(rand() * flowerColors.length)])
   })

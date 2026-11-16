@@ -857,10 +857,11 @@ const OUTER_LOOKS: Record<OuterLookKey, Array<Omit<RangeLayer, 'segs' | 'seed'>>
     { r: 230, h: 34, spread: 14, foot: '#7f98ac', peak: '#8cb8a8' },
   ],
   // ふれあいワールド: 牧場を囲むなだらかな明るい緑の丘。遠いほど淡い
+  // 11/16 見本の絵に寄せて、手前の丘を濃い緑に、奥ほど青みの緑に（層を分ける）
   partner: [
-    { r: 150, h: 14, spread: 5, foot: '#5fae4a', peak: '#9ad86a' },
-    { r: 188, h: 22, spread: 8, foot: '#72b85e', peak: '#b2e282' },
-    { r: 230, h: 32, spread: 11, foot: '#94c890', peak: '#cdeab4' },
+    { r: 150, h: 16, spread: 5, foot: '#3f9038', peak: '#86c850' },
+    { r: 188, h: 26, spread: 8, foot: '#5a9c5a', peak: '#9ccc70' },
+    { r: 230, h: 38, spread: 11, foot: '#78a8a0', peak: '#b0d4a8' },
   ],
   // 空の世界: 高原（地面が約 10m 高い）を囲む、低めのとがった岩の峰（空を広く見せる）。麓はうす紫、日の当たる頂はクリーム色。北の世界の雪の峰と見分けがつく色
   sky: [

@@ -1448,16 +1448,18 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // ふれあいワールド: やさしい青空、照り返しは牧草の明るい緑。影はやわらかく、暖かい午後の太陽
     partner: {
       exposure: 0.97,
-      sky: new THREE.Color('#d4e8ff'),
-      ground: new THREE.Color('#9cc870'),
-      intensity: 0.72,
-      sun: 2.2,
-      top: new THREE.Color('#2a6ee0'),
+      // 11/16 ふれあいワールドの見本の絵に寄せて、霞を遠くへ（120・480 → 260・760。遠くの丘の緑が白くかすまない）、
+      // 暖かい午後の日差し、影はやわらかい青緑、色を濃く
+      sky: new THREE.Color('#fff4dc'),
+      ground: new THREE.Color('#8cc464'),
+      intensity: 1.05,
+      sun: 2.4,
+      top: new THREE.Color('#1f62e0'),
       horizon: new THREE.Color('#9ad0f4'),
-      near: 120,
-      far: 480,
-      gradeSat: 1.07,
-      gradeContrast: 1.04,
+      near: 260,
+      far: 760,
+      gradeSat: 1.16,
+      gradeContrast: 1.06,
       sunElev: 22,
       sunGlow: new THREE.Color('#fff0cc'),
       sunDisc: 4.0,
@@ -1494,6 +1496,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     jungle: new THREE.Color('#0a2c34'),
     south: new THREE.Color('#241a56'),
     water: new THREE.Color('#0c2a5a'),
+    partner: new THREE.Color('#0e3038'),
   }
   const shadeTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
