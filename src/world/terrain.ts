@@ -90,14 +90,35 @@ function northDrift(x: number, z: number): typeof _drift {
 function driftShape(phase: number): number {
   return phase < 0.72 ? smoothstep(0, 0.72, phase) : 1 - smoothstep(0.72, 1, phase)
 }
-/** 北の世界: 雪の積もったゆるい丘と、吹きだまりの波 */
-function northHeight(x: number, z: number): number {
+/** 北の世界: 雪の積もったゆるい丘と、吹きだまりの波（池の加工前） */
+function northRaw(x: number, z: number): number {
   const d = northDrift(x, z)
   return (
     simplex.fbm(x * 0.012, z * 0.012, 4, 2.1, 0.5) * 5.2 +
     outerNoise.fbm(x * 0.06, z * 0.06, 2, 2, 0.5) * 0.25 +
     driftShape(d.phase) * d.amp * DRIFT_HEIGHT
   )
+}
+/**
+ * 11/16 北の見本の絵に寄せた、凍った池。観察スポットの北西（動物の拠点・峠の道・駅から離れた所）。
+ * 地面を平らな皿にして、氷の面（biomes.ts）は縁のいちばん低い所より少し下。氷の上は歩ける
+ */
+const NORTH_REGION = OUTER_REGIONS.find((r) => r.key === 'north') ?? { x: 0, z: -300 }
+const northPondX = NORTH_REGION.x - 24
+const northPondZ = NORTH_REGION.z - 20
+const northPondR = 8
+let northPondRim = Infinity
+for (let i = 0; i < 32; i++) {
+  const a = (i / 32) * Math.PI * 2
+  northPondRim = Math.min(northPondRim, northRaw(northPondX + Math.cos(a) * northPondR * 1.15, northPondZ + Math.sin(a) * northPondR * 1.15))
+}
+export const NORTH_POND = { x: northPondX, z: northPondZ, radius: northPondR, level: northPondRim - 0.1 }
+/** 北の世界: 雪の丘と吹きだまり。凍った池は平らな皿に */
+function northHeight(x: number, z: number): number {
+  const h = northRaw(x, z)
+  const d = Math.hypot(x - northPondX, z - northPondZ) / (northPondR * 1.6)
+  if (d >= 1) return h
+  return lerp(h, NORTH_POND.level, 1 - smoothstep(0.55, 1, d))
 }
 /** ジャングル: こぶの多い森の地面（沼の加工前） */
 function jungleRaw(x: number, z: number): number {

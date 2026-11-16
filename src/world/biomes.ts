@@ -5,7 +5,7 @@ import { OUTER_REGIONS } from './regions'
 import type { Region, RegionKey } from './regions'
 import { rockCollider, rockRise } from './props'
 import type { Collider } from './props'
-import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
+import { CREEK, GOAT_ROCKS, JUNGLE_POND, LAGOON, NORTH_POND, SEA_LEVEL, SKY_RING, creekDist, farmPathDist, farmPens, lagoonDist, shapeHeight, skyPathDist, terrainHeight } from './terrain'
 import { toonMaterial } from '../render/toon'
 import { SUN_LIGHT_DIR } from './scene'
 import { createShopHouse, shopClears } from './shop'
@@ -97,7 +97,9 @@ function finish(...meshes: THREE.InstancedMesh[]): void {
 /** 北の世界: 雪をかぶったトウヒ（円錐 3 段＋雪の帽子）と、雪の乗った岩 */
 function createNorth(rand: () => number, group: THREE.Group, colliders: Collider[], mobile: boolean): void {
   const r = region('north')
-  const spots = scatter(rand, r, mobile ? 110 : 160, { max: r.walk + 40, clearing: 14, path: 7 })
+  // 凍った池の上と岸には、木と岩を置かない（rand は同じ数だけ使うので、ほかの場所の並びは変わらない）
+  const offPond = (m: number) => (p: { x: number; z: number }) => Math.hypot(p.x - NORTH_POND.x, p.z - NORTH_POND.z) > NORTH_POND.radius + m
+  const spots = scatter(rand, r, mobile ? 110 : 160, { max: r.walk + 40, clearing: 14, path: 7 }).filter(offPond(4))
   const trunkGeo = new THREE.CylinderGeometry(0.18, 0.3, 1, 6)
   trunkGeo.translate(0, 0.5, 0)
   const coneGeo = new THREE.ConeGeometry(1, 1, 8)
@@ -133,7 +135,7 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
   group.add(trunks, cones, caps)
 
   // 雪の乗った岩
-  const rocks = scatter(rand, r, 40, { max: r.walk + 20, clearing: 10, path: 6 })
+  const rocks = scatter(rand, r, 40, { max: r.walk + 20, clearing: 10, path: 6 }).filter(offPond(2))
   const rockGeo = new THREE.IcosahedronGeometry(1, 0)
   const rockMesh = instanced(rockGeo, toonMaterial({ color: '#929cab' }), rocks.length)
   const snowMesh = instanced(rockGeo, toonMaterial({ color: '#f4f8fc' }), rocks.length, false)
@@ -150,6 +152,98 @@ function createNorth(rand: () => number, group: THREE.Group, colliders: Collider
   })
   finish(rockMesh, snowMesh)
   group.add(rockMesh, snowMesh)
+
+  // 凍った池の氷: 空を映す淡い青、岸の白い霜、細い白いひび
+  const ice = new THREE.Mesh(new THREE.CircleGeometry(NORTH_POND.radius * 1.12, 48).rotateX(-Math.PI / 2), createIceMaterial())
+  ice.position.set(NORTH_POND.x, NORTH_POND.level + 0.03, NORTH_POND.z)
+  ice.name = 'north-ice'
+  group.add(ice)
+}
+
+/**
+ * 11/16 北の凍った池の氷（映り込みの描画はしない軽いシェーダー。スマホでも同じ）。
+ * - 色: 真ん中は澄んだ青、岸に近いほど白い霜。斜めから見るほど空（上の青と地平線の桃色）を映す
+ * - ひび: ます目ごとの点に一番近い所の境目（ボロノイ）を細い白い線に。大小 2 段
+ * - 日の照り返し: 平らな面に細く
+ */
+function createIceMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    fog: true,
+    uniforms: {
+      ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+      uCenter: { value: new THREE.Vector2(NORTH_POND.x, NORTH_POND.z) },
+      uRadius: { value: NORTH_POND.radius * 1.12 },
+      uSun: { value: SUN_LIGHT_DIR.clone().normalize() },
+    },
+    vertexShader: /* glsl */ `
+      #include <fog_pars_vertex>
+      varying vec3 vWorld;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorld = wp.xyz;
+        vec4 mvPosition = viewMatrix * wp;
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      #include <fog_pars_fragment>
+      uniform vec2 uCenter;
+      uniform float uRadius;
+      uniform vec3 uSun;
+      varying vec3 vWorld;
+      vec2 hash2(vec2 p) {
+        p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+        return fract(sin(p) * 43758.5453);
+      }
+      // ボロノイの境目までの距離（近い 2 点の差）
+      float cracks(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        float d1 = 8.0;
+        float d2 = 8.0;
+        for (int y = -1; y <= 1; y++) {
+          for (int x = -1; x <= 1; x++) {
+            vec2 g = vec2(float(x), float(y));
+            vec2 o = hash2(i + g);
+            float d = length(g + o - f);
+            if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) { d2 = d; }
+          }
+        }
+        return d2 - d1;
+      }
+      void main() {
+        vec2 p = vWorld.xz;
+        vec2 rel = p - uCenter;
+        float ang = atan(rel.y, rel.x);
+        // 岸の形を少しゆがめる（丸すぎない）
+        float r = (length(rel) + 0.3 * sin(ang * 5.0 + 1.1) + 0.2 * sin(ang * 9.0 - 0.4)) / uRadius;
+        if (r > 1.0) discard;
+        vec3 v = normalize(cameraPosition - vWorld);
+        // 色は線形の値で書く（最後に sRGB へ変える）
+        vec3 deep = vec3(0.08, 0.30, 0.72);
+        vec3 shallow = vec3(0.36, 0.64, 0.90);
+        vec3 col = mix(deep, shallow, smoothstep(0.2, 0.9, r));
+        // 空の映り込み: 斜めから見るほど、上の青から地平線の桃色へ
+        float fres = pow(1.0 - max(v.y, 0.0), 3.0);
+        vec3 sky = mix(vec3(0.30, 0.50, 0.95), vec3(0.86, 0.52, 0.66), fres);
+        col = mix(col, sky, 0.12 + fres * 0.35);
+        // ひび（大きいます目 2.2m と小さいます目 0.8m）
+        float c = 1.0 - smoothstep(0.0, 0.05, cracks(p / 2.2));
+        c = max(c, (1.0 - smoothstep(0.0, 0.035, cracks(p / 0.8 + 7.3))) * 0.35);
+        col = mix(col, vec3(0.92, 0.95, 1.0), c * 0.45 * (1.0 - smoothstep(0.85, 1.0, r)));
+        // 日の照り返し
+        vec3 h = normalize(uSun + v);
+        col += vec3(1.0, 0.95, 0.88) * pow(max(h.y, 0.0), 120.0) * 0.8;
+        // 岸の白い霜（縁ほど白く、雪へつながる）
+        col = mix(col, vec3(0.95, 0.94, 0.98), smoothstep(0.8, 0.98, r));
+        gl_FragColor = vec4(col, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+        #include <fog_fragment>
+      }
+    `,
+  })
 }
 
 /**
