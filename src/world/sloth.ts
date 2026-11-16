@@ -157,12 +157,15 @@ export function createSloth(options: SlothOptions): Lion {
         }
       })
       // 手足の先（モデルのいちばん上）を枝の中心の高さ（原点の 0.6 半径上）に
+      // 11/16 ずらしは別の入れ物に持たせる（生成モデルの wrap は毎フレーム接地の処理で y=0 に戻され、体が枝の上に乗っていた）
       m.updateMatrixWorld(true)
       const top = new THREE.Box3().setFromObject(m).max.y
-      m.position.y += CLAW_TOP - top
+      const lift = new THREE.Group()
+      lift.position.y = CLAW_TOP - top
+      lift.add(m)
       // 生成モデルの手足の並び（体の長さ）は入れ物の x 向き。枝は入れ物の z 向きに伸びるので、縦軸で 90° 回して枝に沿わせる
       pivot.rotation.y = -Math.PI / 2
-      pivot.add(m)
+      pivot.add(lift)
       hang.add(pivot)
       model = m
     },
