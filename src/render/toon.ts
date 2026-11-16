@@ -99,10 +99,14 @@ function contactShadowTexture(): THREE.Texture {
   canvas.width = canvas.height = size
   const g = canvas.getContext('2d')
   if (g) {
+    // alphaMap は緑の値を読む。透明度で描くと iPhone の Safari では透明な所の色が白のまま残り、影が四角になる。
+    // 不透明な黒の上に白→黒の色だけで丸を描く
+    g.fillStyle = '#000'
+    g.fillRect(0, 0, size, size)
     const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-    grad.addColorStop(0, 'rgba(255,255,255,1)')
-    grad.addColorStop(0.55, 'rgba(255,255,255,0.7)')
-    grad.addColorStop(1, 'rgba(255,255,255,0)')
+    grad.addColorStop(0, '#fff')
+    grad.addColorStop(0.55, 'rgb(179,179,179)')
+    grad.addColorStop(1, '#000')
     g.fillStyle = grad
     g.fillRect(0, 0, size, size)
   }
