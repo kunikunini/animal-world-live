@@ -262,9 +262,10 @@ function createPondMaterial(): THREE.ShaderMaterial {
       uCenter: { value: new THREE.Vector2(JUNGLE_POND.x, JUNGLE_POND.z) },
       uRadius: { value: JUNGLE_POND.radius * 1.12 },
       uSun: { value: SUN_LIGHT_DIR.clone().normalize() },
-      uDeep: { value: new THREE.Color('#1c64b0') },
-      uShallow: { value: new THREE.Color('#3c9ccc') },
-      uSky: { value: new THREE.Color('#bfe4ff') },
+      // 11/16 ジャングルの見本の絵に寄せて、深い青緑の水に。映り込みは空と葉の混ざった緑がかった水色（灰色に白くとばない）
+      uDeep: { value: new THREE.Color('#0e4a62') },
+      uShallow: { value: new THREE.Color('#2a8a86') },
+      uSky: { value: new THREE.Color('#8fcac4') },
     },
     vertexShader: /* glsl */ `
       #include <fog_pars_vertex>
@@ -303,13 +304,13 @@ function createPondMaterial(): THREE.ShaderMaterial {
         vec3 col = mix(uDeep, uShallow, smoothstep(0.35, 1.0, r));
         // 空の映り込み（斜めから見るほど強い）
         float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-        col = mix(col, uSky, 0.05 + fres * 0.35);
+        col = mix(col, uSky, 0.05 + fres * 0.28);
         // 日の照り返し（細い）と、ゆるい光の帯
         vec3 h = normalize(uSun + v);
         float nh = max(dot(n, h), 0.0);
         float spec = pow(nh, 70.0);
         float sheen = pow(nh, 8.0);
-        col += vec3(1.0, 0.97, 0.88) * (spec * 1.6 + sheen * 0.22);
+        col += vec3(1.0, 0.97, 0.88) * (spec * 1.6 + sheen * 0.12);
         // 波の山に乗る細い光の線（ゆっくり流れる）
         float crest = sin(dot(p, vec2(0.6, 0.8)) * 2.3 + t * 1.2) * sin(dot(p, vec2(-0.7, 0.7)) * 1.9 - t * 0.9);
         col += vec3(0.85, 0.95, 1.0) * pow(max(crest, 0.0), 6.0) * 0.16;
@@ -424,6 +425,70 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
   fernMesh.userData.clearAroundAnimals = 1.0
   group.add(fernMesh)
 
+  // 11/16 木もれ日の光の筋（ジャングルの見本の絵）。日の向きに傾いた、うすく光る筒。
+  // 足し算で明るくするだけ（影や当たり判定なし）。根元と先は消し、近づくとうすくなる（中に入っても白くならない）
+  {
+    const beamGeo = new THREE.CylinderGeometry(1.1, 2.4, 28, 12, 1, true)
+    beamGeo.translate(0, 14, 0)
+    const beamMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      uniforms: { uColor: { value: new THREE.Color('#fff1c4') }, uTime: { value: 0 } },
+      vertexShader: /* glsl */ `
+        varying float vH;
+        varying vec3 vN;
+        varying vec3 vView;
+        varying float vDist;
+        void main() {
+          vH = position.y / 28.0;
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vN = normalize(mat3(modelMatrix) * normal);
+          vView = normalize(cameraPosition - wp.xyz);
+          vDist = length(cameraPosition - wp.xyz);
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform vec3 uColor;
+        uniform float uTime;
+        varying float vH;
+        varying vec3 vN;
+        varying vec3 vView;
+        varying float vDist;
+        void main() {
+          float edge = pow(abs(dot(normalize(vN), vView)), 1.6);
+          float along = smoothstep(0.0, 0.12, vH) * (1.0 - smoothstep(0.55, 1.0, vH));
+          float near = smoothstep(3.0, 14.0, vDist) * (1.0 - smoothstep(70.0, 120.0, vDist));
+          float a = edge * along * near * (0.22 + 0.05 * sin(uTime * 0.6 + vH * 6.0));
+          gl_FragColor = vec4(uColor * a, 1.0);
+        }`,
+    })
+    // 日の向き（SUN_LIGHT_DIR は地面から太陽へ）。筒の上を太陽の側へ倒す
+    const up = new THREE.Vector3(0, 1, 0)
+    const tilt = new THREE.Quaternion().setFromUnitVectors(up, SUN_LIGHT_DIR.clone().normalize())
+    const spots = [
+      [-9, -14], [6, -18], [14, 6], [-16, 4], [2, 16], [-24, -2], [20, -10], [-6, 24],
+    ]
+    // rand は使わない（あとに続く木・岩の並びを変えない）
+    spots.forEach(([dx, dz], i) => {
+      const bx = r.x + dx
+      const bz = r.z + dz
+      const beam = new THREE.Mesh(beamGeo, beamMat)
+      beam.position.set(bx, terrainHeight(bx, bz) - 0.5, bz)
+      beam.quaternion.copy(tilt)
+      beam.rotateY(i * 1.3)
+      beam.scale.setScalar(0.8 + ((i * 0.37) % 0.5))
+      beam.renderOrder = 5
+      beam.name = 'jungle-light-beam'
+      group.add(beam)
+    })
+    const first = group.children[group.children.length - 1]
+    first.onBeforeRender = () => {
+      beamMat.uniforms.uTime.value = performance.now() / 1000
+    }
+  }
+
   // ワニの沼の水面: 青い水に、空の映り込み（斜めから見るほど空色）・ゆっくり動くさざ波・日の光の照り返しときらめき
   const pond = new THREE.Mesh(new THREE.CircleGeometry(JUNGLE_POND.radius * 1.12, 48).rotateX(-Math.PI / 2), createPondMaterial())
   pond.position.set(JUNGLE_POND.x, JUNGLE_POND.level, JUNGLE_POND.z)
@@ -433,6 +498,54 @@ function createJungle(rand: () => number, group: THREE.Group, colliders: Collide
     ;(pond.material as THREE.ShaderMaterial).uniforms.uTime.value = performance.now() / 1000
   }
   group.add(pond)
+
+  // 11/16 沼にスイレンの葉（切れ込みのある円）と岸のアシ（ジャングルの見本の絵）。rand は使わない
+  {
+    const P = JUNGLE_POND
+    const padGeo = new THREE.CircleGeometry(0.55, 14, 0.35, Math.PI * 2 - 0.7).rotateX(-Math.PI / 2)
+    const pads = instanced(padGeo, toonMaterial(), 22, false)
+    const padA = new THREE.Color('#3f9a3c')
+    const padB = new THREE.Color('#7cc24a')
+    for (let i = 0; i < 22; i++) {
+      const a = i * 2.39996
+      const rr = P.radius * (0.35 + 0.55 * ((i * 0.618) % 1))
+      const sc = 0.7 + ((i * 0.37) % 0.7)
+      _m.compose(
+        _p.set(P.x + Math.cos(a) * rr, P.level + 0.02, P.z + Math.sin(a) * rr),
+        _q.setFromEuler(_e.set(0, a * 3.1, 0)),
+        _s.set(sc, 1, sc),
+      )
+      pads.setMatrixAt(i, _m)
+      pads.setColorAt(i, _c.copy(padA).lerp(padB, (i * 0.53) % 1))
+    }
+    finish(pads)
+    pads.castShadow = false
+    pads.name = 'jungle-lily-pads'
+    group.add(pads)
+    const reedGeo = new THREE.ConeGeometry(0.06, 1.6, 3)
+    reedGeo.translate(0, 0.8, 0)
+    const REEDS = 70
+    const reeds = instanced(reedGeo, toonMaterial(), REEDS, false)
+    const reedA = new THREE.Color('#4f8f3a')
+    const reedB = new THREE.Color('#a8c860')
+    for (let i = 0; i < REEDS; i++) {
+      const a = i * 2.39996 + 0.4
+      const rr = P.radius * (0.92 + 0.22 * ((i * 0.618) % 1))
+      const x = P.x + Math.cos(a) * rr
+      const z = P.z + Math.sin(a) * rr
+      const h = 0.7 + ((i * 0.41) % 0.8)
+      _m.compose(
+        _p.set(x, Math.max(P.level - 0.05, terrainHeight(x, z) - 0.05), z),
+        _q.setFromEuler(_e.set(((i * 0.29) % 0.4) - 0.2, 0, ((i * 0.47) % 0.4) - 0.2)),
+        _s.set(1, h, 1),
+      )
+      reeds.setMatrixAt(i, _m)
+      reeds.setColorAt(i, _c.copy(reedA).lerp(reedB, (i * 0.71) % 1))
+    }
+    finish(reeds)
+    reeds.name = 'jungle-reeds'
+    group.add(reeds)
+  }
 
   // 止まり木: 縦の幹と、東へ張り出した横枝（枝の先は細く）
   {

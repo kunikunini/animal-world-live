@@ -20,7 +20,7 @@ import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { createGpuRelease } from './render/gpuRelease'
-import { getClay, getShadeTint, setClay, setShadeTint, vividToon } from './render/toon'
+import { getClay, getShadeTint, setClay, setShadeTint, shadeColor, vividToon } from './render/toon'
 import { ANIME_LOOK } from './render/look'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
 import { createLion, type Lion } from './world/lions'
@@ -1360,10 +1360,11 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // ジャングル: 深い青空、照り返しは若葉の緑（紫の影が草をにごらせない）。霧は近いまま淡い緑で湿った空気。高めの太陽ににじむ広い輪
     jungle: {
       exposure: 0.96,
-      sky: new THREE.Color('#c6e2ff'),
-      ground: new THREE.Color('#7cab4e'),
-      intensity: 0.7,
-      sun: 2.25,
+      // 11/16 ジャングルの見本の絵に寄せて、木もれ日を暖かく強く、葉の陰は青緑に（照り返しを上げて陰が黒くつぶれない）
+      sky: new THREE.Color('#dff0e0'),
+      ground: new THREE.Color('#5f9a5a'),
+      intensity: 1.15,
+      sun: 2.55,
       top: new THREE.Color('#1a5bd6'),
       horizon: new THREE.Color('#8ecaf0'),
       // 11/16 ジャングルの見本の絵に寄せて、霞を遠くへ（90・420 → 200・620。霧にかすむ緑の山の層が見分けられるように）
@@ -1372,7 +1373,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       gradeSat: 1.1,
       gradeContrast: 1.06,
       sunElev: 26,
-      sunGlow: new THREE.Color('#fbf3d6'),
+      sunGlow: new THREE.Color('#ffecc0'),
       sunDisc: 3.4,
       sunHalo: 1.7,
     },
@@ -1455,6 +1456,12 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   let sunDisc = lightTarget.sunDisc
   const weights: BiomeWeights = emptyWeights()
   const fogTarget = new THREE.Color()
+  /** 影に足す色（toon.ts の shadeColor）。書いていないワールドは今までの夜空の青 */
+  const SHADE_DEFAULT = shadeColor.value.clone()
+  const SHADE_TINT: Partial<Record<RegionKey, THREE.Color>> = {
+    jungle: new THREE.Color('#0a2c34'),
+  }
+  const shadeTarget = new THREE.Color()
   // 入った時から明るく（最初に目標を出した時に、そこまで合わせる）
   let lightReady = false
   let lightSnap = false
@@ -1954,6 +1961,15 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     setClay(getClay() + (weights.africa - getClay()) * lk)
     // 影の青み・動物の塗り（色を何段かにまとめる）・足もとの影。11/16 にサバンナで試し、全ワールドに広げた
     setShadeTint(getShadeTint() + (1 - getShadeTint()) * lk)
+    // 影に足す色もワールドごと（11/16 ジャングルは見本の絵の青緑の影）
+    shadeTarget.setRGB(0, 0, 0)
+    for (const k of REGION_KEYS) {
+      const c = SHADE_TINT[k] ?? SHADE_DEFAULT
+      shadeTarget.r += c.r * weights[k]
+      shadeTarget.g += c.g * weights[k]
+      shadeTarget.b += c.b * weights[k]
+    }
+    shadeColor.value.lerp(shadeTarget, lk)
     // 遠くの山並みの帯（空に描く背景）もサバンナだけ。峠でほかのワールドへ溶ける
     // 11/16 北にも広げた（色は北の雪山）
     // 11/16 ジャングルにも広げた。色は重みで混ぜる

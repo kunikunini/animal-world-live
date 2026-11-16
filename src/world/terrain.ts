@@ -587,20 +587,29 @@ function northColor(x: number, z: number, h: number, slope: number, out: THREE.C
 }
 
 // ジャングル: 鮮やかな若草色の下草と、湿った土の道（トップの絵の明るい黄緑に寄せる）
-const colJungle = new THREE.Color('#8cc63f')
-const colJungleDeep = new THREE.Color('#5aa33a')
-const colMoss = new THREE.Color('#bfd84a')
-const colJungleEarth = new THREE.Color('#9c6f44')
+// 11/16 ジャングルの見本の絵に寄せて、下草を深い緑に、日だまりに明るい苔、けもの道を赤土に（道の縁は苔でふちどる）
+const _cTmp2 = new THREE.Color()
+const colJungle = new THREE.Color('#72b43c')
+const colJungleDeep = new THREE.Color('#3c8a32')
+const colMoss = new THREE.Color('#b9d846')
+const colJungleEarth = new THREE.Color('#b25a32')
+const colJungleEarthDark = new THREE.Color('#8a4a2c')
 const colPondMud = new THREE.Color('#7a5a36')
 function jungleColor(x: number, z: number, _h: number, slope: number, out: THREE.Color): void {
   const n = detail.noise(x * 0.04 - 3, z * 0.04 + 7) * 0.5 + 0.5
   out.copy(colJungle).lerp(colJungleDeep, n)
   const big = patch.noise(x * 0.022 + 8, z * 0.022 - 1) * 0.5 + 0.5
-  out.lerp(colMoss, Math.max(0, big - 0.62) * 1.6)
-  // けもの道のような土の筋
+  out.lerp(colMoss, Math.max(0, big - 0.6) * 1.8)
+  // けもの道のような赤土の筋（縁は苔の明るい緑）
   const trail = Math.abs(outerNoise.noise(x * 0.012 + 20, z * 0.012 - 20))
-  out.lerp(colJungleEarth, (1 - smoothstep(0.02, 0.07, trail)) * 0.75)
-  if (slope < 0.9) out.lerp(colJungleEarth, Math.min(1, (0.9 - slope) * 4))
+  out.lerp(colMoss, (1 - smoothstep(0.06, 0.11, trail)) * 0.45)
+  _cTmp2.copy(colJungleEarth).lerp(colJungleEarthDark, detail.noise(x * 0.3, z * 0.3) * 0.5 + 0.5)
+  out.lerp(_cTmp2, (1 - smoothstep(0.025, 0.075, trail)) * 0.9)
+  // 観察スポットの広場は踏み固めた赤土（見本の絵の手前の道）。ところどころ苔の島が残る
+  const dc = Math.hypot(x - JUNGLE_REGION.x, z - JUNGLE_REGION.z)
+  const mossIsle = smoothstep(0.15, 0.45, detail.noise(x * 0.18 + 5, z * 0.18 - 9))
+  out.lerp(_cTmp2, (1 - smoothstep(6, 12, dc)) * 0.85 * (1 - mossIsle * 0.8))
+  if (slope < 0.9) out.lerp(colJungleEarthDark, Math.min(1, (0.9 - slope) * 4))
   // ワニの沼のまわりは湿った泥
   const dp = Math.hypot(x - JUNGLE_POND.x, z - JUNGLE_POND.z) / JUNGLE_POND.radius
   if (dp < 1.6) out.lerp(colPondMud, (1 - smoothstep(1.05, 1.6, dp)) * 0.85)
