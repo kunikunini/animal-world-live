@@ -1497,7 +1497,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   const SHADE_DEFAULT = shadeColor.value.clone()
   const SHADE_TINT: Partial<Record<RegionKey, THREE.Color>> = {
     jungle: new THREE.Color('#0a2c34'),
-    south: new THREE.Color('#241a56'),
+    // 南は青紫を弱めに（逆光のカンガルーの赤茶が紫の灰色にならない）
+    south: new THREE.Color('#1c1840'),
     water: new THREE.Color('#0c2a5a'),
     partner: new THREE.Color('#0e3038'),
     sky: new THREE.Color('#1c1a56'),
