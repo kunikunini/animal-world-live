@@ -49,6 +49,12 @@ function createSky(): THREE.Mesh {
       // 円盤の大きさ（見込み角の cos）と、まわりの光の輪の強さ
       uDisc: { value: Math.cos((4 * Math.PI) / 180) },
       uHalo: { value: 1 },
+      // 遠くの山並みの帯（霧のかからない背景。サバンナだけ main.ts が 0〜1 で出し入れする）。見本の絵（11/16）の青い山の層に寄せる
+      uRange: { value: 0 },
+      uRangeFar: { value: new THREE.Color('#6f86d0') },
+      uRangeFarLit: { value: new THREE.Color('#9db0ea') },
+      uRangeNear: { value: new THREE.Color('#3f58b0') },
+      uRangeNearLit: { value: new THREE.Color('#6d88d8') },
     },
     vertexShader: /* glsl */ `
       varying vec3 vDir;
@@ -66,7 +72,28 @@ function createSky(): THREE.Mesh {
       uniform vec3 uSunDir;
       uniform float uDisc;
       uniform float uHalo;
+      uniform float uRange;
+      uniform vec3 uRangeFar;
+      uniform vec3 uRangeFarLit;
+      uniform vec3 uRangeNear;
+      uniform vec3 uRangeNearLit;
       varying vec3 vDir;
+      // 山並みの稜線。方角（一周 0〜1）の三角波を重ねて、ローポリの尖った峰にする（整数倍なので一周でつながる）
+      float tri(float x) { return 1.0 - abs(fract(x) * 2.0 - 1.0); }
+      float ridge(float a, float o) {
+        return tri(a * 11.0 + o) * 0.65 + tri(a * 27.0 + o * 1.7) * 0.35;
+      }
+      // 1 層ぶんを塗る。面の向き（稜線の傾きと太陽の方角）で日なたと日かげの 2 色、麓は地平線の色へ溶かす
+      vec3 rangeLayer(vec3 col, float a, float y, float base, float amp, float o, vec3 shade, vec3 lit, float sunA) {
+        float h = base + amp * ridge(a, o);
+        if (y < 0.0 || y > h) return col;
+        // 日なた・日かげは大きい峰の傾きだけで分ける（細かい峰で縞にならないように）
+        float slope = tri(a * 11.0 + o + 0.0005) - tri(a * 11.0 + o - 0.0005);
+        float side = sin((a - sunA) * 6.2831853);
+        vec3 m = slope * side < 0.0 ? lit : shade;
+        m = mix(uHorizon, m, smoothstep(0.0, h * 0.45, y));
+        return mix(col, m, uRange);
+      }
       void main() {
         vec3 d = normalize(vDir);
         float y = d.y;
@@ -84,6 +111,13 @@ function createSky(): THREE.Mesh {
         // 太陽の円盤。縁はやわらかく。大きさはワールドごと（uDisc）
         float disc = smoothstep(uDisc - 0.0012, uDisc + 0.0004, s) * 1.4;
         col += uGlow * (glow + disc);
+        // 遠くの山並みの帯（奥の層は高く淡く、手前の層は低く濃く）
+        if (uRange > 0.001 && y >= 0.0 && y < 0.08) {
+          float a = atan(d.z, d.x) / 6.2831853;
+          float sunA = atan(uSunDir.z, uSunDir.x) / 6.2831853;
+          col = rangeLayer(col, a, y, 0.015, 0.055, 0.13, uRangeFar, uRangeFarLit, sunA);
+          col = rangeLayer(col, a, y, 0.006, 0.035, 0.61, uRangeNear, uRangeNearLit, sunA);
+        }
         // 地平線ぎわの霞
         float haze = exp(-abs(y) * 7.0) * 0.22;
         col = mix(col, uHorizon, haze);

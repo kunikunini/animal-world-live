@@ -401,11 +401,19 @@ const colGrassDry = new THREE.Color('#f3cc2a')
 const colGrassTawny = new THREE.Color('#d8921a')
 const colGrassGreen = new THREE.Color('#a6ca1e')
 const colEarth = new THREE.Color('#c98a50')
-const colBare = new THREE.Color('#df9833')
+// 11/16 見本の絵に寄せて、はげた所は橙の土ではなく赤土に。大きな色の帯にオリーブ色と黄土色を足す
+const colBare = new THREE.Color('#c86f3c')
+const colOlive = new THREE.Color('#a0a63a')
+const colOchre = new THREE.Color('#cf8a26')
 const colTrail = new THREE.Color('#e3ba60')
 const colRock = new THREE.Color('#9c8c86')
 const trailNoise = new Simplex2D(WORLD_SEED + 57)
 const bareNoise = new Simplex2D(WORLD_SEED + 63)
+
+/** 草のはげた赤土のまだらの濃さ（0..1）。地面の色と、草を減らす所（props の草の濃さ）に使う */
+export function savannaBare(x: number, z: number): number {
+  return smoothstep(0.42, 0.66, bareNoise.noise(x * 0.03 + 7, z * 0.03 - 3))
+}
 
 /**
  * 踏み分け道の濃さ（0..1）。細いノイズの尾根で、幅 2〜4m ほどの道が平原をうねる。
@@ -442,14 +450,18 @@ function savannaColor(x: number, z: number, h: number, out: THREE.Color, forMap 
   out.lerp(colGrassTawny, Math.max(0, 0.5 - Math.abs(big - 0.46) * 6) * 0.45)
   out.lerp(colGrassGreen, Math.max(0, 0.4 - big) * 1.7)
 
+  // さらに大きな色の帯（数十 m）。オリーブ色の草地と、黄土色に枯れた草地（見本の絵の、地面の色の大きな揺らぎ）
+  const field = patch.noise(x * 0.011 - 40, z * 0.011 + 17)
+  out.lerp(colOlive, smoothstep(-0.05, -0.45, field) * 0.75)
+  out.lerp(colOchre, smoothstep(0.2, 0.6, field) * 0.5)
+
   // 低い場所は若草色、乾いた高い場所は淡い麦わら色
   const rel = (h - 0) / 4
   if (rel < 0) out.lerp(colGrassGreen, Math.min(1, -rel * 0.6))
   else out.lerp(colGrassDry, Math.min(1, rel * 0.35))
 
   // 草のはげた赤土のまだら（ところどころ）
-  const bare = bareNoise.noise(x * 0.045 + 7, z * 0.045 - 3)
-  out.lerp(colBare, smoothstep(0.52, 0.72, bare) * 0.7)
+  out.lerp(colBare, savannaBare(x, z) * 0.8)
 
   // 踏み分け道（幅が地図の格子より細いので、地図には入れない）
   if (!forMap) {

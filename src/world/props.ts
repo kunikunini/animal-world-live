@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Reflector } from 'three/addons/objects/Reflector.js'
 import { Simplex2D, mulberry32, smoothstep } from './noise'
 import { ACACIAS, KOPJE, LIONS, SPAWN, SPOT, WALK_RADIUS, WATERHOLE, WORLD_SEED } from './layout'
-import { SEA_LEVEL, WATER_LEVEL, savannaTrail, shapeHeight, terrainHeight } from './terrain'
+import { SEA_LEVEL, WATER_LEVEL, savannaBare, savannaTrail, shapeHeight, terrainHeight } from './terrain'
 import { MAP_BOUNDS, OUTER_REGIONS, PASS_HALF_WIDTH, REACH_BINS, REGIONS, biomeAt, distToPassAxis, distToPassAxisOf, emptyWeights, reachBin, setReach } from './regions'
 import type { Region } from './regions'
 import { toonMaterial } from '../render/toon'
@@ -350,6 +350,8 @@ const WaterShader = {
     tDiffuse: { value: null as THREE.Texture | null },
     textureMatrix: { value: null as THREE.Matrix4 | null },
     uTime: { value: 0 },
+    uCenter: { value: new THREE.Vector3() },
+    uRadius: { value: 1 },
   },
   vertexShader: /* glsl */ `
     uniform mat4 textureMatrix;
@@ -369,22 +371,54 @@ const WaterShader = {
     uniform vec3 color;
     uniform sampler2D tDiffuse;
     uniform float uTime;
+    uniform vec3 uCenter;
+    uniform float uRadius;
     varying vec4 vUv;
     varying vec3 vWorld;
     #include <common>
     #include <fog_pars_fragment>
     void main() {
+      // 11/16 見本の絵に寄せる。灰色の丸い板に見えないよう、
+      // 岸の線を揺らして縁をぼかし（周りの地面が水より低い所があり、板の縁が浮いて見えていた）、
+      // 縁に濡れた泥の帯と白い波打ち際、中ほどは深い青、斜めから見るほど空を映す
+      vec2 rel = (vWorld.xz - uCenter.xz) / uRadius;
+      float ang = atan(rel.y, rel.x);
+      float edge = length(rel) + 0.035 * sin(ang * 5.0 + 1.3) + 0.025 * sin(ang * 9.0 - 0.7) + 0.015 * sin(ang * 14.0 + uTime * 0.3);
+      if (edge > 1.0) discard;
+
       vec2 ripple = vec2(
         sin(vWorld.x * 1.3 + uTime * 1.1) + sin(vWorld.z * 1.7 - uTime * 0.9),
         cos(vWorld.x * 1.1 - uTime * 0.8) + sin(vWorld.z * 1.5 + uTime * 1.3)
       ) * 0.0035;
+      vec3 V = normalize(cameraPosition - vWorld);
+      float fres = clamp(pow(1.0 - V.y, 3.0), 0.0, 1.0);
+      #ifdef NO_REFLECT
+      // スマホ: 映り込みを描かず、空の色を斜めほど強く
+      vec3 refl = mix(vec3(0.15, 0.34, 0.83), vec3(0.57, 0.75, 1.0), fres);
+      #else
       vec4 uv = vUv;
       uv.xy += ripple * uv.w;
       vec3 refl = texture2DProj(tDiffuse, uv).rgb;
-      // 映り込みを少し白っぽい水色へ寄せ、様式化した色にそろえる
-      vec3 c = mix(refl, color, 0.4);
-      c += color * 0.08;
-      gl_FragColor = vec4(c, 1.0);
+      // 映り込みを青空寄りにして、灰色っぽさを消す
+      refl = mix(refl, refl * vec3(0.7, 0.95, 1.15), 0.7);
+      #endif
+      vec3 deep = vec3(0.02, 0.15, 0.46);
+      vec3 shallow = vec3(0.10, 0.42, 0.50);
+      vec3 body = mix(deep, shallow, smoothstep(0.45, 0.88, edge));
+      vec3 c = mix(body, refl, 0.12 + 0.6 * fres);
+      // 水面のきらめき: 短く切れた細い光の筋（トゥーン調に硬めのしきい値）。色はリニア値で書く
+      float s = sin(vWorld.x * 1.6 + vWorld.z * 0.5 + uTime * 0.6 + sin(vWorld.z * 0.9 + uTime * 0.3) * 1.4);
+      float dash = smoothstep(0.3, 0.6, sin(vWorld.z * 1.1 - vWorld.x * 0.35 + uTime * 0.2));
+      c += vec3(0.9, 0.95, 1.0) * smoothstep(0.985, 0.995, s) * dash * 0.35 * (1.0 - smoothstep(0.7, 0.85, edge));
+      // 白い波打ち際
+      float foam = smoothstep(0.8, 0.84, edge) * (1.0 - smoothstep(0.86, 0.9, edge));
+      c = mix(c, vec3(0.93, 0.96, 0.95), foam * 0.75);
+      // 濡れた泥の帯。外へ向かって地面に溶ける
+      float mud = smoothstep(0.88, 0.9, edge);
+      c = mix(c, vec3(0.14, 0.07, 0.03), mud);
+      float alpha = 1.0 - mud * smoothstep(0.9, 1.0, edge);
+      alpha *= 1.0 - mud * 0.35;
+      gl_FragColor = vec4(c, alpha);
       #include <fog_fragment>
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
@@ -393,7 +427,7 @@ const WaterShader = {
 }
 
 /**
- * 水場。PC は Reflector で空と岸を映す。スマホは映り込みを描かず空色の板にする。
+ * 水場。PC は Reflector で空と岸を映す。スマホは映り込みを描かず、同じシェーダで空の色を映す。
  * 映り込みの描画からは草と光の粒（NO_REFLECT_LAYER）を外して負荷を抑える。
  */
 function createWater(
@@ -404,12 +438,32 @@ function createWater(
   geo.rotateX(-Math.PI / 2)
 
   if (options.mobile || !options.camera) {
-    const mat = new THREE.MeshBasicMaterial({ color: WATER_COLOR, transparent: true, opacity: 0.94 })
+    // 映り込みなしの同じシェーダ（NO_REFLECT）。岸の揺らぎ・泥の帯・波打ち際はPCと同じ
+    const mat = new THREE.ShaderMaterial({
+      name: WaterShader.name,
+      uniforms: {
+        ...THREE.UniformsUtils.clone(WaterShader.uniforms),
+        ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+      },
+      vertexShader: WaterShader.vertexShader,
+      fragmentShader: WaterShader.fragmentShader,
+      defines: { NO_REFLECT: '' },
+      transparent: true,
+      depthWrite: false,
+      fog: true,
+    })
+    mat.uniforms.textureMatrix.value = new THREE.Matrix4()
+    mat.uniforms.uCenter.value.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
+    mat.uniforms.uRadius.value = WATERHOLE.radius
     const mesh = new THREE.Mesh(geo, mat)
     mesh.position.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
     mesh.name = 'water'
     group.add(mesh)
-    return { update: () => {} }
+    return {
+      update: (time) => {
+        mat.uniforms.uTime.value = time
+      },
+    }
   }
 
   const reflector = new Reflector(geo, {
@@ -425,6 +479,11 @@ function createWater(
   const mat = reflector.material as THREE.ShaderMaterial
   Object.assign(mat.uniforms, THREE.UniformsUtils.clone(THREE.UniformsLib.fog))
   mat.fog = true
+  mat.uniforms.uCenter.value.set(WATERHOLE.x, WATER_LEVEL, WATERHOLE.z)
+  mat.uniforms.uRadius.value = WATERHOLE.radius
+  // 縁を地面に溶かすため半透明で描く
+  mat.transparent = true
+  mat.depthWrite = false
   // 映り込み用カメラからは草・光の粒を外す
   const reflectionCamera = reflector.getReflectionCamera(options.camera) as THREE.Camera
   reflectionCamera.layers.disable(NO_REFLECT_LAYER)
@@ -747,10 +806,11 @@ function createMountains(group: THREE.Group): void {
     cutPasses: true,
     name: 'mountains',
     layers: [
-      // トップの絵の遠い山のような青紫。奥ほど淡く
-      { r: 172, h: 20, spread: 10, segs: 200, foot: '#7a72b4', peak: '#b2a9de', seed: 0.0 },
-      { r: 212, h: 36, spread: 16, segs: 180, foot: '#8086c4', peak: '#bcc1ea', seed: 3.3 },
-      { r: 258, h: 54, spread: 24, segs: 160, foot: '#98a3d6', peak: '#d3d9f4', seed: 7.1 },
+      // 見本の絵（11/16）に寄せて、手前は赤茶の岩の丘、奥の 2 層は深い青。層ごとの色の差で近景・中景・遠景を分ける。
+      // さらに奥の青い山並みは、霧のかからない空の背景として scene.ts の空に描く（この輪はほかのワールドの近くで低く抑えられるため）
+      { r: 172, h: 20, spread: 10, segs: 200, foot: '#9c5a40', peak: '#d4946a', seed: 0.0 },
+      { r: 212, h: 36, spread: 16, segs: 180, foot: '#2f4fa8', peak: '#6a8ad8', seed: 3.3 },
+      { r: 258, h: 54, spread: 24, segs: 160, foot: '#4a6cc4', peak: '#8aa6e6', seed: 7.1 },
     ],
   })
   for (const r of OUTER_REGIONS) {
@@ -821,8 +881,9 @@ function grassDensity(x: number, z: number): number {
   d += 0.45 * (1 - smoothstep(1, 14, foot))
   const far = Math.hypot(x, z)
   d *= 1 - smoothstep(95, 145, far) * 0.6
-  // 踏み分け道には草が生えない
+  // 踏み分け道には草が生えない。赤土のまだらも草をうすく（地面の赤土が見えるように）
   d *= 1 - savannaTrail(x, z) * 0.9
+  d *= 1 - savannaBare(x, z) * 0.75
   return Math.min(1, d)
 }
 
@@ -854,8 +915,9 @@ function createGrass(
     const dz = Math.sin(yaw)
     const px = -dz
     const pz = dx
-    const w0 = 0.05
-    const w1 = 0.03
+    // 11/16 見本の絵に寄せて葉を幅広に（0.05・0.03 → 0.08・0.05）。房の数は変えずに、草むらを密に見せる
+    const w0 = 0.08
+    const w1 = 0.05
     const bl = [-px * w0, 0, -pz * w0]
     const br = [px * w0, 0, pz * w0]
     const ml = [dx * lean * 0.5 - px * w1, 0.55, dz * lean * 0.5 - pz * w1]
@@ -920,10 +982,11 @@ function createGrass(
   grass.frustumCulled = false
   grass.layers.set(NO_REFLECT_LAYER)
 
-  const gA = new THREE.Color('#fcd424')
-  const gB = new THREE.Color('#e6ad16')
-  const gC = new THREE.Color('#aacd22')
-  const gD = new THREE.Color('#f8d34e')
+  // 11/16 見本の絵に寄せて、レモン色から黄金色へ。緑の群れはオリーブ寄り
+  const gA = new THREE.Color('#f7c636')
+  const gB = new THREE.Color('#e39a1e')
+  const gC = new THREE.Color('#b4bb34')
+  const gD = new THREE.Color('#fbdb62')
 
   const R = WALK_RADIUS + 30
   let placed = 0
@@ -938,7 +1001,9 @@ function createGrass(
     if (dw < WATERHOLE.radius + 1.5) continue
     if (distToKopje(x, z) < KOPJE.radius * 0.97) continue
     if (LIONS.some((l) => Math.hypot(x - l.x, z - l.z) < 1.8)) continue
-    const h = 0.35 + rand() * 0.45
+    // 背の高い群れ（見本の絵の、手前に密集する背の高い草）。乱数の数は変えない
+    const tall = 1 + 0.5 * smoothstep(0.1, 0.5, patchNoise.noise(x * 0.035 - 11, z * 0.035 + 5))
+    const h = (0.35 + rand() * 0.45) * tall
     _p.set(x, terrainHeight(x, z) - 0.03, z)
     _e.set(0, rand() * Math.PI, 0)
     _q.setFromEuler(_e)

@@ -382,9 +382,9 @@ const RANGES: Array<{ cx: number; cz: number; pass: boolean; style: PeakStyle; s
     style: 'peak',
     snow: false,
     layers: [
-      [172, '#7a72b4', '#b2a9de'],
-      [212, '#8086c4', '#bcc1ea'],
-      [258, '#98a3d6', '#d3d9f4'],
+      [172, '#9c5a40', '#d4946a'],
+      [212, '#2f4fa8', '#6a8ad8'],
+      [258, '#4a6cc4', '#8aa6e6'],
     ],
   },
   ...OUTER_REGIONS.map((r) => {

@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
-import { toonMaterial } from '../render/toon'
+import { contactShadowMaterial, toonMaterial } from '../render/toon'
 
 /**
  * 群れの 5 頭の生成モデル（Meshy の Image to 3D。期間中に用意したクレイ版の絵から生成し、四足リグと「歩く」を付けた glTF）。
@@ -109,6 +109,9 @@ function loadShared(url: string): Promise<GLTF> {
   return p
 }
 
+/** 足もとの影の板（1 m 四方、水平）。全頭で共有 */
+const contactGeometry = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)
+
 export async function loadAiLion(url: string, opts: { length: number; posture: PostureFix; upright?: boolean; /** 横たわる子（ヘビ、リグなし）: length を水平の長い方の辺に合わせる */ lie?: boolean; /** 色の画像に掛ける明るさ（1 で書き出しのまま）。暗い毛色がワールドの光で沈む子だけ上げる */ brighten?: number }): Promise<AiLion> {
   const gltf = await loadShared(url)
   const inner = cloneSkinned(gltf.scene)
@@ -123,6 +126,8 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
       const mat = toonMaterial({ color: '#ffffff' })
       mat.map = src.map
       if (opts.brighten) mat.color.setScalar(opts.brighten)
+      // 色の画像を数段にまとめる（サバンナだけ。toon.ts の ANIMAL_MAP）
+      mat.defines = { ...mat.defines, AWL_ANIMAL: '' }
       mesh.material = mat
     }
   })
@@ -169,6 +174,14 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   const c = box.getCenter(new THREE.Vector3())
   inner.position.set(-c.x, -box.min.y, -c.z)
   wrap.updateMatrixWorld(true)
+  // 11/16 足もとの影（サバンナだけ見える）。体の足あとの大きさの楕円を、足の高さ（y=0）に置く
+  const footprint = box.getSize(new THREE.Vector3())
+  const contact = new THREE.Mesh(contactGeometry, contactShadowMaterial)
+  contact.name = 'contact-shadow'
+  contact.scale.set(Math.max(footprint.x, 0.2) * 0.94, 1, Math.max(footprint.z, 0.2) * 0.8)
+  contact.position.y = 0.03
+  contact.renderOrder = -1
+  wrap.add(contact)
   const headHeight = head ? head.getWorldPosition(new THREE.Vector3()).y + 0.12 : size.y * s * 0.85
 
   // Lion.update が書く「動く部分」。空の Object3D に回転だけ書いてもらい、tick で骨に写す
@@ -363,6 +376,8 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     } else {
       wrap.position.y = 0
     }
+    // 体が上下しても影は地面に残す
+    contact.position.y = 0.03 - wrap.position.y / (wrap.scale.y || 1)
   }
 
   return {

@@ -20,7 +20,7 @@ import { createClouds } from './world/clouds'
 import { createWeather } from './world/weather'
 import { createPostFx } from './render/postfx'
 import { createGpuRelease } from './render/gpuRelease'
-import { getClay, setClay, vividToon } from './render/toon'
+import { getClay, getShadeTint, setClay, setShadeTint, vividToon } from './render/toon'
 import { ANIME_LOOK } from './render/look'
 import { LIONS, SAVANNA_HYENA, SAVANNA_MEERKAT, SAVANNA_ZEBRA, SPAWN, SPOT } from './world/layout'
 import { createLion, type Lion } from './world/lions'
@@ -1217,8 +1217,9 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
   // いるワールドが変わったら、スポット・案内・霧の色を切り替える
   const fogColor = (scene.fog as THREE.Fog).color
   const FOG_TINT: Record<RegionKey, THREE.Color> = {
-    // サバンナはトップの絵に寄せて、地平線の空に近い澄んだ水色へ
-    africa: new THREE.Color('#a6cff0'),
+    // サバンナはトップの絵に寄せて、地平線の空に近い澄んだ水色へ。
+    // 11/16 見本の絵に寄せて、はっきりした青へ（遠くの山が白くとばず、青い山並みの層として残る）
+    africa: new THREE.Color('#8a9be0'),
     // 北は雪明かりの白、ジャングルは湿った淡い緑、南半球はベージュをやめて空に近い薄い色（遠くが茶色くにごらない）
     north: new THREE.Color('#dfeaf6'),
     jungle: new THREE.Color('#d6eadb'),
@@ -1241,6 +1242,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     uSunDir: { value: THREE.Vector3 }
     uDisc: { value: number }
     uHalo: { value: number }
+    uRange: { value: number }
   }
   const fog = scene.fog as THREE.Fog
   interface Light {
@@ -1291,12 +1293,14 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       exposure: 0.95,
       sky: new THREE.Color('#c4dcff'),
       ground: new THREE.Color('#c4a26a'),
-      intensity: 0.64,
+      // 11/16 影が黒茶につぶれないよう環境光を上げる（0.64 → 1.3。影の青みは toon.ts の shadeColor で足す）
+      intensity: 1.3,
       sun: 2.3,
       top: new THREE.Color('#0a4cd4'),
       horizon: new THREE.Color('#5ea6ee'),
-      near: 130,
-      far: 520,
+      // 11/16 見本の絵に寄せて霞を少し遠くへ（130・520 → 200・640。奥の青い山が白くとばず、層が見分けられるように）
+      near: 200,
+      far: 640,
       gradeSat: 1.04,
       gradeContrast: 1.06,
       // サバンナ: 大きく暖かい太陽
@@ -1917,6 +1921,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     postfx.grade.contrast += (lightTarget.gradeContrast - postfx.grade.contrast) * lk
     // サバンナだけクレイアニメ（粘土）の見た目。峠でほかのワールドの見た目へ溶ける
     setClay(getClay() + (weights.africa - getClay()) * lk)
+    // 影の青み（見本の絵に寄せる試作）もサバンナだけ
+    setShadeTint(getShadeTint() + (weights.africa - getShadeTint()) * lk)
+    // 遠くの山並みの帯（空に描く背景）もサバンナだけ。峠でほかのワールドへ溶ける
+    skyU.uRange.value += (weights.africa - skyU.uRange.value) * lk
     skyU.uTop.value.lerp(lightTarget.top, lk)
     skyU.uHorizon.value.lerp(lightTarget.horizon, lk)
     skyU.uGlow.value.lerp(lightTarget.sunGlow, lk)
