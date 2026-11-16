@@ -181,6 +181,11 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   contact.scale.set(Math.max(footprint.x, 0.2) * 0.94, 1, Math.max(footprint.z, 0.2) * 0.8)
   contact.position.y = 0.03
   contact.renderOrder = -1
+  // 太陽の影は落とさない／受けない。動物を置く側があとでモデルの中を全部「影を落とす」にするので、ここで固定する。
+  // 太陽の影は丸い切り抜きを無視するため、落とすと板の形の四角い影になる
+  for (const key of ['castShadow', 'receiveShadow'] as const) {
+    Object.defineProperty(contact, key, { get: () => false, set: () => {} })
+  }
   wrap.add(contact)
   const headHeight = head ? head.getWorldPosition(new THREE.Vector3()).y + 0.12 : size.y * s * 0.85
 

@@ -123,6 +123,17 @@ export const contactShadowMaterial = new THREE.MeshBasicMaterial({
   polygonOffsetFactor: -2,
   polygonOffsetUnits: -2,
 })
+// 板は平らなので、でこぼこの地面では縁が埋まり、遠くでは奥行きの精度が足りず地面に負けて消える（iPhone で起きた）。
+// 画面上の位置は変えずに、奥行きだけカメラの方へ CONTACT_LIFT m 寄せて、地面より手前に描く
+const CONTACT_LIFT = 0.15
+contactShadowMaterial.onBeforeCompile = (shader) => {
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <project_vertex>',
+    `#include <project_vertex>
+    mvPosition.xyz *= max( 0.0, 1.0 - ${CONTACT_LIFT.toFixed(2)} / length( mvPosition.xyz ) );
+    gl_Position = projectionMatrix * mvPosition;`,
+  )
+}
 export function getShadeTint(): number {
   return shadeUniform.value
 }
