@@ -1921,8 +1921,8 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     postfx.grade.contrast += (lightTarget.gradeContrast - postfx.grade.contrast) * lk
     // サバンナだけクレイアニメ（粘土）の見た目。峠でほかのワールドの見た目へ溶ける
     setClay(getClay() + (weights.africa - getClay()) * lk)
-    // 影の青み（見本の絵に寄せる試作）もサバンナだけ
-    setShadeTint(getShadeTint() + (weights.africa - getShadeTint()) * lk)
+    // 影の青み・動物の塗り（色を何段かにまとめる）・足もとの影。11/16 にサバンナで試し、全ワールドに広げた
+    setShadeTint(getShadeTint() + (1 - getShadeTint()) * lk)
     // 遠くの山並みの帯（空に描く背景）もサバンナだけ。峠でほかのワールドへ溶ける
     skyU.uRange.value += (weights.africa - skyU.uRange.value) * lk
     skyU.uTop.value.lerp(lightTarget.top, lk)

@@ -4,6 +4,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
 import { contactShadowMaterial, toonMaterial } from '../render/toon'
+import { terrainHeight } from './terrain'
 
 /**
  * 群れの 5 頭の生成モデル（Meshy の Image to 3D。期間中に用意したクレイ版の絵から生成し、四足リグと「歩く」を付けた glTF）。
@@ -181,6 +182,8 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
   contact.scale.set(Math.max(footprint.x, 0.2) * 0.94, 1, Math.max(footprint.z, 0.2) * 0.8)
   contact.position.y = 0.03
   contact.renderOrder = -1
+  let groundCheck = 0
+  const contactAt = new THREE.Vector3()
   // 太陽の影は落とさない／受けない。動物を置く側があとでモデルの中を全部「影を落とす」にするので、ここで固定する。
   // 太陽の影は丸い切り抜きを無視するため、落とすと板の形の四角い影になる
   for (const key of ['castShadow', 'receiveShadow'] as const) {
@@ -383,6 +386,12 @@ export async function loadAiLion(url: string, opts: { length: number; posture: P
     }
     // 体が上下しても影は地面に残す
     contact.position.y = 0.03 - wrap.position.y / (wrap.scale.y || 1)
+    // 地面に立っているときだけ影を描く。木の枝や止まり木の鳥・ナマケモノの足もとに、宙に浮いた影を出さない（ときどき調べる）
+    if (--groundCheck <= 0) {
+      groundCheck = 20
+      contact.getWorldPosition(contactAt)
+      contact.visible = contactAt.y - terrainHeight(contactAt.x, contactAt.z) < 0.35
+    }
   }
 
   return {
