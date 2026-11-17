@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { clayCompile, toonMaterial } from '../render/toon'
@@ -111,7 +112,12 @@ export function createOutline(mesh: THREE.Mesh): THREE.Mesh {
         '#include <project_vertex>',
         `#include <project_vertex>
         // 法線を画面の向きにして、その方向へ一定の画素ぶん外へずらす
+        // スキンの体は骨で動いた法線（objectNormal）、スキンの無い形（スコップ）は形の法線をそのまま使う（MeshBasicMaterial はスキンの時しか objectNormal を作らない）
+        #ifdef USE_SKINNING
         vec3 outlineN = normalize( normalMatrix * objectNormal );
+        #else
+        vec3 outlineN = normalize( normalMatrix * normal );
+        #endif
         vec2 outlineDir = ( projectionMatrix * vec4( outlineN, 0.0 ) ).xy;
         float outlineLen = length( outlineDir );
         if ( outlineLen > 1e-5 ) gl_Position.xy += ( outlineDir / outlineLen ) * uOutlinePx * 2.0 / uResolution * gl_Position.w;`,
@@ -123,12 +129,22 @@ export function createOutline(mesh: THREE.Mesh): THREE.Mesh {
     const sk = new THREE.SkinnedMesh(mesh.geometry, mat)
     sk.bind(skinned.skeleton, skinned.bindMatrix)
     outline = sk
-  } else outline = new THREE.Mesh(mesh.geometry, mat)
+  } else {
+    // スキンの無い形（スコップ）: 生成モデルは色の画像の継ぎ目で法線が割れていて、そのまま押し出すと体の上に継ぎ目の線が出る。
+    // 輪郭用にだけ、同じ位置の頂点をまとめてなめらかな法線を作り直した形を使う
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', mesh.geometry.getAttribute('position'))
+    if (mesh.geometry.index) g.setIndex(mesh.geometry.index)
+    const smooth = mergeVertices(g, 1e-4)
+    smooth.computeVertexNormals()
+    outline = new THREE.Mesh(smooth, mat)
+  }
   outline.name = 'hero-outline'
   outline.frustumCulled = false
   outline.castShadow = false
   const size = new THREE.Vector2()
-  outline.onBeforeRender = (renderer) => {
+  // 材質の側で毎回渡す（形を clone した輪郭（ワールドのスコップ）にも、材質は共有されて届く。形の onBeforeRender は clone に写らない）
+  mat.onBeforeRender = (renderer) => {
     // 描く先（色補正のパスの画面、または画面そのもの）の画素数と、画面の倍率
     const rt = renderer.getRenderTarget()
     if (rt) size.set(rt.width, rt.height)
