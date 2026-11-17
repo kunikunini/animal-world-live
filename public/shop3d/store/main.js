@@ -28,12 +28,21 @@ const AWL_NAV = params.get('awl') === 'nav' && window.parent === window;
 let gone = false;
 function freeGL(){
   if (gone) return; gone = true;
-  try { bgm?.pause(); } catch { /* 音が無くても続ける */ }
+  try { bgm?.pause(); bgmCtx?.close(); } catch { /* 音が無くても続ける */ }
   try { renderer.dispose(); renderer.forceContextLoss(); } catch { /* 手放せなくても、移動は続ける */ }
 }
 // スマホでページごと移ってきた時は、ワールドの BGM が途切れるので、ここでふれあいワールドの曲を小さく流す。
 // ブラウザは最初の操作まで音を出させないので、最初にさわった時から鳴る。音量と消音は、アプリの設定（localStorage）に合わせる
-let bgm = null;
+let bgm = null, bgmCtx = null, bgmGain = null, bgmLevel = 0;
+/** 曲の音量を sec 秒で to へ。iPhone の Safari は audio の volume を変えられないので、Web Audio の音量で絞る */
+function rampBgm(to, sec){
+  if (bgmCtx && bgmGain) {
+    const now = bgmCtx.currentTime;
+    bgmGain.gain.cancelScheduledValues(now);
+    bgmGain.gain.setValueAtTime(bgmGain.gain.value, now);
+    bgmGain.gain.linearRampToValueAtTime(to, now + sec);
+  } else if (bgm) bgm.volume = to;
+}
 function startBgm(){
   if (bgm || gone) return;
   let vol = 0.6, mute = false;
@@ -43,8 +52,32 @@ function startBgm(){
   } catch { /* 設定が読めなければ、既定の音量 */ }
   if (mute || vol <= 0) return;
   bgm = new Audio('/audio/bgm-partner.mp3');
-  bgm.loop = true; bgm.volume = vol * vol * 0.5;   // 店内なので、ワールドより控えめ
-  bgm.play().catch(() => { bgm = null; });   // まだ鳴らせなければ、次の操作でもう一度
+  bgm.loop = true;
+  bgmLevel = vol * vol * 0.5;   // 店内なので、ワールドより控えめ
+  // Web Audio に通して音量を持つ（出る時に絞れるように）。使えなければ audio の volume のまま
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    bgmCtx = new AC();
+    bgmGain = bgmCtx.createGain();
+    bgmGain.gain.value = 0;
+    bgmCtx.createMediaElementSource(bgm).connect(bgmGain).connect(bgmCtx.destination);
+    void bgmCtx.resume?.();
+  } catch { bgmCtx = null; bgmGain = null; bgm.volume = bgmLevel; }
+  bgm.play().then(() => rampBgm(bgmLevel, 0.8)).catch(() => { try { bgmCtx?.close(); } catch { /* 続ける */ } bgm = null; bgmCtx = null; bgmGain = null; });   // まだ鳴らせなければ、次の操作でもう一度
+}
+/**
+ * ページごとワールドへ戻る（?awl=nav）。暗い幕を閉じながら曲を小さくしていき、閉じ切ってから移る。
+ * いきなり止めると「ブチッ」と鳴って画面も急に替わるので（11/18 くに）、幕と音を同じ 0.6 秒で下げる
+ */
+const BACK_FADE_MS = 600;
+let backStarted = false;
+function goBackToWorld(){
+  if (gone || backStarted) return;
+  backStarted = true;
+  goingBack = true;
+  rampBgm(0, BACK_FADE_MS / 1000);
+  if (curtain) { curtain.hidden = false; curtain.classList.add('is-leaving'); void curtain.offsetWidth; curtain.classList.remove('is-out'); }
+  setTimeout(() => { freeGL(); location.assign('/?shop'); }, BACK_FADE_MS + 200);   // 幕が閉じ切ってから
 }
 const curtain = document.getElementById('awl-curtain');   // ページごと行き来する時の暗い幕（ワールドの側の幕と同じ色）
 const AWL = AWL_NAV || (params.has('awl') && window.parent !== window);
@@ -384,7 +417,7 @@ function refresh(){
     $('#greeting').classList.add('thanks');
     $('#greeting').replaceChildren(...['ありがとうございました！', 'またきてね！'].map(t => { const line = document.createElement('span'); line.append(Object.assign(document.createElement('span'), {textContent:t})); return line; }));   // 行ごとに、外の枠（マスク）と中の文字
   }
-  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => { if (!AWL_NAV) return tellParent('awl-shop-close'); curtain?.classList.remove('is-out'); setTimeout(() => { freeGL(); location.assign('/?shop'); }, 480); }, 1700); }   // ページごと戻る時は、暗い幕を閉じてから   // お礼を見せてから、ワールドへ
+  if (AWL && !inside && visited && !goingBack) { goingBack = true; setTimeout(() => { if (!AWL_NAV) return tellParent('awl-shop-close'); goBackToWorld(); }, 1700); }   // ページごと戻る時は、暗い幕を閉じてから   // お礼を見せてから、ワールドへ
   $('#hud').hidden = !inside; $('#leave').hidden = !inside; $('#help').hidden = !inside;
   $('#enter').tabIndex = inside ? -1 : 0;
   const place = mode === 'fixture' ? String(current) : 'overview';
@@ -899,6 +932,8 @@ async function start(){
   connectShop().then(s => { shop = s; refresh(); if (dialog.open) paintDetail(); afterReturn(); });
   // 「ワールドにもどる」：ANIMAL WORLD LIVE の中（iframe）で開いているときは、親の画面に閉じてもらう。じかに開いたときは、ワールドのお店の前へ（/?shop）
   $('#to-world').addEventListener('click', e => {
+    // ページごと移ってきた時は、幕と曲を下げてから戻る（リンクのまま移ると、音が切れて画面が急に替わる）
+    if (AWL_NAV) { e.preventDefault(); goBackToWorld(); return; }
     if (window.parent === window) return;
     e.preventDefault();
     window.parent.postMessage({type:'awl-shop-close'}, location.origin);

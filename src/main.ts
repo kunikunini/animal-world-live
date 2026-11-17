@@ -1572,7 +1572,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
    * そのワールドでいちばん見ばえのする動物の群れ（同じ種で 30m 以内に集まっている子たち。体の大きさの合計がいちばん大きい群れ）。
    * 空撮の途中で、この群れのそばを低く飛んで見せる。size は群れの子の平均の大きさ（当たりの半径、m）。いなければ null
    */
-  const biggestGroup = (key: RegionKey): { at: THREE.Vector3; size: number } | null => {
+  const biggestGroup = (key: RegionKey, anchor: THREE.Vector3): { at: THREE.Vector3; size: number } | null => {
     const groups: Array<{ species: string; x: number; y: number; z: number; n: number; r: number }> = []
     for (const l of lions) {
       if (regionAt(l.position.x, l.position.z) !== key) continue
@@ -1591,10 +1591,20 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     // 体の大きさで比べる（半径の 2 乗の合計）。小さい子がたくさんいる群れ（キンカジュー・ミーアキャットなど）より、
     // ライオンやトラのような見ばえのする子を選ぶ（11/6 に全個体を置いて、頭数だけだと小さい子の群れが選ばれるようになったため）
     const weight = (g: { r: number; n: number }) => g.n * (g.r / g.n) ** 2
-    groups.sort((a, b) => weight(b) - weight(a))
-    const g = groups[0]
+    // 観察スポット（スコープ）のそばの群れだけから選ぶ。ワールドの端の群れへ飛ぶと、スコープから離れた所を見せられて
+    // 何を見ているのか分からない（11/18 くに: サバンナでライオンからいつのまにか小さなミーアキャットへ）。
+    // そばに群れがいなければ、スコープにいちばん近い群れ
+    const away = (g: { x: number; z: number }) => Math.hypot(g.x - anchor.x, g.z - anchor.z)
+    const close = groups.filter((g) => away(g) <= FLY_NEAR_SPOT)
+    const pool = close.length > 0 ? close : groups.sort((a, b) => away(a) - away(b)).slice(0, 1)
+    // スコープに近いほど選ばれやすく（当たりの大きさは種によってはあてにならないので、近さを強く効かせる。15m で半分）
+    const score = (g: { r: number; n: number; x: number; z: number }) => weight(g) / (1 + (away(g) / 15) ** 2)
+    pool.sort((a, b) => score(b) - score(a))
+    const g = pool[0]
     return g ? { at: new THREE.Vector3(g.x, g.y, g.z), size: g.r / g.n } : null
   }
+  /** 空撮で見せる群れを探す範囲（観察スポットからの距離、m） */
+  const FLY_NEAR_SPOT = 45
   /**
    * 空撮の道すじ: 高い空から回って全体を見渡す（3 点）→ 動物の群れへ下りていき、群れを見たまままわりを低く回る（3 点）
    * → 主人公の後ろの高いところ → いつものカメラの位置。
@@ -1606,8 +1616,10 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
     const r = REGIONS.find((it) => it.key === key) ?? REGIONS[0]
     player.followPose(followPos, followLook)
     const cy = terrainHeight(r.x, r.z)
-    const center = new THREE.Vector3(r.x, cy, r.z)
-    const found = biggestGroup(key)
+    // 高い所から見渡す間は、そのワールドの観察スポット（スコープ）を見る（サバンナはコピエの頂上で、中心とずれている）
+    const spotAt = (worldSpots.find((w) => w.key === key) ?? worldSpots[0]).spot.position
+    const center = spotAt.clone()
+    const found = biggestGroup(key, spotAt)
     const group = found?.at ?? null
     // 小さい子の群れほど近くを飛ぶ（ライオンくらいで 1、小さい子は 0.45 まで寄る）
     const near = clamp((found?.size ?? 1) / 1.0, 0.45, 1)
@@ -2273,6 +2285,7 @@ function startWorld(canvas: HTMLCanvasElement, shell: Shell, startPaused = false
       // 遠景で止めている生成モデルの数（確認用）
       lodFar: () => lod.filter((e) => e.far).length,
       lodTotal: () => lod.length,
+
       // 本編を描いた回数（スコープ・モニターの間に増えないことの確認用）
       frames: () => frames,
       // 描画直後に canvas を画像化する（判定用スクリーンショット）

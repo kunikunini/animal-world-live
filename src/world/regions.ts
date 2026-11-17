@@ -177,6 +177,21 @@ function branchOf(x: number, z: number): { key: RegionKey; inCircle: boolean } {
   return { key: best.key, inCircle: false }
 }
 
+/** 2 つのワールドの中心のまんなか */
+function midpoint(r: Region, q: Region): { x: number; z: number } {
+  return { x: (r.x + q.x) / 2, z: (r.z + q.z) / 2 }
+}
+
+/** a から b までの線分が、1m おきに見て全部歩ける場所か */
+function walkableSegment(a: { x: number; z: number }, b: { x: number; z: number }): boolean {
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z)))
+  for (let i = 1; i <= n; i++) {
+    const t = i / n
+    if (!isWalkable(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false
+  }
+  return true
+}
+
 /** 峠の軸の上の点。t = 原点からの距離 */
 function onPassAxis(r: Region, t: number): { x: number; z: number } {
   const len = Math.hypot(r.x, r.z)
@@ -198,7 +213,15 @@ export function routeTo(from: { x: number; z: number }, to: { x: number; z: numb
   const savannaMouth = (r: Region) => onPassAxis(r, SAVANNA.walk - 15)
   const outerMouth = (r: Region) => onPassAxis(r, Math.hypot(r.x, r.z) - r.walk + 5)
   const outer = (k: RegionKey) => OUTER_REGIONS.find((r) => r.key === k) as Region
-  if (a.key === b.key) {
+  // となりのワールドどうしは、歩ける地面が地続きになっている（円の外の見えている地面まで歩けるようにしたため）。
+  // 床をタップしてとなりのワールドへ行く時に、サバンナまで戻る遠回り（タップと別の向きへ走り出す）をしないよう、
+  // まっすぐ、または 2 つのワールドの中心のあいだを通って歩けるなら、そちらを通る（11/18 くに）
+  const seam = a.key !== b.key && a.key !== 'africa' && b.key !== 'africa' ? midpoint(outer(a.key), outer(b.key)) : null
+  if (a.key !== b.key && walkableSegment(from, dest)) {
+    // まっすぐ行ける
+  } else if (seam && walkableSegment(from, seam) && walkableSegment(seam, dest)) {
+    route.push(seam)
+  } else if (a.key === b.key) {
     // 同じ枝: 円の中どうし・峠の中どうしはまっすぐ。円と峠のあいだは峠の口を通る
     if (a.key !== 'africa' && a.inCircle !== b.inCircle) route.push(outerMouth(outer(a.key)))
   } else {
