@@ -99,8 +99,8 @@ function createContactShadow(radius: number): THREE.Mesh | null {
   return mesh
 }
 
-/** スキンの体に合わせて動く輪郭（同じ形・同じ骨で、法線の方向へ画面の上で OUTLINE_PX だけ広げた裏面） */
-function createOutline(mesh: THREE.SkinnedMesh): THREE.SkinnedMesh {
+/** スキンの体に合わせて動く輪郭（同じ形・同じ骨で、法線の方向へ画面の上で OUTLINE_PX だけ広げた裏面）。スキンの無い形（スコップ）にも使う */
+export function createOutline(mesh: THREE.Mesh): THREE.Mesh {
   const uniforms = { uOutlinePx: { value: OUTLINE_PX }, uResolution: { value: new THREE.Vector2(1, 1) } }
   const mat = new THREE.MeshBasicMaterial({ color: OUTLINE_COLOR, side: THREE.BackSide })
   mat.onBeforeCompile = (shader) => {
@@ -117,9 +117,14 @@ function createOutline(mesh: THREE.SkinnedMesh): THREE.SkinnedMesh {
         if ( outlineLen > 1e-5 ) gl_Position.xy += ( outlineDir / outlineLen ) * uOutlinePx * 2.0 / uResolution * gl_Position.w;`,
       )
   }
-  const outline = new THREE.SkinnedMesh(mesh.geometry, mat)
+  const skinned = (mesh as THREE.SkinnedMesh).isSkinnedMesh ? (mesh as THREE.SkinnedMesh) : null
+  let outline: THREE.Mesh
+  if (skinned) {
+    const sk = new THREE.SkinnedMesh(mesh.geometry, mat)
+    sk.bind(skinned.skeleton, skinned.bindMatrix)
+    outline = sk
+  } else outline = new THREE.Mesh(mesh.geometry, mat)
   outline.name = 'hero-outline'
-  outline.bind(mesh.skeleton, mesh.bindMatrix)
   outline.frustumCulled = false
   outline.castShadow = false
   const size = new THREE.Vector2()

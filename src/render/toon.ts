@@ -296,6 +296,10 @@ const ANIMAL_MAP = /* glsl */ `
   animalQ = mix( sqrt( animalL ), animalQ, smoothstep( 0.8, 1.2, animalG ) );
   animalTex *= mix( 1.0, ( animalQ * animalQ ) / animalL, uShade * 0.8 );
   diffuseColor *= vec4( animalTex, sampledDiffuseColor.a );
+#elif defined( USE_MAP ) && defined( AWL_SOFT )
+  // 11/17 スコップ（AWL_SOFT）: 生成の色の画像がざらざら・まだらで、主人公より細かく見えていた。
+  // 段にはまとめず、画像を少しぼかして読むだけ（主人公くらいのなめらかさに）。ワールドによらず同じ
+  diffuseColor *= texture2D( map, vMapUv, AWL_SOFT );
 #else
   #include <map_fragment>
 #endif

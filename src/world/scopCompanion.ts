@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { clayCompile, toonMaterial } from '../render/toon'
+import { createOutline } from '../player/heroModel'
 
 /**
  * あそびかたツアーの案内役スコップ（3D）。主人公の斜め前（行き先の方、画面で見て右寄り）に立ち、跳ねながら先導する。
@@ -85,12 +86,16 @@ export function contactShadow(radius: number): THREE.Mesh | null {
 /** 角度の差（-π〜π） */
 const angleDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
 
+/** 色の画像をぼかす強さ（mip の段。0 でいままでと同じ） */
+const SCOP_SOFT = 1.0
+
 /** スコップのモデル（足の裏が y=0、真ん中が原点、高さ height）。ワールドのスコップ（scopNpc.ts）も clone して使う */
 export async function loadScopModel(url: string, heroHeight: number): Promise<{ model: THREE.Group; height: number }> {
   const loader = new GLTFLoader()
   loader.setMeshoptDecoder(MeshoptDecoder)
   const gltf = await loader.loadAsync(url)
   const inner = gltf.scene
+  const outlines: THREE.Mesh[] = []
   inner.traverse((o) => {
     const mesh = o as THREE.Mesh
     if (!mesh.isMesh) return
@@ -100,9 +105,20 @@ export async function loadScopModel(url: string, heroHeight: number): Promise<{ 
     const mat = toonMaterial({ color: '#ffffff' })
     mat.map = src.map ?? null
     mat.onBeforeCompile = (shader) => clayCompile(shader)
+    // 11/17 くに「スコップを主人公と合わせて」: 色の画像を少しぼかして読み（toon.ts の AWL_SOFT、値は mip の段）、主人公と同じ細い輪郭を付ける
+    mat.defines = { ...mat.defines, AWL_SOFT: SCOP_SOFT.toFixed(2) }
     mesh.material = mat
     src.dispose()
+    outlines.push(mesh)
   })
+  // 輪郭は形と同じ親に、同じ置き場所・向き・大きさで置く（スキンが無いので形の変換を写す）
+  for (const m of outlines) {
+    const line = createOutline(m)
+    line.position.copy(m.position)
+    line.quaternion.copy(m.quaternion)
+    line.scale.copy(m.scale)
+    m.parent?.add(line)
+  }
   // 大きさと接地: 高さを主人公の HEIGHT_RATIO 倍に、足の裏を y=0、真ん中を原点に。正面は +z（Meshy の書き出しのまま）
   const height = heroHeight * HEIGHT_RATIO
   const box = new THREE.Box3().setFromObject(inner)
